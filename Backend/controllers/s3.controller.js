@@ -1,0 +1,64 @@
+// controllers/s3.controller.js
+import { PutObjectCommand, GetObjectCommand } from "@aws-sdk/client-s3";
+import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
+import { v4 as uuid } from "uuid";
+import { s3 } from "../config/s3Client.config.js";
+import ApiError from "../utils/ApiError.js";
+import ApiResponse from "../utils/Apiresponse.js";
+
+export const generateUploadUrl = async (req, res) => {
+  const { fileType } = req.body;
+  if (!fileType) {
+    throw new ApiError(400, "fileType is required");
+  }
+
+  const key = `uploads/${uuid()}`;
+  const command = new PutObjectCommand({
+    Bucket: process.env.BUCKET_NAME,
+    Key: key,
+    ContentType: fileType,
+  });
+
+  const uploadUrl = await getSignedUrl(s3, command, {
+    expiresIn: 60, // 60 sec
+  });
+
+  res.json(new ApiResponse(200, "Upload URL generated", { uploadUrl, key }));
+};
+
+// generate a signed URL for downloading a file given its key
+export const generateDownloadUrl = async (req, res) => {
+  // key can come from body or query parameters
+  const { key } = req.body || req.query;
+  if (!key) {
+    throw new ApiError(400, "Key is required");
+  }
+
+  const command = new GetObjectCommand({
+    Bucket: process.env.BUCKET_NAME,
+    Key: key,
+  });
+
+  const downloadUrl = await getSignedUrl(s3, command, {
+    expiresIn: 60, // 60 sec
+  });
+
+  res.json(new ApiResponse(200, "Download URL generated", { downloadUrl }));
+};
+
+// return a public URL for the object (assumes bucket or object is public-read)
+export const getFileUrl = (req, res) => {
+  // key may be in body or query
+  const { key } = req.body || req.query ||req.params;
+  if (!key) {
+    throw new ApiError(400, "Key is required");
+  }
+
+  if (!process.env.BUCKET_NAME) {
+    throw new ApiError(500, "Bucket name not configured");
+  }
+
+  const region = process.env.AWS_REGION ? `${process.env.AWS_REGION}.` : "";
+  const url = `https://${process.env.BUCKET_NAME}.s3.${region}amazonaws.com/${key}`;
+  res.json(new ApiResponse(200, "File URL", { url }));
+};

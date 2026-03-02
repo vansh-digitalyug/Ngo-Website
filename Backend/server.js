@@ -10,6 +10,7 @@ import adminRoutes from "./routes/admin.routes.js";
 import galleryRoutes from "./routes/gallery.routes.js";
 import ngoDashboardRoutes from "./routes/ngoDashboard.route.js";
 import paymentRoutes from "./routes/payment.routes.js";
+import s3Routes from "./routes/s3.routes.js";
 
 import "./config/loadEnv.js";
 import cors from "cors";
@@ -56,7 +57,9 @@ app.use("/api/contact", contactRoutes);
 app.use("/api/kyc", kycRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/gallery", galleryRoutes);
-app.use("/api/payments", paymentRoutes);
+app.use("/api/payment", paymentRoutes);
+// S3 URL generation endpoints
+app.use("/api/s3", s3Routes);
 app.use(errorHandler);
 
 const PORT = process.env.PORT || 5000;
