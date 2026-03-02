@@ -86,6 +86,7 @@ const handleProceedPayment = async (e) => {
           isAnonymous,
           mobile,
           email,
+          panNumber,
         },
         receipt: `donation_${Date.now()}`
       })
