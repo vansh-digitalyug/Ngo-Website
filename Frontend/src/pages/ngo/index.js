@@ -5,3 +5,4 @@ export { default as NgoProfile } from './NgoProfile';
 export { default as NgoGallery } from './NgoGallery';
 export { default as NgoVolunteers } from './NgoVolunteers';
 export { default as NgoPending } from './NgoPending';
+export { default as NgoFundRequests } from './NgoFundRequests';

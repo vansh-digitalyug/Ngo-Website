@@ -3,7 +3,7 @@ import { PutObjectCommand, GetObjectCommand } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { s3 } from "../config/s3Client.config.js";
 import ApiError from "../utils/ApiError.js";
-import ApiResponse from "../utils/Apiresponse.js";
+import ApiResponse from "../utils/ApiResponse.js";
 
 export const generateUploadUrl = async (req, res) => {
   const { fileType, fileName,location } = req.body;

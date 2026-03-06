@@ -23,13 +23,14 @@ import AdminUsers from "../pages/admin/AdminUsers.jsx";
 import AdminGallery from "../pages/admin/AdminGallery.jsx";
 
 // NGO Dashboard imports
-import { 
-  NgoLayout, 
-  NgoDashboard, 
-  NgoProfile, 
-  NgoGallery, 
-  NgoVolunteers, 
-  NgoPending 
+import {
+  NgoLayout,
+  NgoDashboard,
+  NgoProfile,
+  NgoGallery,
+  NgoVolunteers,
+  NgoPending,
+  NgoFundRequests
 } from "../pages/ngo/index.js";
 
 import GalleryImages from "../pages/gallery/GalleryImages.jsx";
@@ -176,6 +177,7 @@ function AppRoutes() {
           <Route path="profile" element={<NgoProfile />} />
           <Route path="gallery" element={<NgoGallery />} />
           <Route path="volunteers" element={<NgoVolunteers />} />
+          <Route path="funds" element={<NgoFundRequests />} />
         </Route>
 
       </Routes>

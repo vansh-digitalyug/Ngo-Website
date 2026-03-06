@@ -1,17 +1,18 @@
 import React, { useState, useEffect } from "react";
 import { Link, useLocation, useNavigate, Outlet } from "react-router-dom";
-import { 
-  LayoutDashboard, 
-  User, 
-  Image, 
-  Handshake, 
-  Building2, 
-  CheckCircle, 
-  Globe, 
+import {
+  LayoutDashboard,
+  User,
+  Image,
+  Handshake,
+  Building2,
+  CheckCircle,
+  Globe,
   LogOut,
   ChevronRight,
   Settings,
-  HelpCircle
+  HelpCircle,
+  IndianRupee
 } from "lucide-react";
 import "./ngo.css";
 // Removed remove-ngo-padding.css import
@@ -23,6 +24,7 @@ const NAV_ITEMS = [
   { path: "/ngo/profile", label: "Organization Profile", icon: User },
   { path: "/ngo/gallery", label: "Media Gallery", icon: Image },
   { path: "/ngo/volunteers", label: "Volunteer Management", icon: Handshake },
+  { path: "/ngo/funds", label: "Fund Requests", icon: IndianRupee },
 ];
 
 function NgoLayout() {
