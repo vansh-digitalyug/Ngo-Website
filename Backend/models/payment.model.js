@@ -6,6 +6,26 @@ const paymentSchema = new mongoose.Schema({
     ref: "User",
     required: false
   },
+  ngoId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Ngo",
+    default: null,
+    index: true
+  },
+  serviceTitle: {
+    type: String,
+    trim: true,
+    default: ""
+  },
+  donorName: {
+    type: String,
+    trim: true,
+    default: ""
+  },
+  isAnonymous: {
+    type: Boolean,
+    default: false
+  },
   amount: {
     type: Number,
     required: true
@@ -36,11 +56,7 @@ const paymentSchema = new mongoose.Schema({
     type: String,
     enum: ["created", "paid", "failed"],
     default: "created"
-  },
-  createdAt: {
-    type: Date,
-    default: Date.now
   }
-});
+}, { timestamps: true });
 
 export default mongoose.model("Payment", paymentSchema);

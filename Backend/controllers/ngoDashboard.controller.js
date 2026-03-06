@@ -1,8 +1,10 @@
 import Ngo from "../models/ngo.model.js";
 import Gallery from "../models/gallery.model.js";
 import Volunteer from "../models/volunteer.model.js";
+import Payment from "../models/payment.model.js";
 import asyncHandler from "../utils/asyncHandler.js";
 import ApiError from "../utils/ApiError.js";
+import ApiResponse from "../utils/ApiResponse.js";
 
 // ═══════════════════════════════════════════════════════════════════════════
 // NGO DASHBOARD CONTROLLER
@@ -19,7 +21,8 @@ export const getDashboardStats = asyncHandler(async (req, res) => {
     volunteersTotal,
     volunteersPending,
     recentGallery,
-    recentVolunteers
+    recentVolunteers,
+    donationAgg
   ] = await Promise.all([
     Gallery.countDocuments({ ngoId }),
     Gallery.countDocuments({ ngoId, approvalStatus: "pending" }),
@@ -33,8 +36,14 @@ export const getDashboardStats = asyncHandler(async (req, res) => {
     Volunteer.find({ ngoId })
       .sort({ createdAt: -1 })
       .limit(5)
-      .select("fullName email status skills createdAt")
+      .select("fullName email status skills createdAt"),
+    Payment.aggregate([
+      { $match: { ngoId, status: "paid" } },
+      { $group: { _id: null, total: { $sum: 1 }, amount: { $sum: "$amount" } } }
+    ])
   ]);
+
+  const donationStats = donationAgg[0] || { total: 0, amount: 0 };
 
   return res.status(200).json({
     success: true,
@@ -57,7 +66,7 @@ export const getDashboardStats = asyncHandler(async (req, res) => {
       stats: {
         gallery: { total: galleryTotal, pending: galleryPending, approved: galleryApproved },
         volunteers: { total: volunteersTotal, pending: volunteersPending },
-        donations: { total: 0, amount: 0 }
+        donations: { total: donationStats.total, amount: donationStats.amount }
       },
       recent: { gallery: recentGallery, volunteers: recentVolunteers }
     }
@@ -337,14 +346,62 @@ export const getNgoStatus = asyncHandler(async (req, res) => {
   });
 });
 
+// ═══════════════════════════════════════════════════════════════════════════
+// DONATION HISTORY
+// ═══════════════════════════════════════════════════════════════════════════
+
+export const getNgoDonationHistory = asyncHandler(async (req, res) => {
+  const ngoId = req.ngo._id;
+  const { page = 1, limit = 20 } = req.query;
+
+  const skip = (Number(page) - 1) * Number(limit);
+
+  const [donations, total, summary] = await Promise.all([
+    Payment.find({ ngoId, status: "paid" })
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(Number(limit))
+      .select("donorName isAnonymous amount serviceTitle createdAt razorpayPaymentId")
+      .lean(),
+    Payment.countDocuments({ ngoId, status: "paid" }),
+    Payment.aggregate([
+      { $match: { ngoId, status: "paid" } },
+      { $group: { _id: null, totalAmount: { $sum: "$amount" }, totalCount: { $sum: 1 } } }
+    ])
+  ]);
+
+  const { totalAmount = 0, totalCount = 0 } = summary[0] || {};
+
+  // Mask donor names for anonymous donations
+  const sanitized = donations.map(d => ({
+    ...d,
+    donorName: d.isAnonymous ? "Anonymous" : (d.donorName || "Anonymous")
+  }));
+
+  return res.status(200).json(
+    new ApiResponse(200, "Donation history fetched", {
+      donations: sanitized,
+      summary: { totalAmount, totalCount },
+      pagination: {
+        total,
+        page: Number(page),
+        limit: Number(limit),
+        totalPages: Math.ceil(total / Number(limit))
+      }
+    })
+  );
+});
+
 export default {
   getDashboardStats,
   getNgoProfile,
   updateNgoProfile,
+  updateNgoDocuments,
   getNgoGallery,
   uploadToGallery,
   deleteGalleryItem,
   getNgoVolunteers,
   updateVolunteerStatus,
-  getNgoStatus
+  getNgoStatus,
+  getNgoDonationHistory
 };

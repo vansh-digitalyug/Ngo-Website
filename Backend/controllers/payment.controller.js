@@ -13,7 +13,16 @@ const WEBHOOK_SECRET = process.env.RAZORPAY_WEBHOOK_SECRET;
    CREATE ORDER
 ========================= */
 export const createOrder = asyncHandler(async (req, res) => {
-  const { amount, currency = "INR", receipt, notes } = req.body || {};
+  const {
+    amount,
+    currency = "INR",
+    receipt,
+    notes,
+    ngoId,
+    serviceTitle,
+    donorName,
+    isAnonymous
+  } = req.body || {};
 
   if (!amount || Number(amount) <= 0) {
     throw new ApiError(400, "Invalid amount");
@@ -23,19 +32,23 @@ export const createOrder = asyncHandler(async (req, res) => {
     amount: amount * 100, // rupees → paise
     currency,
     receipt: receipt || `rcpt_${Date.now()}`,
-    notes: notes || {},
+    notes: notes || {}
   };
 
   const order = await razorpay.orders.create(options);
 
   const payment = await Payment.create({
     user: req.userId || null,
+    ngoId: ngoId || null,
+    serviceTitle: serviceTitle || "",
+    donorName: donorName || notes?.donorName || "",
+    isAnonymous: isAnonymous || false,
     amount: Number(amount),
     currency,
     receipt: options.receipt,
     notes: options.notes,
     razorpayOrderId: order.id,
-    status: "created",
+    status: "created"
   });
 
   return res

@@ -12,6 +12,7 @@ const Donate = () => {
   const isHi = language === "hi";
   const serviceImage = location.state?.serviceImage || cowImage;
   const serviceTitle = location.state?.serviceTitle || "Help Guardian of Angels rescue and care for abandoned and injured cows";
+  const ngoId = location.state?.ngoId || null;
   
   const [selectedAmount, setSelectedAmount] = useState(3000);
   const [customAmount, setCustomAmount] = useState("");
@@ -81,6 +82,10 @@ const handleProceedPayment = async (e) => {
       body: JSON.stringify({
         amount: totalAmount,
         currency: "INR",
+        ngoId,
+        serviceTitle,
+        donorName: donorName || "Anonymous",
+        isAnonymous,
         notes: {
           donorName: donorName || "Anonymous",
           isAnonymous,

@@ -3,6 +3,7 @@ import Ngo from "../models/ngo.model.js";
 import Volunteer from "../models/volunteer.model.js";
 import Contact from "../models/contact.model.js";
 import FundRequest from "../models/fundRequest.model.js";
+import Payment from "../models/payment.model.js";
 import asyncHandler from "../utils/asyncHandler.js";
 import ApiError from "../utils/ApiError.js";
 import ApiResponse from "../utils/ApiResponse.js";
@@ -416,5 +417,101 @@ export const updateFundRequestStatus = asyncHandler(async (req, res) => {
 
     return res.status(200).json(
         new ApiResponse(200, messages[status], fundRequest)
+    );
+});
+
+// ─── Donation Management ───
+
+// Admin: All donations with filters, pagination, and per-NGO breakdown
+export const getAllDonations = asyncHandler(async (req, res) => {
+    const { ngoId, status = "paid", search, page = 1, limit = 20 } = req.query;
+
+    const filter = {};
+    if (status && ["created", "paid", "failed"].includes(status)) filter.status = status;
+    if (ngoId) filter.ngoId = ngoId;
+    if (search) {
+        filter.$or = [
+            { donorName: { $regex: search, $options: "i" } },
+            { serviceTitle: { $regex: search, $options: "i" } }
+        ];
+    }
+
+    const skip = (Number(page) - 1) * Number(limit);
+
+    const [donations, total, summary] = await Promise.all([
+        Payment.find(filter)
+            .sort({ createdAt: -1 })
+            .skip(skip)
+            .limit(Number(limit))
+            .populate("ngoId", "ngoName city state")
+            .populate("user", "name email")
+            .lean(),
+        Payment.countDocuments(filter),
+        Payment.aggregate([
+            { $match: { status: "paid" } },
+            { $group: { _id: null, totalAmount: { $sum: "$amount" }, totalCount: { $sum: 1 } } }
+        ])
+    ]);
+
+    const { totalAmount = 0, totalCount = 0 } = summary[0] || {};
+
+    // Mask anonymous donor names
+    const sanitized = donations.map(d => ({
+        ...d,
+        donorName: d.isAnonymous ? "Anonymous" : (d.donorName || "Anonymous")
+    }));
+
+    return res.status(200).json(
+        new ApiResponse(200, "Donations fetched successfully", {
+            donations: sanitized,
+            summary: { totalAmount, totalCount },
+            pagination: {
+                total,
+                page: Number(page),
+                limit: Number(limit),
+                totalPages: Math.ceil(total / Number(limit))
+            }
+        })
+    );
+});
+
+// Admin: Per-NGO donation totals (leaderboard)
+export const getDonationsByNgo = asyncHandler(async (req, res) => {
+    const breakdown = await Payment.aggregate([
+        { $match: { status: "paid", ngoId: { $ne: null } } },
+        {
+            $group: {
+                _id: "$ngoId",
+                totalAmount: { $sum: "$amount" },
+                totalCount: { $sum: 1 },
+                lastDonationAt: { $max: "$createdAt" }
+            }
+        },
+        { $sort: { totalAmount: -1 } },
+        { $limit: 50 },
+        {
+            $lookup: {
+                from: "ngos",
+                localField: "_id",
+                foreignField: "_id",
+                as: "ngo"
+            }
+        },
+        { $unwind: { path: "$ngo", preserveNullAndEmpty: true } },
+        {
+            $project: {
+                ngoId: "$_id",
+                ngoName: "$ngo.ngoName",
+                city: "$ngo.city",
+                state: "$ngo.state",
+                totalAmount: 1,
+                totalCount: 1,
+                lastDonationAt: 1
+            }
+        }
+    ]);
+
+    return res.status(200).json(
+        new ApiResponse(200, "Donation breakdown by NGO", breakdown)
     );
 });

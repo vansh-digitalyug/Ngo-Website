@@ -15,7 +15,9 @@ import {
     deleteContact,
     getAllUsers,
     getAllFundRequests,
-    updateFundRequestStatus
+    updateFundRequestStatus,
+    getAllDonations,
+    getDonationsByNgo
 } from "../controllers/admin.controller.js";
 
 const router = express.Router();
@@ -50,5 +52,9 @@ router.get("/users", getAllUsers);
 // Fund request management
 router.get("/funds", getAllFundRequests);
 router.put("/funds/:id/status", updateFundRequestStatus);
+
+// Donation management
+router.get("/donations", getAllDonations);
+router.get("/donations/by-ngo", getDonationsByNgo);
 
 export default router;
