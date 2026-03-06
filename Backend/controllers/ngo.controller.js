@@ -149,13 +149,18 @@ export const createNgo = async (req, res) => {
       socialFacebook,
       socialInstagram,
       otherService,
-      agreeToTerms
+      agreeToTerms,
+      // S3 keys sent by frontend after direct-to-S3 upload
+      registrationCertificate,
+      certificate12A,
+      certificate80G
     } = req.body;
 
+    // Documents are S3 keys provided by the frontend after direct-to-S3 upload
     const documents = {
-      registrationCertificate: getUploadedFileName(req.files, "registrationCertificate"),
-      certificate12A: getUploadedFileName(req.files, "certificate12A"),
-      certificate80G: getUploadedFileName(req.files, "certificate80G")
+      registrationCertificate: registrationCertificate || "",
+      certificate12A: certificate12A || "",
+      certificate80G: certificate80G || ""
     };
 
     if (!documents.registrationCertificate) {

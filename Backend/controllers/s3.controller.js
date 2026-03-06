@@ -14,7 +14,10 @@ export const generateUploadUrl = async (req, res) => {
     throw new ApiError(400, "fileName is required");
   }
 
-  const key = `Uploads/${location}/${fileName}.${fileType.split("/")[1]}`;
+  // Strip any existing extension from fileName to avoid double extensions (e.g. photo.png.png)
+  const baseName = fileName.replace(/\.[^/.]+$/, "");
+  const ext = fileType.split("/")[1];
+  const key = `Uploads/${location}/${baseName}.${ext}`;
   const command = new PutObjectCommand({
     Bucket: process.env.BUCKET_NAME,
     Key: key,

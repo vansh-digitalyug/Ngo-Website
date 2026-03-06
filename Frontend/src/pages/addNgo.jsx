@@ -125,8 +125,9 @@ const AddNGOPage = () => {
 
   const [currentStep, setCurrentStep] = useState(1);
   const [isSubmitted, setIsSubmitted] = useState(false);
-  const [isLoading, setIsLoading] = useState(false); // New Loading State
-  const [apiError, setApiError] = useState(''); // New API Error State
+  const [isLoading, setIsLoading] = useState(false);
+  const [uploadStatus, setUploadStatus] = useState(''); // Tracks current upload step for UX feedback
+  const [apiError, setApiError] = useState('');
   const [errors, setErrors] = useState({});
 
   // State for Form Data
@@ -302,68 +303,94 @@ const AddNGOPage = () => {
     window.scrollTo(0, 0);
   };
 
+  // --- S3 UPLOAD HELPER ---
+
+  /**
+   * Uploads a single file directly to S3 using a backend-generated presigned URL.
+   * Returns the S3 key (path) of the stored object.
+   */
+  const uploadFileToS3 = async (file, location) => {
+    // Step 1: Ask backend for a presigned PUT URL
+    const res = await fetch("http://localhost:5000/api/s3/generate-upload-url", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+      body: JSON.stringify({
+        fileName: file.name.replace(/\s/g, "_"),
+        fileType: file.type,
+        location,
+      }),
+    });
+
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.message || "Failed to get S3 upload URL");
+    }
+
+    const { data } = await res.json();
+    const { uploadUrl, key } = data;
+
+    // Step 2: Upload the raw file binary directly to S3 (bypasses our backend)
+    const s3Res = await fetch(uploadUrl, {
+      method: "PUT",
+      headers: { "Content-Type": file.type },
+      body: file,
+    });
+
+    if (!s3Res.ok) {
+      throw new Error("Failed to upload file to S3. Please try again.");
+    }
+
+    return key; // S3 key to store in the database
+  };
+
   // --- API SUBMISSION ---
 
   const handleSubmit = async () => {
-    if (validateStep(5)) {
-      setIsLoading(true);
-      setApiError('');
+    if (!validateStep(5)) return;
 
-      // 1. Create FormData object
-      const dataToSend = new FormData();
+    setIsLoading(true);
+    setApiError('');
 
-      // 2. Append standard text fields
-      Object.keys(formData).forEach(key => {
-        // Exclude files and array initially
-        const excludeList = ['services', 'registrationCertificate', 'certificate12A', 'certificate80G'];
+    try {
+      // Step 1: Upload all 3 certificate files to S3 in parallel
+      setUploadStatus('Uploading documents to S3 (1/3)...');
+      const [regCertKey, cert12AKey, cert80GKey] = await Promise.all([
+        uploadFileToS3(formData.registrationCertificate, "ngoDocs"),
+        uploadFileToS3(formData.certificate12A, "ngoDocs"),
+        uploadFileToS3(formData.certificate80G, "ngoDocs"),
+      ]);
 
-        if (!excludeList.includes(key)) {
-          // Ensure we don't send null/undefined as strings
-          if (formData[key] !== null && formData[key] !== undefined) {
-            dataToSend.append(key, formData[key]);
-          }
-        }
+      // Step 2: Submit NGO form with S3 keys (plain JSON — no FormData needed)
+      setUploadStatus('Submitting your application...');
+      const payload = {
+        ...formData,
+        // Replace File objects with their S3 keys
+        registrationCertificate: regCertKey,
+        certificate12A: cert12AKey,
+        certificate80G: cert80GKey,
+      };
+
+      const response = await fetch("http://localhost:5000/api/ngo/create", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify(payload),
       });
 
-      // 3. Append Services (as stringified JSON)
-      dataToSend.append('services', JSON.stringify(formData.services));
+      const result = await response.json().catch(() => ({}));
 
-      // 4. Append Files (Only if they exist)
-      if (formData.registrationCertificate) {
-        dataToSend.append('registrationCertificate', formData.registrationCertificate);
-      }
-      if (formData.certificate12A) {
-        dataToSend.append('certificate12A', formData.certificate12A);
-      }
-      if (formData.certificate80G) {
-        dataToSend.append('certificate80G', formData.certificate80G);
+      if (!response.ok || !result.success) {
+        throw new Error(result.message || "Failed to submit. Please check your connection and try again.");
       }
 
-      // Debug: Log entries to console
-      // for (var pair of dataToSend.entries()) {
-      //     console.log(pair[0]+ ', ' + pair[1]); 
-      // }
-
-      try {
-        const response = await fetch("http://localhost:5000/api/ngo/create", {
-          method: "POST",
-          body: dataToSend,
-          credentials: "include"
-        });
-
-        const result = await response.json().catch(() => ({}));
-
-        if (!response.ok || !result.success) {
-          throw new Error(result.message || "Failed to submit. Please check your connection and try again.");
-        }
-
-        setIsSubmitted(true);
-      } catch (error) {
-        console.error("Error submitting form:", error);
-        setApiError(error.message || "Failed to submit. Please check your connection and try again.");
-      } finally {
-        setIsLoading(false);
-      }
+      setIsSubmitted(true);
+    } catch (error) {
+      console.error("Error submitting form:", error);
+      setApiError(error.message || "Failed to submit. Please check your connection and try again.");
+    } finally {
+      setIsLoading(false);
+      setUploadStatus('');
     }
   };
 
@@ -686,7 +713,7 @@ const AddNGOPage = () => {
                   style={{ opacity: isLoading ? 0.7 : 1, cursor: isLoading ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
                 >
                   {isLoading && <Loader2 className="animate-spin" size={20} />}
-                  {isLoading ? 'Submitting...' : 'Submit for Verification'}
+                  {isLoading ? (uploadStatus || 'Submitting...') : 'Submit for Verification'}
                 </button>
               )}
             </div>
