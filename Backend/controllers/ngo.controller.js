@@ -155,6 +155,7 @@ export const createNgo = async (req, res) => {
       socialInstagram,
       otherService,
       agreeToTerms,
+      
       // S3 keys sent by frontend after direct-to-S3 upload
       registrationCertificate,
       certificate12A,
@@ -163,9 +164,9 @@ export const createNgo = async (req, res) => {
 
     // Documents are S3 keys provided by the frontend after direct-to-S3 upload
     const documents = {
-      registrationCertificate: registrationCertificate || "",
-      certificate12A: certificate12A || "",
-      certificate80G: certificate80G || ""
+      registrationCertificate: registrationCertificate || "not found",
+      certificate12A: certificate12A || "not found",
+      certificate80G: certificate80G || "not found"
     };
 
     if (!documents.registrationCertificate) {
@@ -202,6 +203,7 @@ export const createNgo = async (req, res) => {
       whatsapp: onlyDigits(whatsapp),
       email,
       website,
+      documents,
       socialMedia: {
         facebook: facebook || socialFacebook || "",
         instagram: instagram || socialInstagram || ""
