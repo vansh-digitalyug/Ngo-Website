@@ -208,6 +208,7 @@ export const createNgo = async (req, res) => {
       },
       services: toArray(req.body.services),
       otherService,
+      documents,
       agreeToTerms: true,
       // Link to logged-in user if available
       ownerId: req.user?._id || null

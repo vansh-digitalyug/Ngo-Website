@@ -126,9 +126,13 @@ const AddNGOPage = () => {
   const [currentStep, setCurrentStep] = useState(1);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [uploadStatus, setUploadStatus] = useState(''); // Tracks current upload step for UX feedback
+  const [uploadStatus, setUploadStatus] = useState('');
   const [apiError, setApiError] = useState('');
   const [errors, setErrors] = useState({});
+
+  // Generate a unique S3 folder ID once when the form loads
+  // This is used as the S3 folder name: Uploads/ngoDocs/{ngoS3Id}/filename
+  const [ngoS3Id] = useState(() => crypto.randomUUID());
 
   // State for Form Data
   const [formData, setFormData] = useState({
@@ -338,6 +342,11 @@ const AddNGOPage = () => {
     });
 
     if (!s3Res.ok) {
+      const errText = await s3Res.text();
+      console.error("S3 Status:", s3Res.status);
+      console.error("S3 Error XML:", errText);
+      console.error("File type used:", file.type);
+      console.error("Upload URL:", uploadUrl);
       throw new Error("Failed to upload file to S3. Please try again.");
     }
 
@@ -356,15 +365,16 @@ const AddNGOPage = () => {
       // Step 1: Upload all 3 certificate files to S3 in parallel
       setUploadStatus('Uploading documents to S3 (1/3)...');
       const [regCertKey, cert12AKey, cert80GKey] = await Promise.all([
-        uploadFileToS3(formData.registrationCertificate, "ngoDocs"),
-        uploadFileToS3(formData.certificate12A, "ngoDocs"),
-        uploadFileToS3(formData.certificate80G, "ngoDocs"),
+        uploadFileToS3(formData.registrationCertificate, `ngoDocs/${ngoS3Id}`),
+        uploadFileToS3(formData.certificate12A, `ngoDocs/${ngoS3Id}`),
+        uploadFileToS3(formData.certificate80G, `ngoDocs/${ngoS3Id}`),
       ]);
 
       // Step 2: Submit NGO form with S3 keys (plain JSON — no FormData needed)
       setUploadStatus('Submitting your application...');
       const payload = {
         ...formData,
+        ngoS3Id,
         // Replace File objects with their S3 keys
         registrationCertificate: regCertKey,
         certificate12A: cert12AKey,
