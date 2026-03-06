@@ -313,14 +313,17 @@ const AddNGOPage = () => {
    * Uploads a single file directly to S3 using a backend-generated presigned URL.
    * Returns the S3 key (path) of the stored object.
    */
-  const uploadFileToS3 = async (file, location) => {
+  const uploadFileToS3 = async (file, location, fieldName) => {
+    // Prepend fieldName so same file uploaded for multiple fields gets unique S3 keys
+    const uniqueFileName = `${fieldName}_${file.name.replace(/\s/g, "_")}`;
+
     // Step 1: Ask backend for a presigned PUT URL
     const res = await fetch("http://localhost:5000/api/s3/generate-upload-url", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       credentials: "include",
       body: JSON.stringify({
-        fileName: file.name.replace(/\s/g, "_"),
+        fileName: uniqueFileName,
         fileType: file.type,
         location,
       }),
@@ -365,9 +368,9 @@ const AddNGOPage = () => {
       // Step 1: Upload all 3 certificate files to S3 in parallel
       setUploadStatus('Uploading documents to S3 (1/3)...');
       const [regCertKey, cert12AKey, cert80GKey] = await Promise.all([
-        uploadFileToS3(formData.registrationCertificate, `ngoDocs/${ngoS3Id}`),
-        uploadFileToS3(formData.certificate12A, `ngoDocs/${ngoS3Id}`),
-        uploadFileToS3(formData.certificate80G, `ngoDocs/${ngoS3Id}`),
+        uploadFileToS3(formData.registrationCertificate, `ngoDocs/${ngoS3Id}`, 'reg-cert'),
+        uploadFileToS3(formData.certificate12A, `ngoDocs/${ngoS3Id}`, 'cert-12a'),
+        uploadFileToS3(formData.certificate80G, `ngoDocs/${ngoS3Id}`, 'cert-80g'),
       ]);
 
       // Step 2: Submit NGO form with S3 keys (plain JSON — no FormData needed)
