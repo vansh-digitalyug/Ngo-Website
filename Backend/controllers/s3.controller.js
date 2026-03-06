@@ -42,7 +42,7 @@ export const generateDownloadUrl = async (req, res) => {
   });
 
   const downloadUrl = await getSignedUrl(s3, command, {
-    expiresIn: 60, // 60 sec
+    expiresIn: 60000, // 60 sec
   });
 
   res.json(new ApiResponse(200, "Download URL generated", { downloadUrl }));

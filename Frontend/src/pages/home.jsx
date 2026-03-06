@@ -3,9 +3,11 @@ import { Link } from "react-router-dom";
 // IMPORT YOUR LOCAL IMAGE HERE
 import elderImage from "../assets/images/elderly/elder.png";
 
+
 function Home() {
   // 1. STATE FOR CAROUSEL
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+
 
   // 2. IMAGE ARRAY
   const heroImages = [
@@ -139,7 +141,6 @@ function Home() {
             <p style={styles.heroSubtitle}>
               SevaIndia connects donors and volunteers with trusted NGOs to uplift children, support senior citizens, and bridge the digital divide.
             </p>
-
             <div style={styles.heroButtons}>
               <Link to="/donate" className="primary-btn pulse-btn" style={styles.primaryBtn}>
                 Donate Now
@@ -176,6 +177,8 @@ function Home() {
             and no student is left behind due to the digital divide. We are building an
             ecosystem of <strong>dignity, care, and transparency</strong> to turn your good intentions into measurable impact.
           </p>
+        
+
         </div>
       </section>
 
