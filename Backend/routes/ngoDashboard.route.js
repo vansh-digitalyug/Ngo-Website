@@ -6,6 +6,7 @@ import {
     getDashboardStats,
     getNgoProfile,
     updateNgoProfile,
+    updateNgoDocuments,
     getNgoGallery,
     uploadToGallery,
     deleteGalleryItem,

@@ -7,8 +7,8 @@ const router = express.Router();
 
 router.post("/generate-upload-url", asyncHandler(generateUploadUrl));
 // presigned GET link (short-lived) for downloads or preview
-// router.get("/generate-download-url", asyncHandler(generateDownloadUrl));
-// simple public URL for display; bucket/object must be publicly readable
 router.get("/get-url", asyncHandler(getUrl));
+// public URL for display (bucket/object must be publicly readable)
+
 
 export default router;

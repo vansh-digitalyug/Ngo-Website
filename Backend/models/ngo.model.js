@@ -7,6 +7,10 @@ const ngoSchema = new mongoose.Schema({
     required: [true, 'NGO Name is required'],
     trim: true
   },
+  ngoS3Id:{
+    type: String,
+    default: ''
+  },
   regType: {
     type: String,
     required: [true, 'Registration Type is required'],

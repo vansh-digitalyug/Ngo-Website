@@ -1,7 +1,7 @@
 import crypto from "crypto";
 import asyncHandler from "../utils/asyncHandler.js";
 import ApiError from "../utils/ApiError.js";
-import ApiResponse from "../utils/Apiresponse.js";
+import ApiResponse from "../utils/ApiResponse.js";
 import Payment from "../models/payment.model.js";
 import razorpay from "../config/razorpay.config.js";
 import "../config/loadEnv.js";

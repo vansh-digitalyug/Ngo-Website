@@ -131,6 +131,7 @@ export const createNgo = async (req, res) => {
   try {
     const {
       ngoName,
+      ngoS3Id,
       regType,
       regNumber,
       estYear,
@@ -183,6 +184,7 @@ export const createNgo = async (req, res) => {
 
     const ngo = await Ngo.create({
       ngoName,
+      ngoS3Id,
       regType,
       regNumber,
       estYear: estYear ? Number(estYear) : undefined,
@@ -206,7 +208,6 @@ export const createNgo = async (req, res) => {
       },
       services: toArray(req.body.services),
       otherService,
-      documents,
       agreeToTerms: true,
       // Link to logged-in user if available
       ownerId: req.user?._id || null
@@ -233,6 +234,64 @@ export const createNgo = async (req, res) => {
   }
 };
 
+export const updateNgo = async (req, res) => {
+  try {
+    const ngo = req.ngo; // From auth middleware
+
+    if (ngo.isVerified) {
+      return res.apiError(403, "Verified NGOs cannot update their profile. Please contact support for any changes.");
+    }
+
+    const updateData = {};
+    const allowedFields = [
+      "ngoName", "regType", "regNumber", "estYear", "darpanId", "panNumber",
+      "description", "state", "district", "city", "pincode", "address",
+      "contactName", "contactRole", "phone", "whatsapp", "email",
+      "website", "facebook", "instagram", "otherService"
+    ];
+
+    allowedFields.forEach(field => {
+      if (req.body[field] !== undefined) {
+        updateData[field] = req.body[field];
+      }
+    });
+
+    // Handle services array
+    if (req.body.services !== undefined) {
+      updateData.services = toArray(req.body.services);
+    }
+
+    // Handle document updates (S3 keys)
+    const documentFields = ["registrationCertificate", "certificate12A", "certificate80G"];
+    documentFields.forEach(docField => {
+      if (req.body[docField] !== undefined) {
+        updateData[docField] = req.body[docField]; // Expecting S3 key from frontend
+      }
+    });
+
+    const updatedNgo = await Ngo.findByIdAndUpdate(ngo._id, updateData, { new: true });
+
+    return res.status(200).json({
+      success: true,
+      message: "NGO profile updated successfully",
+      ngo: updatedNgo
+    });
+  }
+    catch (error) {
+      if (error?.code === 11000 && error?.keyPattern?.regNumber) {
+        return res.status(409).json({
+          success: false,
+          message: "An NGO with this registration number already exists"
+        });
+      }
+
+      const status = error.name === "ValidationError" ? 400 : 500;
+      return res.status(status).json({
+        success: false,
+        message: error.message
+      });
+    }
+};
 // ─── Fund Request: NGO submits a fund request ───
 export const requestNgoFunds = asyncHandler(async (req, res) => {
     const ngo = req.ngo;
