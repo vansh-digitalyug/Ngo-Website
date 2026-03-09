@@ -208,15 +208,19 @@ export const getAllVolunteers = asyncHandler(async (req, res) => {
 
 export const updateVolunteerStatus = asyncHandler(async (req, res) => {
         const { id } = req.params;
-        const { status } = req.body;
+        const { status, role, assignedArea } = req.body;
 
         if (!["Pending", "Approved", "Rejected"].includes(status)) {
             return res.status(400).json({ success: false, message: "Status must be Pending, Approved, or Rejected" });
         }
 
+        const updateFields = { status };
+        if (role !== undefined) updateFields.role = String(role).trim();
+        if (assignedArea !== undefined) updateFields.assignedArea = String(assignedArea).trim();
+
         const volunteer = await Volunteer.findByIdAndUpdate(
             id,
-            { $set: { status } },
+            { $set: updateFields },
             { new: true }
         );
 

@@ -1504,3 +1504,375 @@ h2 {
   border: 1px solid #ffeeba;
   border-radius: 8px;
 }
+/* ─── Volunteer badge in sidebar ─────────────────────────────────────────── */
+.volunteer-badge-sidebar {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: #e8f5e9;
+  color: #2E7D32;
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 3px 10px;
+  border-radius: 20px;
+  margin-top: 6px;
+  border: 1px solid #a5d6a7;
+}
+
+/* ─── Volunteer tag in overview ──────────────────────────────────────────── */
+.volunteer-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: #2E7D32;
+  color: #fff;
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 3px 10px;
+  border-radius: 12px;
+  margin-left: 10px;
+  vertical-align: middle;
+}
+
+/* ─── Kanyadan status section in overview ────────────────────────────────── */
+.kanyadan-status-section {
+  margin-top: 24px;
+}
+
+.section-sub-title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #1f2937;
+  margin-bottom: 14px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.kanyadan-status-card {
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  padding: 14px 18px;
+  margin-bottom: 12px;
+}
+
+.kanyadan-status-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.kanyadan-meta {
+  font-size: 0.82rem;
+  color: #6b7280;
+}
+
+.kanyadan-admin-note {
+  font-size: 0.85rem;
+  color: #374151;
+  margin-top: 8px;
+  padding: 8px 12px;
+  background: #f3f4f6;
+  border-radius: 6px;
+}
+
+.kanyadan-date {
+  font-size: 0.78rem;
+  color: #9ca3af;
+  margin-top: 8px;
+  margin-bottom: 0;
+}
+
+/* ─── Status pill additional states ─────────────────────────────────────── */
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  padding: 4px 12px;
+  border-radius: 20px;
+  white-space: nowrap;
+}
+.status-pill.success { background: #d1fae5; color: #065f46; }
+.status-pill.pending { background: #fef3c7; color: #92400e; }
+.status-pill.review  { background: #dbeafe; color: #1e40af; }
+.status-pill.danger  { background: #fee2e2; color: #991b1b; }
+.status-pill.approved{ background: #d1fae5; color: #065f46; }
+.status-pill.rejected{ background: #fee2e2; color: #991b1b; }
+
+/* ─── Loading inline ─────────────────────────────────────────────────────── */
+.loading-inline {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.9rem;
+  color: #6b7280;
+  padding: 24px 0;
+}
+
+/* ─── Volunteer Dashboard ────────────────────────────────────────────────── */
+.volunteer-hero-card {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  background: linear-gradient(135deg, #2E7D32 0%, #43a047 100%);
+  color: #fff;
+  border-radius: 14px;
+  padding: 24px 28px;
+  margin-bottom: 24px;
+}
+
+.volunteer-hero-avatar {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2rem;
+  font-weight: 700;
+  overflow: hidden;
+  flex-shrink: 0;
+  border: 3px solid rgba(255,255,255,0.4);
+}
+
+.volunteer-hero-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.volunteer-hero-info h3 {
+  font-size: 1.25rem;
+  font-weight: 700;
+  margin: 0 0 8px 0;
+}
+
+.volunteer-hero-tags {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.role-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: rgba(255,255,255,0.25);
+  border: 1px solid rgba(255,255,255,0.4);
+  color: #fff;
+  font-size: 0.78rem;
+  font-weight: 600;
+  padding: 3px 10px;
+  border-radius: 20px;
+}
+
+.volunteer-since {
+  font-size: 0.82rem;
+  opacity: 0.8;
+  margin-top: 8px;
+  margin-bottom: 0;
+}
+
+.volunteer-info-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 16px;
+}
+
+.volunteer-info-section {
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 18px 20px;
+}
+
+.volunteer-info-section.full-width {
+  grid-column: 1 / -1;
+}
+
+.volunteer-info-section h4 {
+  font-size: 0.88rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #6b7280;
+  margin: 0 0 14px 0;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #f3f4f6;
+}
+
+.vinfo-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.vinfo-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 10px;
+  font-size: 0.875rem;
+}
+
+.vinfo-item span {
+  color: #9ca3af;
+  min-width: 120px;
+  flex-shrink: 0;
+}
+
+.vinfo-item strong {
+  color: #111827;
+  text-align: right;
+  word-break: break-word;
+}
+
+.interest-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.interest-tag {
+  background: #e8f5e9;
+  color: #2E7D32;
+  font-size: 0.8rem;
+  font-weight: 500;
+  padding: 4px 12px;
+  border-radius: 20px;
+  border: 1px solid #a5d6a7;
+}
+
+/* ─── Secondary button ───────────────────────────────────────────────────── */
+.btn-secondary {
+  background: #f3f4f6;
+  color: #374151;
+  border: 1px solid #d1d5db;
+  padding: 9px 18px;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.btn-secondary:hover {
+  background: #e5e7eb;
+}
+
+/* ─── Inline notice in forms ─────────────────────────────────────────────── */
+.inline-notice {
+  padding: 10px 14px;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  margin-bottom: 14px;
+}
+.notice-success { background: #d1fae5; color: #065f46; border: 1px solid #6ee7b7; }
+.notice-error   { background: #fee2e2; color: #991b1b; border: 1px solid #fca5a5; }
+
+@media (max-width: 640px) {
+  .volunteer-hero-card { flex-direction: column; text-align: center; }
+  .volunteer-hero-tags { justify-content: center; }
+  .vinfo-item { flex-direction: column; gap: 2px; }
+  .vinfo-item strong { text-align: left; }
+  .kanyadan-status-row { flex-direction: column; }
+}
+
+/* ─── Kanyadan dedicated tab ─────────────────────────────────────────────── */
+.kanyadan-tab-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+
+.kanyadan-tab-header h2 {
+  margin: 0;
+}
+
+.btn-refresh {
+  background: #f3f4f6;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 8px 10px;
+  cursor: pointer;
+  color: #6b7280;
+  display: flex;
+  align-items: center;
+  transition: background 0.15s;
+}
+
+.btn-refresh:hover { background: #e5e7eb; color: #374151; }
+.btn-refresh:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.spin { animation: spinLoader 0.7s linear infinite; }
+
+.kanyadan-apps-list {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.kanyadan-detail-card {
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 14px;
+  overflow: hidden;
+}
+
+.kanyadan-status-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 14px 20px;
+}
+
+.kanyadan-banner-pending       { background: #fffbeb; border-bottom: 1px solid #fde68a; }
+.kanyadan-banner-under-review  { background: #eff6ff; border-bottom: 1px solid #bfdbfe; }
+.kanyadan-banner-approved      { background: #f0fdf4; border-bottom: 1px solid #bbf7d0; }
+.kanyadan-banner-rejected      { background: #fff1f2; border-bottom: 1px solid #fecdd3; }
+
+.kanyadan-applied-date {
+  font-size: 0.8rem;
+  color: #6b7280;
+}
+
+.kanyadan-detail-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 0;
+  padding: 0;
+}
+
+.kd-section {
+  padding: 16px 20px;
+  border-right: 1px solid #f3f4f6;
+}
+
+.kd-section:last-child { border-right: none; }
+
+.kd-section h4 {
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #9ca3af;
+  margin: 0 0 12px 0;
+}
+
+@media (max-width: 640px) {
+  .kanyadan-detail-grid { grid-template-columns: 1fr; }
+  .kd-section { border-right: none; border-bottom: 1px solid #f3f4f6; }
+  .kd-section:last-child { border-bottom: none; }
+  .kanyadan-status-banner { flex-direction: column; align-items: flex-start; }
+}

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { useSearchParams } from "react-router-dom";
-import { Trash2 } from "lucide-react";
+import { Trash2, Eye, X } from "lucide-react";
 import { API_BASE_URL } from "./AdminLayout.jsx";
 
 const STATUS_OPTIONS = ["Pending", "Approved", "Rejected"];
@@ -14,6 +14,13 @@ function AdminVolunteers() {
   const [page, setPage] = useState(Number(searchParams.get("page")) || 1);
   const [pagination, setPagination] = useState({ total: 0, pages: 1 });
   const [actionLoading, setActionLoading] = useState(null);
+
+  // Detail / update modal
+  const [selected, setSelected] = useState(null);
+  const [modalStatus, setModalStatus] = useState("");
+  const [modalRole, setModalRole] = useState("");
+  const [modalArea, setModalArea] = useState("");
+  const [modalSaving, setModalSaving] = useState(false);
 
   const token = localStorage.getItem("token");
 
@@ -50,14 +57,59 @@ function AdminVolunteers() {
     setSearchParams(params, { replace: true });
   }, [search, statusFilter, page, setSearchParams]);
 
-  const updateStatus = async (id, status) => {
+  const openModal = (v) => {
+    setSelected(v);
+    setModalStatus(v.status);
+    setModalRole(v.role || "");
+    setModalArea(v.assignedArea || "");
+  };
+
+  const closeModal = () => {
+    if (modalSaving) return;
+    setSelected(null);
+  };
+
+  const handleModalSave = async () => {
+    if (!selected) return;
+    setModalSaving(true);
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/admin/volunteers/${selected._id}/status`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        credentials: "include",
+        body: JSON.stringify({ status: modalStatus, role: modalRole, assignedArea: modalArea })
+      });
+      const d = await res.json();
+      if (d.success) { closeModal(); fetchVolunteers(); }
+      else alert(d.message || "Failed to update");
+    } catch { alert("Network error"); }
+    finally { setModalSaving(false); }
+  };
+
+  const quickApprove = async (id) => {
     setActionLoading(id);
     try {
       const res = await fetch(`${API_BASE_URL}/api/admin/volunteers/${id}/status`, {
         method: "PUT",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
         credentials: "include",
-        body: JSON.stringify({ status })
+        body: JSON.stringify({ status: "Approved" })
+      });
+      const d = await res.json();
+      if (d.success) fetchVolunteers();
+      else alert(d.message || "Failed to update status");
+    } catch { alert("Network error"); }
+    finally { setActionLoading(null); }
+  };
+
+  const quickReject = async (id) => {
+    setActionLoading(id);
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/admin/volunteers/${id}/status`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        credentials: "include",
+        body: JSON.stringify({ status: "Rejected" })
       });
       const d = await res.json();
       if (d.success) fetchVolunteers();
@@ -114,9 +166,8 @@ function AdminVolunteers() {
                 <tr>
                   <th>Name</th>
                   <th>Email / Phone</th>
-                  <th>City</th>
-                  <th>ID Type</th>
-                  <th>ID Verified</th>
+                  <th>City / State</th>
+                  <th>Role</th>
                   <th>Status</th>
                   <th>Applied</th>
                   <th>Actions</th>
@@ -130,13 +181,8 @@ function AdminVolunteers() {
                       {v.email}
                       <br /><small style={{ color: "#6b7280" }}>{v.phone}</small>
                     </td>
-                    <td>{v.city}</td>
-                    <td>{v.idType || "—"}</td>
-                    <td>
-                      <span className={`admin-badge ${v.idVerified ? "green" : "gray"}`}>
-                        {v.idVerified ? "Yes" : "No"}
-                      </span>
-                    </td>
+                    <td>{v.city}<br /><small style={{ color: "#6b7280" }}>{v.state}</small></td>
+                    <td>{v.role || <span style={{ color: "#9ca3af" }}>—</span>}</td>
                     <td>
                       <span className={`admin-badge ${v.status === "Approved" ? "green" : v.status === "Rejected" ? "red" : "yellow"}`}>
                         {v.status}
@@ -145,11 +191,19 @@ function AdminVolunteers() {
                     <td>{formatDate(v.createdAt)}</td>
                     <td>
                       <div className="admin-action-group">
+                        <button
+                          className="admin-action-btn"
+                          style={{ background: "#e0f2fe", color: "#0369a1" }}
+                          title="View & Edit"
+                          onClick={() => openModal(v)}
+                        >
+                          <Eye size={15} />
+                        </button>
                         {v.status !== "Approved" && (
                           <button
                             className="admin-action-btn approve"
                             disabled={actionLoading === v._id}
-                            onClick={() => updateStatus(v._id, "Approved")}
+                            onClick={() => quickApprove(v._id)}
                           >
                             ✓ Approve
                           </button>
@@ -158,7 +212,7 @@ function AdminVolunteers() {
                           <button
                             className="admin-action-btn reject"
                             disabled={actionLoading === v._id}
-                            onClick={() => updateStatus(v._id, "Rejected")}
+                            onClick={() => quickReject(v._id)}
                           >
                             ✗ Reject
                           </button>
@@ -187,6 +241,62 @@ function AdminVolunteers() {
           </>
         )}
       </div>
+
+      {/* Detail / Update Modal */}
+      {selected && (
+        <div className="admin-modal-overlay" onClick={closeModal}>
+          <div className="admin-modal-card" style={{ maxWidth: 540 }} onClick={e => e.stopPropagation()}>
+            <div className="admin-modal-header">
+              <h3>Volunteer Details — {selected.fullName}</h3>
+              <button className="admin-modal-close" onClick={closeModal} disabled={modalSaving}><X size={18} /></button>
+            </div>
+            <div className="admin-modal-body" style={{ display: "grid", gap: "8px" }}>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px", fontSize: "0.875rem" }}>
+                <div><span style={{ color: "#6b7280" }}>Email:</span><br /><strong>{selected.email}</strong></div>
+                <div><span style={{ color: "#6b7280" }}>Phone:</span><br /><strong>{selected.phone}</strong></div>
+                <div><span style={{ color: "#6b7280" }}>City:</span><br /><strong>{selected.city}</strong></div>
+                <div><span style={{ color: "#6b7280" }}>State:</span><br /><strong>{selected.state}</strong></div>
+                <div><span style={{ color: "#6b7280" }}>Mode:</span><br /><strong>{selected.mode || "—"}</strong></div>
+                <div><span style={{ color: "#6b7280" }}>Availability:</span><br /><strong>{selected.availability || "—"}</strong></div>
+                <div style={{ gridColumn: "1 / -1" }}><span style={{ color: "#6b7280" }}>Interests:</span><br /><strong>{selected.interests?.join(", ") || "—"}</strong></div>
+                {selected.skills && <div style={{ gridColumn: "1 / -1" }}><span style={{ color: "#6b7280" }}>Skills:</span><br /><strong>{selected.skills}</strong></div>}
+                {selected.motivation && <div style={{ gridColumn: "1 / -1" }}><span style={{ color: "#6b7280" }}>Motivation:</span><br /><strong>{selected.motivation}</strong></div>}
+              </div>
+
+              <hr style={{ border: "none", borderTop: "1px solid #e5e7eb", margin: "8px 0" }} />
+
+              <label className="admin-form-label">Status</label>
+              <select className="admin-form-select" value={modalStatus} onChange={e => setModalStatus(e.target.value)}>
+                {STATUS_OPTIONS.map(s => <option key={s} value={s}>{s}</option>)}
+              </select>
+
+              <label className="admin-form-label">Role (assigned by admin)</label>
+              <input
+                className="admin-form-input"
+                type="text"
+                placeholder="e.g. Field Coordinator, Camp Leader"
+                value={modalRole}
+                onChange={e => setModalRole(e.target.value)}
+              />
+
+              <label className="admin-form-label">Assigned Area</label>
+              <input
+                className="admin-form-input"
+                type="text"
+                placeholder="e.g. North Delhi, Rajasthan Zone"
+                value={modalArea}
+                onChange={e => setModalArea(e.target.value)}
+              />
+            </div>
+            <div className="admin-modal-footer">
+              <button className="admin-btn-secondary" onClick={closeModal} disabled={modalSaving}>Cancel</button>
+              <button className="admin-btn-primary" onClick={handleModalSave} disabled={modalSaving}>
+                {modalSaving ? "Saving..." : "Save Changes"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

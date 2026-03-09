@@ -13,7 +13,10 @@ import {
   changePassword,
   logoutUser,
   forgotPassword,
-  resetPassword
+  resetPassword,
+  getUserDonations,
+  getUserVolunteer,
+  getUserKanyadan
 } from "../controllers/auth.controller.js";
 import { verifyToken } from "../middlewares/auth.middleware.js";
 import profileUpload from "../middlewares/profileUpload.middleware.js";
@@ -69,5 +72,11 @@ router.post("/email-verification/verify-otp", verifyToken, verifyEmailOtp);
 router.post("/change-password", verifyToken, changePassword);
 // Logout user (protected route)
 router.post("/logout", verifyToken, logoutUser);
+// User donation history
+router.get("/profile/donations", verifyToken, getUserDonations);
+// User volunteer application
+router.get("/profile/volunteer", verifyToken, getUserVolunteer);
+// User kanyadan applications (matched by phone)
+router.get("/profile/kanyadan", verifyToken, getUserKanyadan);
 
 export default router;

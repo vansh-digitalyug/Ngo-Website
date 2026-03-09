@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Link, useLocation, useNavigate, Outlet } from "react-router-dom";
-import { LayoutDashboard, Building2, Users, Mail, Image, UserCircle } from "lucide-react";
+import { LayoutDashboard, Building2, Users, Mail, Image, UserCircle, Heart } from "lucide-react";
 import "./admin.css";
 // Removed remove-admin-padding.css import
 
@@ -13,12 +13,13 @@ const NAV_ITEMS = [
   { path: "/admin/contacts", label: "Contacts", icon: Mail },
   { path: "/admin/gallery", label: "Gallery", icon: Image },
   { path: "/admin/users", label: "Users", icon: UserCircle },
+  { path: "/admin/kanyadan", label: "Kanyadan", icon: Heart },
 ];
 
 function AdminLayout() {
   const location = useLocation();
   const navigate = useNavigate();
-  const [pendingCounts, setPendingCounts] = useState({ ngos: 0, volunteers: 0, contacts: 0 });
+  const [pendingCounts, setPendingCounts] = useState({ ngos: 0, volunteers: 0, contacts: 0, kanyadan: 0 });
 
   // Removed body class toggling for admin dashboard to restore default spacing
 
@@ -46,8 +47,20 @@ function AdminLayout() {
           setPendingCounts({
             ngos: d.data.stats.pendingNgos || 0,
             volunteers: d.data.stats.pendingVolunteers || 0,
-            contacts: d.data.stats.newContacts || 0
+            contacts: d.data.stats.newContacts || 0,
+            kanyadan: 0
           });
+        }
+        // Fetch kanyadan pending count separately
+        return fetch(`${API_BASE_URL}/api/admin/kanyadan/stats`, {
+          headers: { Authorization: `Bearer ${token}` },
+          credentials: "include"
+        });
+      })
+      .then(r => r?.json?.())
+      .then(d => {
+        if (d?.success) {
+          setPendingCounts(prev => ({ ...prev, kanyadan: d.data?.pending || 0 }));
         }
       })
       .catch(() => {});
@@ -62,6 +75,7 @@ function AdminLayout() {
     if (label === "NGOs" && pendingCounts.ngos > 0) return pendingCounts.ngos;
     if (label === "Volunteers" && pendingCounts.volunteers > 0) return pendingCounts.volunteers;
     if (label === "Contacts" && pendingCounts.contacts > 0) return pendingCounts.contacts;
+    if (label === "Kanyadan" && pendingCounts.kanyadan > 0) return pendingCounts.kanyadan;
     return null;
   };
 

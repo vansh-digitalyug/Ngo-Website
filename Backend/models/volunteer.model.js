@@ -125,6 +125,16 @@ const volunteerSchema = new mongoose.Schema({
     enum: ['Pending', 'Approved', 'Rejected'],
     default: 'Pending'
   },
+  role: {
+    type: String,
+    trim: true,
+    default: ''
+  },
+  assignedArea: {
+    type: String,
+    trim: true,
+    default: ''
+  },
   createdAt: {
     type: Date,
     default: Date.now
