@@ -16,7 +16,6 @@ const Donate = () => {
   
   const [selectedAmount, setSelectedAmount] = useState(3000);
   const [customAmount, setCustomAmount] = useState("");
-  const [tipPercentage, setTipPercentage] = useState(8);
   const [donorName, setDonorName] = useState("");
   const [isAnonymous, setIsAnonymous] = useState(false);
   const [mobile, setMobile] = useState("");
@@ -30,8 +29,7 @@ const Donate = () => {
 
   // Calculate amounts
   const donationAmount = customAmount ? parseInt(customAmount) : (selectedAmount || 3000);
-  const tipAmount = Math.floor((donationAmount * tipPercentage) / 100);
-  const totalAmount = donationAmount + tipAmount;
+  const totalAmount = donationAmount;
 
   const handleAmountClick = (amount) => {
     setSelectedAmount(amount);
@@ -61,8 +59,8 @@ const handleProceedPayment = async (e) => {
   e.preventDefault();
 
   // validation
-  if (customAmount && parseInt(customAmount) < 300) {
-    alert("Minimum donation amount is ₹300");
+  if (customAmount && parseInt(customAmount) < 1000) {
+    alert("Minimum donation amount is ₹1,000");
     return;
   }
 
@@ -268,44 +266,6 @@ const handleProceedPayment = async (e) => {
           font-size: 13px;
           color: #888;
           margin-top: 6px;
-        }
-
-        .tip-section {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          padding: 12px 0;
-          border-bottom: 1px solid #f0f0f0;
-          margin-bottom: 16px;
-        }
-
-        .tip-row-label {
-          font-size: 15px;
-          color: #666;
-        }
-
-        .tip-dropdown {
-          display: flex;
-          align-items: center;
-          gap: 8px;
-        }
-
-        .tip-select {
-          padding: 6px 10px;
-          border: 1px solid #e0e0e0;
-          border-radius: 4px;
-          font-size: 14px;
-          cursor: pointer;
-          outline: none;
-          background: white;
-        }
-
-        .tip-amount {
-          font-size: 15px;
-          font-weight: 600;
-          color: #333;
-          min-width: 40px;
-          text-align: right;
         }
 
         .gift-card-link {
@@ -570,33 +530,12 @@ const handleProceedPayment = async (e) => {
             <input
               type="number"
               className="custom-amount-input"
-              placeholder="Other amount - ₹300 or more"
+              placeholder="Other amount - ₹1,000 or more"
               value={customAmount}
               onChange={handleCustomAmountChange}
             />
           </div>
 
-          {/* Tip Section */}
-          <div className="tip-section">
-            <label className="tip-row-label">Give Tip:</label>
-            <div className="tip-dropdown">
-              <select
-                className="tip-select"
-                value={tipPercentage}
-                onChange={(e) => setTipPercentage(parseInt(e.target.value))}
-              >
-                <option value={0}>0%</option>
-                <option value={5}>5%</option>
-                <option value={8}>8%</option>
-                <option value={10}>10%</option>
-                <option value={15}>15%</option>
-              </select>
-              <div className="tip-amount">₹{tipAmount}</div>
-            </div>
-          </div>
-
-          {/* Gift Card Link */}
-          <div className="gift-card-link">Have a gift card?</div>
 
           {/* Indian Citizen Checkbox */}
           <div className="checkbox-group">
@@ -732,10 +671,6 @@ const handleProceedPayment = async (e) => {
               <div className="summary-row">
                 <span className="summary-label">Donation Amount</span>
                 <span className="summary-value">₹{donationAmount.toLocaleString('en-IN')}</span>
-              </div>
-              <div className="summary-row">
-                <span className="summary-label">Give Tip: {tipPercentage} %</span>
-                <span className="summary-value">₹{tipAmount.toLocaleString('en-IN')}</span>
               </div>
               <div className="summary-row total">
                 <span>Total Donation</span>
