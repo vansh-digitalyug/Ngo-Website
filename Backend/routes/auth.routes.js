@@ -2,6 +2,7 @@ import express from "express";
 import multer from "multer";
 let router=express.Router();
 import {
+  sendRegisterOtp,
   registerUser,
   loginUser,
   googleLogin,
@@ -44,7 +45,9 @@ const handleProfileUpload = (req, res, next) => {
   });
 };
 
-// Register a new user
+// Send OTP to email before registration (no auth required)
+router.post("/send-register-otp", sendRegisterOtp);
+// Register a new user (requires OTP verified via /send-register-otp)
 router.post("/register", registerUser);
 // Login user
 router.post("/login", loginUser);

@@ -1,6 +1,9 @@
 import Volunteer from "../models/volunteer.model.js";
 import User from "../models/user.model.js";
 import asyncHandler from "../utils/asyncHandler.js";
+import ApiError from "../utils/ApiError.js";
+import ApiResponse from "../utils/ApiResponse.js";
+import { sendVolunteerApplicationEmail } from "../services/mail.service.js";
 
 // Create a new volunteer application
 
@@ -125,10 +128,16 @@ export const applyVolunteer = asyncHandler(async (req, res) => {
       declaration: toBool(declaration)
     });
 
-    res.status(201).json({
-      success: true,
-      message: "Volunteer application submitted successfully",
-      volunteer
+    // Send application confirmation email (non-blocking)
+    setImmediate(() => {
+      sendVolunteerApplicationEmail({
+        fullName: volunteer.fullName,
+        email: volunteer.email
+      }).catch(err => console.error("[mail] Volunteer application email failed:", err.message));
     });
+
+    return res.status(201).json(
+      new ApiResponse(201, "Volunteer application submitted successfully", volunteer)
+    );
 
 });

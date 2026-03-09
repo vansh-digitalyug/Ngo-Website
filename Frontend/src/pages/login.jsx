@@ -37,6 +37,12 @@ function Login() {
     confirmPassword: ""
   });
 
+  // OTP step for registration
+  const [otpSent, setOtpSent] = useState(false);
+  const [otpSending, setOtpSending] = useState(false);
+  const [registerOtp, setRegisterOtp] = useState("");
+  const [otpCountdown, setOtpCountdown] = useState(0);
+
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [showForgotModal, setShowForgotModal] = useState(false);
@@ -74,6 +80,46 @@ function Login() {
     setIsLogin(!isLogin);
     setLoginData({ email: "", password: "" });
     setRegisterData({ name: "", email: "", password: "", confirmPassword: "" });
+    setOtpSent(false);
+    setRegisterOtp("");
+    setOtpCountdown(0);
+  };
+
+  // Start OTP countdown timer
+  const startOtpCountdown = (seconds) => {
+    setOtpCountdown(seconds);
+    const interval = setInterval(() => {
+      setOtpCountdown(prev => {
+        if (prev <= 1) { clearInterval(interval); return 0; }
+        return prev - 1;
+      });
+    }, 1000);
+  };
+
+  const handleSendRegisterOtp = async () => {
+    setError("");
+    const { name, email } = registerData;
+    if (!name.trim()) { setError("Please enter your full name first."); return; }
+    if (!email.trim()) { setError("Please enter your email address first."); return; }
+
+    setOtpSending(true);
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/send-register-otp`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: name.trim(), email: email.trim() }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || !data.success) throw new Error(data.message || "Failed to send OTP");
+
+      setOtpSent(true);
+      setRegisterOtp("");
+      startOtpCountdown(data.data?.resendCooldownSeconds || 60);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setOtpSending(false);
+    }
   };
 
   const openForgotPassword = () => {
@@ -355,6 +401,16 @@ function Login() {
     setError("");
     setGoogleError("");
 
+    if (!otpSent) {
+      setError("Please verify your email with an OTP first.");
+      return;
+    }
+
+    if (!registerOtp.trim()) {
+      setError("Please enter the OTP sent to your email.");
+      return;
+    }
+
     if (registerData.password !== registerData.confirmPassword) {
       setError("Passwords do not match");
       return;
@@ -371,23 +427,27 @@ function Login() {
           name: registerData.name,
           email: registerData.email,
           password: registerData.password,
+          otp: registerOtp.trim(),
         }),
       });
 
       const data = await res.json();
 
-      if (!res.ok) {
+      if (!res.ok || !data.success) {
         throw new Error(data.message || "Registration failed");
       }
 
       sessionStorage.setItem(
         "flash_message",
-        JSON.stringify({ type: "success", message: "Account created successfully." })
+        JSON.stringify({ type: "success", message: "Account created successfully. Welcome to SevaIndia!" })
       );
-      if (data?.token) {
-        localStorage.setItem("token", data.token);
-      }
-      localStorage.setItem("user", JSON.stringify(data.data));
+
+      const payload = data.data || {};
+      const token = payload.token || data.token;
+      if (token) localStorage.setItem("token", token);
+      const userData = { ...payload };
+      delete userData.token;
+      localStorage.setItem("user", JSON.stringify(userData));
       window.dispatchEvent(new Event("authChanged"));
       navigate(getRedirectPath(), { replace: true });
     } catch (err) {
@@ -553,6 +613,64 @@ function Login() {
                 </div>
               )}
 
+              {/* Email OTP Verification (Register Only) */}
+              {!isLogin && (
+                <div style={styles.inputGroup}>
+                  <label style={styles.label}>Email Verification</label>
+                  <div style={{ display: "flex", gap: "8px" }}>
+                    <input
+                      type="text"
+                      inputMode="numeric"
+                      maxLength={6}
+                      style={{
+                        ...styles.input,
+                        letterSpacing: "6px",
+                        fontWeight: "700",
+                        fontSize: "1.1rem",
+                        flex: 1,
+                        backgroundColor: otpSent ? "#fcfcfc" : "#f5f5f5",
+                        color: otpSent ? "#1a1a1a" : "#aaa",
+                      }}
+                      placeholder="— — — — — —"
+                      value={registerOtp}
+                      onChange={e => setRegisterOtp(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                      disabled={!otpSent}
+                    />
+                    <button
+                      type="button"
+                      onClick={handleSendRegisterOtp}
+                      disabled={otpSending || otpCountdown > 0}
+                      style={{
+                        padding: "0 14px",
+                        borderRadius: "10px",
+                        border: "none",
+                        background: (otpSending || otpCountdown > 0) ? "#9e9e9e" : "#1565c0",
+                        color: "#fff",
+                        fontWeight: "600",
+                        fontSize: "0.82rem",
+                        cursor: (otpSending || otpCountdown > 0) ? "not-allowed" : "pointer",
+                        whiteSpace: "nowrap",
+                        minWidth: "90px",
+                        fontFamily: "inherit",
+                      }}
+                    >
+                      {otpSending
+                        ? "Sending..."
+                        : otpCountdown > 0
+                          ? `Resend (${otpCountdown}s)`
+                          : otpSent
+                            ? "Resend OTP"
+                            : "Send OTP"}
+                    </button>
+                  </div>
+                  {otpSent && (
+                    <p style={{ margin: "4px 0 0", fontSize: "0.8rem", color: "#2e7d32" }}>
+                      ✓ OTP sent to {registerData.email}. Check your inbox.
+                    </p>
+                  )}
+                </div>
+              )}
+
               {/* Forgot Password Link (Login Only) */}
               {isLogin && (
                 <div style={styles.forgotPass}>
@@ -563,7 +681,13 @@ function Login() {
               )}
 
               <button type="submit" style={loading ? styles.disabledBtn : styles.submitBtn} disabled={loading}>
-                {loading ? "Processing..." : isLogin ? (loginType === "ngo" ? "Login as NGO" : "Sign In") : "Create Account"}
+                {loading
+                  ? "Processing..."
+                  : isLogin
+                    ? (loginType === "ngo" ? "Login as NGO" : "Sign In")
+                    : otpSent
+                      ? "Create Account"
+                      : "Create Account"}
               </button>
             </form>
 

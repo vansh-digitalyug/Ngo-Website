@@ -7,6 +7,7 @@ import Payment from "../models/payment.model.js";
 import asyncHandler from "../utils/asyncHandler.js";
 import ApiError from "../utils/ApiError.js";
 import ApiResponse from "../utils/ApiResponse.js";
+import { sendNgoStatusEmail, sendVolunteerStatusEmail } from "../services/mail.service.js";
 
 // ─── Dashboard Stats ───
 export const getDashboardStats = asyncHandler(async (req, res) => {
@@ -148,11 +149,19 @@ export const updateNgoStatus = asyncHandler(async (req, res) => {
 
         await ngo.save();
 
-        return res.status(200).json({
-            success: true,
-            message: `NGO ${isVerified ? "approved" : "rejected"} successfully`,
-            data: ngo
+        // Send approval/rejection email to NGO contact (non-blocking)
+        setImmediate(() => {
+            sendNgoStatusEmail({
+                ngoName: ngo.ngoName,
+                contactName: ngo.contactName,
+                email: ngo.email,
+                isApproved: isVerified
+            }).catch(err => console.error("[mail] NGO status email failed:", err.message));
         });
+
+        return res.status(200).json(
+            new ApiResponse(200, `NGO ${isVerified ? "approved" : "rejected"} successfully`, ngo)
+        );
 });
 
 export const deleteNgo = asyncHandler(async (req, res) => {
@@ -212,14 +221,23 @@ export const updateVolunteerStatus = asyncHandler(async (req, res) => {
         );
 
         if (!volunteer) {
-            return res.status(404).json({ success: false, message: "Volunteer not found" });
+            throw new ApiError(404, "Volunteer not found");
         }
 
-        return res.status(200).json({
-            success: true,
-            message: `Volunteer ${status.toLowerCase()} successfully`,
-            data: volunteer
-        });
+        // Send approval/rejection email to volunteer (non-blocking)
+        if (status === "Approved" || status === "Rejected") {
+            setImmediate(() => {
+                sendVolunteerStatusEmail({
+                    fullName: volunteer.fullName,
+                    email: volunteer.email,
+                    status
+                }).catch(err => console.error("[mail] Volunteer status email failed:", err.message));
+            });
+        }
+
+        return res.status(200).json(
+            new ApiResponse(200, `Volunteer ${status.toLowerCase()} successfully`, volunteer)
+        );
 });
 
 export const deleteVolunteer = asyncHandler(async (req, res) => {
