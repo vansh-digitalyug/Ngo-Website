@@ -1,0 +1,190 @@
+/* ── Force html & body to ignore Google Translate's top offset ── */
+html,
+body {
+  top: 0px !important;
+  margin-top: 0px !important;
+  position: static !important;
+}
+
+/* ══════════════════════════════════════════════════════
+   Attractive Pill Button for Google Translate
+   ══════════════════════════════════════════════════════ */
+
+.gt-wrapper {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: linear-gradient(135deg, #e8f5e9 0%, #ffffff 100%);
+  border: 1.5px solid #a5d6a7;
+  border-radius: 28px;
+  padding: 8px 16px 8px 12px;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  white-space: nowrap;
+  margin-right: 10px;
+  box-shadow: 0 2px 6px rgba(46, 125, 50, 0.1);
+  position: relative;
+  z-index: 1001;
+  user-select: none;
+}
+
+.gt-wrapper:hover,
+.gt-wrapper:focus-within {
+  background: linear-gradient(135deg, #c8e6c9 0%, #e8f5e9 100%);
+  border-color: #2e7d32;
+  box-shadow: 0 4px 14px rgba(46, 125, 50, 0.25);
+  transform: translateY(-1px);
+}
+
+.gt-wrapper:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 6px rgba(46, 125, 50, 0.15);
+}
+
+/* Globe SVG icon — clicks pass through */
+.gt-icon {
+  width: 18px;
+  height: 18px;
+  color: #2e7d32;
+  flex-shrink: 0;
+  transition: transform 0.3s ease;
+  pointer-events: none;
+}
+
+.gt-wrapper:hover .gt-icon {
+  transform: rotate(20deg);
+}
+
+/* Chevron down SVG — clicks pass through */
+.gt-chevron {
+  width: 14px;
+  height: 14px;
+  color: #4caf50;
+  flex-shrink: 0;
+  transition: transform 0.3s ease, color 0.3s ease;
+  pointer-events: none;
+}
+
+.gt-wrapper:hover .gt-chevron,
+.gt-wrapper:focus-within .gt-chevron {
+  color: #1b5e20;
+  transform: rotate(180deg);
+}
+
+/* Visible label — clicks pass through */
+.gt-label {
+  font-size: 14px;
+  font-weight: 600;
+  color: #1b5e20;
+  pointer-events: none;
+  white-space: nowrap;
+  transition: color 0.2s;
+}
+
+.gt-wrapper:hover .gt-label {
+  color: #2e7d32;
+}
+
+/* ── Hide Google's gadget branding & original select text ── */
+#google_translate_element .goog-te-gadget {
+  font-size: 0 !important;
+  color: transparent !important;
+}
+
+/*
+   KEY TRICK: keep #google_translate_element in normal flow
+   so Google can render the widget, but make the <select>
+   stretch over the entire .gt-wrapper pill using absolute positioning.
+   The visible icons/label all have pointer-events:none, so
+   every click anywhere on the pill lands on the <select>.
+*/
+#google_translate_element {
+  position: static;
+  display: inline;
+  margin: 0;
+  padding: 0;
+}
+
+#google_translate_element .goog-te-combo {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  cursor: pointer;
+  border: none;
+  background: transparent;
+  font-size: 16px;
+  z-index: 1003;
+  margin: 0;
+  padding: 0;
+}
+
+#google_translate_element .goog-te-combo option {
+  font-size: 14px;
+  font-weight: 500;
+  padding: 8px 12px;
+  background: #fff;
+  color: #333;
+  opacity: 1;
+}
+
+/* ══════════════════════════════════════════════════════
+   HARD-KILL the Google Translate TOP BANNER iframe
+   ══════════════════════════════════════════════════════ */
+.goog-te-banner-frame,
+iframe.goog-te-banner-frame,
+.goog-te-balloon-frame,
+#goog-gt-tt,
+#goog-gt-vt,
+iframe[src*="translate.google"],
+iframe[src*="translate_a/element"] {
+  display: none !important;
+  visibility: hidden !important;
+  height: 0 !important;
+  width: 0 !important;
+  max-height: 0 !important;
+  max-width: 0 !important;
+  pointer-events: none !important;
+  position: absolute !important;
+  top: -9999px !important;
+  left: -9999px !important;
+  opacity: 0 !important;
+  z-index: -1 !important;
+  overflow: hidden !important;
+  border: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+/* Hide the .skiptranslate banner wrapper Google injects in body */
+body>iframe[style*="position: fixed"],
+body>.skiptranslate {
+  display: none !important;
+  visibility: hidden !important;
+  height: 0 !important;
+  max-height: 0 !important;
+  width: 0 !important;
+  max-width: 0 !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+  position: fixed !important;
+  top: -9999px !important;
+  left: -9999px !important;
+  overflow: hidden !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  line-height: 0 !important;
+  font-size: 0 !important;
+}
+
+/* Keep the widget select inside #google_translate_element visible */
+#google_translate_element .skiptranslate {
+  display: inline !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  height: auto !important;
+  overflow: visible !important;
+}

@@ -1,6 +1,6 @@
 .navbar {
   position: fixed;
-  top: 0;
+  top: 0px;
   left: 0;
   width: 100%;
 
@@ -8,11 +8,11 @@
   align-items: center;
   justify-content: space-between;
 
-  padding: 14px 40px;
+  padding: 5px 40px;
   background-color: #ffffff;
   border-bottom: 1px solid #e5e5e5;
 
-  z-index: 1000;
+  z-index: 10000;
 }
 
 
@@ -364,10 +364,10 @@
 /* Mobile Menu */
 .mobile-menu {
   position: fixed;
-  top: 70px;
+  top: 82px;
   right: -100%;
   width: 280px;
-  height: calc(100vh - 70px);
+  height: calc(100vh - 82px);
   background-color: #ffffff;
   box-shadow: -4px 0 20px rgba(0, 0, 0, 0.15);
   transition: right 0.35s ease;
@@ -460,15 +460,30 @@
   .hamburger {
     display: block;
   }
+
+  /* Google Translate in mobile menu */
+  .mobile-translate {
+    display: flex;
+    justify-content: center;
+    padding: 10px 20px 15px;
+    border-bottom: 1px solid #f0f0f0;
+  }
+
+  .mobile-translate .gt-wrapper {
+    width: 100%;
+    justify-content: center;
+    margin-right: 0;
+    padding: 10px 16px;
+  }
 }
 
 @media (max-width: 768px) {
   .navbar {
-    padding: 12px 20px;
+    padding: 18px 20px;
   }
 
   body {
-    padding-top: 60px;
+    padding-top: 72px;
   }
 
   .mobile-menu {
@@ -479,7 +494,7 @@
 
 @media (max-width: 480px) {
   .navbar {
-    padding: 10px 15px;
+    padding: 16px 15px;
   }
 
   .navbar-logo {
