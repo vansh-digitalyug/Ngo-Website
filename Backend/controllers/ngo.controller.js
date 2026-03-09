@@ -3,6 +3,7 @@ import FundRequest from "../models/fundRequest.model.js";
 import ApiResponse from "../utils/ApiResponse.js";
 import ApiError from "../utils/ApiError.js";
 import asyncHandler from "../utils/asyncHandler.js";
+import { sendNgoSubmissionEmail } from "../services/mail.service.js";
 
 const toBool = (value) => value === true || value === "true" || value === "on";
 
@@ -127,63 +128,57 @@ export const getNgoById = async (req, res) => {
   }
 };
 
-export const createNgo = async (req, res) => {
+export const createNgo = asyncHandler(async (req, res) => {
+  const {
+    ngoName,
+    ngoS3Id,
+    regType,
+    regNumber,
+    estYear,
+    darpanId,
+    panNumber,
+    description,
+    state,
+    district,
+    city,
+    pincode,
+    address,
+    contactName,
+    contactRole,
+    phone,
+    whatsapp,
+    email,
+    website,
+    facebook,
+    instagram,
+    socialFacebook,
+    socialInstagram,
+    otherService,
+    agreeToTerms,
+    // S3 keys sent by frontend after direct-to-S3 upload
+    registrationCertificate,
+    certificate12A,
+    certificate80G
+  } = req.body;
+
+  // Documents are S3 keys provided by the frontend after direct-to-S3 upload
+  const documents = {
+    registrationCertificate: registrationCertificate || "not found",
+    certificate12A: certificate12A || "not found",
+    certificate80G: certificate80G || "not found"
+  };
+
+  if (!documents.registrationCertificate) {
+    throw new ApiError(400, "Registration certificate is required");
+  }
+
+  if (!toBool(agreeToTerms)) {
+    throw new ApiError(400, "You must agree to the terms");
+  }
+
+  let ngo;
   try {
-    const {
-      ngoName,
-      ngoS3Id,
-      regType,
-      regNumber,
-      estYear,
-      darpanId,
-      panNumber,
-      description,
-      state,
-      district,
-      city,
-      pincode,
-      address,
-      contactName,
-      contactRole,
-      phone,
-      whatsapp,
-      email,
-      website,
-      facebook,
-      instagram,
-      socialFacebook,
-      socialInstagram,
-      otherService,
-      agreeToTerms,
-      
-      // S3 keys sent by frontend after direct-to-S3 upload
-      registrationCertificate,
-      certificate12A,
-      certificate80G
-    } = req.body;
-
-    // Documents are S3 keys provided by the frontend after direct-to-S3 upload
-    const documents = {
-      registrationCertificate: registrationCertificate || "not found",
-      certificate12A: certificate12A || "not found",
-      certificate80G: certificate80G || "not found"
-    };
-
-    if (!documents.registrationCertificate) {
-      return res.status(400).json({
-        success: false,
-        message: "Registration certificate is required"
-      });
-    }
-
-    if (!toBool(agreeToTerms)) {
-      return res.status(400).json({
-        success: false,
-        message: "You must agree to the terms"
-      });
-    }
-
-    const ngo = await Ngo.create({
+    ngo = await Ngo.create({
       ngoName,
       ngoS3Id,
       regType,
@@ -210,32 +205,30 @@ export const createNgo = async (req, res) => {
       },
       services: toArray(req.body.services),
       otherService,
-      documents,
       agreeToTerms: true,
       // Link to logged-in user if available
       ownerId: req.user?._id || null
     });
-
-    return res.status(201).json({
-      success: true,
-      message: "NGO registered successfully. Your application is under review.",
-      ngo
-    });
   } catch (error) {
     if (error?.code === 11000 && error?.keyPattern?.regNumber) {
-      return res.status(409).json({
-        success: false,
-        message: "An NGO with this registration number already exists"
-      });
+      throw new ApiError(409, "An NGO with this registration number already exists");
     }
-
-    const status = error.name === "ValidationError" ? 400 : 500;
-    return res.status(status).json({
-      success: false,
-      message: error.message
-    });
+    throw error;
   }
-};
+
+  // Send submission confirmation email (non-blocking)
+  setImmediate(() => {
+    sendNgoSubmissionEmail({
+      ngoName: ngo.ngoName,
+      contactName: ngo.contactName,
+      email: ngo.email
+    }).catch(err => console.error("[mail] NGO submission email failed:", err.message));
+  });
+
+  return res.status(201).json(
+    new ApiResponse(201, "NGO registered successfully. Your application is under review.", { ngo })
+  );
+});
 
 export const updateNgo = async (req, res) => {
   try {

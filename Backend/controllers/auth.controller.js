@@ -6,8 +6,16 @@ import crypto from "crypto";
 import { OAuth2Client } from "google-auth-library";
 import {
     sendResetPasswordEmail,
-    sendEmailVerificationOtpEmail
+    sendEmailVerificationOtpEmail,
+    sendWelcomeEmail,
+    sendLoginNotificationEmail
 } from "../services/mail.service.js";
+import ApiError from "../utils/ApiError.js";
+import ApiResponse from "../utils/ApiResponse.js";
+
+// ── In-memory OTP store for pre-registration email verification ───────────────
+// Structure: email -> { otpHash, name, expiresAt, lastSentAt }
+const pendingRegisterOtps = new Map();
 import "../config/loadEnv.js";
 import asyncHandler from "../utils/asyncHandler.js";
 
@@ -113,61 +121,122 @@ const verifyGoogleIdToken = async (idToken) => {
     return payload;
 };
 
-//Register a new user /api/register
+// Send OTP to email before registration /api/send-register-otp
+export const sendRegisterOtp = asyncHandler(async (req, res) => {
+    const cleanName = String(req.body?.name || "").trim();
+    const cleanEmail = normalizeEmail(req.body?.email);
+
+    if (!cleanName || !cleanEmail) {
+        throw new ApiError(400, "Name and email are required");
+    }
+
+    // Block if user already exists
+    const existingUser = await User.findOne({ email: cleanEmail }).select("_id").lean();
+    if (existingUser) {
+        throw new ApiError(400, "An account with this email already exists. Please log in.");
+    }
+
+    // Cooldown: prevent spam
+    const existing = pendingRegisterOtps.get(cleanEmail);
+    const cooldown = getOtpCooldownSeconds();
+    if (existing?.lastSentAt && Date.now() - existing.lastSentAt < cooldown * 1000) {
+        const retryAfter = Math.ceil((cooldown * 1000 - (Date.now() - existing.lastSentAt)) / 1000);
+        throw new ApiError(429, `Please wait ${retryAfter}s before requesting a new OTP`);
+    }
+
+    const otp = generateOtpCode();
+    const otpHash = hashOtp(otp);
+    const expiryMinutes = getOtpExpiryMinutes();
+    const expiresAt = new Date(Date.now() + expiryMinutes * 60 * 1000);
+
+    // Store in memory
+    pendingRegisterOtps.set(cleanEmail, {
+        otpHash,
+        name: cleanName,
+        expiresAt,
+        lastSentAt: Date.now()
+    });
+
+    await sendEmailVerificationOtpEmail({ name: cleanName, email: cleanEmail, otp, expiryMinutes });
+
+    return res.status(200).json(
+        new ApiResponse(200, `OTP sent to ${cleanEmail}. It expires in ${expiryMinutes} minutes.`, {
+            expiryMinutes,
+            resendCooldownSeconds: cooldown
+        })
+    );
+});
+
+// Register a new user /api/register
 export const registerUser = asyncHandler(async (req, res) => {
-        const { name, email, password } = req.body;
+        const { name, email, password, otp } = req.body;
         const cleanName = String(name || "").trim();
         const cleanEmail = normalizeEmail(email);
-        console.log(req.body);
-        
-        // Validation checks
+
+        // Validation
         if (!cleanName || !cleanEmail || !password) {
-            return res.status(400).json({ success: false, message: "All fields required" });
+            throw new ApiError(400, "All fields are required");
         }
 
         if (password.length < 6) {
-            return res.status(400).json({
-                success: false,
-                message: "Password must be at least 6 characters long"
-            });
+            throw new ApiError(400, "Password must be at least 6 characters long");
         }
 
-        // finding the existing user
-        const existingUser = await User.findOne({ email: cleanEmail })
-            .select("_id")
-            .lean();
+        // Verify registration OTP
+        if (!otp) {
+            throw new ApiError(400, "Email OTP is required. Please verify your email first.");
+        }
 
-        // if user already exists
+        const pending = pendingRegisterOtps.get(cleanEmail);
+        if (!pending) {
+            throw new ApiError(400, "No OTP found for this email. Please click 'Send OTP' first.");
+        }
+
+        if (new Date(pending.expiresAt).getTime() <= Date.now()) {
+            pendingRegisterOtps.delete(cleanEmail);
+            throw new ApiError(400, "OTP has expired. Please request a new one.");
+        }
+
+        if (hashOtp(String(otp).trim()) !== pending.otpHash) {
+            throw new ApiError(400, "Invalid OTP. Please check and try again.");
+        }
+
+        // OTP is valid — remove from store
+        pendingRegisterOtps.delete(cleanEmail);
+
+        // Check user doesn't already exist
+        const existingUser = await User.findOne({ email: cleanEmail }).select("_id").lean();
         if (existingUser) {
-            return res.status(400).json({
-                success: false,
-                message: "User already exists. Please log in instead."
-            });
+            throw new ApiError(400, "User already exists. Please log in instead.");
         }
 
-        // hashing the password before saving to database
         const hashedPassword = await bcrypt.hash(password, BCRYPT_SALT_ROUNDS);
-        console.log(hashedPassword);
-        
 
         const newUser = new User({
             name: cleanName,
             email: cleanEmail,
-            password: hashedPassword
+            password: hashedPassword,
+            emailVerified: true  // verified via OTP before registration
         });
         await newUser.save();
 
-        console.log(newUser ? `New user registered: ${newUser._id}` : "Failed to create new user");
-        
+        console.log(`New user registered: ${newUser._id}`);
+
+        // Send welcome email (non-blocking)
+        setImmediate(() => {
+            sendWelcomeEmail({ name: newUser.name, email: newUser.email })
+                .catch(err => console.error("[mail] Welcome email failed:", err.message));
+        });
+
         // Generate token and set cookie
         const token = generateToken(res, newUser._id);
 
-        res.status(201).json({
-            success: true,
-            message: "User registered successfully",
-            token,
-            data: toUserPayload(newUser)
-        });
+        return res.status(201).json(
+            new ApiResponse(201, "Account created successfully. Welcome to SevaIndia!", {
+                token,
+                ...toUserPayload(newUser)
+            })
+        );
 });
 
 // Login user /api/login
@@ -239,6 +308,13 @@ export const loginUser = asyncHandler(async (req, res) => {
 
         // Generate token and set cookie
         const token = generateToken(res, user._id);
+
+        // Fire login notification email (non-blocking)
+        setImmediate(() => {
+            const loginTime = new Date().toLocaleString("en-IN", { timeZone: "Asia/Kolkata" });
+            sendLoginNotificationEmail({ name: user.name, email: user.email, loginTime })
+                .catch(err => console.error("[mail] Login notification failed:", err.message));
+        });
 
         res.status(200).json({
             success: true,
