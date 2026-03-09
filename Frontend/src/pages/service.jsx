@@ -27,6 +27,11 @@ import medicalKidney from "../assets/images/Medical/kidney.jpg";
 import helmet from "../assets/images/communitySafety/helmet.png";
 import rites from "../assets/images/socialWelfare/rites.png";
 import kandyaDan from "../assets/images/socialWelfare/kanyadan.png";
+import kanyaHero from "../assets/images/socialWelfare/Kanyadan/hero.png";
+import kanyaBeginning from "../assets/images/socialWelfare/Kanyadan/Beggining.png";
+import kanyaHelp from "../assets/images/socialWelfare/Kanyadan/Help.png";
+import kanyaSupport from "../assets/images/socialWelfare/Kanyadan/Support.png";
+import kanyaFuture from "../assets/images/socialWelfare/Kanyadan/Future.png";
 import road from "../assets/images/infrastructure/road.jpg";
 import widow from "../assets/images/women/widow.png";
 import "./service.css";
@@ -305,20 +310,21 @@ const SERVICE_DATA = [
     icon: FaHandHoldingHeart,
     programs: [
       {
-        title: "Kanyadan Yojna",
-        titleHi: "कन्यादान योजना",
-        titleBn: "কন্যাদান যোজনা",
-        titlePa: "ਕੰਨਿਆਦਾਨ ਯੋਜਨਾ",
-        description: "Supporting marriage assistance for daughters from economically vulnerable families.",
-        descriptionHi: "आर्थिक रूप से कमजोर परिवारों की बेटियों के लिए विवाह सहायता।",
-        descriptionBn: "অর্থনৈতিকভাবে দুর্বল পরিবারের মেয়েদের বিবাহ সহায়তা প্রদান।",
-        descriptionPa: "ਆਰਥਿਕ ਤੌਰ 'ਤੇ ਕਮਜ਼ੋਰ ਪਰਿਵਾਰਾਂ ਦੀਆਂ ਧੀਆਂ ਲਈ ਵਿਆਹ ਸਹਾਇਤਾ।",
+        title: "Kanyadan Yojna — LIC Support",
+        titleHi: "कन्यादान योजना — LIC बीमा सहायता",
+        titleBn: "কন্যাদান যোজনা — LIC বীমা সহায়তা",
+        titlePa: "ਕੰਨਿਆਦਾਨ ਯੋਜਨਾ — LIC ਬੀਮਾ ਸਹਾਇਤਾ",
+        description: "We enroll underprivileged girls in LIC life insurance policies and pay the first 3 premiums — giving every daughter a secured financial future.",
+        descriptionHi: "हम वंचित लड़कियों को LIC जीवन बीमा पॉलिसी में नामांकित करते हैं और पहली 3 प्रीमियम भरते हैं — हर बेटी को एक सुरक्षित भविष्य देते हैं।",
+        descriptionBn: "আমরা সুবিধাবঞ্চিত মেয়েদের LIC জীবন বীমা পলিসিতে নথিভুক্ত করি এবং প্রথম ৩টি প্রিমিয়াম পরিশোধ করি।",
+        descriptionPa: "ਅਸੀਂ ਵੰਚਿਤ ਲੜਕੀਆਂ ਨੂੰ LIC ਜੀਵਨ ਬੀਮਾ ਪਾਲਿਸੀ ਵਿੱਚ ਦਾਖਲ ਕਰਦੇ ਹਾਂ ਅਤੇ ਪਹਿਲੇ 3 ਪ੍ਰੀਮੀਅਮ ਭਰਦੇ ਹਾਂ।",
         fullDescription: "Marriage is a significant social milestone in India, but for families living in poverty, arranging a daughter's wedding can mean selling assets, taking high-interest loans, or simply being unable to provide the basic dignified celebration their daughter deserves. Our Kanyadan Yojna provides financial and material support for marriages of girls from below-poverty-line and economically weaker families. Support includes contribution toward wedding ceremony costs, essential household items like utensils, bedding, and basic furniture for the new home, assistance with wedding attire for the bride, and guidance on legal registration of marriage and accessing government marriage assistance schemes. We work with local panchayats, social workers, and community leaders to identify genuine cases and ensure the support reaches families in need, not those misusing welfare programs. We also conduct premarital counseling and awareness sessions on legal rights, domestic violence prevention, and family planning. Group wedding ceremonies organized under this program help families reduce costs while creating a joyful community celebration. Your donation contributes directly to helping daughters begin their new lives with dignity and to reducing the financial burden that pushes many poor families into debt.",
         fullDescriptionHi: "शादी भारत में एक महत्वपूर्ण सामाजिक मील का पत्थर है, लेकिन गरीबी में रहने वाले परिवारों के लिए बेटी की शादी का इंतजाम करना मुश्किल हो सकता है। हमारी कन्यादान योजना गरीबी रेखा से नीचे के परिवारों की शादियों के लिए वित्तीय और भौतिक सहायता प्रदान करती है। समर्थन में विवाह समारोह लागत, आवश्यक घरेलू सामान और विवाह पोशाक शामिल हैं।",
         image: kandyaDan,
+        images: [kanyaHero, kanyaBeginning, kanyaHelp, kanyaSupport, kanyaFuture],
         cta: "Help Now",
         href: "/services/welfare/kanyadan",
-        donationTitle: "Support a daughter's wedding through Kanyadan Yojna",
+        donationTitle: "Support LIC Policy Enrollment for Underprivileged Girls — Kanyadan Yojna",
       },
       {
         title: "Dignified Last Rites",
@@ -466,6 +472,36 @@ const CATEGORY_OPTIONS = [
     icon: service.icon,
   })),
 ];
+
+function CardCarousel({ images, alt }) {
+  const [idx, setIdx] = useState(0);
+  useEffect(() => {
+    const t = setInterval(() => setIdx((i) => (i + 1) % images.length), 2800);
+    return () => clearInterval(t);
+  }, [images.length]);
+  return (
+    <>
+      {images.map((src, i) => (
+        <img
+          key={i}
+          src={src}
+          alt={alt}
+          className={`carousel-slide${i === idx ? " active" : ""}`}
+          loading="lazy"
+        />
+      ))}
+      <div className="carousel-dots">
+        {images.map((_, i) => (
+          <span
+            key={i}
+            className={`carousel-dot${i === idx ? " active" : ""}`}
+            onClick={(e) => { e.stopPropagation(); setIdx(i); }}
+          />
+        ))}
+      </div>
+    </>
+  );
+}
 
 function ServicePage() {
   const navigate = useNavigate();
@@ -649,7 +685,11 @@ function ServicePage() {
               >
                 <div className="program-media-link" aria-label={`Read more about ${program.title}`}>
                   <div className="program-media">
-                    <img src={program.image} alt={program.title} loading="lazy" />
+                    {program.images ? (
+                      <CardCarousel images={program.images} alt={program.title} />
+                    ) : (
+                      <img src={program.image} alt={program.title} loading="lazy" />
+                    )}
                     <div className="program-readmore" aria-hidden="true">
                       <span>Read More</span>
                       <span className="program-readmore-dots">...</span>

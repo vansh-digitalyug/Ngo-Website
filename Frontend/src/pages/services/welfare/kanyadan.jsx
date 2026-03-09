@@ -16,13 +16,18 @@ import {
 } from "react-icons/fa";
 import { useLanguage } from "../../../utils/useLanguage.jsx";
 import kanyadanImage from "../../../assets/images/socialWelfare/kanyadan.png";
+import heroImg from "../../../assets/images/socialWelfare/Kanyadan/hero.png";
+import beginningImg from "../../../assets/images/socialWelfare/Kanyadan/Beggining.png";
+import helpImg from "../../../assets/images/socialWelfare/Kanyadan/Help.png";
+import supportImg from "../../../assets/images/socialWelfare/Kanyadan/Support.png";
+import futureImg from "../../../assets/images/socialWelfare/Kanyadan/Future.png";
 import "./kanyadan.css";
 
 const LIC_BENEFITS = [
     {
         icon: FaGift,
         title: "First 3 Premiums Paid by Our NGO",
-        desc: "Our NGO directly pays the first 3 annual LIC premium installments for every enrolled girl — completely free for the family. This removes the single biggest barrier to policy enrollment for low-income households and ensures the policy is active and growing from day one.",
+        desc: "Our NGO directly pays the first 3 LIC premium installments for every enrolled girl — completely free for the family. This removes the single biggest barrier to policy enrollment for low-income households and ensures the policy is active and growing from day one.",
     },
     {
         icon: FaShieldAlt,
@@ -43,7 +48,7 @@ const LIC_BENEFITS = [
 
 const WHAT_WE_PROVIDE = [
     "Complete LIC policy enrollment — we handle all paperwork, KYC, and form submission on behalf of the family so they face zero administrative burden",
-    "Direct payment of the first 3 annual LIC premium installments from NGO funds — no hidden charges, no partial support",
+    "Direct payment of the first 3 LIC premium installments from NGO funds — no hidden charges, no partial support",
     "Selection of the most suitable LIC policy (Jeevan Tarun / Jeevan Lakshya) based on the girl's age, family profile, and long-term needs",
     "A dedicated relationship manager assigned to each enrolled family for the entire policy term",
     "Financial literacy workshops held at the community level to educate families about insurance, savings, and the long-term value of the policy",
@@ -55,7 +60,7 @@ const WHAT_WE_PROVIDE = [
 
 const GOALS = [
     { number: "500+", label: "Girls to be enrolled in Year 1" },
-    { number: "3 Yrs", label: "Premium support per beneficiary" },
+    { number: "3", label: "LIC Premiums paid per beneficiary" },
     { number: "₹15Cr+", label: "Total future corpus for beneficiaries" },
     { number: "100%", label: "Verified underprivileged families" },
 ];
@@ -71,7 +76,7 @@ const FAQS = [
     },
     {
         question: "What happens after the NGO pays the first 3 premiums?",
-        answer: "After the first 3 premiums, the family takes over the policy. We provide financial counselling and continued support to ensure families are aware of the long-term benefits and continue the policy without lapse.",
+        answer: "After our NGO pays the first 3 premiums, the family takes over the policy. We provide financial counselling and continued support to ensure families are aware of the long-term benefits and continue the policy without lapse.",
     },
     {
         question: "Will the policy lapse if the family cannot continue?",
@@ -97,8 +102,8 @@ const STORY = [
         hi: "LIC भारत की सबसे विश्वसनीय बीमा कंपनी है जो विशेष रूप से लड़कियों के लिए जीवन तरुण और जीवन लक्ष्य जैसी पॉलिसियां प्रदान करती है — जो जीवन बीमा, बचत और परिपक्वता लाभ की गारंटी देती हैं। लेकिन जिन परिवारों को इनकी सबसे अधिक जरूरत है, उनके लिए पहली प्रीमियम भी वहन करना मुश्किल होता है।",
     },
     {
-        en: "This is exactly the gap our Kanyadan Yojna fills. We identify eligible girls from underprivileged families, complete the entire LIC enrollment process on their behalf, and — most crucially — our NGO directly pays the first 3 annual premium installments. This kickstarts the policy and gives the family time to stabilize financially before they take over.",
-        hi: "यही वह अंतर है जिसे हमारी कन्यादान योजना भरती है। हम वंचित परिवारों की पात्र लड़कियों की पहचान करते हैं, उनकी ओर से LIC में नामांकन की पूरी प्रक्रिया पूरी करते हैं और — सबसे महत्वपूर्ण — हमारा NGO पहली 3 वार्षिक प्रीमियम किश्तें सीधे भरता है।",
+        en: "This is exactly the gap our Kanyadan Yojna fills. We identify eligible girls from underprivileged families, complete the entire LIC enrollment process on their behalf, and — most crucially — our NGO directly pays the first 3 LIC premium installments. This kickstarts the policy and gives the family time to stabilize financially before they take over.",
+        hi: "यही वह अंतर है जिसे हमारी कन्यादान योजना भरती है। हम वंचित परिवारों की पात्र लड़कियों की पहचान करते हैं, उनकी ओर से LIC में नामांकन की पूरी प्रक्रिया पूरी करते हैं और — सबसे महत्वपूर्ण — हमारा NGO पहली 3 LIC प्रीमियम किश्तें सीधे भरता है।",
     },
     {
         en: "We do not stop there. Our team conducts financial literacy sessions to help families understand how the policy works, what benefits it unlocks, and why continuing the premium is one of the best investments they will ever make for their daughter. We track every enrolled girl, follow up with the family annually, and connect them to micro-finance support if they struggle to continue.",
@@ -202,11 +207,51 @@ function KanyadanYojnaPage() {
                         {/* Hero Banner */}
                         <section className="kanyadan-hero-card">
                             <div className="kanyadan-hero-img-wrap">
-                                <img src={kanyadanImage} alt="Kanyadan Yojna — LIC for Girls" />
+                                <img src={heroImg} alt="Kanyadan Yojna — LIC for Girls" />
                                 <div className="kanyadan-hero-overlay">
                                     <span className="lic-badge">LIC Policy Support</span>
                                     <h1>Kanyadan Yojna</h1>
                                     <p>We enroll underprivileged girls into LIC life insurance policies and pay the first 3 premiums — so every daughter gets a secured financial future, regardless of her family's income</p>
+                                </div>
+                            </div>
+                        </section>
+
+                        {/* Journey Photo Strip */}
+                        <section className="kanyadan-section-card ky-journey-section">
+                            <h2>A Daughter's Journey</h2>
+                            <p className="ky-section-desc">From a family's worry to a girl's secured future — this is the journey our Kanyadan Yojna makes possible, one premium at a time.</p>
+                            <div className="ky-journey-grid">
+                                <div className="ky-journey-item">
+                                    <img src={beginningImg} alt="The Beginning — underprivileged family" />
+                                    <div className="ky-journey-caption">
+                                        <span className="ky-journey-step">Step 1</span>
+                                        <strong>The Beginning</strong>
+                                        <p>An underprivileged family worries about their daughter's financial future</p>
+                                    </div>
+                                </div>
+                                <div className="ky-journey-item">
+                                    <img src={helpImg} alt="The Help — NGO enrollment" />
+                                    <div className="ky-journey-caption">
+                                        <span className="ky-journey-step">Step 2</span>
+                                        <strong>The Help</strong>
+                                        <p>Our NGO enrolls the girl in a suitable LIC policy and handles all paperwork</p>
+                                    </div>
+                                </div>
+                                <div className="ky-journey-item">
+                                    <img src={supportImg} alt="The Support — NGO pays premiums" />
+                                    <div className="ky-journey-caption">
+                                        <span className="ky-journey-step">Step 3</span>
+                                        <strong>The Support</strong>
+                                        <p>We pay the first 3 LIC premium installments — completely free for the family</p>
+                                    </div>
+                                </div>
+                                <div className="ky-journey-item">
+                                    <img src={futureImg} alt="Her Future — secured and hopeful" />
+                                    <div className="ky-journey-caption">
+                                        <span className="ky-journey-step">Step 4</span>
+                                        <strong>Her Future</strong>
+                                        <p>She grows up with a secured financial future, free to pursue her dreams</p>
+                                    </div>
                                 </div>
                             </div>
                         </section>
@@ -350,8 +395,8 @@ function KanyadanYojnaPage() {
                     <aside className="kanyadan-side-stack">
                         <article className="campaign-card">
                             <div className="campaign-image-wrap">
-                                <img src={kanyadanImage} alt="Kanyadan Yojna" />
-                                <span className="campaign-chip">80G Tax Benefits</span>
+                                <img src={heroImg} alt="Kanyadan Yojna" />
+                                <span className="campaign-chip">LIC Policy Support</span>
                             </div>
 
                             <div className="campaign-body">
@@ -439,7 +484,7 @@ function KanyadanYojnaPage() {
                                     <span className="ky-step-num">3</span>
                                     <div>
                                         <strong>NGO Pays First 3 Premiums</strong>
-                                        <p>Our NGO directly pays the first 3 annual LIC premium installments</p>
+                                        <p>Our NGO directly pays the first 3 LIC premium installments</p>
                                     </div>
                                 </li>
                                 <li>

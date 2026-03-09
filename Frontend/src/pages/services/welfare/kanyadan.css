@@ -38,9 +38,10 @@
 
 .campaign-image-wrap img {
     width: 100%;
-    height: clamp(220px, 45vw, 340px);
+    height: auto;
+    aspect-ratio: 16 / 9;
     object-fit: cover;
-    object-position: center;
+    object-position: center center;
     display: block;
 }
 
@@ -856,6 +857,71 @@
     line-height: 1.4;
 }
 
+/* Journey Photo Strip */
+.ky-journey-section {
+    padding: 16px;
+}
+
+.ky-journey-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+    margin-top: 14px;
+}
+
+.ky-journey-item {
+    border-radius: 10px;
+    overflow: hidden;
+    border: 1px solid #e5e7eb;
+    background: #ffffff;
+    transition: box-shadow 0.2s ease;
+}
+
+.ky-journey-item:hover {
+    box-shadow: 0 4px 16px rgba(22, 163, 74, 0.12);
+    border-color: #86efac;
+}
+
+.ky-journey-item img {
+    width: 100%;
+    height: auto;
+    aspect-ratio: 4 / 3;
+    object-fit: cover;
+    object-position: center top;
+    display: block;
+}
+
+.ky-journey-caption {
+    padding: 10px 12px 12px;
+}
+
+.ky-journey-step {
+    display: inline-block;
+    background: #dcfce7;
+    color: #166534;
+    font-size: 0.68rem;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 999px;
+    margin-bottom: 6px;
+    letter-spacing: 0.04em;
+}
+
+.ky-journey-caption strong {
+    display: block;
+    font-size: 0.9rem;
+    color: #1f2937;
+    margin-bottom: 4px;
+    font-weight: 700;
+}
+
+.ky-journey-caption p {
+    margin: 0;
+    font-size: 0.78rem;
+    color: #6b7280;
+    line-height: 1.45;
+}
+
 /* Apply CTA Section */
 .ky-apply-cta {
     background: linear-gradient(135deg, #f0fdf4, #dcfce7);
@@ -1170,9 +1236,10 @@
         top: 92px;
     }
 
-    .campaign-image-wrap img {
-        height: 250px;
+    .ky-journey-grid {
+        grid-template-columns: repeat(4, 1fr);
     }
+
 }
 
 @media (max-width: 420px) {
