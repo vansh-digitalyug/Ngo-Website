@@ -12,6 +12,7 @@ import Login from "../pages/login.jsx";
 import Contact from "../pages/contact.jsx";
 import ResetPassword from "../pages/resetPassword.jsx";
 import Profile from "../pages/profile.jsx";
+import VolunteerDashboard from "../pages/volunteer/VolunteerDashboard.jsx";
 
 import AdminLayout from "../pages/admin/AdminLayout.jsx";
 import AdminLogin from "../pages/admin/AdminLogin.jsx";
@@ -156,6 +157,14 @@ function AppRoutes() {
           element={
             <RequireVolunteerAuth>
               <ProfileOrAdmin />
+            </RequireVolunteerAuth>
+          }
+        />
+        <Route
+          path="/volunteer-dashboard"
+          element={
+            <RequireVolunteerAuth>
+              <VolunteerDashboard />
             </RequireVolunteerAuth>
           }
         />

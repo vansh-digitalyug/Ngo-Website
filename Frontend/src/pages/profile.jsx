@@ -160,7 +160,6 @@ const Profile = () => {
   const [donations, setDonations] = useState([]);
   const [donationsLoading, setDonationsLoading] = useState(false);
   const [volunteerData, setVolunteerData] = useState(null);
-  const [volunteerLoading, setVolunteerLoading] = useState(false);
   const [kanyadanApps, setKanyadanApps] = useState([]);
   const [kanyadanLoading, setKanyadanLoading] = useState(false);
 
@@ -202,6 +201,15 @@ const Profile = () => {
 
     fetchProfile();
 
+    // Fetch volunteer on mount to decide whether to show the sidebar link
+    fetch(`${API_BASE_URL}/api/profile/volunteer`, {
+      headers: { Authorization: `Bearer ${token}` },
+      credentials: 'include',
+    })
+      .then(r => r.json())
+      .then(d => { if (isMounted && d?.success) setVolunteerData(d.data); })
+      .catch(() => {});
+
     // Fetch kanyadan on mount to decide whether to show the tab
     fetch(`${API_BASE_URL}/api/profile/kanyadan`, {
       headers: { Authorization: `Bearer ${token}` },
@@ -231,22 +239,6 @@ const Profile = () => {
     }
   }, []);
 
-  // Fetch volunteer data when tab is opened
-  const fetchVolunteer = useCallback(async () => {
-    const token = localStorage.getItem('token');
-    if (!token) return;
-    setVolunteerLoading(true);
-    try {
-      const res = await fetch(`${API_BASE_URL}/api/profile/volunteer`, {
-        headers: { Authorization: `Bearer ${token}` },
-        credentials: 'include',
-      });
-      const data = await res.json().catch(() => ({}));
-      if (data?.success) setVolunteerData(data.data);
-    } catch { /* silent */ } finally {
-      setVolunteerLoading(false);
-    }
-  }, []);
 
   // Fetch kanyadan status when overview is shown
   const fetchKanyadan = useCallback(async () => {
@@ -267,9 +259,8 @@ const Profile = () => {
 
   useEffect(() => {
     if (activeTab === 'donations' && donations.length === 0) fetchDonations();
-    if (activeTab === 'volunteer') fetchVolunteer();
     if (activeTab === 'kanyadan') fetchKanyadan();
-  }, [activeTab, donations.length, fetchDonations, fetchKanyadan, fetchVolunteer]);
+  }, [activeTab, donations.length, fetchDonations, fetchKanyadan]);
 
   const handleProfileInputChange = (field, value) => {
     setProfileForm((prev) => ({ ...prev, [field]: value }));
@@ -471,9 +462,9 @@ const Profile = () => {
           </button>
         )}
         {isVolunteer ? (
-          <button className={`nav-item ${activeTab === 'volunteer' ? 'active' : ''}`} onClick={() => setActiveTab('volunteer')}>
+          <Link to="/volunteer-dashboard" className="nav-item">
             <FaHandHoldingHeart className="nav-icon" /> Volunteer Dashboard
-          </button>
+          </Link>
         ) : null}
         <button className="nav-item logout-btn" onClick={handleLogout}>
           <FaSignOutAlt className="nav-icon" /> Logout
@@ -697,108 +688,6 @@ const Profile = () => {
     </div>
   );
 
-  const renderVolunteerDashboard = () => {
-    if (volunteerLoading) {
-      return (
-        <div className="tab-content fade-in">
-          <h2>Volunteer Dashboard</h2>
-          <div className="loading-inline"><FaSpinner className="spinner-icon" /> Loading volunteer data...</div>
-        </div>
-      );
-    }
-
-    if (!volunteerData) {
-      return (
-        <div className="tab-content fade-in">
-          <h2>Volunteer Dashboard</h2>
-          <div className="empty-state-card">
-            <div className="empty-icon"><FaHandHoldingHeart /></div>
-            <h3>Not a volunteer yet</h3>
-            <p>Join our volunteer program and make a difference in communities.</p>
-            <Link to="/services/volunteer" className="btn-donate-now">Apply Now</Link>
-          </div>
-        </div>
-      );
-    }
-
-    const dobFormatted = volunteerData.dob
-      ? new Date(volunteerData.dob).toLocaleDateString('en-IN', { day: '2-digit', month: 'long', year: 'numeric' })
-      : 'Not Provided';
-
-    const joinDate = volunteerData.createdAt
-      ? new Date(volunteerData.createdAt).toLocaleDateString('en-IN', { month: 'long', year: 'numeric' })
-      : 'Unknown';
-
-    return (
-      <div className="tab-content fade-in">
-        <h2>Volunteer Dashboard</h2>
-
-        {/* Volunteer hero card */}
-        <div className="volunteer-hero-card">
-          <div className="volunteer-hero-avatar">
-            {visibleAvatar ? <img src={visibleAvatar} alt="Profile" /> : userInitial}
-          </div>
-          <div className="volunteer-hero-info">
-            <h3>{volunteerData.fullName}</h3>
-            <div className="volunteer-hero-tags">
-              <StatusBadge status={volunteerData.status} />
-              {volunteerData.role && (
-                <span className="role-tag"><FaStar /> {volunteerData.role}</span>
-              )}
-            </div>
-            <p className="volunteer-since">Volunteer since {joinDate}</p>
-          </div>
-        </div>
-
-        {/* Info grid */}
-        <div className="volunteer-info-grid">
-          <div className="volunteer-info-section">
-            <h4>Personal Information</h4>
-            <div className="vinfo-list">
-              <div className="vinfo-item"><span>Email</span><strong>{volunteerData.email}</strong></div>
-              <div className="vinfo-item"><span>Phone</span><strong>{volunteerData.phone}</strong></div>
-              <div className="vinfo-item"><span>Date of Birth</span><strong>{dobFormatted}</strong></div>
-              <div className="vinfo-item"><span>Occupation</span><strong>{volunteerData.occupation || 'Not Provided'}</strong></div>
-              <div className="vinfo-item"><span>Education</span><strong>{volunteerData.education || 'Not Provided'}</strong></div>
-            </div>
-          </div>
-
-          <div className="volunteer-info-section">
-            <h4>Location & Area</h4>
-            <div className="vinfo-list">
-              <div className="vinfo-item"><span>City</span><strong>{volunteerData.city}</strong></div>
-              <div className="vinfo-item"><span>State</span><strong>{volunteerData.state}</strong></div>
-              {volunteerData.assignedArea && (
-                <div className="vinfo-item"><span>Assigned Area</span><strong>{volunteerData.assignedArea}</strong></div>
-              )}
-            </div>
-          </div>
-
-          <div className="volunteer-info-section">
-            <h4>Preferences</h4>
-            <div className="vinfo-list">
-              <div className="vinfo-item"><span>Mode</span><strong>{volunteerData.mode || 'On-site'}</strong></div>
-              <div className="vinfo-item"><span>Availability</span><strong>{volunteerData.availability || 'Not Specified'}</strong></div>
-              {volunteerData.skills && (
-                <div className="vinfo-item"><span>Skills</span><strong>{volunteerData.skills}</strong></div>
-              )}
-            </div>
-          </div>
-
-          {volunteerData.interests?.length > 0 && (
-            <div className="volunteer-info-section full-width">
-              <h4>Areas of Interest</h4>
-              <div className="interest-tags">
-                {volunteerData.interests.map((interest) => (
-                  <span key={interest} className="interest-tag">{interest}</span>
-                ))}
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
-    );
-  };
 
   return (
     <div className="profile-layout">
@@ -836,7 +725,6 @@ const Profile = () => {
           {activeTab === 'personal' && renderPersonalInfo()}
           {activeTab === 'donations' && renderDonations()}
           {activeTab === 'kanyadan' && renderKanyadan()}
-          {activeTab === 'volunteer' && renderVolunteerDashboard()}
         </main>
       </div>
     </div>
