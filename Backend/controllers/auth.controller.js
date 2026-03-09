@@ -1,5 +1,8 @@
 import User from "../models/user.model.js";
 import Ngo from "../models/ngo.model.js";
+import Payment from "../models/payment.model.js";
+import Volunteer from "../models/volunteer.model.js";
+import KanyadanApplication from "../models/kanyadanApplication.model.js";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import crypto from "crypto";
@@ -983,4 +986,46 @@ export const adminLogin = asyncHandler(async (req, res) => {
                 avatar: user.avatar || null
             }
         });
+});
+
+// ─── User Donation History ────────────────────────────────────────────────────
+export const getUserDonations = asyncHandler(async (req, res) => {
+    const userId = req.user._id;
+    const donations = await Payment.find({ user: userId, status: "paid" })
+        .sort({ createdAt: -1 })
+        .select("serviceTitle donorName amount currency razorpayOrderId razorpayPaymentId receipt createdAt")
+        .lean();
+
+    return res.status(200).json(new ApiResponse(200, "Donations fetched", donations));
+});
+
+// ─── User Volunteer Application ───────────────────────────────────────────────
+export const getUserVolunteer = asyncHandler(async (req, res) => {
+    const volunteer = await Volunteer.findOne({ user: req.user._id }).lean();
+    return res.status(200).json(new ApiResponse(200, "Volunteer data fetched", volunteer || null));
+});
+
+// ─── User Kanyadan Applications (by userId, fallback to phone) ───────────────
+export const getUserKanyadan = asyncHandler(async (req, res) => {
+    const userId = req.user._id;
+
+    // Primary: applications submitted while logged in (has userId attached)
+    let applications = await KanyadanApplication.find({ userId })
+        .sort({ createdAt: -1 })
+        .select("guardianName girlName girlAge annualIncome state district village status adminNote createdAt")
+        .lean();
+
+    // Fallback: match by phone number for older submissions without userId
+    if (applications.length === 0) {
+        const userDoc = await User.findById(userId).select("phone").lean();
+        const phone = String(userDoc?.phone || "").replace(/\D/g, "").slice(-10);
+        if (phone && phone.length === 10) {
+            applications = await KanyadanApplication.find({ mobile: phone, userId: null })
+                .sort({ createdAt: -1 })
+                .select("guardianName girlName girlAge annualIncome state district village status adminNote createdAt")
+                .lean();
+        }
+    }
+
+    return res.status(200).json(new ApiResponse(200, "Kanyadan applications fetched", applications));
 });

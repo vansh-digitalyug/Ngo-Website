@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+
+const API_BASE_URL = String(import.meta.env.VITE_API_BASE_URL || "http://localhost:5000").replace(/\/$/, "");
 import {
     FaChevronDown,
     FaHandHoldingHeart,
@@ -120,6 +122,8 @@ function KanyadanYojnaPage() {
     const [shareLabel, setShareLabel] = useState("Share");
     const [applyOpen, setApplyOpen] = useState(false);
     const [applySubmitted, setApplySubmitted] = useState(false);
+    const [applyLoading, setApplyLoading] = useState(false);
+    const [applyError, setApplyError] = useState("");
     const [applyForm, setApplyForm] = useState({
         guardianName: "", mobile: "", state: "", district: "",
         village: "", girlName: "", girlAge: "", annualIncome: "",
@@ -130,14 +134,36 @@ function KanyadanYojnaPage() {
         setApplyForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
     };
 
-    const handleApplySubmit = (e) => {
+    const handleApplySubmit = async (e) => {
         e.preventDefault();
-        setApplySubmitted(true);
+        setApplyError("");
+        setApplyLoading(true);
+        try {
+            const token = localStorage.getItem("token");
+            const headers = { "Content-Type": "application/json" };
+            if (token) headers["Authorization"] = `Bearer ${token}`;
+
+            const res = await fetch(`${API_BASE_URL}/api/kanyadan/apply`, {
+                method: "POST",
+                headers,
+                body: JSON.stringify(applyForm),
+            });
+            const data = await res.json().catch(() => ({}));
+            if (!res.ok || !data.success) {
+                throw new Error(data.message || "Submission failed. Please try again.");
+            }
+            setApplySubmitted(true);
+        } catch (err) {
+            setApplyError(err.message);
+        } finally {
+            setApplyLoading(false);
+        }
     };
 
     const handleApplyClose = () => {
         setApplyOpen(false);
         setApplySubmitted(false);
+        setApplyError("");
         setApplyForm({
             guardianName: "", mobile: "", state: "", district: "",
             village: "", girlName: "", girlAge: "", annualIncome: "",
@@ -508,6 +534,11 @@ function KanyadanYojnaPage() {
                         ) : (
                             <form className="ky-apply-form" onSubmit={handleApplySubmit}>
                                 <div className="ky-form-body">
+                                    {applyError && (
+                                        <div style={{ background: "#fee2e2", color: "#b91c1c", border: "1px solid #fecaca", borderRadius: "8px", padding: "10px 14px", marginBottom: "12px", fontSize: "0.9rem" }}>
+                                            {applyError}
+                                        </div>
+                                    )}
                                     <p className="ky-form-note">
                                         <FaShieldAlt aria-hidden="true" />
                                         All information is kept strictly confidential and used only for enrollment purposes.
@@ -656,11 +687,11 @@ function KanyadanYojnaPage() {
                                 </div>
 
                                 <div className="ky-form-footer">
-                                    <button type="button" className="campaign-btn campaign-btn-secondary" onClick={handleApplyClose}>
+                                    <button type="button" className="campaign-btn campaign-btn-secondary" onClick={handleApplyClose} disabled={applyLoading}>
                                         Cancel
                                     </button>
-                                    <button type="submit" className="campaign-btn campaign-btn-primary">
-                                        Submit Application
+                                    <button type="submit" className="campaign-btn campaign-btn-primary" disabled={applyLoading}>
+                                        {applyLoading ? "Submitting..." : "Submit Application"}
                                     </button>
                                 </div>
                             </form>

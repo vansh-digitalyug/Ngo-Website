@@ -19,6 +19,12 @@ import {
     getAllDonations,
     getDonationsByNgo
 } from "../controllers/admin.controller.js";
+import {
+    getAllKanyadanApplications,
+    updateKanyadanApplicationStatus,
+    deleteKanyadanApplication,
+    getKanyadanStats
+} from "../controllers/kanyadanApplication.controller.js";
 
 const router = express.Router();
 
@@ -56,5 +62,11 @@ router.put("/funds/:id/status", updateFundRequestStatus);
 // Donation management
 router.get("/donations", getAllDonations);
 router.get("/donations/by-ngo", getDonationsByNgo);
+
+// Kanyadan Yojna applications
+router.get("/kanyadan", getAllKanyadanApplications);
+router.get("/kanyadan/stats", getKanyadanStats);
+router.put("/kanyadan/:id/status", updateKanyadanApplicationStatus);
+router.delete("/kanyadan/:id", deleteKanyadanApplication);
 
 export default router;
