@@ -358,7 +358,7 @@ function OrphanageEducationPage() {
 
                                     <Link to="/donate" state={{ serviceImage: orphanEducation, serviceTitle: "Help provide education support for children in orphanage care" }} className="campaign-btn campaign-btn-primary">
 
-                                        Donate Now
+                                        Help Now
 
                                     </Link>
 
@@ -488,7 +488,7 @@ function OrphanageEducationPage() {
 
                                 <Link to="/donate" state={{ serviceImage: orphanEducation, serviceTitle: "Help provide education support for children in orphanage care" }} className="campaign-btn campaign-btn-primary">
 
-                                    Donate Now
+                                    Help Now
 
                                 </Link>
 

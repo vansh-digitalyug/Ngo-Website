@@ -396,6 +396,7 @@ function KanyadanYojnaPage() {
                         <article className="campaign-card">
                             <div className="campaign-image-wrap">
                                 <img src={heroImg} alt="Kanyadan Yojna" />
+                                <span className="campaign-chip">LIC Policy Support</span>
                             </div>
 
                             <div className="campaign-body">

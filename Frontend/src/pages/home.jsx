@@ -142,7 +142,7 @@ function Home() {
             </p>
             <div style={styles.heroButtons}>
               <Link to="/donate" className="primary-btn pulse-btn" style={styles.primaryBtn}>
-                Donate Now
+                Help Now
               </Link>
               <Link to="/find-ngos" className="secondary-btn" style={styles.secondaryBtn}>
                 Locate NGOs

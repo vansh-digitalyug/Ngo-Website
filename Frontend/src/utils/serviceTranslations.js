@@ -7,7 +7,7 @@ export const mealTranslations = {
     donors: "Donors",
     daysLeft: "Days left",
     funded: "Funded",
-    donateNow: "Donate Now",
+    donateNow: "Help Now",
     share: "Share",
     storyTitle: "The Story",
     supportTitle: "Support the Nutritious Meal initiative",
@@ -71,7 +71,7 @@ export const orphanHealthTranslations = {
     donors: "Donors",
     daysLeft: "Days left",
     funded: "Funded",
-    donateNow: "Donate Now",
+    donateNow: "Help Now",
     share: "Share",
     supportTitle: "Support comprehensive health and medical care",
     supportDesc: "Your donation ensures every child receives proper medical attention and preventive care.",
@@ -95,7 +95,7 @@ export const orphanEducationTranslations = {
   en: {
     title: "Help provide education support for children in orphanage care",
     organization: "by Guardian of Angels Trust",
-    donateNow: "Donate Now",
+    donateNow: "Help Now",
     share: "Share",
     supportTitle: "Support quality education for every child",
     supportDesc: "Your contribution ensures orphans have access to quality education and learning resources.",
@@ -114,7 +114,7 @@ export const elderMealTranslations = {
   en: {
     title: "Provide daily nutritious meals for abandoned elderly",
     organization: "by Guardian of Angels Trust",
-    donateNow: "Donate Now",
+    donateNow: "Help Now",
     share: "Share",
     supportTitle: "Support daily meal care for seniors",
     supportDesc: "Your contribution provides nutritious meals to elderly citizens in need.",
@@ -133,7 +133,7 @@ export const elderMedicalTranslations = {
   en: {
     title: "Provide urgent medical assistance and life-saving care",
     organization: "by Guardian of Angels Trust",
-    donateNow: "Donate Now",
+    donateNow: "Help Now",
     share: "Share",
     supportTitle: "Support medical care for elderly",
     supportDesc: "Your donation provides essential medical assistance to vulnerable elderly.",
@@ -152,7 +152,7 @@ export const elderLivingTranslations = {
   en: {
     title: "Provide dignified living and shelter for abandoned elderly",
     organization: "by Silver Years Foundation",
-    donateNow: "Donate Now",
+    donateNow: "Help Now",
     share: "Share",
     topDonations: "Top Donations",
     allDonations: "All Donations",
@@ -175,7 +175,7 @@ export const medicalCampTranslations = {
   en: {
     title: "Fund a Mega Free Health Checkup Camp for rural communities",
     organization: "by Arogya Care Foundation",
-    donateNow: "Donate Now",
+    donateNow: "Help Now",
     share: "Share",
     topDonations: "Top Donations",
     allDonations: "All Donations",
@@ -198,7 +198,7 @@ export const medicalCancerTranslations = {
   en: {
     title: "Support Life-Saving Cancer Treatments & Care",
     organization: "by Arogya Care Foundation",
-    donateNow: "Donate Now",
+    donateNow: "Help Now",
     share: "Share",
     topDonations: "Top Donations",
     allDonations: "All Donations",
@@ -231,7 +231,7 @@ export const medicalKidneyTranslations = {
   en: {
     title: "Support Life-Saving Kidney Dialysis & Care",
     organization: "by Arogya Care Foundation",
-    donateNow: "Donate Now",
+    donateNow: "Help Now",
     share: "Share",
     topDonations: "Top Donations",
     allDonations: "All Donations",
@@ -264,7 +264,7 @@ export const welfareKanyadanTranslations = {
   en: {
     title: "Support a daughter's wedding through Kanyadan Yojana",
     organization: "by Guardian of Angels Trust",
-    donateNow: "Donate Now",
+    donateNow: "Help Now",
     share: "Share",
     supportTitle: "Support Kanyadan wedding assistance",
     supportDesc: "Your donation helps poor families provide dignified weddings for their daughters.",
@@ -283,7 +283,7 @@ export const welfareRitesTranslations = {
   en: {
     title: "Support Dignified Last Rites: A Respectful Farewell for the Underprivileged",
     organization: "by Guardian of Angels Trust",
-    donateNow: "Donate Now",
+    donateNow: "Help Now",
     share: "Share",
     supportTitle: "Support dignified last rites",
     supportDesc: "Your donation helps underprivileged families perform respectful final rites.",
@@ -302,7 +302,7 @@ export const womenWidowTranslations = {
   en: {
     title: "Empower Widow Women with Financial and Social Support",
     organization: "by Women Welfare Foundation",
-    donateNow: "Donate Now",
+    donateNow: "Help Now",
     share: "Share",
     topDonations: "Top Donations",
     allDonations: "All Donations",
@@ -344,7 +344,7 @@ export const infrastructureRoadTranslations = {
     donors: "Donors",
     daysLeft: "Days left",
     funded: "Funded",
-    donateNow: "Donate Now",
+    donateNow: "Help Now",
     share: "Share",
     storyTitle: "The Cause",
     supportTitle: "Support this infrastructure mission",
@@ -386,7 +386,7 @@ export const communityHelmetTranslations = {
   en: {
     title: "Protect Lives: Nationwide Helmet Distribution Drive",
     organization: "by SafeRoads Initiative",
-    donateNow: "Donate Now",
+    donateNow: "Help Now",
     share: "Share",
     topDonations: "Top Donations",
     allDonations: "All Donations",

@@ -30,7 +30,7 @@ function Footer() {
               <li><Link to="/">Home</Link></li>
               <li><Link to="/find-ngos">Find NGOs</Link></li>
               <li><Link to="/volunteer">Volunteer</Link></li>
-              <li><Link to="/donate">Donate Now</Link></li>
+              <li><Link to="/donate">Help Now</Link></li>
             </ul>
           </div>
 

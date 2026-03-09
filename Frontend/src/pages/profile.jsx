@@ -614,7 +614,7 @@ const Profile = () => {
           <div className="empty-icon"><FaHeart /></div>
           <h3>Ready to make a difference?</h3>
           <p>You haven't made any donations yet. Your support can change lives.</p>
-          <Link to="/donate" className="btn-donate-now">Donate Now</Link>
+          <Link to="/donate" className="btn-donate-now">Help Now</Link>
         </div>
       )}
     </div>
