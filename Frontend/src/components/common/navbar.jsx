@@ -1,7 +1,7 @@
 import { Link, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
-import LanguageToggle from "../LanguageToggle.jsx";
 import "./navbar.css";
+import GoogleTranslate from "../GoogleTranslate.jsx";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
 
@@ -25,6 +25,7 @@ function Navbar() {
   const userInitial = user?.name ? user.name.charAt(0).toUpperCase() : "U";
   const isAdmin = user?.role === "admin";
 
+
   // Check if user has an NGO
   useEffect(() => {
     const checkNgoStatus = async () => {
@@ -33,17 +34,17 @@ function Navbar() {
         setHasNgo(false);
         return;
       }
-      
+
       try {
         const res = await fetch(`${API_BASE_URL}/api/ngo-dashboard/status`, {
           headers: { Authorization: `Bearer ${token}` }
         });
-        
+
         if (res.ok) {
           const data = await res.json();
           if (data.status !== 'none') {
             setHasNgo(true);
-            setNgoStatus(data.status); // 'pending', 'approved'
+            setNgoStatus(data.status);
           } else {
             setHasNgo(false);
           }
@@ -120,11 +121,11 @@ function Navbar() {
           <li><Link to="/donate">Donate</Link></li>
           <li><Link to="/volunteer">Volunteer</Link></li>
           <li><Link to="/add-ngo">Add Your NGO</Link></li>
-          <li><Link to="/contact">Contact Us</Link></li>
+          <li><Link to="/contact">Contact</Link></li>
         </ul>
 
         <div className="navbar-auth">
-          {/* <LanguageToggle /> */}
+          <GoogleTranslate />
           {isLoggedIn ? (
             <div className="dropdown profile-dropdown">
               <div className="profile-icon" title={user?.name || "User"}>
@@ -139,8 +140,8 @@ function Navbar() {
                   </li>
                 ) : hasNgo ? (
                   <li>
-                    <Link 
-                      to={ngoStatus === 'approved' ? "/ngo/dashboard" : "/ngo/pending"} 
+                    <Link
+                      to={ngoStatus === 'approved' ? "/ngo/dashboard" : "/ngo/pending"}
                       className="profile-link ngo-link"
                     >
                       <span className="link-icon">My NGO</span>
@@ -175,6 +176,7 @@ function Navbar() {
         >
           {"\u2630"}
         </button>
+
       </nav>
 
       <div className={`mobile-menu ${menuOpen ? "open" : ""}`}>
@@ -190,10 +192,11 @@ function Navbar() {
           </button>
         </div>
 
+        <div className="mobile-translate">
+          <GoogleTranslate />
+        </div>
+
         <ul>
-          <li style={{ borderBottom: "2px solid #f0f0f0", paddingBottom: "10px", marginBottom: "10px" }}>
-            {/* <LanguageToggle /> */}
-          </li>
           <li onClick={() => setMenuOpen(false)}>
             <Link to="/">Home</Link>
           </li>
@@ -227,14 +230,14 @@ function Navbar() {
               >
                 {isAdmin ? (
                   <Link to="/admin" style={{ display: "flex", alignItems: "center", gap: "10px", color: "#1e40af", fontWeight: "bold" }}>
-                    📊 Admin Panel
+                    Admin Panel
                   </Link>
                 ) : hasNgo ? (
-                  <Link 
-                    to={ngoStatus === 'approved' ? "/ngo/dashboard" : "/ngo/pending"} 
+                  <Link
+                    to={ngoStatus === 'approved' ? "/ngo/dashboard" : "/ngo/pending"}
                     style={{ display: "flex", alignItems: "center", gap: "10px", color: "#7c3aed", fontWeight: "bold" }}
                   >
-                    🏢 My NGO
+                    My NGO
                     {ngoStatus === 'pending' && (
                       <span style={{ fontSize: '0.7rem', background: '#fef3c7', color: '#92400e', padding: '2px 6px', borderRadius: '4px' }}>
                         Pending
@@ -267,5 +270,4 @@ function Navbar() {
     </>
   );
 }
-
 export default Navbar;

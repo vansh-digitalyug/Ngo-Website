@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-// IMPORT YOUR LOCAL IMAGE HERE
 import elderImage from "../assets/images/elderly/elder.png";
 
 
@@ -61,7 +60,7 @@ function Home() {
             from { opacity: 0; transform: translateY(30px); }
             to { opacity: 1; transform: translateY(0); }
           }
-          
+
           @keyframes pulse {
             0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(255, 152, 0, 0.7); }
             70% { transform: scale(1.02); box-shadow: 0 0 0 10px rgba(255, 152, 0, 0); }
@@ -88,9 +87,9 @@ function Home() {
           .service-card {
             transition: transform 0.4s ease, box-shadow 0.4s ease;
           }
-          .service-card:hover { 
-            transform: translateY(-10px); 
-            box-shadow: 0 20px 40px rgba(0,0,0,0.15) !important; 
+          .service-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.15) !important;
           }
           /* Link hover effect inside card */
           .service-card:hover .card-link {
@@ -103,12 +102,12 @@ function Home() {
             transform: scale(1.1);
           }
 
-          .primary-btn:hover { 
+          .primary-btn:hover {
             background-color: #f57c00 !important;
             transform: translateY(-2px);
           }
-          
-          .secondary-btn:hover { 
+
+          .secondary-btn:hover {
             background-color: rgba(255,255,255,0.1) !important;
             transform: translateY(-2px);
           }
@@ -173,12 +172,8 @@ function Home() {
           <h2 style={styles.sectionTitle}>Our Mission</h2>
           <div style={styles.underline}></div>
           <p style={styles.sectionText}>
-            We envision an India where no child sleeps hungry, no elder feels forgotten,
-            and no student is left behind due to the digital divide. We are building an
-            ecosystem of <strong>dignity, care, and transparency</strong> to turn your good intentions into measurable impact.
+            We envision an India where no child sleeps hungry, no elderly person feels forgotten, and no student falls behind due to the digital divide. We are building an ecosystem of <strong>dignity, care, and transparency</strong> to turn your good intentions into measurable impact.
           </p>
-        
-
         </div>
       </section>
 
@@ -186,9 +181,9 @@ function Home() {
       <section style={styles.sectionAlt}>
         <div style={styles.maxWidthWrapper}>
           <div className="animate-on-scroll">
-            <h2 style={styles.sectionTitle}>Holistic Services</h2>
+            <h2 style={styles.sectionTitle}>Comprehensive Services</h2>
             <p style={styles.sectionSubtitle}>
-              Targeted initiatives designed to solve real-world problems.
+              Targeted initiatives to solve real problems.
             </p>
           </div>
 
@@ -199,7 +194,6 @@ function Home() {
                 <img src={heroImages[0]} alt="Orphanage Support" style={styles.cardImage} />
               </div>
               <div style={styles.cardContent}>
-                {/* SVG INLINE WITH HEADING */}
                 <h3 style={styles.cardTitle}>
                   <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ transition: 'all 0.3s' }}>
                     <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
@@ -209,7 +203,7 @@ function Home() {
                   Child Welfare
                 </h3>
                 <p style={styles.cardText}>Providing shelter, nutrition, and holistic education to orphaned children.</p>
-                <Link to="/services/orphanage" className="card-link" style={styles.cardLink}>Support a Child →</Link>
+                <Link to="/services/orphanage" className="card-link" style={styles.cardLink}>Support a child →</Link>
               </div>
             </div>
 
@@ -219,15 +213,14 @@ function Home() {
                 <img src={heroImages[1]} alt="Elderly Care" style={styles.cardImage} />
               </div>
               <div style={styles.cardContent}>
-                {/* SVG INLINE WITH HEADING */}
                 <h3 style={styles.cardTitle}>
                   <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ transition: 'all 0.3s' }}>
                     <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
                   </svg>
-                  Honoring Seniors
+                  Honouring Seniors
                 </h3>
                 <p style={styles.cardText}>Ensuring healthcare, companionship, and dignity for our elderly citizens.</p>
-                <Link to="/services/elderly" className="card-link" style={styles.cardLink}>Adopt a Grandparent →</Link>
+                <Link to="/services/elderly" className="card-link" style={styles.cardLink}>Adopt a grandparent →</Link>
               </div>
             </div>
 
@@ -237,7 +230,6 @@ function Home() {
                 <img src={heroImages[2]} alt="Digital Empowerment" style={styles.cardImage} />
               </div>
               <div style={styles.cardContent}>
-                {/* SVG INLINE WITH HEADING */}
                 <h3 style={styles.cardTitle}>
                   <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ transition: 'all 0.3s' }}>
                     <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
@@ -246,17 +238,17 @@ function Home() {
                   Digital Bridge
                 </h3>
                 <p style={styles.cardText}>Empowering rural communities through digital skills.</p>
-                <Link to="/services" className="card-link" style={styles.cardLink}>Enable Education →</Link>
+                <Link to="/services" className="card-link" style={styles.cardLink}>Enable education →</Link>
               </div>
             </div>
           </div>
         </div>
       </section>
 
-      {/* IMPACT SECTION - Green & Orange + Cubes */}
+      {/* IMPACT SECTION */}
       <section style={styles.impactSection}>
         <div style={styles.maxWidthWrapper}>
-          <h2 className="animate-on-scroll" style={{ ...styles.sectionTitle, color: "white" }}>Creating Real Impact</h2>
+          <h2 className="animate-on-scroll" style={{ ...styles.sectionTitle, color: "white" }}>Making Real Impact</h2>
           <div className="impact-grid" style={styles.impactGrid}>
             <div className="animate-on-scroll delay-100" style={styles.impactItem}>
               <h3 style={styles.impactNumber}>500+</h3>
@@ -264,7 +256,7 @@ function Home() {
             </div>
             <div className="animate-on-scroll delay-200" style={styles.impactItem}>
               <h3 style={styles.impactNumber}>10k+</h3>
-              <p style={styles.impactLabel}>Lives Transformed</p>
+              <p style={styles.impactLabel}>Lives Changed</p>
             </div>
             <div className="animate-on-scroll delay-300" style={styles.impactItem}>
               <h3 style={styles.impactNumber}>25+</h3>
@@ -277,7 +269,7 @@ function Home() {
       {/* CTA SECTION */}
       <section style={styles.cta}>
         <div className="animate-on-scroll" style={styles.maxWidthWrapper}>
-          <h2 style={styles.ctaTitle}>Ready to Be the Change?</h2>
+          <h2 style={styles.ctaTitle}>Ready to Make a Difference?</h2>
           <p style={styles.ctaText}>Every small act of kindness creates a ripple of hope.</p>
           <div style={styles.heroButtons}>
             <Link to="/volunteer" className="primary-btn" style={styles.ctaBtnPrimary}>Become a Volunteer</Link>
@@ -400,8 +392,6 @@ const styles = {
     transition: "transform 0.5s ease"
   },
   cardContent: { padding: "30px" },
-
-  // UPDATED CARD TITLE: Flexbox to keep icon and text in same line
   cardTitle: {
     fontSize: "1.4rem",
     marginBottom: "10px",
@@ -411,7 +401,6 @@ const styles = {
     alignItems: "center",
     gap: "12px"
   },
-
   cardText: { fontSize: "1rem", color: "#666", marginBottom: "20px", lineHeight: "1.6" },
   cardLink: {
     color: "#2e7d32",
@@ -421,16 +410,15 @@ const styles = {
     transition: "all 0.2s"
   },
 
-  // IMPACT - UPDATED WITH GREEN+ORANGE GRADIENT AND CUBES PATTERN
+  // IMPACT
   impactSection: {
     position: "relative",
     padding: "100px 0",
     color: "white",
     textAlign: "center",
-    // Linear Gradient (Green to Orange) + Cubes Pattern Overlay
     backgroundImage: "linear-gradient(135deg, rgba(46, 125, 50, 0.95), rgba(255, 152, 0, 0.9)), url('https://www.transparenttextures.com/patterns/cubes.png')",
-    backgroundSize: "auto, auto", // Gradient covers, cubes repeat
-    backgroundAttachment: "fixed" // Parallax effect
+    backgroundSize: "auto, auto",
+    backgroundAttachment: "fixed"
   },
   impactGrid: { display: "flex", justifyContent: "space-around", marginTop: "50px", flexWrap: "wrap", gap: "30px" },
   impactItem: { padding: "20px" },

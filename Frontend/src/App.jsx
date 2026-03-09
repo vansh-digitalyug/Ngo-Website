@@ -4,6 +4,7 @@ import Navbar from "./components/common/navbar.jsx";
 import Footer from "./components/common/footer.jsx";
 import AppRoutes from "./routes/AppRoute.jsx";
 import { FlashProvider } from "./components/common/FlashMessage.jsx";
+import GoogleTranslate from "./components/GoogleTranslate.jsx";
 
 function App() {
   const location = useLocation();
@@ -40,8 +41,10 @@ function App() {
     sessionStorage.removeItem("flash_message");
   };
 
+
   useEffect(() => {
     consumeFlashMessage();
+
   }, [location.key]);
 
   useEffect(() => {
@@ -68,6 +71,8 @@ function App() {
       )}
       <main className="app-content">
         <AppRoutes />
+       
+
       </main>
       {!hideNavFooter && <Footer />}
     </FlashProvider>
