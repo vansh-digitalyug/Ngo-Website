@@ -1,5 +1,5 @@
 import express from "express";
-import { verifyToken } from "../middlewares/auth.middleware.js";
+import { verifyToken, optionalAuth } from "../middlewares/auth.middleware.js";
 
 import {
   createOrder,
@@ -14,8 +14,8 @@ const router = express.Router();
    PAYMENT ROUTES
 ========================= */
 
-// Create Razorpay Order
-router.post("/order", createOrder);
+// Create Razorpay Order (optionalAuth links order to user if logged in)
+router.post("/order", optionalAuth, createOrder);
 
 // Verify payment after checkout
 router.post("/verify", verifyPayment);
