@@ -258,9 +258,9 @@ const Profile = () => {
   }, []);
 
   useEffect(() => {
-    if (activeTab === 'donations' && donations.length === 0) fetchDonations();
+    if (activeTab === 'donations') fetchDonations();
     if (activeTab === 'kanyadan') fetchKanyadan();
-  }, [activeTab, donations.length, fetchDonations, fetchKanyadan]);
+  }, [activeTab, fetchDonations, fetchKanyadan]);
 
   const handleProfileInputChange = (field, value) => {
     setProfileForm((prev) => ({ ...prev, [field]: value }));
@@ -567,7 +567,18 @@ const Profile = () => {
 
   const renderDonations = () => (
     <div className="tab-content fade-in">
-      <h2>Donation History</h2>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
+        <h2 style={{ margin: 0 }}>Donation History</h2>
+        <button
+          className="btn-cancel"
+          type="button"
+          onClick={fetchDonations}
+          disabled={donationsLoading}
+          style={{ display: 'flex', alignItems: 'center', gap: '6px' }}
+        >
+          <FaSync className={donationsLoading ? 'spinner-icon' : ''} /> Refresh
+        </button>
+      </div>
 
       {donationsLoading ? (
         <div className="loading-inline"><FaSpinner className="spinner-icon" /> Loading donations...</div>

@@ -38,7 +38,7 @@ export const createOrder = asyncHandler(async (req, res) => {
   const order = await razorpay.orders.create(options);
 
   const payment = await Payment.create({
-    user: req.userId || null,
+    user: req.user?._id || null,
     ngoId: ngoId || null,
     serviceTitle: serviceTitle || "",
     donorName: donorName || notes?.donorName || "",

@@ -73,9 +73,13 @@ const handleProceedPayment = async (e) => {
   let orderData;
 
   try {
+    const _token = localStorage.getItem("token");
     const res = await fetch(`${API_BASE_URL}/api/payment/order`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        ...(_token ? { Authorization: `Bearer ${_token}` } : {}),
+      },
       credentials: "include",
       body: JSON.stringify({
         amount: totalAmount,
