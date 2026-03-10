@@ -81,6 +81,11 @@ function RequireVolunteerAuth({ children }) {
   return children;
 }
 
+function LoginRedirect() {
+  const location = useLocation();
+  return <Navigate to={`/login/user${location.search}`} replace />;
+}
+
 function ProfileOrAdmin() {
   try {
     const user = JSON.parse(localStorage.getItem("user"));
@@ -146,7 +151,7 @@ function AppRoutes() {
           }
         />
         <Route path="/add-ngo" element={<AddNGO />} />
-        <Route path="/login" element={<Navigate to="/login/user" replace />} />
+        <Route path="/login" element={<LoginRedirect />} />
         <Route path="/login/user" element={<Login />} />
         <Route path="/login/ngo" element={<Login />} />
         <Route path="/login/admin" element={<AdminLogin />} />

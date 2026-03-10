@@ -28,6 +28,11 @@ import mealImg3 from "../assets/images/orphanage/meal/image3.png";
 import mealImg4 from "../assets/images/orphanage/meal/image 4.png";
 import mealImg5 from "../assets/images/orphanage/meal/image5.png";
 import orphanHealth from "../assets/images/orphanage/health.jpg";
+import healthImg1 from "../assets/images/orphanage/medical/image1.png";
+import healthImg2 from "../assets/images/orphanage/medical/image2.png";
+import healthImg3 from "../assets/images/orphanage/medical/image3.png";
+import healthImg4 from "../assets/images/orphanage/medical/image4.png";
+import healthImg5 from "../assets/images/orphanage/medical/image5.png";
 import elderFood from "../assets/images/elderly/food.jpg";
 import elderLiving from "../assets/images/elderly/living.jpg";
 import elderMedical from "../assets/images/elderly/medical.webp";
@@ -174,7 +179,7 @@ const SERVICE_DATA = [
         fullDescription: "Proper nutrition during childhood is critical for physical and cognitive development. Many orphaned children suffer from malnutrition, stunting, and micronutrient deficiencies that have long-lasting effects on their health and learning ability. Our Nutritious Meal Program ensures that children in partner orphanages receive three balanced meals every day, formulated by nutritionists to meet the specific dietary needs of growing children. The meal plan includes proteins, vitamins, minerals, and adequate calories across breakfast, lunch, and dinner. We also provide vitamin supplements and conduct regular growth monitoring to track each child's health progress. Trained cooks prepare meals using locally sourced, fresh ingredients, supporting local farmers and ensuring food quality. Special meals are provided during festivals and birthdays to give children a sense of celebration and belonging. We also run nutrition education sessions so older children understand the importance of healthy eating habits. Seasonal menus are adjusted based on availability and doctor recommendations. Our program has shown measurable improvements in weight-for-age and height-for-age indicators among children enrolled for over six months. Your donation funds ingredients, kitchen equipment, and nutritionist consultations that keep these children healthy, focused in school, and full of energy to dream big.",
         fullDescriptionHi: "बचपन में उचित पोषण शारीरिक और संज्ञानात्मक विकास के लिए महत्वपूर्ण है। हमारा पौष्टिक भोजन कार्यक्रम यह सुनिश्चित करता है कि सहयोगी अनाथालयों के बच्चों को हर दिन तीन संतुलित भोजन मिले, जो बच्चों की विशिष्ट आहार आवश्यकताओं को पूरा करने के लिए पोषण विशेषज्ञों द्वारा तैयार किया गया है।",
         image: orphanFood,
-        images: [mealImg1, mealImg2, mealImg3, mealImg4, mealImg5],
+        images: [mealImg4, mealImg1, mealImg3, mealImg5, mealImg2],
         cta: "Help Now",
         href: "/services/orphanage/meal",
         donationTitle: "Provide high-quality nutritious meals for orphans",
@@ -191,6 +196,7 @@ const SERVICE_DATA = [
         fullDescription: "Orphaned children are among the most medically vulnerable populations, often arriving at care centers with untreated infections, dental problems, skin conditions, and nutritional deficiencies. Our Health and Medical Care program ensures that every child in our partner orphanages receives comprehensive healthcare. We organize monthly health checkups by qualified pediatricians, dental screenings, eye examinations, and mental health assessments. All prescribed medicines are procured and administered under caregiver supervision. Children requiring specialist treatment are referred to partner hospitals where costs are covered through our fund. We maintain detailed health records for every child and set up vaccination schedules in line with government immunization programs. Our caregiver training includes first aid, recognizing signs of illness, and emergency protocols. Children who have experienced trauma receive counseling and psychological support from trained therapists. Hygiene education is embedded in daily routines to prevent illness at the source. We also run dental hygiene drives and distribute health kits that include toothbrushes, soaps, and personal hygiene items. Your donation directly funds doctor visits, medicines, specialist referrals, and the mental health support that helps these children heal from past trauma and grow up healthy and resilient.",
         fullDescriptionHi: "अनाथ बच्चे सबसे चिकित्सकीय रूप से कमजोर आबादी में से हैं। हमारा स्वास्थ्य और चिकित्सा देखभाल कार्यक्रम यह सुनिश्चित करता है कि सहयोगी अनाथालयों के हर बच्चे को व्यापक स्वास्थ्य सेवा मिले। हम मासिक स्वास्थ्य जाँच, दंत स्क्रीनिंग, आँख की परीक्षा और मानसिक स्वास्थ्य आकलन आयोजित करते हैं।",
         image: orphanHealth,
+        images: [healthImg1, healthImg2, healthImg3, healthImg4, healthImg5],
         cta: "Help Now",
         href: "/services/orphanage/health",
         donationTitle: "Help provide healthcare and medical support for children in orphanage care",

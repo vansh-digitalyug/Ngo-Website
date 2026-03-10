@@ -1,763 +1,453 @@
-﻿
-import { useEffect, useMemo, useState } from "react";
-
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-
 import {
-
     FaChevronDown,
-
     FaHandHoldingHeart,
-
     FaRegClock,
-
     FaShieldAlt,
-
-    FaUserCircle,
-
+    FaCheckCircle,
+    FaStar,
+    FaBookOpen,
+    FaGraduationCap,
+    FaChalkboardTeacher,
+    FaLaptop,
+    FaUsers,
 } from "react-icons/fa";
-
-import { useLanguage, translate } from "../../../utils/useLanguage.jsx";
-
-import { orphanEducationTranslations } from "../../../utils/serviceTranslations.js";
-
+import { useLanguage } from "../../../utils/useLanguage.jsx";
 import orphanEducation from "../../../assets/images/orphanage/education.jpg";
-
+import eduImg1 from "../../../assets/images/orphanage/education/image1.png";
+import eduImg2 from "../../../assets/images/orphanage/education/image2.png";
+import eduImg3 from "../../../assets/images/orphanage/education/image3.png";
+import eduImg4 from "../../../assets/images/orphanage/education/image4.png";
+import eduImg5 from "../../../assets/images/orphanage/education/image5.png";
 import "./education.css";
 
-
-
-const DONATIONS = [
-
-    { name: "Sourabh Bakshi", amount: 15000, note: "Helping children" },
-
-    { name: "Jayesh Shrivastava", amount: 7500, note: "Top Donor" },
-
-    { name: "Priya Sharma", amount: 5000, note: "Monthly supporter" },
-
-    { name: "Rahul Verma", amount: 3000, note: "In memory donation" },
-
-    { name: "Neha Gupta", amount: 2500, note: "Education first" },
-
-    { name: "Kunal Jain", amount: 2100, note: "For school kits" },
-
-    { name: "Anonymous", amount: 1111, note: "Joined today" },
-
-    { name: "A. Das", amount: 1500, note: "With gratitude" },
-
-    { name: "Simran Kaur", amount: 1200, note: "Keep going" },
-
-    { name: "Rohit Singh", amount: 1000, note: "Best wishes" },
-
-    { name: "Meera Nair", amount: 900, note: "Small effort" },
-
-    { name: "Vikash Kumar", amount: 800, note: "For children" },
-
-    { name: "Anonymous", amount: 700, note: "Blessings" },
-
-    { name: "Anita Menon", amount: 500, note: "Support education" },
-
+const EDU_BENEFITS = [
+    {
+        icon: FaBookOpen,
+        title: "School Fees & Books Fully Covered",
+        desc: "We pay every rupee of school enrollment fees, purchase textbooks, notebooks, stationery, and all required learning materials so no child misses school due to financial constraints.",
+    },
+    {
+        icon: FaChalkboardTeacher,
+        title: "Dedicated Weekly Tutoring",
+        desc: "Trained tutors visit the orphanage multiple times a week to provide subject-specific coaching, resolve doubts, and give every child the individual attention their school classroom cannot offer.",
+    },
+    {
+        icon: FaLaptop,
+        title: "Digital Literacy & Computer Skills",
+        desc: "Children are introduced to computers, basic internet use, and digital tools — equipping them with practical skills that are essential for education and employment in the modern world.",
+    },
+    {
+        icon: FaGraduationCap,
+        title: "Career Guidance for Older Students",
+        desc: "As children grow, our mentors guide them through higher education options, vocational training programs, scholarship applications, and career pathways suited to their strengths.",
+    },
 ];
 
+const WHAT_WE_PROVIDE = [
+    "Full school enrollment — we handle all admissions paperwork, fees, and documentation",
+    "Complete uniform set, school bags, shoes, and stationery provided free of cost at the start of every academic year",
+    "Textbooks, notebooks, and all required study materials purchased and delivered to each child",
+    "Dedicated tutors visiting the orphanage weekly for individual subject coaching",
+    "Monthly academic progress tracking shared with orphanage caretakers",
+    "Digital literacy sessions covering computers, internet safety, and basic software tools",
+    "Career counselling and mentoring sessions for students in Class 8 and above",
+    "Support for competitive exam preparation — scholarships, entrance tests, and government schemes",
+    "Emotional and motivational support to keep every child engaged and confident in school",
+];
 
+const GOALS = [
+    { number: "200+", label: "Children Educated" },
+    { number: "15+", label: "Partner Schools" },
+    { number: "98%", label: "Attendance Rate" },
+    { number: "5 yrs", label: "Program Running" },
+];
 
 const FAQS = [
-
     {
-
-        question: "How does this education fundraiser help children?",
-
-        answer: "Funds are used for school fees, books, uniforms, tutoring support, and basic classroom needs for children living in orphanage care.",
-
-        questionHi: "यह शिक्षा धन संचय बच्चों को कैसे मदद करता है?",
-
-        answerHi: "धन को अनाथालय देखभाल में रहने वाले बच्चों के लिए स्कूल फीस, किताबें, वर्दी, ट्यूशन सहायता और बुनियादी कक्षा की जरूरतों के लिए उपयोग किया जाता है।",
-
+        question: "Which children are covered under this program?",
+        answer: "All children residing in our partner orphanages who are of school-going age (5–18 years) are eligible. There is no application process — our team directly enrolls every child into the nearest suitable school.",
     },
-
     {
-
-        question: "Is my donation secure?",
-
-        answer: "Yes. Donations are processed through secure payment channels and campaign-level records are maintained for accountability.",
-
-        questionHi: "क्या मेरा दान सुरक्षित है?",
-
-        answerHi: "हाँ। दान को सुरक्षित भुगतान चैनलों के माध्यम से संसाधित किया जाता है और जवाबदेही के लिए अभियान-स्तरीय रिकॉर्ड बनाए रखे जाते हैं।",
-
+        question: "What exactly does the program pay for?",
+        answer: "We cover school admission fees, annual tuition, uniforms, school bags, shoes, textbooks, notebooks, stationery, and all project or activity materials required throughout the year.",
     },
-
     {
-
-        question: "Will I get donation confirmation?",
-
-        answer: "Yes. You receive confirmation as soon as your contribution is completed successfully.",
-
-        questionHi: "क्या मुझे दान की पुष्टि मिलेगी?",
-
-        answerHi: "हाँ। आप अपना योगदान सफलतापूर्वक पूर्ण होते ही पुष्टि प्राप्त करते हैं।",
-
+        question: "How are tutors selected for the children?",
+        answer: "Our tutors are screened volunteers and paid educators with verified backgrounds. They are matched to children by subject and grade level, and each tutor works consistently with the same group to build rapport.",
     },
-
     {
-
-        question: "Can I support this fundraiser monthly?",
-
-        answer: "Yes. You can return and donate again any time, or support related child welfare campaigns regularly.",
-
-        questionHi: "क्या मैं इस धन संचय को मासिक समर्थन कर सकता हूँ?",
-
-        answerHi: "हाँ। आप कभी भी वापस आ सकते हैं और फिर से दान कर सकते हैं, या संबंधित बाल कल्याण अभियानों को नियमित रूप से समर्थन कर सकते हैं।",
-
+        question: "What happens when a child completes Class 12?",
+        answer: "We actively support students in applying for college scholarships, vocational training institutes, and government skill development programs. Our career mentors assist with entrance exams and admission processes.",
     },
-
     {
-
-        question: "Can I share this campaign with friends?",
-
-        answer: "Yes. You can use the Share button to quickly send this page to your contacts and help this cause reach more people.",
-
-        questionHi: "क्या मैं इस अभियान को दोस्तों के साथ साझा कर सकता हूँ?",
-
-        answerHi: "हाँ। आप इस पृष्ठ को अपने संपर्कों को जल्दी भेजने के लिए साझा बटन का उपयोग कर सकते हैं और इस कारण को अधिक लोगों तक पहुंचने में मदद कर सकते हैं।",
-
+        question: "How can I donate to this program?",
+        answer: "Click the 'Help Now' button on this page to make a secure donation. Every ₹2,000 covers one child's school expenses for a full month. All donations are eligible for 80G tax exemption.",
     },
-
+    {
+        question: "Is my donation eligible for tax exemption?",
+        answer: "Yes. All donations to our NGO are eligible for 80G tax deduction under the Income Tax Act. An official receipt and tax certificate will be sent to you after your donation.",
+    },
 ];
-
-
 
 const STORY = [
-
     {
-        en: "Children in orphanage care often have dreams of becoming teachers, doctors, artists, and leaders, but financial barriers keep interrupting their schooling.",
-        hi: "अनाथालय देखभाल में बच्चों के अक्सर शिक्षक, डॉक्टर, कलाकार और नेता बनने के सपने होते हैं, लेकिन वित्तीय बाधाएं उनकी पढ़ाई में बाधा डालती हैं।",
+        en: "Children in orphanage care carry a weight that most children never know. Alongside the emotional gap left by the absence of family, they face a very practical barrier — the financial impossibility of consistent schooling. School fees, books, uniforms, examination charges — costs that seem small to many are completely out of reach for an orphanage running on limited resources.",
+        hi: "अनाथालय में रहने वाले बच्चे एक ऐसा बोझ उठाते हैं जिसे अधिकांश बच्चे कभी नहीं जानते। परिवार की अनुपस्थिति से उत्पन्न भावनात्मक कमी के साथ-साथ उन्हें एक व्यावहारिक बाधा का सामना करना पड़ता है — लगातार स्कूली शिक्षा की वित्तीय असंभवता।",
     },
-
     {
-        en: "This education support fundraiser helps cover school enrollment, books, uniforms, and daily learning essentials so children can continue studying with confidence.",
-        hi: "यह शिक्षा सहायता धन संचय अभियान स्कूल नामांकन, किताबें, वर्दी और दैनिक सीखने की जरूरी चीजों को कवर करने में मदद करता है ताकि बच्चे आत्मविश्वास के साथ अध्ययन जारी रख सकें।",
+        en: "Our Education Support Program was built to remove that barrier completely. We do not just pay school fees — we take full responsibility for every aspect of a child's educational journey. From the moment a child joins the orphanage, our team coordinates with the nearest suitable school, handles all paperwork, and ensures the child walks in on the first day with everything they need.",
+        hi: "हमारा शिक्षा सहायता कार्यक्रम उस बाधा को पूरी तरह दूर करने के लिए बनाया गया था। हम केवल स्कूल फीस नहीं देते — हम एक बच्चे की शैक्षणिक यात्रा के हर पहलू की पूरी जिम्मेदारी लेते हैं।",
     },
-
     {
-        en: "With your support, every child gets a fair chance to stay in school, learn consistently, and build a brighter and more secure future.",
-        hi: "आपके समर्थन से, हर बच्चे को स्कूल में रहने, लगातार सीखने और एक उज्जवल और अधिक सुरक्षित भविष्य बनाने का उचित मौका मिलता है।",
+        en: "Beyond the classroom, we invest in what makes education truly transformative. Our weekly tutoring sessions ensure no child falls behind. Our digital literacy programme gives children skills the modern economy demands. And as they grow older, our mentors help them navigate the complex world of higher education, scholarships, and career options — so that when they leave the orphanage at 18, they leave as capable, qualified, and confident young adults.",
+        hi: "कक्षा से परे, हम उसमें निवेश करते हैं जो शिक्षा को वास्तव में परिवर्तनकारी बनाता है। हमारे साप्ताहिक ट्यूटरिंग सत्र सुनिश्चित करते हैं कि कोई बच्चा पीछे न रहे। हमारा डिजिटल साक्षरता कार्यक्रम बच्चों को वे कौशल देता है जिनकी आधुनिक अर्थव्यवस्था में जरूरत है।",
     },
-
+    {
+        en: "Education is not a gift we give children — it is a right we help them reclaim. Every child in our care deserves the same quality of schooling, the same encouragement, and the same shot at a future that any child born into privilege takes for granted. That is what this program is about. That is what your support makes possible.",
+        hi: "शिक्षा कोई उपहार नहीं है जो हम बच्चों को देते हैं — यह एक अधिकार है जिसे हम उन्हें वापस दिलाने में मदद करते हैं। हमारी देखभाल में हर बच्चा समान गुणवत्ता की शिक्षा, समान प्रोत्साहन और उज्ज्वल भविष्य का समान अवसर पाने का हकदार है।",
+    },
 ];
 
-
-
 function OrphanageEducationPage() {
-
     const { language } = useLanguage();
-
     const [storyExpanded, setStoryExpanded] = useState(false);
-
     const [openFaq, setOpenFaq] = useState(null);
-
     const [shareLabel, setShareLabel] = useState("Share");
 
-    const [donationModalType, setDonationModalType] = useState(null);
-
-
-
-    const isDonationModalOpen = donationModalType !== null;
-
-    const sortedDonations = useMemo(
-
-        () => [...DONATIONS].sort((a, b) => b.amount - a.amount),
-
-        []
-
-    );
-
-    const modalDonations =
-
-        donationModalType === "top" ? sortedDonations.slice(0, 10) : sortedDonations;
-
-    const modalTitle = donationModalType === "top" ? translate("topDonations", orphanEducationTranslations, language) : translate("allDonations", orphanEducationTranslations, language);
-
-
-
     useEffect(() => {
-
         window.scrollTo(0, 0);
-
     }, []);
 
-
-
-    useEffect(() => {
-
-        if (!isDonationModalOpen) return undefined;
-
-
-
-        const previousOverflow = document.body.style.overflow;
-
-        document.body.style.overflow = "hidden";
-
-
-
-        const closeOnEscape = (event) => {
-
-            if (event.key === "Escape") {
-
-                setDonationModalType(null);
-
-            }
-
-        };
-
-
-
-        window.addEventListener("keydown", closeOnEscape);
-
-
-
-        return () => {
-
-            document.body.style.overflow = previousOverflow;
-
-            window.removeEventListener("keydown", closeOnEscape);
-
-        };
-
-    }, [isDonationModalOpen]);
-
-
-
-    const formatAmount = (amount) => `Rs ${amount.toLocaleString("en-IN")}`;
-
-
-
     const handleShare = async () => {
-
         const pageUrl = window.location.href;
-
         try {
-
             if (navigator.share) {
-
                 await navigator.share({
-
-                    title: translate("title", orphanEducationTranslations, language),
-
-                    text: translate("supportDesc", orphanEducationTranslations, language),
-
+                    title: "Education Support for Orphanage Children",
+                    text: "Help provide quality education for children in orphanage care. Every donation covers school fees, books, and tutoring.",
                     url: pageUrl,
-
                 });
-
                 return;
-
             }
-
-
-
             if (navigator.clipboard && navigator.clipboard.writeText) {
-
                 await navigator.clipboard.writeText(pageUrl);
-
-                setShareLabel(translate("linkCopied", orphanEducationTranslations, language));
-
-                window.setTimeout(() => setShareLabel(translate("share", orphanEducationTranslations, language)), 1600);
-
+                setShareLabel("Link Copied");
+                window.setTimeout(() => setShareLabel("Share"), 1600);
             }
-
         } catch {
-
-            setShareLabel(translate("share", orphanEducationTranslations, language));
-
+            setShareLabel("Share");
         }
-
     };
 
-
-
     return (
-
         <section className="education-detail-page">
-
             <div className="education-detail-shell">
-
                 <div className="education-content-grid">
 
-                    <aside className="education-side-stack">
-
-                        <article className="campaign-card">
-
-                            <div className="campaign-image-wrap">
-
-                                <img src={orphanEducation} alt="Children receiving education support" />
-
-                                <span className="campaign-chip">Tax Benefits Available</span>
-
-                            </div>
-
-
-
-                            <div className="campaign-body">
-
-                                <h1>Help provide education support for children in orphanage care</h1>
-
-                                <p className="campaign-org">by Guardian of Angels Trust</p>
-
-
-
-                                <div className="campaign-amounts">
-
-                                    <strong>Rs 2,61,000</strong>
-
-                                    <span>raised of Rs 5,00,000 goal</span>
-
-                                </div>
-
-
-
-                                <div className="campaign-progress" aria-hidden="true">
-
-                                    <span className="campaign-progress-fill" style={{ width: "52%" }} />
-
-                                </div>
-
-
-
-                                <div className="campaign-stats">
-
-                                    <div>
-
-                                        <strong>124</strong>
-
-                                        <span>Donors</span>
-
-                                    </div>
-
-                                    <div>
-
-                                        <strong>14</strong>
-
-                                        <span>Days left</span>
-
-                                    </div>
-
-                                    <div>
-
-                                        <strong>52%</strong>
-
-                                        <span>Funded</span>
-
-                                    </div>
-
-                                </div>
-
-
-
-                                <div className="campaign-actions">
-
-                                    <Link to="/donate" state={{ serviceImage: orphanEducation, serviceTitle: "Help provide education support for children in orphanage care" }} className="campaign-btn campaign-btn-primary">
-
-                                        Help Now
-
-                                    </Link>
-
-                                    <button
-
-                                        type="button"
-
-                                        className="campaign-btn campaign-btn-secondary"
-
-                                        onClick={handleShare}
-
-                                    >
-
-                                        {shareLabel}
-
-                                    </button>
-
-                                </div>
-
-                            </div>
-
-                        </article>
-
-                    </aside>
-
-
-
+                    {/* LEFT — MAIN CONTENT */}
                     <div className="education-main-stack">
 
+                        {/* Hero Banner */}
+                        <section className="education-hero-card">
+                            <div className="education-hero-img-wrap">
+                                <img src={orphanEducation} alt="Orphanage Education Support Program" />
+                                <div className="education-hero-overlay">
+                                    <span className="edu-badge">Orphanage Program</span>
+                                    <h1>Education Support Program</h1>
+                                    <p>We ensure every orphaned child stays in school — covering fees, books, uniforms, tutoring, and career guidance so no child's future is left to chance</p>
+                                </div>
+                            </div>
+                        </section>
+
+                        {/* Journey Photo Strip */}
+                        <section className="education-section-card edu-journey-section">
+                            <h2>A Child's Educational Journey</h2>
+                            <p className="edu-section-desc">From a child with no school access to a confident young adult ready for the world — this is the journey our Education Support Program makes possible, one step at a time.</p>
+                            <div className="edu-journey-grid">
+                                <div className="edu-journey-item">
+                                    <img src={eduImg1} alt="Child enrolling in school" />
+                                    <div className="edu-journey-caption">
+                                        <span className="edu-journey-step">Step 1</span>
+                                        <strong>School Enrollment</strong>
+                                        <p>We handle admission paperwork, pay all fees, and provide uniform and stationery</p>
+                                    </div>
+                                </div>
+                                <div className="edu-journey-item">
+                                    <img src={eduImg2} alt="Child studying with tutor" />
+                                    <div className="edu-journey-caption">
+                                        <span className="edu-journey-step">Step 2</span>
+                                        <strong>Tutoring & Learning</strong>
+                                        <p>Dedicated tutors visit weekly for individual coaching and doubt resolution</p>
+                                    </div>
+                                </div>
+                                <div className="edu-journey-item">
+                                    <img src={eduImg3} alt="Child using computer" />
+                                    <div className="edu-journey-caption">
+                                        <span className="edu-journey-step">Step 3</span>
+                                        <strong>Digital Skills</strong>
+                                        <p>Children learn computers and internet skills to prepare for the modern world</p>
+                                    </div>
+                                </div>
+                                <div className="edu-journey-item">
+                                    <img src={eduImg4} alt="Child graduating" />
+                                    <div className="edu-journey-caption">
+                                        <span className="edu-journey-step">Step 4</span>
+                                        <strong>Future Ready</strong>
+                                        <p>Career mentors guide students toward higher education, scholarships, and careers</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </section>
+
+                        {/* Story */}
                         <section className="education-section-card">
-
-                            <h2>{translate("story", orphanEducationTranslations, language)}</h2>
-
+                            <h2>{language === "hi" ? "हमारी पहल" : "Our Initiative"}</h2>
                             <div className={`story-content ${storyExpanded ? "expanded" : ""}`}>
-
-                                {STORY.map((paragraph, index) => (
-
-                                    <p key={index}>{language === "en" ? paragraph.en : paragraph.hi}</p>
-
+                                {STORY.map((item, idx) => (
+                                    <p key={idx}>{language === "hi" ? item.hi : item.en}</p>
                                 ))}
-
                             </div>
-
                             <button
-
                                 type="button"
-
                                 className="text-action"
-
-                                onClick={() => setStoryExpanded((current) => !current)}
-
+                                onClick={() => setStoryExpanded((c) => !c)}
                             >
-
                                 {storyExpanded ? "Read Less" : "Read More"}
-
                             </button>
-
                         </section>
 
-
-
+                        {/* Goals */}
                         <section className="education-section-card">
-
-                            <div className="section-head">
-
-                                <h2>Recent Donations</h2>
-
-                                <span>114 Donations</span>
-
-                            </div>
-
-
-
-                            <div className="donation-list">
-
-                                {sortedDonations.slice(0, 3).map((donation) => (
-
-                                    <article key={`${donation.name}-${donation.amount}`} className="donation-item">
-
-                                        <FaUserCircle aria-hidden="true" />
-
-                                        <div>
-
-                                            <h3>{donation.name}</h3>
-
-                                            <p>{formatAmount(donation.amount)}</p>
-
-                                        </div>
-
-                                        <span>{donation.note}</span>
-
-                                    </article>
-
+                            <h2>Our Impact So Far</h2>
+                            <div className="edu-goals-grid">
+                                {GOALS.map((g) => (
+                                    <div key={g.label} className="edu-goal-item">
+                                        <strong>{g.number}</strong>
+                                        <span>{g.label}</span>
+                                    </div>
                                 ))}
-
                             </div>
-
-
-
-                            <div className="section-links">
-
-                                <button type="button" onClick={() => setDonationModalType("top")}>
-
-                                    View Top Donations
-
-                                </button>
-
-                                <button type="button" onClick={() => setDonationModalType("all")}>
-
-                                    View All Donations
-
-                                </button>
-
-                            </div>
-
                         </section>
 
-
-
-                        <section className="support-panel">
-
-                            <h2>Support the fundraiser</h2>
-
-                            <p>Every small share and donation counts.</p>
-
-                            <div className="support-actions">
-
-                                <Link to="/donate" state={{ serviceImage: orphanEducation, serviceTitle: "Help provide education support for children in orphanage care" }} className="campaign-btn campaign-btn-primary">
-
-                                    Help Now
-
-                                </Link>
-
-                                <button
-
-                                    type="button"
-
-                                    className="campaign-btn campaign-btn-secondary"
-
-                                    onClick={handleShare}
-
-                                >
-
-                                    Share
-
-                                </button>
-
-                            </div>
-
-                        </section>
-
-
-
+                        {/* Benefits */}
                         <section className="education-section-card">
-
-                            <h2>Organizers</h2>
-
-                            <div className="organizer-list">
-
-                                <article className="organizer-item">
-
-                                    <span className="organizer-logo">GA</span>
-
-                                    <div>
-
-                                        <h3>Guardian of Angels Trust</h3>
-
-                                        <p>Verified Charity</p>
-
-                                    </div>
-
-                                </article>
-
-                                <article className="organizer-item">
-
-                                    <span className="organizer-logo organizer-logo-alt">g</span>
-
-                                    <div>
-
-                                        <h3>Give</h3>
-
-                                        <p>Organizer</p>
-
-                                    </div>
-
-                                </article>
-
+                            <h2>What Our Program Provides</h2>
+                            <p className="edu-section-desc">Education is more than a classroom. Here is the full support system we build around every child — from the day they enroll to the day they graduate:</p>
+                            <div className="edu-benefits-grid">
+                                {EDU_BENEFITS.map((b) => (
+                                    <article key={b.title} className="edu-benefit-card">
+                                        <div className="edu-benefit-icon">
+                                            <b.icon aria-hidden="true" />
+                                        </div>
+                                        <div>
+                                            <h3>{b.title}</h3>
+                                            <p>{b.desc}</p>
+                                        </div>
+                                    </article>
+                                ))}
                             </div>
-
                         </section>
 
+                        {/* What We Provide */}
+                        <section className="education-section-card">
+                            <h2>Everything We Cover</h2>
+                            <p className="edu-section-desc">Our support goes far beyond school fees. Here is the complete list of what every child in our program receives — from day one of enrollment to the day they step into adulthood:</p>
+                            <ul className="edu-provide-list">
+                                {WHAT_WE_PROVIDE.map((item) => (
+                                    <li key={item}>
+                                        <FaCheckCircle aria-hidden="true" className="edu-check-icon" />
+                                        <span>{item}</span>
+                                    </li>
+                                ))}
+                            </ul>
+                        </section>
 
-
+                        {/* Trust Strip */}
                         <section className="trust-strip">
-
-                            <h2>India&apos;s trusted online donation platform</h2>
-
+                            <h2>Why Trust Us</h2>
                             <div className="trust-grid">
-
                                 <article>
-
                                     <FaShieldAlt aria-hidden="true" />
-
                                     <div>
-
-                                        <h3>Easy</h3>
-
-                                        <p>Donate quickly and securely in a few steps.</p>
-
+                                        <h3>Verified Program</h3>
+                                        <p>Every child is independently verified and enrolled through our structured process.</p>
                                     </div>
-
                                 </article>
-
                                 <article>
-
                                     <FaHandHoldingHeart aria-hidden="true" />
-
                                     <div>
-
-                                        <h3>Impactful</h3>
-
-                                        <p>Your support helps children stay in school and continue learning.</p>
-
+                                        <h3>Real Impact</h3>
+                                        <p>Your donation directly funds school fees, books, and tutoring for a real child.</p>
                                     </div>
-
                                 </article>
-
                                 <article>
-
                                     <FaRegClock aria-hidden="true" />
-
                                     <div>
-
-                                        <h3>Credible</h3>
-
-                                        <p>Campaign records and charity details are maintained clearly.</p>
-
+                                        <h3>Long-Term Commitment</h3>
+                                        <p>We support each child throughout their entire school journey — not just for one year.</p>
                                     </div>
-
                                 </article>
-
                             </div>
-
                         </section>
 
-
-
-                        <section className="education-section-card faq-section">
-
-                            <h2>FAQs</h2>
-
-                            <p className="faq-intro">Everything you need to know before you donate.</p>
-
-
-
-                            <div className="faq-list">
-
-                                {FAQS.map((faq, index) => {
-
-                                    const isOpen = openFaq === index;
-
-                                    return (
-
-                                        <article key={index} className={`faq-item ${isOpen ? "open" : ""}`}>
-
-                                            <button
-
-                                                type="button"
-
-                                                className="faq-question"
-
-                                                onClick={() => setOpenFaq(isOpen ? null : index)}
-
-                                                aria-expanded={isOpen}
-
-                                            >
-
-                                                <span>{language === "en" ? faq.question : faq.questionHi}</span>
-
-                                                <FaChevronDown aria-hidden="true" />
-
-                                            </button>
-
-                                            {isOpen && <p className="faq-answer">{language === "en" ? faq.answer : faq.answerHi}</p>}
-
-                                        </article>
-
-                                    );
-
-                                })}
-
+                        {/* Impact CTA */}
+                        <section className="education-section-card edu-impact-cta">
+                            <div className="edu-impact-cta-content">
+                                <FaUsers className="edu-impact-cta-icon" aria-hidden="true" />
+                                <div>
+                                    <h2>Make a Real Difference Today</h2>
+                                    <p>₹2,000 covers one child's complete school expenses for a full month — fees, books, uniform, and tutoring. Your donation goes directly to a child in our care. Every rupee is accounted for, and you will receive an 80G tax exemption certificate for your contribution.</p>
+                                </div>
                             </div>
-
-                        </section>
-
-                    </div>
-
-                </div>
-
-            </div>
-
-
-
-            {isDonationModalOpen && (
-
-                <div
-
-                    className="donation-modal-backdrop"
-
-                    role="presentation"
-
-                    onClick={() => setDonationModalType(null)}
-
-                >
-
-                    <div
-
-                        className="donation-modal"
-
-                        role="dialog"
-
-                        aria-modal="true"
-
-                        aria-label={modalTitle}
-
-                        onClick={(event) => event.stopPropagation()}
-
-                    >
-
-                        <div className="donation-modal-head">
-
-                            <h3>{modalTitle}</h3>
-
-                            <button
-
-                                type="button"
-
-                                className="donation-modal-close"
-
-                                onClick={() => setDonationModalType(null)}
-
-                                aria-label="Close donations popup"
-
+                            <Link
+                                to="/donate"
+                                state={{ serviceImage: orphanEducation, serviceTitle: "Education Support for Orphanage Children" }}
+                                className="campaign-btn campaign-btn-primary edu-impact-cta-btn"
                             >
+                                Help a Child Learn
+                            </Link>
+                        </section>
 
-                                x
-
-                            </button>
-
-                        </div>
-
-                        <p className="donation-modal-subtitle">
-
-                            Showing {modalDonations.length} contributions to this fundraiser
-
-                        </p>
-
-                        <div className="donation-modal-list">
-
-                            {modalDonations.map((donation) => (
-
-                                <article
-
-                                    key={`${donation.name}-${donation.amount}-modal`}
-
-                                    className="donation-item donation-item-modal"
-
-                                >
-
-                                    <FaUserCircle aria-hidden="true" />
-
-                                    <div>
-
-                                        <h3>{donation.name}</h3>
-
-                                        <p>{formatAmount(donation.amount)}</p>
-
-                                    </div>
-
-                                    <span>{donation.note}</span>
-
-                                </article>
-
-                            ))}
-
-                        </div>
+                        {/* FAQs */}
+                        <section className="education-section-card faq-section">
+                            <h2>Frequently Asked Questions</h2>
+                            <p className="faq-intro">Everything you need to know about how we support children's education.</p>
+                            <div className="faq-list">
+                                {FAQS.map((faq, index) => {
+                                    const isOpen = openFaq === index;
+                                    return (
+                                        <article key={index} className={`faq-item ${isOpen ? "open" : ""}`}>
+                                            <button
+                                                type="button"
+                                                className="faq-question"
+                                                onClick={() => setOpenFaq(isOpen ? null : index)}
+                                                aria-expanded={isOpen}
+                                            >
+                                                <span>{faq.question}</span>
+                                                <FaChevronDown aria-hidden="true" />
+                                            </button>
+                                            {isOpen && <p className="faq-answer">{faq.answer}</p>}
+                                        </article>
+                                    );
+                                })}
+                            </div>
+                        </section>
 
                     </div>
 
+                    {/* RIGHT — STICKY CAMPAIGN CARD */}
+                    <aside className="education-side-stack">
+                        <article className="campaign-card">
+                            <div className="campaign-image-wrap">
+                                <img src={eduImg5} alt="Education Support for Children" />
+                                <span className="campaign-chip">Orphanage Education</span>
+                            </div>
+
+                            <div className="campaign-body">
+                                <h1>Help provide education support for children in orphanage care</h1>
+                                <p className="campaign-org">Guardian of Angels Trust</p>
+
+                                <div className="edu-premium-highlight">
+                                    <FaBookOpen aria-hidden="true" />
+                                    <span>₹2,000 covers <strong>1 child's full monthly education</strong></span>
+                                </div>
+
+                                <div className="campaign-amounts">
+                                    <strong>₹2,61,000</strong>
+                                    <span>raised of ₹5,00,000 goal</span>
+                                </div>
+
+                                <div className="campaign-progress" aria-hidden="true">
+                                    <span className="campaign-progress-fill" style={{ width: "52%" }} />
+                                </div>
+
+                                <div className="campaign-stats">
+                                    <div>
+                                        <strong>124</strong>
+                                        <span>Donors</span>
+                                    </div>
+                                    <div>
+                                        <strong>200+</strong>
+                                        <span>Children</span>
+                                    </div>
+                                    <div>
+                                        <strong>52%</strong>
+                                        <span>Funded</span>
+                                    </div>
+                                </div>
+
+                                <div className="edu-impact-note">
+                                    <FaStar aria-hidden="true" />
+                                    <span>80G tax exemption on all donations</span>
+                                </div>
+
+                                <div className="campaign-actions">
+                                    <Link
+                                        to="/donate"
+                                        state={{ serviceImage: orphanEducation, serviceTitle: "Education Support for Orphanage Children" }}
+                                        className="campaign-btn campaign-btn-primary"
+                                    >
+                                        Help Now
+                                    </Link>
+                                    <button
+                                        type="button"
+                                        className="campaign-btn campaign-btn-secondary"
+                                        onClick={handleShare}
+                                    >
+                                        {shareLabel}
+                                    </button>
+                                </div>
+                            </div>
+                        </article>
+
+                        <article className="edu-how-it-works-card">
+                            <h3>How It Works</h3>
+                            <ol className="edu-steps-list">
+                                <li>
+                                    <span className="edu-step-num">1</span>
+                                    <div>
+                                        <strong>Child Assessment</strong>
+                                        <p>We assess each child's academic level, grade, and individual learning needs</p>
+                                    </div>
+                                </li>
+                                <li>
+                                    <span className="edu-step-num">2</span>
+                                    <div>
+                                        <strong>School Admission</strong>
+                                        <p>We handle all paperwork, fees, uniform, and stationery for enrollment</p>
+                                    </div>
+                                </li>
+                                <li>
+                                    <span className="edu-step-num">3</span>
+                                    <div>
+                                        <strong>Ongoing Tutoring</strong>
+                                        <p>Dedicated tutors provide weekly coaching and track monthly progress</p>
+                                    </div>
+                                </li>
+                                <li>
+                                    <span className="edu-step-num">4</span>
+                                    <div>
+                                        <strong>Digital & Life Skills</strong>
+                                        <p>Children learn computers, internet literacy, and soft skills alongside academics</p>
+                                    </div>
+                                </li>
+                                <li>
+                                    <span className="edu-step-num">5</span>
+                                    <div>
+                                        <strong>Career Guidance</strong>
+                                        <p>Mentors guide older students toward higher education and career opportunities</p>
+                                    </div>
+                                </li>
+                            </ol>
+                        </article>
+                    </aside>
+
                 </div>
-
-            )}
-
+            </div>
         </section>
-
     );
-
 }
-
-
 
 export default OrphanageEducationPage;

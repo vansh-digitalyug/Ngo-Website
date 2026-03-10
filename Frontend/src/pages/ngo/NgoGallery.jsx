@@ -91,11 +91,12 @@ export default function NgoGallery() {
       const file = uploadForm.file;
       const uuid = crypto.randomUUID();
 
-      // Step 1 — get presigned S3 upload URL (scoped to this NGO's S3 folder)
-      const urlRes = await fetch(
-        `${API_BASE_URL}/api/ngo-dashboard/gallery/upload-url?fileName=${encodeURIComponent(uuid)}&fileType=${encodeURIComponent(file.type)}`,
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
+      // Step 1 — get presigned S3 upload URL via dedicated S3 API
+      const urlRes = await fetch(`${API_BASE_URL}/api/s3/generate-upload-url`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ fileName: uuid, fileType: file.type, location: `${ngoData.ngoS3Id}/gallery` }),
+      });
       if (!urlRes.ok) { const e = await urlRes.json(); throw new Error(e.message || 'Failed to get upload URL'); }
       const { data: { uploadUrl, key } } = await urlRes.json();
 

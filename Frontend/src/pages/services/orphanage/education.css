@@ -1,695 +1,768 @@
-/* education.css - Green & Light Green Theme */
+/* education.css - Green & Light Green Theme (matches Kanyadan design) */
 
 .education-detail-page {
-  /* Soft, very light mint/greenish off-white background */
-  background: #f4f9f5;
-  color: #1f2937;
-  min-height: 100%;
-  padding: 20px 12px 56px;
+    background: #f4f9f5;
+    color: #1f2937;
+    min-height: 100%;
+    padding: 20px 12px 56px;
 }
 
 .education-detail-shell {
-  max-width: 760px;
-  margin: 0 auto;
+    max-width: 760px;
+    margin: 0 auto;
 }
 
 .education-content-grid,
 .education-side-stack,
 .education-main-stack {
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
 }
 
 .campaign-card,
 .education-section-card,
 .support-panel,
 .trust-strip {
-  background: #ffffff;
-  border: 1px solid #e5e7eb;
-  border-radius: 14px;
-  overflow: hidden;
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 14px;
+    overflow: hidden;
 }
 
 .campaign-image-wrap {
-  position: relative;
-  background: #eaf5ec;
+    position: relative;
+    background: #eaf5ec;
 }
 
 .campaign-image-wrap img {
-  width: 100%;
-  height: clamp(220px, 45vw, 340px);
-  object-fit: cover;
-  object-position: center;
-  display: block;
+    width: 100%;
+    height: auto;
+    aspect-ratio: 16 / 9;
+    object-fit: cover;
+    object-position: center center;
+    display: block;
 }
 
-/* Light Green theme for the chip */
 .campaign-chip {
-  position: absolute;
-  left: 12px;
-  bottom: 12px;
-  font-size: 0.7rem;
-  font-weight: 700;
-  color: #166534; /* Dark green text */
-  background: #dcfce7; /* Light green bg */
-  border: 1px solid #bbf7d0; /* Soft green border */
-  border-radius: 999px;
-  padding: 6px 10px;
+    position: absolute;
+    left: 12px;
+    bottom: 12px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: #166534;
+    background: #dcfce7;
+    border: 1px solid #bbf7d0;
+    border-radius: 999px;
+    padding: 6px 10px;
 }
 
 .campaign-body {
-  padding: 16px;
+    padding: 16px;
 }
 
 .campaign-body h1 {
-  margin: 0;
-  font-size: clamp(1.2rem, 2.6vw, 1.65rem);
-  line-height: 1.35;
+    margin: 0;
+    font-size: clamp(1.2rem, 2.6vw, 1.65rem);
+    line-height: 1.35;
 }
 
 .campaign-org {
-  margin: 8px 0 14px;
-  color: #6b7280;
-  font-size: 0.95rem;
+    margin: 8px 0 14px;
+    color: #6b7280;
+    font-size: 0.95rem;
 }
 
 .campaign-amounts {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  margin-bottom: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    margin-bottom: 10px;
 }
 
 .campaign-amounts strong {
-  font-size: 1.2rem;
-  color: #111827;
+    font-size: 1.2rem;
+    color: #111827;
 }
 
 .campaign-amounts span {
-  font-size: 0.86rem;
-  color: #6b7280;
+    font-size: 0.86rem;
+    color: #6b7280;
 }
 
 .campaign-progress {
-  width: 100%;
-  height: 8px;
-  border-radius: 999px;
-  background: #e5e7eb;
-  overflow: hidden;
+    width: 100%;
+    height: 8px;
+    border-radius: 999px;
+    background: #e5e7eb;
+    overflow: hidden;
 }
 
-/* Green gradient for progress bar */
 .campaign-progress-fill {
-  display: block;
-  height: 100%;
-  border-radius: inherit;
-  background: linear-gradient(90deg, #16a34a, #4ade80);
+    display: block;
+    height: 100%;
+    border-radius: inherit;
+    background: linear-gradient(90deg, #16a34a, #4ade80);
 }
 
 .campaign-stats {
-  margin-top: 12px;
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 10px;
+    margin-top: 12px;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 10px;
 }
 
 .campaign-stats div {
-  background: #f9fafb;
-  border: 1px solid #f3f4f6;
-  border-radius: 10px;
-  padding: 10px;
-  text-align: center;
+    background: #f9fafb;
+    border: 1px solid #f3f4f6;
+    border-radius: 10px;
+    padding: 10px;
+    text-align: center;
 }
 
 .campaign-stats strong {
-  display: block;
-  font-size: 1rem;
+    display: block;
+    font-size: 1rem;
 }
 
 .campaign-stats span {
-  display: block;
-  color: #6b7280;
-  font-size: 0.78rem;
-  margin-top: 3px;
+    display: block;
+    color: #6b7280;
+    font-size: 0.78rem;
+    margin-top: 3px;
 }
 
 .campaign-actions {
-  margin-top: 14px;
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px;
+    margin-top: 14px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
 }
 
 .campaign-btn {
-  min-height: 44px;
-  border-radius: 8px;
-  border: 1px solid transparent;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  text-decoration: none;
-  font-weight: 700;
-  font-size: 0.95rem;
-  cursor: pointer;
-  transition: background-color 0.2s ease;
+    min-height: 44px;
+    border-radius: 8px;
+    border: 1px solid transparent;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
+    font-weight: 700;
+    font-size: 0.95rem;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
 }
 
-/* Primary button to primary green */
 .campaign-btn-primary {
-  background: #16a34a;
-  color: #ffffff;
+    background: #16a34a;
+    color: #ffffff;
 }
 
 .campaign-btn-primary:hover {
-  background: #15803d; /* Darker green on hover */
+    background: #15803d;
 }
 
 .campaign-btn-secondary {
-  background: #ffffff;
-  color: #374151;
-  border-color: #d1d5db;
+    background: #ffffff;
+    color: #374151;
+    border-color: #d1d5db;
 }
 
 .campaign-btn-secondary:hover {
-  background: #f3f4f6;
+    background: #f3f4f6;
 }
 
 .education-section-card {
-  padding: 16px;
+    padding: 16px;
 }
 
 .education-section-card h2,
 .support-panel h2,
 .trust-strip h2 {
-  margin: 0;
-  font-size: 1.08rem;
+    margin: 0;
+    font-size: 1.08rem;
 }
 
-.donate-via-grid {
-  margin-top: 12px;
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 8px;
-}
-
-.donate-via-item {
-  border: 1px solid #e5e7eb;
-  border-radius: 8px;
-  padding: 10px 8px;
-  background: #f9fafb;
-}
-
-.donate-via-item h3 {
-  margin: 0;
-  font-size: 0.82rem;
-  font-weight: 700;
-  color: #1f2937;
-}
-
-.donate-via-item p {
-  margin: 6px 0 0;
-  font-size: 0.76rem;
-  color: #16a34a; /* primary green text */
-  font-weight: 700;
-}
-
+/* Story */
 .story-content {
-  margin-top: 10px;
-  max-height: 122px;
-  overflow: hidden;
-  position: relative;
+    margin-top: 10px;
+    max-height: 122px;
+    overflow: hidden;
+    position: relative;
 }
 
 .story-content::after {
-  content: "";
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  height: 44px;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0), #ffffff);
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 44px;
+    background: linear-gradient(180deg, rgba(255,255,255,0), #ffffff);
 }
 
 .story-content.expanded {
-  max-height: none;
+    max-height: none;
 }
 
 .story-content.expanded::after {
-  content: none;
+    content: none;
 }
 
 .story-content p {
-  margin: 0 0 10px;
-  color: #4b5563;
-  line-height: 1.55;
-  font-size: 0.92rem;
+    margin: 0 0 10px;
+    color: #4b5563;
+    line-height: 1.55;
+    font-size: 0.92rem;
 }
 
-/* Text links to green */
 .text-action {
-  margin-top: 6px;
-  border: 0;
-  padding: 0;
-  background: transparent;
-  color: #16a34a;
-  font-weight: 700;
-  font-size: 0.88rem;
-  cursor: pointer;
+    margin-top: 6px;
+    border: 0;
+    padding: 0;
+    background: transparent;
+    color: #16a34a;
+    font-weight: 700;
+    font-size: 0.88rem;
+    cursor: pointer;
 }
 
 .text-action:hover {
-  color: #15803d;
-}
-
-.section-head {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 8px;
-}
-
-.section-head span {
-  font-size: 0.82rem;
-  color: #6b7280;
-}
-
-.donation-list {
-  margin-top: 10px;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.donation-item {
-  display: grid;
-  grid-template-columns: 28px minmax(0, 1fr) auto;
-  align-items: center;
-  gap: 10px;
-  padding: 10px;
-  border: 1px solid #f3f4f6;
-  border-radius: 10px;
-  background: #f9fafb;
-}
-
-/* User icon to primary green */
-.donation-item svg {
-  font-size: 1.3rem;
-  color: #16a34a;
-}
-
-.donation-item h3 {
-  margin: 0;
-  font-size: 0.9rem;
-}
-
-.donation-item p {
-  margin: 2px 0 0;
-  font-size: 0.8rem;
-  color: #6b7280;
-}
-
-/* Donation note pill - Light Green */
-.donation-item span {
-  border: 1px solid #bbf7d0;
-  background: #dcfce7;
-  color: #166534;
-  border-radius: 999px;
-  padding: 4px 8px;
-  font-size: 0.72rem;
-  font-weight: 700;
-  white-space: nowrap;
-}
-
-.section-links {
-  display: flex;
-  gap: 14px;
-  margin-top: 12px;
-}
-
-.section-links button {
-  padding: 0;
-  border: 0;
-  background: transparent;
-  color: #16a34a;
-  font-size: 0.83rem;
-  font-weight: 700;
-  text-decoration: none;
-  cursor: pointer;
-}
-
-.section-links button:hover {
-  color: #15803d;
-}
-
-/* Support panel background to very soft green */
-.support-panel {
-  padding: 16px;
-  background: #f0fdf4;
-  border-color: #dcfce7;
-}
-
-.support-panel p {
-  margin: 8px 0 12px;
-  color: #4b5563;
-  font-size: 0.9rem;
-}
-
-.support-actions {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 8px;
-}
-
-.organizer-list {
-  margin-top: 12px;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.organizer-item {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-/* Organizer logo bg */
-.organizer-logo {
-  width: 40px;
-  height: 40px;
-  border-radius: 999px;
-  background: #16a34a;
-  color: #ffffff;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 0.88rem;
-  font-weight: 800;
-}
-
-.organizer-logo-alt {
-  background: #22c55e;
-  font-size: 1rem;
-  text-transform: lowercase;
-}
-
-.organizer-item h3 {
-  margin: 0;
-  font-size: 0.92rem;
-}
-
-.organizer-item p {
-  margin: 2px 0 0;
-  color: #6b7280;
-  font-size: 0.82rem;
-}
-
-.fundraiser-panel p {
-  margin: 10px 0 14px;
-  color: #4b5563;
-  line-height: 1.55;
-  font-size: 0.91rem;
-}
-
-.fundraiser-link {
-  min-height: 44px;
-  border: 1px solid #d1d5db;
-  border-radius: 8px;
-  display: inline-flex;
-  width: 100%;
-  align-items: center;
-  justify-content: center;
-  text-decoration: none;
-  color: #1f2937;
-  font-weight: 700;
-  font-size: 0.9rem;
+    color: #15803d;
 }
 
 /* Trust strip */
 .trust-strip {
-  padding: 16px;
-  background: #f9fafb;
-  border-color: #e5e7eb;
+    padding: 16px;
+    background: #f9fafb;
+    border-color: #e5e7eb;
 }
 
 .trust-grid {
-  margin-top: 12px;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
+    margin-top: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
 }
 
 .trust-grid article {
-  display: grid;
-  grid-template-columns: 22px minmax(0, 1fr);
-  gap: 10px;
-  align-items: start;
+    display: grid;
+    grid-template-columns: 22px minmax(0, 1fr);
+    gap: 10px;
+    align-items: start;
 }
 
 .trust-grid svg {
-  margin-top: 2px;
-  color: #4b5563;
+    margin-top: 2px;
+    color: #4b5563;
 }
 
 .trust-grid h3 {
-  margin: 0;
-  font-size: 0.9rem;
+    margin: 0;
+    font-size: 0.9rem;
 }
 
 .trust-grid p {
-  margin: 2px 0 0;
-  font-size: 0.82rem;
-  color: #6b7280;
+    margin: 2px 0 0;
+    font-size: 0.82rem;
+    color: #6b7280;
 }
 
+/* FAQ */
 .faq-section {
-  padding-bottom: 10px;
+    padding-bottom: 10px;
 }
 
 .faq-intro {
-  margin: 8px 0 12px;
-  color: #6b7280;
-  font-size: 0.9rem;
+    margin: 8px 0 12px;
+    color: #6b7280;
+    font-size: 0.9rem;
 }
 
 .faq-list {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
 }
 
 .faq-item {
-  border: 1px solid #e5e7eb;
-  border-radius: 10px;
-  overflow: hidden;
-  background: #f9fafb;
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+    overflow: hidden;
+    background: #f9fafb;
 }
 
 .faq-question {
-  width: 100%;
-  border: 0;
-  background: transparent;
-  padding: 12px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-  text-align: left;
-  font-weight: 600;
-  color: #1f2937;
-  cursor: pointer;
+    width: 100%;
+    border: 0;
+    background: transparent;
+    padding: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    text-align: left;
+    font-weight: 600;
+    color: #1f2937;
+    cursor: pointer;
 }
 
 .faq-question span {
-  font-size: 0.88rem;
-  line-height: 1.4;
+    font-size: 0.88rem;
+    line-height: 1.4;
 }
 
 .faq-question svg {
-  flex-shrink: 0;
-  font-size: 0.8rem;
-  transition: transform 0.2s ease;
+    flex-shrink: 0;
+    font-size: 0.8rem;
+    transition: transform 0.2s ease;
 }
 
 .faq-item.open .faq-question svg {
-  transform: rotate(180deg);
+    transform: rotate(180deg);
 }
 
 .faq-answer {
-  margin: 0;
-  border-top: 1px solid #f3f4f6;
-  padding: 10px 12px;
-  color: #4b5563;
-  line-height: 1.55;
-  font-size: 0.86rem;
+    margin: 0;
+    border-top: 1px solid #f3f4f6;
+    padding: 10px 12px;
+    color: #4b5563;
+    line-height: 1.55;
+    font-size: 0.86rem;
 }
 
-/* Modal styles */
-.donation-modal-backdrop {
-  position: fixed;
-  inset: 0;
-  z-index: 1200;
-  background: rgba(17, 24, 39, 0.6);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 16px;
+/* ── Hero Card ── */
+.education-hero-card {
+    border-radius: 14px;
+    overflow: hidden;
+    border: 1px solid #e5e7eb;
 }
 
-.donation-modal {
-  width: min(620px, 100%);
-  max-height: min(86vh, 780px);
-  background: #ffffff;
-  border-radius: 14px;
-  border: 1px solid #e5e7eb;
-  box-shadow: 0 18px 42px rgba(17, 24, 39, 0.24);
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
+.education-hero-img-wrap {
+    position: relative;
 }
 
-.donation-modal-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-  padding: 14px 16px;
-  border-bottom: 1px solid #f3f4f6;
+.education-hero-img-wrap img {
+    width: 100%;
+    height: clamp(220px, 40vw, 380px);
+    object-fit: cover;
+    object-position: center top;
+    display: block;
 }
 
-.donation-modal-head h3 {
-  margin: 0;
-  font-size: 1.05rem;
+.education-hero-overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to top, rgba(0,0,0,0.75) 50%, transparent 100%);
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    padding: 24px 20px;
 }
 
-.donation-modal-close {
-  width: 32px;
-  height: 32px;
-  border: 1px solid #d1d5db;
-  border-radius: 8px;
-  background: #ffffff;
-  color: #374151;
-  cursor: pointer;
+.edu-badge {
+    display: inline-block;
+    background: #16a34a;
+    color: #fff;
+    font-size: 0.72rem;
+    font-weight: 700;
+    padding: 4px 12px;
+    border-radius: 999px;
+    margin-bottom: 10px;
+    width: fit-content;
 }
 
-.donation-modal-subtitle {
-  margin: 0;
-  padding: 10px 16px;
-  font-size: 0.86rem;
-  color: #6b7280;
-  border-bottom: 1px solid #f3f4f6;
+.education-hero-overlay h1 {
+    margin: 0 0 6px;
+    font-size: clamp(1.4rem, 3.5vw, 2rem);
+    color: #ffffff;
+    line-height: 1.2;
 }
 
-.donation-modal-list {
-  padding: 12px 16px 16px;
-  overflow-y: auto;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
+.education-hero-overlay p {
+    margin: 0;
+    font-size: 0.92rem;
+    color: rgba(255,255,255,0.85);
+    line-height: 1.5;
 }
 
-.donation-item-modal {
-  background: #f9fafb;
-}
-
-/* Responsive Rules */
-@media (min-width: 768px) {
-  .education-detail-page {
-    padding: 28px 18px 64px;
-  }
-
-  .campaign-body,
-  .education-section-card,
-  .support-panel,
-  .trust-strip {
-    padding: 20px;
-  }
-
-  .campaign-body h1 {
-    font-size: 1.75rem;
-  }
-
-  .campaign-actions,
-  .support-actions {
-    grid-template-columns: 1fr 1fr;
-  }
-
-  .donate-via-item {
-    padding: 12px;
-  }
-
-  .donate-via-item h3 {
+/* ── Section desc ── */
+.edu-section-desc {
+    margin: 8px 0 14px;
+    color: #6b7280;
     font-size: 0.9rem;
-  }
+    line-height: 1.5;
+}
 
-  .donate-via-item p {
-    font-size: 0.82rem;
-  }
+/* ── Goals Grid ── */
+.edu-goals-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+    margin-top: 14px;
+}
 
-  .story-content {
-    max-height: 146px;
-  }
+.edu-goal-item {
+    background: #f0fdf4;
+    border: 1px solid #bbf7d0;
+    border-radius: 10px;
+    padding: 14px 12px;
+    text-align: center;
+}
+
+.edu-goal-item strong {
+    display: block;
+    font-size: 1.4rem;
+    color: #16a34a;
+    font-weight: 800;
+}
+
+.edu-goal-item span {
+    display: block;
+    font-size: 0.78rem;
+    color: #4b5563;
+    margin-top: 4px;
+}
+
+/* ── Benefits Grid ── */
+.edu-benefits-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.edu-benefit-card {
+    display: grid;
+    grid-template-columns: 44px 1fr;
+    gap: 14px;
+    align-items: start;
+    padding: 14px;
+    background: #f9fafb;
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+}
+
+.edu-benefit-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 10px;
+    background: #dcfce7;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #16a34a;
+    font-size: 1.1rem;
+    flex-shrink: 0;
+}
+
+.edu-benefit-card h3 {
+    margin: 0 0 4px;
+    font-size: 0.92rem;
+    color: #1f2937;
+}
+
+.edu-benefit-card p {
+    margin: 0;
+    font-size: 0.83rem;
+    color: #6b7280;
+    line-height: 1.5;
+}
+
+/* ── What We Provide list ── */
+.edu-provide-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.edu-provide-list li {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    font-size: 0.9rem;
+    color: #374151;
+    line-height: 1.5;
+}
+
+.edu-check-icon {
+    color: #16a34a;
+    font-size: 0.9rem;
+    margin-top: 3px;
+    flex-shrink: 0;
+}
+
+/* ── Premium Highlight (sidebar) ── */
+.edu-premium-highlight {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: #f0fdf4;
+    border: 1px solid #bbf7d0;
+    border-radius: 8px;
+    padding: 10px 12px;
+    margin-bottom: 14px;
+    font-size: 0.88rem;
+    color: #166534;
+}
+
+.edu-premium-highlight svg {
+    color: #16a34a;
+    font-size: 1rem;
+    flex-shrink: 0;
+}
+
+.edu-premium-highlight strong {
+    color: #15803d;
+}
+
+/* ── Impact Note ── */
+.edu-impact-note {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.83rem;
+    color: #16a34a;
+    font-weight: 600;
+    margin: 12px 0 4px;
+}
+
+.edu-impact-note svg {
+    font-size: 0.85rem;
+}
+
+/* ── Journey Photo Strip ── */
+.edu-journey-section {
+    padding: 16px;
+}
+
+.edu-journey-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+    margin-top: 14px;
+}
+
+.edu-journey-item {
+    border-radius: 10px;
+    overflow: hidden;
+    border: 1px solid #e5e7eb;
+    background: #ffffff;
+    transition: box-shadow 0.2s ease;
+}
+
+.edu-journey-item:hover {
+    box-shadow: 0 4px 16px rgba(22, 163, 74, 0.12);
+    border-color: #86efac;
+}
+
+.edu-journey-item img {
+    width: 100%;
+    height: auto;
+    aspect-ratio: 4 / 3;
+    object-fit: cover;
+    object-position: center top;
+    display: block;
+}
+
+.edu-journey-caption {
+    padding: 10px 12px 12px;
+}
+
+.edu-journey-step {
+    display: inline-block;
+    background: #dcfce7;
+    color: #166534;
+    font-size: 0.68rem;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 999px;
+    margin-bottom: 6px;
+    letter-spacing: 0.04em;
+}
+
+.edu-journey-caption strong {
+    display: block;
+    font-size: 0.9rem;
+    color: #1f2937;
+    margin-bottom: 4px;
+    font-weight: 700;
+}
+
+.edu-journey-caption p {
+    margin: 0;
+    font-size: 0.78rem;
+    color: #6b7280;
+    line-height: 1.45;
+}
+
+/* ── Impact CTA Section ── */
+.edu-impact-cta {
+    background: linear-gradient(135deg, #f0fdf4, #dcfce7);
+    border-color: #bbf7d0;
+}
+
+.edu-impact-cta-content {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    margin-bottom: 16px;
+}
+
+.edu-impact-cta-icon {
+    font-size: 2rem;
+    color: #16a34a;
+    flex-shrink: 0;
+    margin-top: 2px;
+}
+
+.edu-impact-cta-content h2 {
+    margin: 0 0 8px;
+    font-size: 1.1rem;
+    color: #166534;
+}
+
+.edu-impact-cta-content p {
+    margin: 0;
+    font-size: 0.9rem;
+    color: #4b5563;
+    line-height: 1.6;
+}
+
+.edu-impact-cta-btn {
+    width: 100%;
+    font-size: 1rem;
+    min-height: 48px;
+}
+
+/* ── How It Works Card (sidebar) ── */
+.edu-how-it-works-card {
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 14px;
+    padding: 16px;
+}
+
+.edu-how-it-works-card h3 {
+    margin: 0 0 14px;
+    font-size: 1rem;
+    color: #1f2937;
+}
+
+.edu-steps-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.edu-steps-list li {
+    display: grid;
+    grid-template-columns: 28px 1fr;
+    gap: 10px;
+    align-items: start;
+}
+
+.edu-step-num {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: #16a34a;
+    color: #ffffff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.78rem;
+    font-weight: 800;
+    flex-shrink: 0;
+}
+
+.edu-steps-list li strong {
+    display: block;
+    font-size: 0.88rem;
+    color: #1f2937;
+    margin-bottom: 2px;
+}
+
+.edu-steps-list li p {
+    margin: 0;
+    font-size: 0.8rem;
+    color: #6b7280;
+    line-height: 1.4;
+}
+
+/* ── Responsive ── */
+@media (min-width: 768px) {
+    .education-detail-page {
+        padding: 28px 18px 64px;
+    }
+
+    .campaign-body,
+    .education-section-card,
+    .support-panel,
+    .trust-strip {
+        padding: 20px;
+    }
+
+    .campaign-body h1 {
+        font-size: 1.75rem;
+    }
+
+    .campaign-actions {
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .story-content {
+        max-height: 146px;
+    }
 }
 
 @media (min-width: 1080px) {
-  .education-detail-page {
-    padding: 28px 18px 70px;
-  }
+    .education-detail-page {
+        padding: 28px 18px 70px;
+    }
 
-  .education-detail-shell {
-    max-width: 1240px;
-  }
+    .education-detail-shell {
+        max-width: 1240px;
+    }
 
-  .education-content-grid {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) 390px;
-    gap: 22px;
-    align-items: start;
-  }
+    .education-content-grid {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 390px;
+        gap: 22px;
+        align-items: start;
+    }
 
-  .education-main-stack {
-    order: 1;
-  }
+    .education-main-stack {
+        order: 1;
+    }
 
-  .education-side-stack {
-    order: 2;
-    position: sticky;
-    top: 92px;
-  }
+    .education-side-stack {
+        order: 2;
+        position: sticky;
+        top: 92px;
+    }
 
-  .campaign-image-wrap img {
-    height: 250px;
-  }
+    .edu-journey-grid {
+        grid-template-columns: repeat(4, 1fr);
+    }
 }
 
 @media (max-width: 420px) {
-  .donate-via-grid {
-    grid-template-columns: 1fr;
-  }
+    .campaign-stats {
+        grid-template-columns: 1fr;
+    }
 
-  .campaign-stats {
-    grid-template-columns: 1fr;
-  }
+    .campaign-actions {
+        grid-template-columns: 1fr;
+    }
 
-  .campaign-actions {
-    grid-template-columns: 1fr;
-  }
-
-  .donation-item,
-  .donation-item-modal {
-    grid-template-columns: 24px minmax(0, 1fr);
-  }
-
-  .donation-item span,
-  .donation-item-modal span {
-    grid-column: 2 / -1;
-    justify-self: start;
-    margin-top: 4px;
-  }
-
-  .section-links {
-    flex-direction: column;
-    gap: 8px;
-  }
+    .edu-impact-cta-content {
+        flex-direction: column;
+        gap: 10px;
+    }
 }
