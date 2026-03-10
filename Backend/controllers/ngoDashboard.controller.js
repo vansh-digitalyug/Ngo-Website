@@ -5,6 +5,9 @@ import Payment from "../models/payment.model.js";
 import asyncHandler from "../utils/asyncHandler.js";
 import ApiError from "../utils/ApiError.js";
 import ApiResponse from "../utils/ApiResponse.js";
+import { PutObjectCommand } from "@aws-sdk/client-s3";
+import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
+import { s3 } from "../config/s3Client.config.js";
 
 // ═══════════════════════════════════════════════════════════════════════════
 // NGO DASHBOARD CONTROLLER
@@ -61,7 +64,8 @@ export const getDashboardStats = asyncHandler(async (req, res) => {
         website: req.ngo.website,
         description: req.ngo.description,
         socialMedia: req.ngo.socialMedia,
-        documents: req.ngo.documents
+        documents: req.ngo.documents,
+        ngoS3Id: req.ngo.ngoS3Id
       },
       stats: {
         gallery: { total: galleryTotal, pending: galleryPending, approved: galleryApproved },
@@ -174,22 +178,43 @@ export const getNgoGallery = asyncHandler(async (req, res) => {
   });
 });
 
+// Generate a presigned PUT URL scoped to this NGO's S3 folder
+export const generateGalleryUploadUrl = asyncHandler(async (req, res) => {
+  const { fileType, fileName } = req.query;
+  if (!fileType || !fileName) throw new ApiError(400, "fileType and fileName are required");
+
+  const ngoS3Id = req.ngo.ngoS3Id;
+  if (!ngoS3Id) throw new ApiError(400, "NGO S3 folder not found. Please contact support.");
+
+  const baseName = fileName.replace(/\.[^/.]+$/, "");
+  const ext = fileType.split("/")[1];
+  const key = `Uploads/ngoDocs/${ngoS3Id}/gallery/${baseName}.${ext}`;
+
+  const command = new PutObjectCommand({
+    Bucket: process.env.BUCKET_NAME,
+    Key: key,
+    ContentType: fileType,
+  });
+
+  const uploadUrl = await getSignedUrl(s3, command, { expiresIn: 60 });
+  return res.json(new ApiResponse(200, "Upload URL generated", { uploadUrl, key }));
+});
+
 export const uploadToGallery = asyncHandler(async (req, res) => {
-  const { title, description, category, type } = req.body;
+  const { title, description, category, s3Key } = req.body;
   const ngoId = req.ngo._id;
 
-  let url = req.body.url || "";
-  if (req.file) url = req.file.filename;
+  if (!s3Key) throw new ApiError(400, "Image S3 key is required");
+  if (!title?.trim()) throw new ApiError(400, "Title is required");
 
-  if (!url) {
-    throw new ApiError(400, "Image/Video URL is required");
-  }
+  // Build the public S3 URL from the key
+  const s3Url = `https://${process.env.BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${s3Key}`;
 
   const galleryItem = await Gallery.create({
-    type: type || "image",
-    title,
-    description: description || "",
-    url,
+    type: "image",
+    title: title.trim(),
+    description: description?.trim() || "",
+    url: s3Url,
     category: category || "Other",
     ngoId,
     uploadedBy: req.user._id,
@@ -310,7 +335,8 @@ export const getNgoStatus = asyncHandler(async (req, res) => {
         website: req.ngo.website,
         description: req.ngo.description,
         socialMedia: req.ngo.socialMedia,
-        documents: req.ngo.documents
+        documents: req.ngo.documents,
+        ngoS3Id: req.ngo.ngoS3Id
       }
     });
   }
@@ -398,6 +424,7 @@ export default {
   updateNgoProfile,
   updateNgoDocuments,
   getNgoGallery,
+  generateGalleryUploadUrl,
   uploadToGallery,
   deleteGalleryItem,
   getNgoVolunteers,

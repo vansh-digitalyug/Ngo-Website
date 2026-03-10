@@ -104,8 +104,10 @@ const ngoSchema = new mongoose.Schema({
     default: ''
   },
   socialMedia: {
-    facebook: { type: String, trim: true, default: '' },
-    instagram: { type: String, trim: true, default: '' }
+    facebook:  { type: String, trim: true, default: '' },
+    instagram: { type: String, trim: true, default: '' },
+    twitter:   { type: String, trim: true, default: '' },
+    youtube:   { type: String, trim: true, default: '' },
   },
 
   // --- Step 4: Services ---

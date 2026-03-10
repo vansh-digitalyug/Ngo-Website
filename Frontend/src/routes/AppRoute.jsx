@@ -37,6 +37,7 @@ import {
 
 import GalleryImages from "../pages/gallery/GalleryImages.jsx";
 import GalleryVideos from "../pages/gallery/GalleryVideos.jsx";
+import NgoPublicProfile from "../pages/NgoPublicProfile.jsx";
 
 import OrphanageEducationPage from "../pages/services/orphanage/education.jsx";
 import Meal from "../pages/services/orphanage/meal.jsx";
@@ -134,6 +135,7 @@ function AppRoutes() {
         <Route path="/gallery/videos" element={<GalleryVideos />} />
 
         <Route path="/find-ngos" element={<FindNGOs />} />
+        <Route path="/ngo-profile/:id" element={<NgoPublicProfile />} />
         <Route path="/donate" element={<Donate />} />
         <Route
           path="/volunteer"

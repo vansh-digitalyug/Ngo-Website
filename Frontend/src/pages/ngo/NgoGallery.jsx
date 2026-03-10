@@ -4,6 +4,14 @@ import { Upload, Trash2, Image, CheckCircle, FolderOpen, Info, X, AlertCircle, E
 import { API_BASE_URL } from './NgoLayout';
 import './ngo.css';
 
+// Resolve gallery image URL — handles full S3 URLs, legacy local paths, and bare filenames
+const getImgUrl = (url) => {
+  if (!url) return 'https://via.placeholder.com/300x300?text=No+Image';
+  if (url.startsWith('http')) return url;
+  if (url.startsWith('/uploads/')) return `${API_BASE_URL}${url}`;
+  return `${API_BASE_URL}/uploads/gallery/${url}`;
+};
+
 const CATEGORIES = [
   "Food Distribution", "Medical Camps", "Education Programs",
   "Elder Care", "Women Empowerment", "Events", "Volunteer Activities", "Other"
@@ -71,45 +79,56 @@ export default function NgoGallery() {
 
   const handleUpload = async (e) => {
     e.preventDefault();
-    
-    if (!uploadForm.file) {
-      setMessage({ type: 'error', text: 'Please select a file to upload' });
-      return;
-    }
 
-    if (!uploadForm.title.trim()) {
-      setMessage({ type: 'error', text: 'Please enter a title for the image' });
-      return;
-    }
+    if (!uploadForm.file) { setMessage({ type: 'error', text: 'Please select a file to upload' }); return; }
+    if (!uploadForm.title.trim()) { setMessage({ type: 'error', text: 'Please enter a title for the image' }); return; }
 
     setUploading(true);
     setMessage({ type: '', text: '' });
 
     try {
       const token = localStorage.getItem('token');
-      const formData = new FormData();
-      formData.append('image', uploadForm.file);
-      formData.append('title', uploadForm.title.trim());
-      formData.append('description', uploadForm.description.trim());
-      formData.append('category', uploadForm.category);
+      const file = uploadForm.file;
+      const uuid = crypto.randomUUID();
 
-      const res = await fetch(`${API_BASE_URL}/api/ngo-dashboard/gallery`, {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${token}` },
-        body: formData
+      // Step 1 — get presigned S3 upload URL (scoped to this NGO's S3 folder)
+      const urlRes = await fetch(
+        `${API_BASE_URL}/api/ngo-dashboard/gallery/upload-url?fileName=${encodeURIComponent(uuid)}&fileType=${encodeURIComponent(file.type)}`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      if (!urlRes.ok) { const e = await urlRes.json(); throw new Error(e.message || 'Failed to get upload URL'); }
+      const { data: { uploadUrl, key } } = await urlRes.json();
+
+      // Step 2 — upload file directly to S3
+      const s3Res = await fetch(uploadUrl, {
+        method: 'PUT',
+        headers: { 'Content-Type': file.type },
+        body: file,
       });
+      if (!s3Res.ok) throw new Error('Failed to upload to S3');
 
-      const data = await res.json();
+      // Step 3 — save S3 key to backend
+      const saveRes = await fetch(`${API_BASE_URL}/api/ngo-dashboard/gallery`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          s3Key: key,
+          title: uploadForm.title.trim(),
+          description: uploadForm.description.trim(),
+          category: uploadForm.category,
+        }),
+      });
+      const data = await saveRes.json();
 
-      if (res.ok) {
-        setMessage({ type: 'success', text: 'Image uploaded successfully! It will be visible after admin approval.' });
+      if (saveRes.ok) {
+        setMessage({ type: 'success', text: 'Image uploaded! It will be visible after admin approval.' });
         setGallery(prev => [data.data, ...prev]);
         closeUploadModal();
       } else {
-        setMessage({ type: 'error', text: data.message || 'Failed to upload image' });
+        setMessage({ type: 'error', text: data.message || 'Failed to save image' });
       }
     } catch (err) {
-      setMessage({ type: 'error', text: 'Something went wrong. Please try again.' });
+      setMessage({ type: 'error', text: err.message || 'Something went wrong. Please try again.' });
     } finally {
       setUploading(false);
     }
@@ -227,8 +246,8 @@ export default function NgoGallery() {
                 const badge = getStatusBadge(item.approvalStatus);
                 return (
                   <div key={item._id} className="ngo-gallery-item">
-                    <img 
-                      src={`${API_BASE_URL}/uploads/gallery/${item.url}`} 
+                    <img
+                      src={getImgUrl(item.url)}
                       alt={item.title || 'Gallery image'}
                       onError={(e) => {
                         e.target.src = 'https://via.placeholder.com/300x300?text=Image+Not+Found';
@@ -241,9 +260,9 @@ export default function NgoGallery() {
                       <h4>{item.title || 'Untitled'}</h4>
                       <p>{item.description || ''}</p>
                       <div className="gallery-item-actions">
-                        <button 
+                        <button
                           className="gallery-action-btn view"
-                          onClick={() => window.open(`${API_BASE_URL}/uploads/gallery/${item.url}`, '_blank')}
+                          onClick={() => window.open(getImgUrl(item.url), '_blank')}
                         >
                           <Eye size={14} />
                         </button>

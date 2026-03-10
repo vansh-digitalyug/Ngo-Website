@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
 import axios from "axios";
 import elderCare from "../assets/images/elderly/elder.png"
 import { 
@@ -462,9 +463,9 @@ const FindNGO = () => {
                         <div className="supporter-count">
                           <FaHeart color="#FF6B6B" /> {ngo.supporters} Supporters
                         </div>
-                        <a href="#" className="view-btn">
+                        <Link to={`/ngo-profile/${ngo.id}`} className="view-btn">
                           View Profile <FaArrowRight size={12} />
-                        </a>
+                        </Link>
                       </div>
                     </div>
                   </div>

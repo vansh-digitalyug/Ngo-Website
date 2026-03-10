@@ -1,5 +1,5 @@
 import express from "express";
-import { createNgo, getAllNgos, getNgoById } from "../controllers/ngo.controller.js";
+import { createNgo, getAllNgos, getNgoById, getNgoGallery } from "../controllers/ngo.controller.js";
 import { optionalAuth } from "../middlewares/auth.middleware.js";
 
 const router = express.Router();
@@ -14,6 +14,7 @@ router.post(
 
 // GET routes
 router.get("/", getAllNgos);
+router.get("/:id/gallery", getNgoGallery);
 router.get("/:id", getNgoById);
 
 export default router;
