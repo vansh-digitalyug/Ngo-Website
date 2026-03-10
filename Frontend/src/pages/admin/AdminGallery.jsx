@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
-import { 
-  Camera, Video, Trash2, Search, 
+import {
+  Camera, Video, Trash2, Search, Eye, X,
   Image as ImageIcon, CheckSquare, Square, CheckCircle, XCircle, Clock, Building2
 } from "lucide-react";
 import { useFlash } from "../../components/common/FlashMessage.jsx";
@@ -33,6 +33,7 @@ const AdminGallery = () => {
   const [selectedItems, setSelectedItems] = useState([]);
   const [bulkDeleting, setBulkDeleting] = useState(false);
   const [actionLoading, setActionLoading] = useState(null);
+  const [previewItem, setPreviewItem] = useState(null);
 
   const token = localStorage.getItem("token");
   const flash = useFlash();
@@ -296,22 +297,46 @@ const AdminGallery = () => {
             <div key={item._id} style={{...styles.card, borderColor: selectedItems.includes(item._id) ? "#3b82f6" : "#e2e8f0"}}>
               
               <div style={{ position: "relative", aspectRatio: "16/10", cursor: "pointer", overflow: "hidden" }} onClick={() => toggleSelectItem(item._id)}>
-                <img
-                  src={item.type === "image" ? getImageUrl(item.url) : (item.thumbnail ? getImageUrl(item.thumbnail) : "https://via.placeholder.com/400x250?text=Video")}
-                  alt={item.title}
-                  style={{ width: "100%", height: "100%", objectFit: "cover", transition: "transform 0.3s ease" }}
-                  onMouseOver={e => e.currentTarget.style.transform = "scale(1.05)"}
-                  onMouseOut={e => e.currentTarget.style.transform = "scale(1)"}
-                  onError={e => { e.currentTarget.src = "https://via.placeholder.com/400x250?text=Image+Not+Found"; }}
-                />
-                
+                {item.type === "video" ? (
+                  <video
+                    src={getImageUrl(item.url)}
+                    style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                    preload="metadata"
+                    muted
+                    onError={e => { e.currentTarget.style.display = "none"; }}
+                  />
+                ) : (
+                  <img
+                    src={getImageUrl(item.url)}
+                    alt={item.title}
+                    style={{ width: "100%", height: "100%", objectFit: "cover", transition: "transform 0.3s ease" }}
+                    onMouseOver={e => e.currentTarget.style.transform = "scale(1.05)"}
+                    onMouseOut={e => e.currentTarget.style.transform = "scale(1)"}
+                    onError={e => { e.currentTarget.src = "https://via.placeholder.com/400x250?text=Image+Not+Found"; }}
+                  />
+                )}
+                {item.type === "video" && (
+                  <div style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%,-50%)", background: "rgba(0,0,0,0.5)", borderRadius: "50%", width: "44px", height: "44px", display: "flex", alignItems: "center", justifyContent: "center", pointerEvents: "none" }}>
+                    <Video size={20} color="white" />
+                  </div>
+                )}
+
                 <div style={styles.badge(item.type === "image" ? "#10b981" : "#ef4444")}>
                   {item.type === "image" ? <Camera size={12} /> : <Video size={12} />}
                   {item.type === "image" ? "Image" : "Video"}
                 </div>
 
-                <div style={{ position: "absolute", top: "12px", right: "12px", background: "white", borderRadius: "6px", display: "flex" }}>
-                  {selectedItems.includes(item._id) ? <CheckSquare size={24} color="#3b82f6" fill="#eff6ff" /> : <Square size={24} color="#cbd5e1" />}
+                <div style={{ position: "absolute", top: "12px", right: "12px", display: "flex", gap: "6px", alignItems: "center" }}>
+                  <button
+                    onClick={e => { e.stopPropagation(); setPreviewItem(item); }}
+                    style={{ background: "white", border: "none", borderRadius: "6px", padding: "4px", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 1px 3px rgba(0,0,0,0.2)" }}
+                    title={item.type === "video" ? "Play video" : "Preview image"}
+                  >
+                    <Eye size={18} color="#3b82f6" />
+                  </button>
+                  <div style={{ background: "white", borderRadius: "6px", display: "flex" }}>
+                    {selectedItems.includes(item._id) ? <CheckSquare size={24} color="#3b82f6" fill="#eff6ff" /> : <Square size={24} color="#cbd5e1" />}
+                  </div>
                 </div>
               </div>
 
@@ -380,6 +405,42 @@ const AdminGallery = () => {
               </div>
             </div>
           ))}
+        </div>
+      )}
+
+      {/* Media Preview Lightbox */}
+      {previewItem && (
+        <div
+          onClick={() => setPreviewItem(null)}
+          style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.85)", zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center", padding: "24px" }}
+        >
+          <button
+            onClick={() => setPreviewItem(null)}
+            style={{ position: "absolute", top: "20px", right: "20px", background: "rgba(255,255,255,0.15)", border: "none", borderRadius: "50%", width: "40px", height: "40px", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", color: "white" }}
+          >
+            <X size={22} />
+          </button>
+          <div onClick={e => e.stopPropagation()} style={{ maxWidth: "90vw", maxHeight: "90vh", display: "flex", flexDirection: "column", alignItems: "center", gap: "12px" }}>
+            {previewItem.type === "video" ? (
+              <video
+                src={getImageUrl(previewItem.url)}
+                controls
+                autoPlay
+                style={{ maxWidth: "100%", maxHeight: "80vh", borderRadius: "8px", background: "#000", boxShadow: "0 20px 60px rgba(0,0,0,0.5)" }}
+              />
+            ) : (
+              <img
+                src={getImageUrl(previewItem.url)}
+                alt={previewItem.title}
+                style={{ maxWidth: "100%", maxHeight: "80vh", objectFit: "contain", borderRadius: "8px", boxShadow: "0 20px 60px rgba(0,0,0,0.5)" }}
+                onError={e => { e.currentTarget.src = "https://via.placeholder.com/800x600?text=Image+Not+Found"; }}
+              />
+            )}
+            <div style={{ color: "white", textAlign: "center" }}>
+              <p style={{ margin: "0 0 4px", fontWeight: "600", fontSize: "16px" }}>{previewItem.title}</p>
+              {previewItem.description && <p style={{ margin: 0, color: "rgba(255,255,255,0.7)", fontSize: "14px" }}>{previewItem.description}</p>}
+            </div>
+          </div>
         </div>
       )}
 

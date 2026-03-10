@@ -5,6 +5,18 @@ import ApiResponse from "../utils/ApiResponse.js";
 import ApiError from "../utils/ApiError.js";
 import asyncHandler from "../utils/asyncHandler.js";
 import { sendNgoSubmissionEmail } from "../services/mail.service.js";
+import { GetObjectCommand } from "@aws-sdk/client-s3";
+import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
+import { s3 } from "../config/s3Client.config.js";
+
+const signIfS3 = async (url) => {
+  if (!url || !url.includes('.amazonaws.com/')) return url;
+  try {
+    const key = url.split('.amazonaws.com/')[1];
+    const command = new GetObjectCommand({ Bucket: process.env.BUCKET_NAME, Key: key });
+    return await getSignedUrl(s3, command, { expiresIn: 3600 });
+  } catch (_) { return url; }
+};
 
 const toBool = (value) => value === true || value === "true" || value === "on";
 
@@ -130,9 +142,18 @@ export const getNgoGallery = asyncHandler(async (req, res) => {
     Gallery.countDocuments(query),
   ]);
 
+  const signedItems = await Promise.all(
+    items.map(async (item) => {
+      const obj = item.toObject();
+      obj.url = await signIfS3(obj.url);
+      if (obj.thumbnail) obj.thumbnail = await signIfS3(obj.thumbnail);
+      return obj;
+    })
+  );
+
   return res.status(200).json(
     new ApiResponse(200, "Gallery fetched successfully", {
-      items,
+      items: signedItems,
       pagination: { total, page: Number(page), pages: Math.ceil(total / Number(limit)) },
     })
   );

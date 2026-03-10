@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useOutletContext } from 'react-router-dom';
-import { Upload, Trash2, Image, CheckCircle, FolderOpen, Info, X, AlertCircle, Eye, Clock, XCircle, Camera } from 'lucide-react';
+import { Upload, Trash2, Image, CheckCircle, FolderOpen, Info, X, AlertCircle, Eye, Clock, XCircle, Camera, Video, Play } from 'lucide-react';
 import { API_BASE_URL } from './NgoLayout';
 import './ngo.css';
 
@@ -25,11 +25,14 @@ export default function NgoGallery() {
   const [message, setMessage] = useState({ type: '', text: '' });
   const [showUploadModal, setShowUploadModal] = useState(false);
   const [previewUrl, setPreviewUrl] = useState(null);
+  const [previewType, setPreviewType] = useState('image');
+  const [lightbox, setLightbox] = useState(null); // { url, title, type }
   const [uploadForm, setUploadForm] = useState({
     title: '',
     description: '',
     category: 'Other',
-    file: null
+    file: null,
+    fileType: ''
   });
   const fileInputRef = useRef(null);
 
@@ -55,33 +58,32 @@ export default function NgoGallery() {
     }
   };
 
+  const isVideoFile = (file) => file.type.startsWith('video/');
+
   const handleFileSelect = (e) => {
     const file = e.target.files[0];
-    if (file) {
-      // Validate file type
-      const validTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
-      if (!validTypes.includes(file.type)) {
-        setMessage({ type: 'error', text: 'Please select a valid image file (JPEG, PNG, GIF, or WebP)' });
-        return;
-      }
-      // Validate file size (5MB max)
-      if (file.size > 5 * 1024 * 1024) {
-        setMessage({ type: 'error', text: 'File size must be less than 5MB' });
-        return;
-      }
-      // Create preview URL
-      const preview = URL.createObjectURL(file);
-      setPreviewUrl(preview);
-      setUploadForm(prev => ({ ...prev, file }));
-      setMessage({ type: '', text: '' });
+    if (!file) return;
+    const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp', 'image/avif', 'video/mp4', 'video/webm', 'video/ogg', 'video/quicktime'];
+    if (!validTypes.includes(file.type)) {
+      setMessage({ type: 'error', text: 'Please select a valid image (JPEG, PNG, GIF, WebP) or video (MP4, WebM, OGG)' });
+      return;
     }
+    if (file.size > 100 * 1024 * 1024) {
+      setMessage({ type: 'error', text: 'File size must be less than 100MB' });
+      return;
+    }
+    const preview = URL.createObjectURL(file);
+    setPreviewUrl(preview);
+    setPreviewType(isVideoFile(file) ? 'video' : 'image');
+    setUploadForm(prev => ({ ...prev, file, fileType: file.type }));
+    setMessage({ type: '', text: '' });
   };
 
   const handleUpload = async (e) => {
     e.preventDefault();
 
     if (!uploadForm.file) { setMessage({ type: 'error', text: 'Please select a file to upload' }); return; }
-    if (!uploadForm.title.trim()) { setMessage({ type: 'error', text: 'Please enter a title for the image' }); return; }
+    if (!uploadForm.title.trim()) { setMessage({ type: 'error', text: 'Please enter a title' }); return; }
 
     setUploading(true);
     setMessage({ type: '', text: '' });
@@ -89,13 +91,13 @@ export default function NgoGallery() {
     try {
       const token = localStorage.getItem('token');
       const file = uploadForm.file;
-      const uuid = crypto.randomUUID();
+      
 
       // Step 1 — get presigned S3 upload URL via dedicated S3 API
       const urlRes = await fetch(`${API_BASE_URL}/api/s3/generate-upload-url`, {
         method: 'POST',
         headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ fileName: uuid, fileType: file.type, location: `${ngoData.ngoS3Id}/gallery` }),
+        body: JSON.stringify({ fileName: file.name, fileType: file.type, location: `${ngoData.ngoS3Id}/gallery` }),
       });
       if (!urlRes.ok) { const e = await urlRes.json(); throw new Error(e.message || 'Failed to get upload URL'); }
       const { data: { uploadUrl, key } } = await urlRes.json();
@@ -114,6 +116,7 @@ export default function NgoGallery() {
         headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
         body: JSON.stringify({
           s3Key: key,
+          fileType: uploadForm.fileType,
           title: uploadForm.title.trim(),
           description: uploadForm.description.trim(),
           category: uploadForm.category,
@@ -122,7 +125,8 @@ export default function NgoGallery() {
       const data = await saveRes.json();
 
       if (saveRes.ok) {
-        setMessage({ type: 'success', text: 'Image uploaded! It will be visible after admin approval.' });
+        const isVideo = uploadForm.fileType?.startsWith('video/');
+        setMessage({ type: 'success', text: `${isVideo ? 'Video' : 'Image'} uploaded! It will be visible after admin approval.` });
         setGallery(prev => [data.data, ...prev]);
         closeUploadModal();
       } else {
@@ -137,8 +141,9 @@ export default function NgoGallery() {
 
   const closeUploadModal = () => {
     setShowUploadModal(false);
-    setUploadForm({ title: '', description: '', category: 'Other', file: null });
+    setUploadForm({ title: '', description: '', category: 'Other', file: null, fileType: '' });
     setPreviewUrl(null);
+    setPreviewType('image');
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
@@ -188,13 +193,13 @@ export default function NgoGallery() {
       <div className="ngo-page-header">
         <div className="page-header-content">
           <h1>Media Gallery</h1>
-          <p>Upload and manage photos showcasing your organization's work</p>
+          <p>Upload and manage photos and videos showcasing your organization's work</p>
         </div>
-        <button 
+        <button
           className="ngo-btn ngo-btn-primary"
           onClick={() => setShowUploadModal(true)}
         >
-          <Upload size={16} /> Upload Image
+          <Upload size={16} /> Upload Media
         </button>
       </div>
 
@@ -215,7 +220,7 @@ export default function NgoGallery() {
           <div className="stat-icon purple"><Image size={18} /></div>
           <div className="stat-info">
             <span className="stat-number">{gallery.length}</span>
-            <span className="stat-text">Total Images</span>
+            <span className="stat-text">Total Media</span>
           </div>
         </div>
         <div className="gallery-stat">
@@ -238,7 +243,7 @@ export default function NgoGallery() {
       {gallery.length > 0 ? (
         <div className="ngo-section">
           <div className="ngo-section-header">
-            <h2>Your Images</h2>
+            <h2>Your Media</h2>
             <span className="section-badge">{gallery.length} items</span>
           </div>
           <div className="ngo-section-body">
@@ -247,13 +252,28 @@ export default function NgoGallery() {
                 const badge = getStatusBadge(item.approvalStatus);
                 return (
                   <div key={item._id} className="ngo-gallery-item">
-                    <img
-                      src={getImgUrl(item.url)}
-                      alt={item.title || 'Gallery image'}
-                      onError={(e) => {
-                        e.target.src = 'https://via.placeholder.com/300x300?text=Image+Not+Found';
-                      }}
-                    />
+                    {item.type === 'video' ? (
+                      <video
+                        src={getImgUrl(item.url)}
+                        style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                        preload="metadata"
+                        muted
+                        onError={(e) => { e.target.style.display = 'none'; }}
+                      />
+                    ) : (
+                      <img
+                        src={getImgUrl(item.url)}
+                        alt={item.title || 'Gallery image'}
+                        onError={(e) => {
+                          e.target.src = 'https://via.placeholder.com/300x300?text=Image+Not+Found';
+                        }}
+                      />
+                    )}
+                    {item.type === 'video' && (
+                      <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%,-50%)', background: 'rgba(0,0,0,0.5)', borderRadius: '50%', width: '40px', height: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center', pointerEvents: 'none' }}>
+                        <Play size={18} color="white" fill="white" />
+                      </div>
+                    )}
                     <span className={`ngo-gallery-badge ${badge.class}`}>
                       {badge.text}
                     </span>
@@ -263,11 +283,11 @@ export default function NgoGallery() {
                       <div className="gallery-item-actions">
                         <button
                           className="gallery-action-btn view"
-                          onClick={() => window.open(getImgUrl(item.url), '_blank')}
+                          onClick={() => setLightbox({ url: getImgUrl(item.url), title: item.title, type: item.type })}
                         >
                           <Eye size={14} />
                         </button>
-                        <button 
+                        <button
                           className="gallery-action-btn delete"
                           onClick={() => handleDelete(item._id)}
                         >
@@ -286,16 +306,51 @@ export default function NgoGallery() {
           <div className="ngo-section-body">
             <div className="ngo-empty-state">
               <Image size={56} strokeWidth={1.5} />
-              <h4>No images uploaded yet</h4>
-              <p>Upload photos to showcase your organization's work and impact on your public profile</p>
-              <button 
+              <h4>No media uploaded yet</h4>
+              <p>Upload photos or videos to showcase your organization's work and impact on your public profile</p>
+              <button
                 className="ngo-btn ngo-btn-primary"
                 style={{ marginTop: '20px' }}
                 onClick={() => setShowUploadModal(true)}
               >
-                <Upload size={16} /> Upload First Image
+                <Upload size={16} /> Upload First Media
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Media Lightbox */}
+      {lightbox && (
+        <div
+          onClick={() => setLightbox(null)}
+          style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.9)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px' }}
+        >
+          <button
+            onClick={() => setLightbox(null)}
+            style={{ position: 'absolute', top: '20px', right: '20px', background: 'rgba(255,255,255,0.15)', border: 'none', borderRadius: '50%', width: '40px', height: '40px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white' }}
+          >
+            <X size={22} />
+          </button>
+          <div onClick={e => e.stopPropagation()} style={{ maxWidth: '90vw', maxHeight: '90vh', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px' }}>
+            {lightbox.type === 'video' ? (
+              <video
+                src={lightbox.url}
+                controls
+                autoPlay
+                style={{ maxWidth: '100%', maxHeight: '80vh', borderRadius: '8px', background: '#000' }}
+              />
+            ) : (
+              <img
+                src={lightbox.url}
+                alt={lightbox.title}
+                style={{ maxWidth: '100%', maxHeight: '80vh', objectFit: 'contain', borderRadius: '8px' }}
+                onError={e => { e.target.src = 'https://via.placeholder.com/800x600?text=Image+Not+Found'; }}
+              />
+            )}
+            {lightbox.title && (
+              <p style={{ margin: 0, color: 'white', fontWeight: '600', fontSize: '15px' }}>{lightbox.title}</p>
+            )}
           </div>
         </div>
       )}
@@ -305,7 +360,7 @@ export default function NgoGallery() {
         <div className="ngo-modal-overlay" onClick={closeUploadModal}>
           <div className="ngo-modal ngo-modal-upload" onClick={e => e.stopPropagation()}>
             <div className="modal-header">
-              <h2><Camera size={22} className="modal-header-icon" /> Upload New Image</h2>
+              <h2><Camera size={22} className="modal-header-icon" /> Upload Image or Video</h2>
               <button className="modal-close" onClick={closeUploadModal}>
                 <X size={20} />
               </button>
@@ -314,28 +369,33 @@ export default function NgoGallery() {
             <form onSubmit={handleUpload} className="upload-form">
               {/* Image Upload Area */}
               <div className="ngo-form-group">
-                <label className="form-label">Image <span className="required">*</span></label>
-                <div 
+                <label className="form-label">Image or Video <span className="required">*</span></label>
+                <div
                   className={`upload-box ${previewUrl ? 'has-preview' : ''}`}
                   onClick={() => fileInputRef.current?.click()}
                 >
                   <input
                     ref={fileInputRef}
                     type="file"
-                    accept="image/jpeg,image/png,image/gif,image/webp"
+                    accept="image/jpeg,image/jpg,image/png,image/gif,image/webp,image/avif,video/mp4,video/webm,video/ogg,video/quicktime"
                     onChange={handleFileSelect}
                     style={{ display: 'none' }}
                   />
                   {previewUrl ? (
                     <div className="preview-container">
-                      <img src={previewUrl} alt="Preview" className="image-preview" />
-                      <button 
+                      {previewType === 'video' ? (
+                        <video src={previewUrl} className="image-preview" controls style={{ background: '#000' }} />
+                      ) : (
+                        <img src={previewUrl} alt="Preview" className="image-preview" />
+                      )}
+                      <button
                         type="button"
                         className="remove-preview-btn"
                         onClick={(e) => {
                           e.stopPropagation();
                           setPreviewUrl(null);
-                          setUploadForm(prev => ({ ...prev, file: null }));
+                          setPreviewType('image');
+                          setUploadForm(prev => ({ ...prev, file: null, fileType: '' }));
                           if (fileInputRef.current) fileInputRef.current.value = '';
                         }}
                       >
@@ -346,7 +406,7 @@ export default function NgoGallery() {
                     <div className="upload-placeholder">
                       <Upload size={36} className="upload-icon" />
                       <p className="upload-text">Click to browse or drag file</p>
-                      <p className="upload-hint">JPEG, PNG, GIF, WebP up to 5MB</p>
+                      <p className="upload-hint">Images (JPEG, PNG, GIF, WebP) or Videos (MP4, WebM) up to 100MB</p>
                     </div>
                   )}
                 </div>
@@ -360,7 +420,7 @@ export default function NgoGallery() {
                   className="ngo-form-input"
                   value={uploadForm.title}
                   onChange={(e) => setUploadForm(prev => ({ ...prev, title: e.target.value }))}
-                  placeholder="Enter image title"
+                  placeholder="Enter title"
                   required
                 />
               </div>
@@ -405,7 +465,7 @@ export default function NgoGallery() {
                   className={`ngo-btn ngo-btn-submit ${uploading ? 'disabled' : ''}`}
                   disabled={uploading}
                 >
-                  {uploading ? 'Saving...' : 'Save Image'}
+                  {uploading ? 'Uploading...' : 'Save Media'}
                 </button>
               </div>
             </form>
@@ -420,11 +480,12 @@ export default function NgoGallery() {
           <h4>Gallery Guidelines</h4>
         </div>
         <ul className="tips-list">
-          <li>Upload high-quality images that showcase your activities and impact</li>
-          <li>All images require admin approval before appearing publicly</li>
-          <li>Maximum file size: 5MB per image</li>
-          <li>Supported formats: JPEG, PNG, GIF, WebP</li>
-          <li>Avoid uploading images with sensitive personal information</li>
+          <li>Upload high-quality images or videos that showcase your activities and impact</li>
+          <li>All uploads require admin approval before appearing publicly</li>
+          <li>Maximum file size: 100MB per file</li>
+          <li>Supported image formats: JPEG, PNG, GIF, WebP, AVIF</li>
+          <li>Supported video formats: MP4, WebM, OGG, MOV</li>
+          <li>Avoid uploading content with sensitive personal information</li>
         </ul>
       </div>
     </div>

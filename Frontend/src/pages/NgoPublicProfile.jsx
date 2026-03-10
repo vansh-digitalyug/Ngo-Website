@@ -441,11 +441,20 @@ export default function NgoPublicProfile() {
                             <FaImages style={{ color: "#fff", fontSize: "1.4rem" }} />
                           </div>
                         </>
-                      ) : (
+                      ) : item.url.includes("youtube.com") || item.url.includes("youtu.be") ? (
                         <>
-                          <img src={getGalleryUrl(item.thumbnail) || `https://img.youtube.com/vi/${item.url.split("v=")[1]?.split("&")[0]}/hqdefault.jpg`} alt={item.title} className="gal-img" loading="lazy" />
+                          <img src={`https://img.youtube.com/vi/${item.url.split("v=")[1]?.split("&")[0]}/hqdefault.jpg`} alt={item.title} className="gal-img" loading="lazy" />
                           <div className="gal-cell-over">
                             <div style={{ width: "48px", height: "48px", background: "rgba(255,0,0,.85)", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                              <div style={{ width: 0, height: 0, borderTop: "9px solid transparent", borderBottom: "9px solid transparent", borderLeft: "16px solid #fff", marginLeft: "3px" }} />
+                            </div>
+                          </div>
+                        </>
+                      ) : (
+                        <>
+                          <video src={getGalleryUrl(item.url)} className="gal-img" preload="metadata" muted style={{ objectFit: "cover" }} />
+                          <div className="gal-cell-over">
+                            <div style={{ width: "48px", height: "48px", background: "rgba(0,0,0,.7)", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center" }}>
                               <div style={{ width: 0, height: 0, borderTop: "9px solid transparent", borderBottom: "9px solid transparent", borderLeft: "16px solid #fff", marginLeft: "3px" }} />
                             </div>
                           </div>
@@ -476,7 +485,7 @@ export default function NgoPublicProfile() {
           <div onClick={e => e.stopPropagation()} style={{ maxWidth: "900px", width: "100%", textAlign: "center" }}>
             {lightbox.type === "image" ? (
               <img src={lightbox.url} alt={lightbox.title} style={{ maxWidth: "100%", maxHeight: "80vh", borderRadius: "10px", objectFit: "contain" }} />
-            ) : (
+            ) : lightbox.url.includes("youtube.com") || lightbox.url.includes("youtu.be") ? (
               <div style={{ position: "relative", paddingBottom: "56.25%", height: 0, borderRadius: "10px", overflow: "hidden" }}>
                 <iframe
                   src={lightbox.url.replace("watch?v=", "embed/")}
@@ -485,6 +494,13 @@ export default function NgoPublicProfile() {
                   title={lightbox.title}
                 />
               </div>
+            ) : (
+              <video
+                src={lightbox.url}
+                controls
+                autoPlay
+                style={{ maxWidth: "100%", maxHeight: "80vh", borderRadius: "10px", background: "#000" }}
+              />
             )}
             {lightbox.title && (
               <p style={{ color: "rgba(255,255,255,.7)", fontSize: ".88rem", marginTop: "12px" }}>{lightbox.title}</p>

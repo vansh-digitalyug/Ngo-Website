@@ -5,7 +5,7 @@ import Payment from "../models/payment.model.js";
 import asyncHandler from "../utils/asyncHandler.js";
 import ApiError from "../utils/ApiError.js";
 import ApiResponse from "../utils/ApiResponse.js";
-import { PutObjectCommand } from "@aws-sdk/client-s3";
+import { PutObjectCommand, GetObjectCommand } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { s3 } from "../config/s3Client.config.js";
 
@@ -166,9 +166,24 @@ export const getNgoGallery = asyncHandler(async (req, res) => {
     Gallery.countDocuments(filter)
   ]);
 
+  // Generate signed URLs for S3-stored images so private buckets are accessible
+  const signedItems = await Promise.all(
+    items.map(async (item) => {
+      const obj = item.toObject();
+      if (obj.url && obj.url.includes('.amazonaws.com/')) {
+        try {
+          const key = obj.url.split('.amazonaws.com/')[1];
+          const command = new GetObjectCommand({ Bucket: process.env.BUCKET_NAME, Key: key });
+          obj.url = await getSignedUrl(s3, command, { expiresIn: 3600 });
+        } catch (_) { /* keep original url on error */ }
+      }
+      return obj;
+    })
+  );
+
   return res.status(200).json({
     success: true,
-    data: items,
+    data: signedItems,
     pagination: {
       total,
       page: parseInt(page),
@@ -201,17 +216,19 @@ export const generateGalleryUploadUrl = asyncHandler(async (req, res) => {
 });
 
 export const uploadToGallery = asyncHandler(async (req, res) => {
-  const { title, description, category, s3Key } = req.body;
+  const { title, description, category, s3Key, fileType } = req.body;
   const ngoId = req.ngo._id;
 
-  if (!s3Key) throw new ApiError(400, "Image S3 key is required");
+  if (!s3Key) throw new ApiError(400, "S3 key is required");
   if (!title?.trim()) throw new ApiError(400, "Title is required");
+
+  const mediaType = fileType?.startsWith("video/") ? "video" : "image";
 
   // Build the public S3 URL from the key
   const s3Url = `https://${process.env.BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${s3Key}`;
 
   const galleryItem = await Gallery.create({
-    type: "image",
+    type: mediaType,
     title: title.trim(),
     description: description?.trim() || "",
     url: s3Url,
