@@ -16,7 +16,17 @@ import {
 import { FaChildren } from "react-icons/fa6";
 import { MdElderly } from "react-icons/md";
 import orphanEducation from "../assets/images/orphanage/education.jpg";
+import eduImg1 from "../assets/images/orphanage/education/image1.png";
+import eduImg2 from "../assets/images/orphanage/education/image2.png";
+import eduImg3 from "../assets/images/orphanage/education/image3.png";
+import eduImg4 from "../assets/images/orphanage/education/image4.png";
+import eduImg5 from "../assets/images/orphanage/education/image5.png";
 import orphanFood from "../assets/images/orphanage/food.webp";
+import mealImg1 from "../assets/images/orphanage/meal/image1.png";
+import mealImg2 from "../assets/images/orphanage/meal/image2.png";
+import mealImg3 from "../assets/images/orphanage/meal/image3.png";
+import mealImg4 from "../assets/images/orphanage/meal/image 4.png";
+import mealImg5 from "../assets/images/orphanage/meal/image5.png";
 import orphanHealth from "../assets/images/orphanage/health.jpg";
 import elderFood from "../assets/images/elderly/food.jpg";
 import elderLiving from "../assets/images/elderly/living.jpg";
@@ -147,6 +157,7 @@ const SERVICE_DATA = [
         fullDescription: "Education is the most powerful tool to break the cycle of poverty for orphaned children. Our Education Support program ensures that every child in our partner orphanages is enrolled in school and receives the academic support needed to succeed. We cover school fees, uniforms, stationery, textbooks, and examination fees. Beyond enrollment, we provide after-school tutoring by trained educators, access to digital learning resources, and mentoring by college student volunteers. For older children, we offer career counseling and scholarship guidance to help them pursue higher education or vocational training. We also organize special learning camps during vacations to address learning gaps and build confidence in subjects where children struggle. Our program currently supports over two thousand children across thirty partner orphanages in eight states. We track each child's academic progress through quarterly reports and intervene quickly when a child begins to fall behind. Many of our alumni have gone on to complete college degrees, join the armed forces, become teachers, and pursue other meaningful careers — returning to their communities as role models. Your donation directly funds school fees, learning materials, tutor salaries, and the digital resources that give orphaned children the same educational opportunities as their peers.",
         fullDescriptionHi: "शिक्षा अनाथ बच्चों के लिए गरीबी के चक्र को तोड़ने का सबसे शक्तिशाली साधन है। हमारा शिक्षा सहायता कार्यक्रम यह सुनिश्चित करता है कि हमारे सहयोगी अनाथालयों के हर बच्चे को स्कूल में नामांकित किया जाए। हम स्कूल फीस, वर्दी, स्टेशनरी, पाठ्यपुस्तकें और परीक्षा शुल्क को कवर करते हैं। स्कूल के बाद के ट्यूशन, डिजिटल शिक्षण संसाधन और कॉलेज स्वयंसेवकों द्वारा मेंटरिंग भी प्रदान की जाती है।",
         image: orphanEducation,
+        images: [eduImg1, eduImg2, eduImg3, eduImg4, eduImg5],
         cta: "Help Now",
         href: "/services/orphanage/education",
         donationTitle: "Help provide education support for children in orphanage care",
@@ -163,6 +174,7 @@ const SERVICE_DATA = [
         fullDescription: "Proper nutrition during childhood is critical for physical and cognitive development. Many orphaned children suffer from malnutrition, stunting, and micronutrient deficiencies that have long-lasting effects on their health and learning ability. Our Nutritious Meal Program ensures that children in partner orphanages receive three balanced meals every day, formulated by nutritionists to meet the specific dietary needs of growing children. The meal plan includes proteins, vitamins, minerals, and adequate calories across breakfast, lunch, and dinner. We also provide vitamin supplements and conduct regular growth monitoring to track each child's health progress. Trained cooks prepare meals using locally sourced, fresh ingredients, supporting local farmers and ensuring food quality. Special meals are provided during festivals and birthdays to give children a sense of celebration and belonging. We also run nutrition education sessions so older children understand the importance of healthy eating habits. Seasonal menus are adjusted based on availability and doctor recommendations. Our program has shown measurable improvements in weight-for-age and height-for-age indicators among children enrolled for over six months. Your donation funds ingredients, kitchen equipment, and nutritionist consultations that keep these children healthy, focused in school, and full of energy to dream big.",
         fullDescriptionHi: "बचपन में उचित पोषण शारीरिक और संज्ञानात्मक विकास के लिए महत्वपूर्ण है। हमारा पौष्टिक भोजन कार्यक्रम यह सुनिश्चित करता है कि सहयोगी अनाथालयों के बच्चों को हर दिन तीन संतुलित भोजन मिले, जो बच्चों की विशिष्ट आहार आवश्यकताओं को पूरा करने के लिए पोषण विशेषज्ञों द्वारा तैयार किया गया है।",
         image: orphanFood,
+        images: [mealImg1, mealImg2, mealImg3, mealImg4, mealImg5],
         cta: "Help Now",
         href: "/services/orphanage/meal",
         donationTitle: "Provide high-quality nutritious meals for orphans",
@@ -609,14 +621,7 @@ function ServicePage() {
 
   return (
     <section className="service-page">
-      <header className="service-hero">
-        <div className="service-hero-content">
-          <h1>Hello, Changemaker!</h1>
-          <p>Ready to make an impact? Browse our programs and donate to make a difference!</p>
-        </div>
-      </header>
-
-      <div className="service-layout">
+<div className="service-layout">
         <div className="service-topbar">
           <div className="title-block">
             <h1>Explore Causes</h1>
