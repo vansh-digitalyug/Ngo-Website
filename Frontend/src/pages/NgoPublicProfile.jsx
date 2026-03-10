@@ -1,11 +1,10 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
 import {
   FaMapMarkerAlt, FaPhone, FaEnvelope, FaGlobe, FaFacebook, FaInstagram,
   FaCheckCircle, FaBuilding, FaCalendarAlt, FaIdCard, FaHandHoldingHeart,
   FaUsers, FaImages, FaArrowLeft, FaWhatsapp, FaExternalLinkAlt,
   FaTag, FaStar, FaHeart, FaShareAlt, FaCheck, FaTwitter, FaYoutube,
-  FaCamera, FaUpload, FaTimes, FaSpinner,
 } from "react-icons/fa";
 
 const API = String(import.meta.env.VITE_API_URL || "http://localhost:5000").replace(/\/$/, "");
@@ -17,11 +16,6 @@ const getGalleryUrl = (url) => {
   if (url.startsWith("/uploads/")) return `${API}${url}`;
   return `${API}/uploads/gallery/${url}`;
 };
-
-const UPLOAD_CATEGORIES = [
-  "Food Distribution", "Medical Camps", "Education Programs",
-  "Elder Care", "Women Empowerment", "Events", "Volunteer Activities", "Other"
-];
 
 const C = {
   green:     "#2d6a4f",
@@ -60,14 +54,6 @@ export default function NgoPublicProfile() {
   const [lightbox, setLightbox] = useState(null);
   const [copied, setCopied]     = useState(false);
 
-  // Upload modal state
-  const [showUpload, setShowUpload]     = useState(false);
-  const [uploadForm, setUploadForm]     = useState({ title: "", description: "", category: "Other", file: null });
-  const [previewUrl, setPreviewUrl]     = useState(null);
-  const [uploading, setUploading]       = useState(false);
-  const [uploadMsg, setUploadMsg]       = useState(null); // { type: "success"|"error", text }
-  const fileInputRef = useRef(null);
-
 
   useEffect(() => {
     const fetchAll = async () => {
@@ -96,69 +82,6 @@ export default function NgoPublicProfile() {
     navigator.clipboard.writeText(window.location.href);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
-  };
-
-  const handleFileSelect = (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-    const valid = ["image/jpeg", "image/png", "image/gif", "image/webp"];
-    if (!valid.includes(file.type)) { setUploadMsg({ type: "error", text: "Only JPEG, PNG, GIF, WebP allowed" }); return; }
-    if (file.size > 5 * 1024 * 1024) { setUploadMsg({ type: "error", text: "File must be under 5 MB" }); return; }
-    setPreviewUrl(URL.createObjectURL(file));
-    setUploadForm(p => ({ ...p, file }));
-    setUploadMsg(null);
-  };
-
-  const closeUploadModal = () => {
-    setShowUpload(false);
-    setUploadForm({ title: "", description: "", category: "Other", file: null });
-    setPreviewUrl(null);
-    setUploadMsg(null);
-    if (fileInputRef.current) fileInputRef.current.value = "";
-  };
-
-  const handleUpload = async (e) => {
-    e.preventDefault();
-    if (!uploadForm.file) { setUploadMsg({ type: "error", text: "Please select an image" }); return; }
-    if (!uploadForm.title.trim()) { setUploadMsg({ type: "error", text: "Title is required" }); return; }
-    const token = localStorage.getItem("token");
-    if (!token) { setUploadMsg({ type: "error", text: "Please log in as an NGO to upload images." }); return; }
-    setUploading(true);
-    setUploadMsg(null);
-    try {
-      const file = uploadForm.file;
-      const uuid = crypto.randomUUID();
-
-      // Step 1 — presigned S3 URL
-      const urlRes = await fetch(
-        `${API}/api/ngo-dashboard/gallery/upload-url?fileName=${encodeURIComponent(uuid)}&fileType=${encodeURIComponent(file.type)}`,
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-      if (!urlRes.ok) { const err = await urlRes.json(); throw new Error(err.message || "Failed to get upload URL"); }
-      const { data: { uploadUrl, key } } = await urlRes.json();
-
-      // Step 2 — direct S3 upload
-      const s3Res = await fetch(uploadUrl, { method: "PUT", headers: { "Content-Type": file.type }, body: file });
-      if (!s3Res.ok) throw new Error("Failed to upload to S3");
-
-      // Step 3 — save key to backend
-      const saveRes = await fetch(`${API}/api/ngo-dashboard/gallery`, {
-        method: "POST",
-        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
-        body: JSON.stringify({ s3Key: key, title: uploadForm.title.trim(), description: uploadForm.description.trim(), category: uploadForm.category }),
-      });
-      const data = await saveRes.json();
-      if (saveRes.ok) {
-        setUploadMsg({ type: "success", text: "Image uploaded! It will appear after admin approval." });
-        setTimeout(closeUploadModal, 2200);
-      } else {
-        setUploadMsg({ type: "error", text: data.message || "Upload failed" });
-      }
-    } catch (err) {
-      setUploadMsg({ type: "error", text: err.message || "Something went wrong. Please try again." });
-    } finally {
-      setUploading(false);
-    }
   };
 
   const filtered = galFilter === "all" ? gallery : gallery.filter(g => g.type === galFilter);
@@ -209,32 +132,6 @@ export default function NgoPublicProfile() {
         .np-card { background:${C.white}; border:1px solid ${C.border}; border-radius:12px; padding:28px; }
         .fil-btn { padding:7px 18px; border-radius:50px; border:1.5px solid ${C.border}; background:${C.white}; font-size:.8rem; font-weight:600; color:${C.textMid}; cursor:pointer; transition:all .2s; }
         .fil-btn.active { background:${C.green}; color:#fff; border-color:${C.green}; }
-        .add-photo-btn { display:inline-flex; align-items:center; gap:7px; background:${C.green}; color:#fff; border:none; padding:8px 18px; border-radius:6px; font-size:.82rem; font-weight:700; cursor:pointer; transition:background .2s; }
-        .add-photo-btn:hover { background:${C.greenDark}; }
-        /* Upload Modal */
-        .up-overlay { position:fixed; inset:0; background:rgba(0,0,0,.55); z-index:10010; display:flex; align-items:center; justify-content:center; padding:16px; }
-        .up-modal { background:#fff; border-radius:14px; width:100%; max-width:480px; max-height:90vh; overflow-y:auto; box-shadow:0 24px 60px rgba(0,0,0,.25); }
-        .up-header { display:flex; align-items:center; justify-content:space-between; padding:20px 24px 16px; border-bottom:1px solid ${C.border}; }
-        .up-header h3 { margin:0; font-size:1rem; font-weight:700; color:${C.text}; display:flex; align-items:center; gap:8px; }
-        .up-close { background:none; border:none; cursor:pointer; color:${C.textLight}; font-size:1.1rem; display:flex; align-items:center; padding:4px; border-radius:4px; }
-        .up-close:hover { background:${C.greenBg}; color:${C.text}; }
-        .up-body { padding:20px 24px 24px; display:flex; flex-direction:column; gap:14px; }
-        .up-drop { border:2px dashed ${C.border}; border-radius:10px; cursor:pointer; transition:border-color .2s; overflow:hidden; }
-        .up-drop:hover { border-color:${C.green}; }
-        .up-drop-inner { display:flex; flex-direction:column; align-items:center; justify-content:center; padding:28px 20px; gap:8px; }
-        .up-preview { width:100%; height:180px; object-fit:cover; display:block; }
-        .up-label { font-size:.78rem; font-weight:700; color:${C.textMid}; margin-bottom:4px; }
-        .up-input { width:100%; padding:9px 12px; border:1.5px solid ${C.border}; border-radius:7px; font-size:.9rem; font-family:inherit; color:${C.text}; outline:none; box-sizing:border-box; }
-        .up-input:focus { border-color:${C.green}; }
-        .up-alert { padding:10px 14px; border-radius:7px; font-size:.82rem; font-weight:600; }
-        .up-alert.error { background:#fef2f2; color:#b91c1c; }
-        .up-alert.success { background:#f0fdf4; color:#15803d; }
-        .up-footer { display:flex; gap:10px; justify-content:flex-end; padding:14px 24px; border-top:1px solid ${C.border}; }
-        .up-btn-cancel { background:none; border:1.5px solid ${C.border}; color:${C.textMid}; padding:9px 20px; border-radius:6px; font-weight:600; font-size:.88rem; cursor:pointer; }
-        .up-btn-cancel:hover { background:${C.greenBg}; }
-        .up-btn-submit { background:${C.green}; color:#fff; border:none; padding:9px 22px; border-radius:6px; font-weight:700; font-size:.88rem; cursor:pointer; display:flex; align-items:center; gap:6px; transition:background .2s; }
-        .up-btn-submit:hover { background:${C.greenDark}; }
-        .up-btn-submit:disabled { opacity:.6; cursor:not-allowed; }
         @media(max-width:900px){
           .np-layout { flex-direction:column !important; }
           .np-sidebar { width:100% !important; }
@@ -517,25 +414,21 @@ export default function NgoPublicProfile() {
                   Gallery
                   {gallery.length > 0 && <span style={{ fontSize: ".75rem", color: C.textLight, fontWeight: "600", marginLeft: "6px" }}>({gallery.length})</span>}
                 </h2>
-                <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", alignItems: "center" }}>
-                  {gallery.length > 0 && ["all", "image", "video"].map(f => (
-                    <button key={f} className={`fil-btn${galFilter === f ? " active" : ""}`} onClick={() => setGalFilter(f)}>
-                      {f === "all" ? "All" : f === "image" ? "Photos" : "Videos"}
-                    </button>
-                  ))}
-                  <button className="add-photo-btn" onClick={() => setShowUpload(true)}>
-                    <FaCamera style={{ fontSize: ".8rem" }} /> Add Photo
-                  </button>
-                </div>
+                {gallery.length > 0 && (
+                  <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
+                    {["all", "image", "video"].map(f => (
+                      <button key={f} className={`fil-btn${galFilter === f ? " active" : ""}`} onClick={() => setGalFilter(f)}>
+                        {f === "all" ? "All" : f === "image" ? "Photos" : "Videos"}
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
 
               {filtered.length === 0 ? (
                 <div style={{ textAlign: "center", padding: "48px 20px" }}>
                   <FaImages style={{ fontSize: "2.5rem", color: C.border, marginBottom: "12px" }} />
-                  <p style={{ color: C.textLight, margin: "0 0 16px" }}>No gallery photos yet. Be the first to add one!</p>
-                  <button className="add-photo-btn" style={{ margin: "0 auto", display: "inline-flex" }} onClick={() => setShowUpload(true)}>
-                    <FaCamera style={{ fontSize: ".8rem" }} /> Add First Photo
-                  </button>
+                  <p style={{ color: C.textLight, margin: 0 }}>No gallery photos uploaded yet.</p>
                 </div>
               ) : (
                 <div className="gal-grid" style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: "12px" }}>
@@ -596,72 +489,6 @@ export default function NgoPublicProfile() {
             {lightbox.title && (
               <p style={{ color: "rgba(255,255,255,.7)", fontSize: ".88rem", marginTop: "12px" }}>{lightbox.title}</p>
             )}
-          </div>
-        </div>
-      )}
-
-      {/* ── UPLOAD MODAL ── */}
-      {showUpload && (
-        <div className="up-overlay" onClick={closeUploadModal}>
-          <div className="up-modal" onClick={e => e.stopPropagation()}>
-            <div className="up-header">
-              <h3><FaCamera /> Add Photo to Gallery</h3>
-              <button className="up-close" onClick={closeUploadModal}><FaTimes /></button>
-            </div>
-            <form onSubmit={handleUpload}>
-              <div className="up-body">
-                {/* Drop zone */}
-                <div>
-                  <div className="up-label">Image <span style={{ color: "#e53e3e" }}>*</span></div>
-                  <div className="up-drop" onClick={() => fileInputRef.current?.click()}>
-                    <input ref={fileInputRef} type="file" accept="image/jpeg,image/png,image/gif,image/webp" onChange={handleFileSelect} style={{ display: "none" }} />
-                    {previewUrl ? (
-                      <div style={{ position: "relative" }}>
-                        <img src={previewUrl} alt="Preview" className="up-preview" />
-                        <button type="button" onClick={e => { e.stopPropagation(); setPreviewUrl(null); setUploadForm(p => ({ ...p, file: null })); if (fileInputRef.current) fileInputRef.current.value = ""; }}
-                          style={{ position: "absolute", top: "8px", right: "8px", background: "rgba(0,0,0,.6)", border: "none", color: "#fff", width: "28px", height: "28px", borderRadius: "50%", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                          <FaTimes style={{ fontSize: ".75rem" }} />
-                        </button>
-                      </div>
-                    ) : (
-                      <div className="up-drop-inner">
-                        <FaUpload style={{ fontSize: "1.8rem", color: C.green, opacity: .7 }} />
-                        <span style={{ fontSize: ".88rem", color: C.textMid, fontWeight: "600" }}>Click to browse image</span>
-                        <span style={{ fontSize: ".75rem", color: C.textLight }}>JPEG, PNG, GIF, WebP · Max 5 MB</span>
-                      </div>
-                    )}
-                  </div>
-                </div>
-                {/* Title */}
-                <div>
-                  <div className="up-label">Title <span style={{ color: "#e53e3e" }}>*</span></div>
-                  <input className="up-input" type="text" placeholder="e.g. Medical Camp 2024" value={uploadForm.title} onChange={e => setUploadForm(p => ({ ...p, title: e.target.value }))} />
-                </div>
-                {/* Category */}
-                <div>
-                  <div className="up-label">Category</div>
-                  <select className="up-input" value={uploadForm.category} onChange={e => setUploadForm(p => ({ ...p, category: e.target.value }))}>
-                    {UPLOAD_CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
-                  </select>
-                </div>
-                {/* Description */}
-                <div>
-                  <div className="up-label">Description <span style={{ fontSize: ".72rem", color: C.textLight }}>(optional)</span></div>
-                  <textarea className="up-input" rows={2} placeholder="Brief context about this photo…" value={uploadForm.description} onChange={e => setUploadForm(p => ({ ...p, description: e.target.value }))} style={{ resize: "vertical" }} />
-                </div>
-                {/* Message */}
-                {uploadMsg && <div className={`up-alert ${uploadMsg.type}`}>{uploadMsg.text}</div>}
-                <p style={{ fontSize: ".75rem", color: C.textLight, margin: 0, lineHeight: 1.6 }}>
-                  Images are reviewed before appearing publicly. You'll see them in your gallery after admin approval.
-                </p>
-              </div>
-              <div className="up-footer">
-                <button type="button" className="up-btn-cancel" onClick={closeUploadModal}>Cancel</button>
-                <button type="submit" className="up-btn-submit" disabled={uploading}>
-                  {uploading ? <><FaSpinner style={{ animation: "spin .7s linear infinite" }} /> Uploading…</> : <><FaUpload /> Upload Photo</>}
-                </button>
-              </div>
-            </form>
           </div>
         </div>
       )}

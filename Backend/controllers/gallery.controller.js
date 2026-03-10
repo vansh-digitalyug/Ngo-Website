@@ -11,7 +11,7 @@ import ApiError from "../utils/ApiError.js";
 export const getImages = asyncHandler(async (req, res) => {
   const { category, page = 1, limit = 20 } = req.query;
 
-  const query = { type: "image", isActive: true };
+  const query = { type: "image", isActive: true, approvalStatus: "approved" };
   if (category && category !== "all") query.category = category;
 
   const skip = (parseInt(page) - 1) * parseInt(limit);
@@ -40,7 +40,7 @@ export const getImages = asyncHandler(async (req, res) => {
 export const getVideos = asyncHandler(async (req, res) => {
   const { category, page = 1, limit = 20 } = req.query;
 
-  const query = { type: "video", isActive: true };
+  const query = { type: "video", isActive: true, approvalStatus: "approved" };
   if (category && category !== "all") query.category = category;
 
   const skip = (parseInt(page) - 1) * parseInt(limit);
