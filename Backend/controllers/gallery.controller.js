@@ -316,13 +316,12 @@ export const approveGalleryItem = asyncHandler(async (req, res) => {
 
   item.approvalStatus = "approved";
   item.rejectionReason = "";
+  item.isActive = true;
   await item.save();
 
-  return res.json({
-    success: true,
-    message: `${item.type === "image" ? "Image" : "Video"} approved successfully`,
-    item
-  });
+  return res.json(
+    new ApiResponse(200, `${item.type === "image" ? "Image" : "Video"} approved successfully`, item)
+  );
 });
 
 export const rejectGalleryItem = asyncHandler(async (req, res) => {

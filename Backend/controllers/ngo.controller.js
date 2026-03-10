@@ -1,5 +1,6 @@
 import Ngo from "../models/ngo.model.js";
 import FundRequest from "../models/fundRequest.model.js";
+import Gallery from "../models/gallery.model.js";
 import ApiResponse from "../utils/ApiResponse.js";
 import ApiError from "../utils/ApiError.js";
 import asyncHandler from "../utils/asyncHandler.js";
@@ -97,36 +98,45 @@ export const getAllNgos = async (req, res) => {
 };
 
 // GET single NGO by ID
-export const getNgoById = async (req, res) => {
-  try {
-    const { id } = req.params;
-    const ngo = await Ngo.findById(id);
-    
-    if (!ngo) {
-      return res.status(404).json({
-        success: false,
-        message: "NGO not found"
-      });
-    }
+export const getNgoById = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const ngo = await Ngo.findById(id);
 
-    // Map isVerified to verified for frontend compatibility
-    const ngoData = {
-      ...ngo.toObject(),
-      verified: ngo.isVerified,
-      rating: 4.8 // Default rating
-    };
+  if (!ngo) throw new ApiError(404, "NGO not found");
 
-    return res.status(200).json({
-      success: true,
-      data: ngoData
-    });
-  } catch (error) {
-    return res.status(500).json({
-      success: false,
-      message: error.message || "Failed to fetch NGO"
-    });
-  }
-};
+  const ngoData = {
+    ...ngo.toObject(),
+    verified: ngo.isVerified,
+    rating: 4.8,
+  };
+
+  return res.status(200).json(new ApiResponse(200, "NGO fetched successfully", ngoData));
+});
+
+// GET gallery items for a specific NGO (public, approved only)
+export const getNgoGallery = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const { type, page = 1, limit = 18 } = req.query;
+
+  const ngo = await Ngo.findById(id).select("_id ngoName");
+  if (!ngo) throw new ApiError(404, "NGO not found");
+
+  const query = { ngoId: id, isActive: true, approvalStatus: "approved" };
+  if (type && (type === "image" || type === "video")) query.type = type;
+
+  const skip = (Number(page) - 1) * Number(limit);
+  const [items, total] = await Promise.all([
+    Gallery.find(query).sort({ order: 1, createdAt: -1 }).skip(skip).limit(Number(limit)).select("-uploadedBy"),
+    Gallery.countDocuments(query),
+  ]);
+
+  return res.status(200).json(
+    new ApiResponse(200, "Gallery fetched successfully", {
+      items,
+      pagination: { total, page: Number(page), pages: Math.ceil(total / Number(limit)) },
+    })
+  );
+});
 
 export const createNgo = asyncHandler(async (req, res) => {
   const {
