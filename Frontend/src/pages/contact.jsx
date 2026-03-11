@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
+import { FaMapMarkerAlt, FaEnvelope, FaPhone, FaClock, FaPaperPlane, FaCheckCircle, FaExclamationTriangle } from 'react-icons/fa';
 
 const Contact = () => {
-  // 1. State Management
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -11,14 +11,12 @@ const Contact = () => {
   });
 
   const [errors, setErrors] = useState({});
-  const [status, setStatus] = useState('idle'); // 'idle', 'submitting', 'success', 'error'
+  const [status, setStatus] = useState('idle');
   const [submitMessage, setSubmitMessage] = useState('');
 
-  // 2. Handle Input Changes
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
     
-    // Clear error when user types
     if (errors[name]) {
       setErrors({ ...errors, [name]: '' });
     }
@@ -34,7 +32,6 @@ const Contact = () => {
     });
   };
 
-  // 3. Validation Logic
   const validate = () => {
     let newErrors = {};
     if (!formData.name.trim()) newErrors.name = 'Full name is required';
@@ -50,7 +47,6 @@ const Contact = () => {
     return Object.keys(newErrors).length === 0;
   };
 
-  // 4. Handle Submission
   const handleSubmit = async (e) => {
     e.preventDefault();
     
@@ -84,7 +80,6 @@ const Contact = () => {
       setSubmitMessage(result.message || "Your message has been successfully sent. We will get back to you shortly.");
       setFormData({ name: '', email: '', subject: 'General Inquiry', message: '', privacy: false });
 
-      // Reset status after 5 seconds to allow new messages
       setTimeout(() => {
         setStatus('idle');
         setSubmitMessage('');
@@ -95,404 +90,656 @@ const Contact = () => {
     }
   };
 
+  const contactInfo = [
+    {
+      icon: FaMapMarkerAlt,
+      title: "Office Location",
+      lines: ["Sector 63, Noida", "Uttar Pradesh, India"]
+    },
+    {
+      icon: FaEnvelope,
+      title: "Email Address",
+      lines: ["support@sevaindia.org", "partnerships@sevaindia.org"]
+    },
+    {
+      icon: FaPhone,
+      title: "Phone Number",
+      lines: ["+91 (120) 123-4567", "+91 98765 43210"]
+    },
+    {
+      icon: FaClock,
+      title: "Working Hours",
+      lines: ["Mon - Fri: 9am - 6pm", "Sat: 10am - 2pm"]
+    }
+  ];
+
   return (
-    <>
-      <style>
-        {`
-          @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+    <div className="contact-page">
+      <style>{`
+        .contact-page {
+          font-family: var(--font-sans);
+          background: var(--color-cream);
+          color: var(--color-text-dark);
+          min-height: 100vh;
+        }
 
-          :root {
-            --primary: #2563eb;       /* Royal Blue */
-            --primary-hover: #1d4ed8;
-            --bg-color: #f8fafc;
-            --text-dark: #1e293b;
-            --text-gray: #64748b;
-            --border: #e2e8f0;
-            --error: #ef4444;
-            --success: #22c55e;
-            --radius: 12px;
+        /* Hero Section */
+        .contact-hero {
+          background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-light) 100%);
+          padding: 100px 24px 80px;
+          text-align: center;
+          position: relative;
+          overflow: hidden;
+        }
+
+        .contact-hero::before {
+          content: '';
+          position: absolute;
+          top: -100px;
+          right: -100px;
+          width: 400px;
+          height: 400px;
+          background: rgba(255, 255, 255, 0.03);
+          border-radius: 50%;
+        }
+
+        .contact-hero::after {
+          content: '';
+          position: absolute;
+          bottom: -80px;
+          left: -80px;
+          width: 300px;
+          height: 300px;
+          background: rgba(255, 255, 255, 0.03);
+          border-radius: 50%;
+        }
+
+        .hero-content {
+          position: relative;
+          z-index: 1;
+          max-width: 600px;
+          margin: 0 auto;
+        }
+
+        .hero-tag {
+          display: inline-block;
+          background: rgba(255, 255, 255, 0.1);
+          border: 1px solid rgba(255, 255, 255, 0.2);
+          color: var(--color-white);
+          padding: 6px 18px;
+          border-radius: var(--radius-full);
+          font-size: 0.75rem;
+          font-weight: 700;
+          letter-spacing: 2px;
+          text-transform: uppercase;
+          margin-bottom: 20px;
+        }
+
+        .hero-title {
+          font-size: clamp(2rem, 5vw, 3rem);
+          font-weight: 800;
+          color: var(--color-white);
+          margin: 0 0 16px;
+          line-height: 1.2;
+        }
+
+        .hero-subtitle {
+          font-size: 1.1rem;
+          color: rgba(255, 255, 255, 0.8);
+          line-height: 1.7;
+          margin: 0;
+        }
+
+        /* Main Content */
+        .contact-container {
+          max-width: 1200px;
+          margin: -40px auto 0;
+          padding: 0 24px 80px;
+          position: relative;
+          z-index: 2;
+        }
+
+        .contact-grid {
+          display: grid;
+          grid-template-columns: 1fr 1.4fr;
+          gap: 32px;
+          background: var(--color-white);
+          border-radius: var(--radius-xl);
+          overflow: hidden;
+          box-shadow: var(--shadow-xl);
+          border: 1px solid var(--color-border-light);
+        }
+
+        /* Info Column */
+        .info-column {
+          background: linear-gradient(180deg, var(--color-primary) 0%, #15352a 100%);
+          padding: 48px 40px;
+          color: var(--color-white);
+          position: relative;
+          overflow: hidden;
+        }
+
+        .info-column::before {
+          content: '';
+          position: absolute;
+          top: -60px;
+          right: -60px;
+          width: 180px;
+          height: 180px;
+          background: rgba(255, 255, 255, 0.03);
+          border-radius: 50%;
+        }
+
+        .info-title {
+          font-size: 1.5rem;
+          font-weight: 700;
+          margin: 0 0 8px;
+          color: var(--color-white);
+        }
+
+        .info-subtitle {
+          font-size: 0.95rem;
+          color: var(--color-primary-soft);
+          margin: 0 0 40px;
+          line-height: 1.6;
+        }
+
+        .info-list {
+          display: flex;
+          flex-direction: column;
+          gap: 28px;
+          margin-bottom: 40px;
+        }
+
+        .info-item {
+          display: flex;
+          gap: 16px;
+          align-items: flex-start;
+        }
+
+        .info-icon {
+          width: 48px;
+          height: 48px;
+          min-width: 48px;
+          background: rgba(255, 255, 255, 0.08);
+          border-radius: var(--radius-md);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          color: var(--color-accent-light);
+          font-size: 1.1rem;
+        }
+
+        .info-text h4 {
+          font-size: 1rem;
+          font-weight: 600;
+          margin: 0 0 6px;
+          color: var(--color-white);
+        }
+
+        .info-text p {
+          font-size: 0.9rem;
+          color: var(--color-primary-soft);
+          margin: 0;
+          line-height: 1.6;
+        }
+
+        /* Map */
+        .map-container {
+          margin-top: auto;
+          border-radius: var(--radius-lg);
+          overflow: hidden;
+          height: 180px;
+          border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .map-container iframe {
+          width: 100%;
+          height: 100%;
+          border: 0;
+          opacity: 0.85;
+        }
+
+        /* Form Column */
+        .form-column {
+          padding: 48px 40px;
+          background: var(--color-white);
+        }
+
+        .form-title {
+          font-size: 1.5rem;
+          font-weight: 700;
+          color: var(--color-primary);
+          margin: 0 0 8px;
+        }
+
+        .form-subtitle {
+          font-size: 0.95rem;
+          color: var(--color-text-muted);
+          margin: 0 0 32px;
+        }
+
+        /* Form Styles */
+        .form-row {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 20px;
+        }
+
+        .form-group {
+          margin-bottom: 24px;
+        }
+
+        .form-group label {
+          display: block;
+          font-size: 0.9rem;
+          font-weight: 600;
+          color: var(--color-text-dark);
+          margin-bottom: 8px;
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+          width: 100%;
+          padding: 14px 16px;
+          border: 2px solid var(--color-border);
+          border-radius: var(--radius-md);
+          font-size: 1rem;
+          font-family: inherit;
+          background: var(--color-white);
+          color: var(--color-text-dark);
+          transition: all var(--transition-fast);
+        }
+
+        .form-group input::placeholder,
+        .form-group textarea::placeholder {
+          color: var(--color-text-muted);
+        }
+
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+          outline: none;
+          border-color: var(--color-primary);
+          box-shadow: 0 0 0 4px var(--color-primary-bg);
+        }
+
+        .form-group textarea {
+          resize: vertical;
+          min-height: 140px;
+        }
+
+        .error-input {
+          border-color: var(--color-error) !important;
+          background: var(--color-error-bg) !important;
+        }
+
+        .error-msg {
+          color: var(--color-error);
+          font-size: 0.8rem;
+          margin-top: 6px;
+          display: flex;
+          align-items: center;
+          gap: 4px;
+        }
+
+        /* Checkbox */
+        .checkbox-group {
+          display: flex;
+          align-items: flex-start;
+          gap: 12px;
+          margin-bottom: 28px;
+        }
+
+        .checkbox-group input[type="checkbox"] {
+          width: 20px;
+          height: 20px;
+          margin-top: 2px;
+          accent-color: var(--color-primary);
+          cursor: pointer;
+        }
+
+        .checkbox-group label {
+          font-size: 0.9rem;
+          color: var(--color-text-body);
+          line-height: 1.5;
+          cursor: pointer;
+        }
+
+        .checkbox-group label a {
+          color: var(--color-primary);
+          text-decoration: none;
+          font-weight: 500;
+        }
+
+        .checkbox-group label a:hover {
+          text-decoration: underline;
+        }
+
+        /* Submit Button */
+        .submit-btn {
+          width: 100%;
+          background: var(--color-accent);
+          color: var(--color-white);
+          border: none;
+          padding: 16px 24px;
+          border-radius: var(--radius-md);
+          font-size: 1rem;
+          font-weight: 600;
+          cursor: pointer;
+          transition: all var(--transition-base);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 10px;
+          box-shadow: 0 4px 16px rgba(196, 92, 46, 0.2);
+        }
+
+        .submit-btn:hover {
+          background: var(--color-accent-hover);
+          transform: translateY(-2px);
+          box-shadow: 0 6px 20px rgba(196, 92, 46, 0.3);
+        }
+
+        .submit-btn:disabled {
+          opacity: 0.7;
+          cursor: not-allowed;
+          transform: none;
+        }
+
+        /* Status Messages */
+        .success-box {
+          background: var(--color-success-bg);
+          border: 1px solid #86efac;
+          color: #166534;
+          padding: 20px 24px;
+          border-radius: var(--radius-lg);
+          margin-bottom: 24px;
+          display: flex;
+          align-items: flex-start;
+          gap: 14px;
+          animation: slideIn 0.4s ease;
+        }
+
+        .success-box .icon {
+          color: var(--color-success);
+          font-size: 1.4rem;
+          flex-shrink: 0;
+        }
+
+        .error-box {
+          background: var(--color-error-bg);
+          border: 1px solid #fca5a5;
+          color: #991b1b;
+          padding: 20px 24px;
+          border-radius: var(--radius-lg);
+          margin-bottom: 24px;
+          display: flex;
+          align-items: flex-start;
+          gap: 14px;
+          animation: slideIn 0.4s ease;
+        }
+
+        .error-box .icon {
+          color: var(--color-error);
+          font-size: 1.4rem;
+          flex-shrink: 0;
+        }
+
+        @keyframes slideIn {
+          from {
+            opacity: 0;
+            transform: translateY(-10px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+
+        /* Spinner */
+        .spinner {
+          width: 20px;
+          height: 20px;
+          border: 3px solid rgba(255, 255, 255, 0.3);
+          border-top-color: var(--color-white);
+          border-radius: 50%;
+          animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+          to { transform: rotate(360deg); }
+        }
+
+        /* Responsive */
+        @media (max-width: 1024px) {
+          .contact-grid {
+            grid-template-columns: 1fr;
           }
 
-          * { margin: 0; padding: 0; box-sizing: border-box; }
-
-          body {
-            font-family: 'Inter', sans-serif;
-            background-color: var(--bg-color);
-            color: var(--text-dark);
-            line-height: 1.5;
+          .info-column {
+            padding: 40px 32px;
           }
 
-          /* --- LAYOUT --- */
-          .contact-container {
-            max-width: 1100px;
-            margin: 60px auto;
-            padding: 0 20px;
-          }
-
-          .header {
-            text-align: center;
-            margin-bottom: 60px;
-          }
-
-          .header h1 {
-            font-size: 42px;
-            font-weight: 800;
-            margin-bottom: 16px;
-            letter-spacing: -1px;
-            color: #0f172a;
-          }
-
-          .header p {
-            font-size: 18px;
-            color: var(--text-gray);
-            max-width: 600px;
-            margin: 0 auto;
-          }
-
-          /* --- CARD GRID --- */
-          .grid-wrapper {
+          .info-list {
             display: grid;
-            grid-template-columns: 1fr 1.5fr; /* Info takes less space than Form */
-            gap: 40px;
-            background: white;
-            border-radius: 24px;
-            overflow: hidden;
-            box-shadow: 0 20px 40px -5px rgba(0,0,0,0.05);
-            border: 1px solid white;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
           }
 
-          /* --- LEFT COLUMN: INFO --- */
-          .info-col {
-            background: #1e293b;
-            padding: 48px;
-            color: white;
-            position: relative;
-            overflow: hidden;
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
+          .map-container {
+            display: none;
+          }
+        }
+
+        @media (max-width: 768px) {
+          .contact-hero {
+            padding: 80px 20px 60px;
           }
 
-          .info-col::before {
-            content: '';
-            position: absolute;
-            top: -50px;
-            right: -50px;
-            width: 200px;
-            height: 200px;
-            background: rgba(255,255,255,0.1);
-            border-radius: 50%;
-            pointer-events: none;
+          .contact-container {
+            margin-top: -30px;
+            padding: 0 16px 60px;
           }
 
-          .info-item {
-            display: flex;
-            gap: 16px;
-            margin-bottom: 32px;
+          .info-column,
+          .form-column {
+            padding: 32px 24px;
           }
 
-          .info-icon {
-            width: 40px;
-            height: 40px;
-            background: rgba(255,255,255,0.1);
-            border-radius: 8px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 20px;
+          .info-list {
+            grid-template-columns: 1fr;
           }
 
-          .info-text h3 { font-size: 16px; margin-bottom: 4px; font-weight: 600; }
-          .info-text p { color: #94a3b8; font-size: 14px; }
+          .form-row {
+            grid-template-columns: 1fr;
+          }
+        }
 
-          /* --- RIGHT COLUMN: FORM --- */
-          .form-col {
-            padding: 48px;
-            background: white;
+        @media (max-width: 480px) {
+          .hero-title {
+            font-size: 1.75rem;
           }
 
-          .form-group { margin-bottom: 24px; position: relative; }
-          .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-
-          label {
-            display: block;
-            margin-bottom: 8px;
-            font-size: 14px;
-            font-weight: 600;
-            color: #334155;
+          .info-column,
+          .form-column {
+            padding: 28px 20px;
           }
+        }
+      `}</style>
 
-          input, select, textarea {
-            width: 100%;
-            padding: 14px;
-            border: 2px solid var(--border);
-            border-radius: var(--radius);
-            font-size: 16px;
-            transition: all 0.2s;
-            background: #fff;
-            font-family: inherit;
-          }
-
-          input:focus, select:focus, textarea:focus {
-            outline: none;
-            border-color: var(--primary);
-            box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1);
-          }
-
-          /* Error State */
-          .error-input { border-color: var(--error); background: #fff5f5; }
-          .error-msg { color: var(--error); font-size: 12px; margin-top: 6px; display: block; }
-
-          /* Checkbox */
-          .checkbox-group {
-            display: flex;
-            align-items: flex-start;
-            gap: 12px;
-            margin-bottom: 24px;
-          }
-          
-          .checkbox-group input { width: 20px; height: 20px; margin-top: 2px; }
-          .checkbox-group label { font-weight: 400; color: var(--text-gray); font-size: 14px; margin: 0; }
-
-          /* Button */
-          .submit-btn {
-            width: 100%;
-            background: var(--primary);
-            color: white;
-            border: none;
-            padding: 16px;
-            border-radius: var(--radius);
-            font-size: 16px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: background 0.2s;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
-          }
-
-          .submit-btn:hover { background: var(--primary-hover); }
-          .submit-btn:disabled { opacity: 0.7; cursor: not-allowed; }
-
-          /* Success Message */
-          .success-box {
-            background: #dcfce7;
-            border: 1px solid #bbf7d0;
-            color: #166534;
-            padding: 20px;
-            border-radius: var(--radius);
-            text-align: center;
-            margin-bottom: 20px;
-            animation: fadeIn 0.5s ease;
-          }
-
-          .error-box {
-            background: #fee2e2;
-            border: 1px solid #fecaca;
-            color: #991b1b;
-            padding: 20px;
-            border-radius: var(--radius);
-            text-align: center;
-            margin-bottom: 20px;
-            animation: fadeIn 0.5s ease;
-          }
-
-          @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
-          @keyframes spin { to { transform: rotate(360deg); } }
-
-          .spinner {
-            width: 20px; height: 20px;
-            border: 3px solid rgba(255,255,255,0.3);
-            border-top-color: white;
-            border-radius: 50%;
-            animation: spin 0.8s linear infinite;
-          }
-
-          /* --- RESPONSIVE --- */
-          @media (max-width: 900px) {
-            .grid-wrapper { grid-template-columns: 1fr; }
-            .info-col { padding: 32px; flex-direction: row; flex-wrap: wrap; gap: 20px; }
-            .info-col::before { display: none; }
-            .info-item { width: 45%; margin: 0; }
-          }
-          @media (max-width: 600px) {
-            .form-row { grid-template-columns: 1fr; }
-            .info-item { width: 100%; }
-            .contact-container { padding: 0 16px; margin: 30px auto; }
-            .header h1 { font-size: 32px; }
-          }
-        `}
-      </style>
-
-      <div className="contact-container">
-        
-        {/* Header Section */}
-        <div className="header">
-          <h1>Get in Touch</h1>
-          <p>Have a question or just want to say hi? We'd love to hear from you.</p>
+      {/* Hero Section */}
+      <section className="contact-hero">
+        <div className="hero-content">
+          <span className="hero-tag">Contact Us</span>
+          <h1 className="hero-title">Get In Touch With Us</h1>
+          <p className="hero-subtitle">
+            Have a question, want to partner with us, or need support? 
+            We would love to hear from you. Our team is here to help.
+          </p>
         </div>
+      </section>
 
-        <div className="grid-wrapper">
+      {/* Main Content */}
+      <div className="contact-container">
+        <div className="contact-grid">
           
-          {/* Left Side: Information */}
-          <div className="info-col">
-            <div>
-              <h2 style={{ fontSize: '24px', marginBottom: '32px' }}>Contact Information</h2>
-              
-              <div className="info-item">
-                <div className="info-icon">📍</div>
-                <div className="info-text">
-                  <h3>Office Location</h3>
-                  <p>Sector 63, Noida<br/>Uttar Pradesh, India</p>
-                </div>
-              </div>
+          {/* Left: Contact Information */}
+          <div className="info-column">
+            <h2 className="info-title">Contact Information</h2>
+            <p className="info-subtitle">
+              Reach out through any of these channels and we will respond within 24 hours.
+            </p>
 
-              <div className="info-item">
-                <div className="info-icon">📧</div>
-                <div className="info-text">
-                  <h3>Email Address</h3>
-                  <p>support@hopelink.org<br/>careers@hopelink.org</p>
+            <div className="info-list">
+              {contactInfo.map((item, index) => (
+                <div key={index} className="info-item">
+                  <div className="info-icon">
+                    <item.icon />
+                  </div>
+                  <div className="info-text">
+                    <h4>{item.title}</h4>
+                    {item.lines.map((line, i) => (
+                      <p key={i}>{line}</p>
+                    ))}
+                  </div>
                 </div>
-              </div>
-
-              <div className="info-item">
-                <div className="info-icon">📞</div>
-                <div className="info-text">
-                  <h3>Phone Number</h3>
-                  <p>+91 (120) 123-4567<br/>Mon-Fri, 9am-6pm</p>
-                </div>
-              </div>
+              ))}
             </div>
 
-            {/* Embed Map Preview */}
-            <div style={{ marginTop: 'auto', borderRadius: '12px', overflow: 'hidden', height: '180px', border: '1px solid rgba(255,255,255,0.2)' }}>
+            <div className="map-container">
               <iframe 
                 src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3503.8!2d77.3726!3d28.6189!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x390ce5f5f5f5f5f5%3A0x0!2sSector%2063%2C%20Noida%2C%20Uttar%20Pradesh!5e0!3m2!1sen!2sin!4v1730000000000"
-                width="100%" 
-                height="100%" 
-                style={{ border: 0, opacity: 0.8 }} 
-                allowFullScreen="" 
+                allowFullScreen=""
                 loading="lazy"
-                title="Mini Map"
-              ></iframe>
+                title="Office Location Map"
+              />
             </div>
           </div>
 
-          {/* Right Side: Interactive Form */}
-          <div className="form-col">
-            
-            {status === 'success' ? (
-              <div className="success-box">
-                <h3 style={{ marginBottom: '8px' }}>Thank you! 🎉</h3>
-                <p>{submitMessage || "Your message has been successfully sent. We will get back to you shortly."}</p>
-              </div>
-            ) : null}
+          {/* Right: Contact Form */}
+          <div className="form-column">
+            <h2 className="form-title">Send Us a Message</h2>
+            <p className="form-subtitle">
+              Fill out the form below and we will get back to you as soon as possible.
+            </p>
 
-            {status === 'error' ? (
-              <div className="error-box">
-                <h3 style={{ marginBottom: '8px' }}>Unable to Send Message</h3>
-                <p>{submitMessage || "Failed to send message. Please try again."}</p>
+            {status === 'success' && (
+              <div className="success-box">
+                <FaCheckCircle className="icon" />
+                <div>
+                  <strong style={{ display: 'block', marginBottom: '4px' }}>Message Sent Successfully!</strong>
+                  <span>{submitMessage}</span>
+                </div>
               </div>
-            ) : null}
+            )}
+
+            {status === 'error' && (
+              <div className="error-box">
+                <FaExclamationTriangle className="icon" />
+                <div>
+                  <strong style={{ display: 'block', marginBottom: '4px' }}>Failed to Send Message</strong>
+                  <span>{submitMessage}</span>
+                </div>
+              </div>
+            )}
 
             <form onSubmit={handleSubmit}>
               <div className="form-row">
-                {/* Name */}
                 <div className="form-group">
-                  <label>Full Name</label>
-                  <input 
-                    type="text" 
-                    name="name" 
+                  <label>Full Name *</label>
+                  <input
+                    type="text"
+                    name="name"
                     value={formData.name}
                     onChange={handleChange}
                     className={errors.name ? 'error-input' : ''}
-                    placeholder="John Doe" 
+                    placeholder="John Doe"
                   />
                   {errors.name && <span className="error-msg">{errors.name}</span>}
                 </div>
 
-                {/* Email */}
                 <div className="form-group">
-                  <label>Email Address</label>
-                  <input 
-                    type="email" 
+                  <label>Email Address *</label>
+                  <input
+                    type="email"
                     name="email"
                     value={formData.email}
                     onChange={handleChange}
                     className={errors.email ? 'error-input' : ''}
-                    placeholder="john@example.com" 
+                    placeholder="john@example.com"
                   />
                   {errors.email && <span className="error-msg">{errors.email}</span>}
                 </div>
               </div>
 
-              {/* Subject */}
               <div className="form-group">
                 <label>Subject</label>
-                <select 
-                  name="subject" 
+                <select
+                  name="subject"
                   value={formData.subject}
                   onChange={handleChange}
                 >
                   <option>General Inquiry</option>
                   <option>Support Request</option>
                   <option>Partnership Opportunity</option>
-                  <option>Job Application</option>
+                  <option>NGO Registration Help</option>
+                  <option>Donation Query</option>
+                  <option>Volunteer Information</option>
                 </select>
               </div>
 
-              {/* Message */}
               <div className="form-group">
-                <label>Message</label>
-                <textarea 
+                <label>Message *</label>
+                <textarea
                   name="message"
                   value={formData.message}
                   onChange={handleChange}
                   className={errors.message ? 'error-input' : ''}
-                  rows="5" 
-                  placeholder="How can we help you?"
-                ></textarea>
+                  placeholder="How can we help you today?"
+                />
                 {errors.message && <span className="error-msg">{errors.message}</span>}
               </div>
 
-              {/* Privacy Checkbox */}
               <div className="checkbox-group">
-                <input 
-                  type="checkbox" 
-                  id="privacy" 
+                <input
+                  type="checkbox"
+                  id="privacy"
                   name="privacy"
                   checked={formData.privacy}
                   onChange={handleChange}
                 />
-                <label htmlFor="privacy" style={{ color: errors.privacy ? '#ef4444' : '' }}>
-                  I agree to the <a href="#" style={{ color: '#2563eb', textDecoration: 'none' }}>privacy policy</a> and consent to being contacted.
+                <label htmlFor="privacy" style={{ color: errors.privacy ? 'var(--color-error)' : '' }}>
+                  I agree to the <a href="/privacy">privacy policy</a> and consent to being contacted regarding my inquiry.
                 </label>
               </div>
-              {errors.privacy && <span className="error-msg" style={{ marginTop: '-15px', marginBottom: '20px' }}>{errors.privacy}</span>}
+              {errors.privacy && <span className="error-msg" style={{ marginTop: '-20px', marginBottom: '20px', display: 'block' }}>{errors.privacy}</span>}
 
-              {/* Submit Button */}
-              <button 
-                type="submit" 
-                className="submit-btn" 
+              <button
+                type="submit"
+                className="submit-btn"
                 disabled={status === 'submitting' || status === 'success'}
               >
                 {status === 'submitting' ? (
                   <>
-                    <div className="spinner"></div> Sending...
+                    <div className="spinner" /> Sending...
                   </>
                 ) : status === 'success' ? (
-                  'Message Sent'
+                  <>
+                    <FaCheckCircle /> Message Sent
+                  </>
                 ) : (
-                  'Send Message'
+                  <>
+                    <FaPaperPlane /> Send Message
+                  </>
                 )}
               </button>
             </form>
           </div>
-
         </div>
       </div>
-    </>
+    </div>
   );
 };
 

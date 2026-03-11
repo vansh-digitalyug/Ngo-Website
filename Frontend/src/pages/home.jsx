@@ -20,21 +20,21 @@ import kanyaHero     from "../assets/images/socialWelfare/Kanyadan/hero.png";
 import road          from "../assets/images/infrastructure/road.jpg";
 
 
-/* ── color tokens ── */
+/* ── color tokens (using CSS custom properties from design system) ── */
 const C = {
-  green:     "#2d6a4f",   // primary — deep muted green
-  greenDark: "#1b4332",   // hover / headings
-  greenSoft: "#52b788",   // accents
-  greenBg:   "#f0f4f1",   // soft green background
-  orange:    "#c45c2e",   // warm terracotta CTA
-  orangeHov: "#a84a22",
-  orangeBg:  "#fdf3ed",
-  warmBg:    "#f9f6f2",   // off-white warm sections
-  border:    "#e0dbd5",
-  text:      "#1c1c1c",
-  textMid:   "#4a4a4a",
-  textLight: "#767676",
-  white:     "#ffffff",
+  green:     "var(--color-primary-light)",   // primary — deep muted green
+  greenDark: "var(--color-primary)",         // hover / headings
+  greenSoft: "var(--color-primary-soft)",    // accents
+  greenBg:   "var(--color-primary-bg)",      // soft green background
+  orange:    "var(--color-accent)",          // warm terracotta CTA
+  orangeHov: "var(--color-accent-hover)",
+  orangeBg:  "var(--color-accent-bg)",
+  warmBg:    "var(--color-warm-bg)",         // off-white warm sections
+  border:    "var(--color-border)",
+  text:      "var(--color-text-dark)",
+  textMid:   "var(--color-text-body)",
+  textLight: "var(--color-text-muted)",
+  white:     "var(--color-white)",
 };
 
 /* ── animated counter ── */
