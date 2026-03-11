@@ -198,7 +198,6 @@ export default function Home() {
     { Icon: FaCheckCircle,      text: <><strong>100%</strong> Transparent</> },
     { Icon: FaFileAlt,          text: <><strong>80G</strong> Tax Benefits</> },
     { Icon: FaHeart,            text: <><strong>10,000+</strong> Lives Changed</> },
-    { Icon: FaFireAlt,          text: <><strong>48 hrs</strong> Certificate Delivery</> },
     { Icon: FaShieldAlt,        text: <><strong>KYC-Verified</strong> Every NGO</> },
     { Icon: FaHandshake,        text: <><strong>1,200+</strong> Volunteers</> },
   ];
@@ -233,7 +232,6 @@ export default function Home() {
         <div className="hero-overlay" />
 
         <div className="hero-content">
-          <span key={`k${slide}`} className="hero-kicker">{slides[slide].kicker}</span>
           <h1 key={`h${slide}`} className="hero-h1">{slides[slide].h}</h1>
           <p key={`p${slide}`} className="hero-p">{slides[slide].p}</p>
           <div className="hero-actions">
@@ -304,7 +302,6 @@ export default function Home() {
         <div className="about-inner">
 
           <div className="about-text sl">
-            <span className="sec-tag navy">Who We Are</span>
             <h2 className="sec-title">
               Bridging the Gap Between<br />
               <span>Compassion and Real Change</span>
@@ -358,7 +355,6 @@ export default function Home() {
         <div className="causes-inner">
 
           <div className="sr sec-center" style={{ marginBottom: "48px" }}>
-            <span className="sec-tag amber">Active Campaigns</span>
             <h2 className="sec-title">Fundraising Campaigns <span>That Need You</span></h2>
             <div className="sec-divider center" />
             <p className="sec-sub">
@@ -402,7 +398,6 @@ export default function Home() {
         <div className="programs-inner">
 
           <div className="sr sec-center" style={{ marginBottom: "48px" }}>
-            <span className="sec-tag navy">What We Do</span>
             <h2 className="sec-title">Our <span>Programmes</span> &amp; Services</h2>
             <div className="sec-divider center" />
             <p className="sec-sub">
@@ -439,7 +434,6 @@ export default function Home() {
       ══════════════════════════════════════════ */}
       <section className="mid-cta">
         <div className="mid-cta-inner">
-          <span className="sec-tag white sr">"One donation. Real change."</span>
           <h2 className="sr d1">
             A single contribution can feed a child for a month, pay for a senior's medicines,
             or put a girl through school.
@@ -462,7 +456,6 @@ export default function Home() {
         <div className="how-inner">
 
           <div className="sr sec-center" style={{ marginBottom: "52px" }}>
-            <span className="sec-tag amber">The Process</span>
             <h2 className="sec-title">How It Works in <span>4 Simple Steps</span></h2>
             <div className="sec-divider center" />
             <p className="sec-sub">
@@ -496,7 +489,6 @@ export default function Home() {
         <div className="why-inner">
 
           <div className="sr sec-center" style={{ marginBottom: "48px" }}>
-            <span className="sec-tag navy">Why SevaIndia</span>
             <h2 className="sec-title">India's Most Trusted <span>NGO Donation Platform</span></h2>
             <div className="sec-divider center" />
             <p className="sec-sub">
@@ -569,7 +561,6 @@ export default function Home() {
           </div>
 
           <div className="sfr d2">
-            <span className="sec-tag navy">NGO Network</span>
             <h2 className="sec-title">Find a Verified NGO<br /><span>Near Your City</span></h2>
             <div className="sec-divider" />
             <p className="sec-sub" style={{ marginBottom: "16px" }}>
@@ -596,7 +587,6 @@ export default function Home() {
         <div className="testimonials-inner">
 
           <div className="sr sec-center" style={{ marginBottom: "48px" }}>
-            <span className="sec-tag white">Real Stories</span>
             <h2 className="sec-title light">Voices From <span>Our Community</span></h2>
             <div className="sec-divider center" />
             <p className="sec-sub light">
@@ -633,7 +623,6 @@ export default function Home() {
         <div className="join-inner">
 
           <div className="sr sec-center" style={{ marginBottom: "48px" }}>
-            <span className="sec-tag amber">Get Involved</span>
             <h2 className="sec-title">There Are Many <span>Ways to Help</span></h2>
             <div className="sec-divider center" />
             <p className="sec-sub">
@@ -702,7 +691,6 @@ export default function Home() {
         <div className="donations-inner">
 
           <div className="sr sec-center" style={{ marginBottom: "48px" }}>
-            <span className="live-dot">Live Feed</span>
             <h2 className="sec-title">Recent <span>Donations</span></h2>
             <div className="sec-divider center" />
             <p className="sec-sub">
@@ -757,7 +745,6 @@ export default function Home() {
         <div className="faq-inner">
 
           <div className="sr sec-center" style={{ marginBottom: "44px" }}>
-            <span className="sec-tag amber">FAQ</span>
             <h2 className="sec-title">Frequently Asked <span>Questions</span></h2>
             <div className="sec-divider center" />
             <p className="sec-sub">
@@ -767,12 +754,14 @@ export default function Home() {
 
           <div className="faq-list">
             {faqs.map((f, i) => (
-              <div key={i} className={`faq-row sr${openFaq === i ? " open" : ""}`}>
-                <button className="faq-btn" onClick={() => setOpenFaq(openFaq === i ? null : i)}>
-                  <span>{f.q}</span>
-                  <FaChevronDown className="faq-chevron" />
-                </button>
-                {openFaq === i && <div className="faq-body">{f.a}</div>}
+              <div key={i} className={`sr d${i + 1}`} style={{ transitionDelay: `${i * 0.07}s` }}>
+                <div className={`faq-row${openFaq === i ? " open" : ""}`}>
+                  <button className="faq-btn" onClick={() => setOpenFaq(openFaq === i ? null : i)}>
+                    <span>{f.q}</span>
+                    <FaChevronDown className="faq-chevron" />
+                  </button>
+                  <div className="faq-body">{f.a}</div>
+                </div>
               </div>
             ))}
           </div>

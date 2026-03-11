@@ -797,9 +797,16 @@
   color: var(--amber);
 }
 .faq-body {
-  padding: 0 6px 20px;
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height .35s ease;
   font-size: .92rem; color: var(--text-mid);
   line-height: 1.8;
+  padding: 0 6px;
+}
+.faq-row.open .faq-body {
+  max-height: 400px;
+  padding: 0 6px 20px;
 }
 
 /* ══════════════════════════════════════════
