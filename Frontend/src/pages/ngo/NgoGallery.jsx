@@ -165,7 +165,7 @@ export default function NgoGallery() {
         setMessage({ type: 'error', text: data.message || 'Failed to delete image' });
       }
     } catch (err) {
-      setMessage({ type: 'error', text: 'Something went wrong. Please try again.' });
+      setMessage({ type: 'error', text: 'Something went wrong. Please try again.',err});
     }
   };
 
