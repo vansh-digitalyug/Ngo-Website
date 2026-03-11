@@ -11,7 +11,7 @@ const Donate = () => {
   const { language } = useLanguage();
   const isHi = language === "hi";
   const serviceImage = location.state?.serviceImage || cowImage;
-  const serviceTitle = location.state?.serviceTitle || "Help Guardian of Angels rescue and care for abandoned and injured cows";
+  const serviceTitle = location.state?.serviceTitle || "General Donation";
   const ngoId = location.state?.ngoId || null;
   
   const [selectedAmount, setSelectedAmount] = useState(3000);

@@ -12,6 +12,7 @@ import ngoDashboardRoutes from "./routes/ngoDashboard.route.js";
 import paymentRoutes from "./routes/payment.routes.js";
 import s3Routes from "./routes/s3.routes.js";
 import kanyadanRoutes from "./routes/kanyadanApplication.routes.js";
+import taskRoutes from "./routes/task.routes.js";
 
 import "./config/loadEnv.js";
 import cors from "cors";
@@ -63,6 +64,8 @@ app.use("/api/payment", paymentRoutes);
 app.use("/api/s3", s3Routes);
 // Kanyadan Yojna applications (public submission)
 app.use("/api/kanyadan", kanyadanRoutes);
+// Task management (donation → assign volunteer → complete → notify donor)
+app.use("/api/tasks", taskRoutes);
 app.use(errorHandler);
 
 const PORT = process.env.PORT || 5000;

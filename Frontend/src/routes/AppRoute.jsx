@@ -23,6 +23,7 @@ import AdminContacts from "../pages/admin/AdminContacts.jsx";
 import AdminUsers from "../pages/admin/AdminUsers.jsx";
 import AdminGallery from "../pages/admin/AdminGallery.jsx";
 import AdminKanyadan from "../pages/admin/AdminKanyadan.jsx";
+import AdminTasks from "../pages/admin/AdminTasks.jsx";
 
 // NGO Dashboard imports
 import {
@@ -185,6 +186,7 @@ function AppRoutes() {
           <Route path="gallery" element={<AdminGallery />} />
           <Route path="users" element={<AdminUsers />} />
           <Route path="kanyadan" element={<AdminKanyadan />} />
+          <Route path="tasks" element={<AdminTasks />} />
         </Route>
 
         {/* NGO Dashboard Routes */}

@@ -86,6 +86,13 @@ const gallerySchema = new mongoose.Schema({
   rejectionReason: {
     type: String,
     default: ""
+  },
+
+  // If this item was auto-created from a volunteer task completion
+  sourceTask: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Task",
+    default: null
   }
 }, {
   timestamps: true

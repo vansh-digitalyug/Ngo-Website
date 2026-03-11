@@ -4,6 +4,13 @@ import path from "path";
 import asyncHandler from "../utils/asyncHandler.js";
 import ApiError from "../utils/ApiError.js";
 import ApiResponse from "../utils/ApiResponse.js";
+<<<<<<< HEAD
+import { GetObjectCommand } from "@aws-sdk/client-s3";
+import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
+import { s3 } from "../config/s3Client.config.js";
+
+=======
+>>>>>>> 31d23d24ccb2adabff38352913522fa2e3328b1a
 
 
 export const getImages = asyncHandler(async (req, res) => {
@@ -87,12 +94,17 @@ export const getCategories = asyncHandler(async (req, res) => {
 // ============================================
 
 export const getAllGalleryItems = asyncHandler(async (req, res) => {
-  const { type, category, status, search, page = 1, limit = 20 } = req.query;
+  const { type, category, status, search, ngoId, page = 1, limit = 20 } = req.query;
 
-  const query = {};
+  // exclude volunteer task-completion uploads (both new and old items)
+  const query = {
+    sourceTask: null,
+    category: { $ne: "Volunteer Activities" }
+  };
   if (type) query.type = type;
   if (category && category !== "all") query.category = category;
   if (status && status !== "all") query.approvalStatus = status;
+  if (ngoId && ngoId !== "all") query.ngoId = ngoId;
   if (search) {
     query.$or = [
       { title: { $regex: search, $options: "i" } },
