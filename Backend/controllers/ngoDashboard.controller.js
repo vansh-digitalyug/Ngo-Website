@@ -8,6 +8,7 @@ import ApiResponse from "../utils/ApiResponse.js";
 import { PutObjectCommand, GetObjectCommand } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { s3 } from "../config/s3Client.config.js";
+import ApiResponse from "../utils/ApiResponse.js";
 
 // ═══════════════════════════════════════════════════════════════════════════
 // NGO DASHBOARD CONTROLLER
