@@ -162,6 +162,8 @@ const Profile = () => {
   const [volunteerData, setVolunteerData] = useState(null);
   const [kanyadanApps, setKanyadanApps] = useState([]);
   const [kanyadanLoading, setKanyadanLoading] = useState(false);
+  const [donorTasks, setDonorTasks] = useState([]);
+  const [donorTasksLoading, setDonorTasksLoading] = useState(false);
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -257,10 +259,27 @@ const Profile = () => {
     }
   }, []);
 
+  const fetchDonorTasks = useCallback(async () => {
+    const token = localStorage.getItem('token');
+    if (!token) return;
+    setDonorTasksLoading(true);
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/tasks/donor/my-tasks`, {
+        headers: { Authorization: `Bearer ${token}` },
+        credentials: 'include',
+      });
+      const data = await res.json().catch(() => ({}));
+      if (data?.success) setDonorTasks(data.data || []);
+    } catch { /* silent */ } finally {
+      setDonorTasksLoading(false);
+    }
+  }, []);
+
   useEffect(() => {
     if (activeTab === 'donations') fetchDonations();
     if (activeTab === 'kanyadan') fetchKanyadan();
-  }, [activeTab, fetchDonations, fetchKanyadan]);
+    if (activeTab === 'tasks') fetchDonorTasks();
+  }, [activeTab, fetchDonations, fetchKanyadan, fetchDonorTasks]);
 
   const handleProfileInputChange = (field, value) => {
     setProfileForm((prev) => ({ ...prev, [field]: value }));
@@ -461,6 +480,10 @@ const Profile = () => {
             <FaClipboardList className="nav-icon" /> Kanyadan Status
           </button>
         )}
+        <button className={`nav-item ${activeTab === 'tasks' ? 'active' : ''}`} onClick={() => setActiveTab('tasks')}>
+          <FaClipboardList className="nav-icon" /> My Donated Tasks
+          {donorTasks.length > 0 && <span style={{ background: "#16a34a", color: "#fff", fontSize: "11px", borderRadius: "10px", padding: "1px 7px", marginLeft: "6px" }}>{donorTasks.length}</span>}
+        </button>
         {isVolunteer ? (
           <Link to="/volunteer-dashboard" className="nav-item">
             <FaHandHoldingHeart className="nav-icon" /> Volunteer Dashboard
@@ -700,6 +723,66 @@ const Profile = () => {
   );
 
 
+  const fmtCurr = (n) => new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 0 }).format(n);
+  const fmtD = (d) => d ? new Date(d).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" }) : "—";
+
+  const renderDonorTasks = () => (
+    <div className="tab-content fade-in">
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "20px" }}>
+        <h2 style={{ margin: 0 }}>My Donated Tasks</h2>
+        <button onClick={fetchDonorTasks} disabled={donorTasksLoading} style={{ background: "none", border: "1px solid #e2e8f0", borderRadius: "8px", padding: "7px 14px", cursor: "pointer", fontSize: "13px", color: "#64748b", display: "flex", alignItems: "center", gap: "5px" }}>
+          <FaSync className={donorTasksLoading ? 'spinner-icon' : ''} /> Refresh
+        </button>
+      </div>
+
+      {donorTasksLoading ? (
+        <div className="loading-inline"><FaSpinner className="spinner-icon" /> Loading tasks...</div>
+      ) : donorTasks.length === 0 ? (
+        <div style={{ textAlign: "center", padding: "48px 20px", color: "#94a3b8" }}>
+          <FaClipboardList style={{ fontSize: "2.5rem", marginBottom: "12px" }} />
+          <p style={{ margin: 0 }}>No completed volunteer tasks yet for your donations.</p>
+          <p style={{ margin: "6px 0 0", fontSize: "13px" }}>When a volunteer completes work on your donation, it will appear here.</p>
+        </div>
+      ) : (
+        <div>
+          {donorTasks.map(task => (
+            <div key={task._id} style={{ background: "#fff", border: "1px solid #e2e8f0", borderRadius: "12px", padding: "20px", marginBottom: "16px", borderLeft: "4px solid #22c55e" }}>
+              <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", flexWrap: "wrap", gap: "10px", marginBottom: "12px" }}>
+                <div>
+                  <p style={{ margin: "0 0 4px", fontWeight: "700", color: "#0f172a", fontSize: "15px" }}>{task.title}</p>
+                  <p style={{ margin: "0 0 4px", color: "#374151", fontSize: "13px" }}>
+                    Service: <strong>{task.serviceTitle || "General Donation"}</strong> · Donated: <strong>{fmtCurr(task.donationAmount)}</strong>
+                  </p>
+                  <p style={{ margin: 0, color: "#64748b", fontSize: "12px" }}>
+                    Volunteer: <strong>{task.volunteerName || "—"}</strong> · Completed: {fmtD(task.completedAt)}
+                  </p>
+                </div>
+                <span style={{ background: "#dcfce7", color: "#166534", padding: "4px 12px", borderRadius: "20px", fontSize: "12px", fontWeight: "700" }}>
+                  <FaCheckCircle style={{ verticalAlign: "middle", marginRight: "4px" }} />Completed
+                </span>
+              </div>
+              {task.volunteerNote && (
+                <div style={{ background: "#f0fdf4", border: "1px solid #bbf7d0", borderRadius: "8px", padding: "10px 14px", marginBottom: "12px" }}>
+                  <p style={{ margin: 0, fontSize: "13px", color: "#166534" }}>💬 <em>{task.volunteerNote}</em></p>
+                </div>
+              )}
+              {task.mediaUrl && (
+                <div style={{ marginTop: "8px" }}>
+                  <p style={{ margin: "0 0 8px", fontSize: "13px", fontWeight: "600", color: "#374151" }}>Proof of Work:</p>
+                  {task.mediaType === "video" ? (
+                    <video src={task.mediaUrl} controls style={{ maxWidth: "100%", maxHeight: "320px", borderRadius: "10px", border: "1px solid #e2e8f0" }} />
+                  ) : (
+                    <img src={task.mediaUrl} alt="Task proof" style={{ maxWidth: "100%", maxHeight: "320px", objectFit: "cover", borderRadius: "10px", border: "1px solid #e2e8f0" }} />
+                  )}
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+
   return (
     <div className="profile-layout">
       {saveNotice.message && (
@@ -736,6 +819,7 @@ const Profile = () => {
           {activeTab === 'personal' && renderPersonalInfo()}
           {activeTab === 'donations' && renderDonations()}
           {activeTab === 'kanyadan' && renderKanyadan()}
+          {activeTab === 'tasks' && renderDonorTasks()}
         </main>
       </div>
     </div>

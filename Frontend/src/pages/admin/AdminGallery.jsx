@@ -15,8 +15,8 @@ const getImageUrl = (url) => {
 };
 
 const CATEGORIES = [
-  "Food Distribution", "Medical Camps", "Education Programs", 
-  "Elder Care", "Women Empowerment", "Events", "Volunteer Activities", "Other"
+  "Food Distribution", "Medical Camps", "Education Programs",
+  "Elder Care", "Women Empowerment", "Events", "Other"
 ];
 
 const AdminGallery = () => {
@@ -27,6 +27,8 @@ const AdminGallery = () => {
   const [activeTab, setActiveTab] = useState("all");
   const [category, setCategory] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
+  const [ngoFilter, setNgoFilter] = useState("all");
+  const [ngoOptions, setNgoOptions] = useState([]); // [{_id, ngoName}]
   const [search, setSearch] = useState("");
   const [pagination, setPagination] = useState({ page: 1, pages: 1, total: 0 });
   
@@ -42,7 +44,7 @@ const AdminGallery = () => {
   useEffect(() => {
     fetchGalleryItems();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeTab, category, statusFilter, search]);
+  }, [activeTab, category, statusFilter, ngoFilter, search]);
 
   const fetchGalleryItems = async (page = 1) => {
     setLoading(true);
@@ -51,6 +53,7 @@ const AdminGallery = () => {
       if (activeTab !== "all") params.set("type", activeTab);
       if (category !== "all") params.set("category", category);
       if (statusFilter !== "all") params.set("status", statusFilter);
+      if (ngoFilter !== "all") params.set("ngoId", ngoFilter);
       if (search) params.set("search", search);
       params.set("page", page);
       params.set("limit", 20);
@@ -60,14 +63,22 @@ const AdminGallery = () => {
         credentials: "include"
       });
       const data = await res.json();
-      
+
       if (data.success) {
         setItems(data.items);
         setCounts(data.counts);
         setPagination(data.pagination);
+        // Accumulate unique NGO options from fetched items
+        setNgoOptions(prev => {
+          const map = new Map(prev.map(o => [o._id, o]));
+          data.items.forEach(item => {
+            if (item.ngoId?._id) map.set(item.ngoId._id, { _id: item.ngoId._id, ngoName: item.ngoId.ngoName });
+          });
+          return Array.from(map.values()).sort((a, b) => a.ngoName.localeCompare(b.ngoName));
+        });
       }
     } catch (error) {
-      flash.error("Failed to load gallery items");
+      flash.error("Failed to load gallery items",error);
     } finally {
       setLoading(false);
     }
@@ -90,7 +101,7 @@ const AdminGallery = () => {
         flash.error(data.message || "Failed to approve");
       }
     } catch (error) {
-      flash.error("Failed to approve item");
+      flash.error("Failed to approve item",error);
     } finally {
       setActionLoading(null);
     }
@@ -112,7 +123,7 @@ const AdminGallery = () => {
         flash.error(data.message || "Failed to reject");
       }
     } catch (error) {
-      flash.error("Failed to reject item");
+      flash.error("Failed to reject item",error);
     } finally {
       setActionLoading(null);
     }
@@ -134,7 +145,7 @@ const AdminGallery = () => {
         flash.error(result.message || "Failed to delete item");
       }
     } catch (error) {
-      flash.error("Failed to delete item");
+      flash.error("Failed to delete item",error);
     }
   };
 
@@ -159,7 +170,7 @@ const AdminGallery = () => {
         flash.error(result.message || "Failed to delete items");
       }
     } catch (error) {
-      flash.error("Failed to delete items");
+      flash.error("Failed to delete items",error);
     } finally {
       setBulkDeleting(false);
     }
@@ -249,6 +260,11 @@ const AdminGallery = () => {
           <option value="pending">Pending</option>
           <option value="approved">Approved</option>
           <option value="rejected">Rejected</option>
+        </select>
+
+        <select value={ngoFilter} onChange={(e) => setNgoFilter(e.target.value)} style={styles.input}>
+          <option value="all">All NGOs</option>
+          {ngoOptions.map(o => <option key={o._id} value={o._id}>{o.ngoName}</option>)}
         </select>
 
         <div style={{ position: "relative", flex: 1, minWidth: "220px" }}>

@@ -83,6 +83,21 @@ function AdminNgos() {
 
   const formatDate = (d) => d ? new Date(d).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" }) : "—";
 
+  const viewDocument = async (key) => {
+    if (!key || key === "not found") return;
+    // If already a full URL, open directly
+    if (key.startsWith("http")) { window.open(key, "_blank", "noopener"); return; }
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/s3/get-url?key=${encodeURIComponent(key)}`, {
+        headers: { Authorization: `Bearer ${token}` },
+        credentials: "include"
+      });
+      const d = await res.json();
+      if (d.data?.Url) window.open(d.data.Url, "_blank", "noopener");
+      else alert("Could not generate document link.");
+    } catch { alert("Failed to load document."); }
+  };
+
   return (
     <div>
       <h1 className="admin-page-title">Manage NGOs</h1>
@@ -216,48 +231,27 @@ function AdminNgos() {
                         <div style={{ marginBottom: "20px" }}>
                           <h4 style={{ fontSize: "14px", fontWeight: "600", marginBottom: "12px", color: "#1f2937" }}>Certificates & Documents</h4>
                           <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "12px" }}>
-                            <div style={{
-                              padding: "12px",
-                              backgroundColor: "#f3f4f6",
-                              borderRadius: "6px",
-                              textAlign: "center"
-                            }}>
-                              <FileText size={20} style={{ margin: "0 auto 8px", color: "#6366f1" }} />
-                              <div style={{ fontSize: "12px", fontWeight: "500" }}>Registration Cert</div>
-                              {n.documents.registrationCertificate ? (
-                                <a href={`${API_BASE_URL}/uploads/${n.documents.registrationCertificate}`} target="_blank" rel="noopener noreferrer" style={{ color: "#0ea5e9", fontSize: "11px", marginTop: "4px" }}>View →</a>
-                              ) : (
-                                <div style={{ color: "#6b7280", fontSize: "11px", marginTop: "4px" }}>Not uploaded</div>
-                              )}
-                            </div>
-                            <div style={{
-                              padding: "12px",
-                              backgroundColor: "#f3f4f6",
-                              borderRadius: "6px",
-                              textAlign: "center"
-                            }}>
-                              <FileText size={20} style={{ margin: "0 auto 8px", color: "#6366f1" }} />
-                              <div style={{ fontSize: "12px", fontWeight: "500" }}>12A Certificate</div>
-                              {n.documents.certificate12A ? (
-                                <a href={`${API_BASE_URL}/uploads/${n.documents.certificate12A}`} target="_blank" rel="noopener noreferrer" style={{ color: "#0ea5e9", fontSize: "11px", marginTop: "4px" }}>View →</a>
-                              ) : (
-                                <div style={{ color: "#6b7280", fontSize: "11px", marginTop: "4px" }}>Not uploaded</div>
-                              )}
-                            </div>
-                            <div style={{
-                              padding: "12px",
-                              backgroundColor: "#f3f4f6",
-                              borderRadius: "6px",
-                              textAlign: "center"
-                            }}>
-                              <FileText size={20} style={{ margin: "0 auto 8px", color: "#6366f1" }} />
-                              <div style={{ fontSize: "12px", fontWeight: "500" }}>80G Certificate</div>
-                              {n.documents.certificate80G ? (
-                                <a href={`${API_BASE_URL}/uploads/${n.documents.certificate80G}`} target="_blank" rel="noopener noreferrer" style={{ color: "#0ea5e9", fontSize: "11px", marginTop: "4px" }}>View →</a>
-                              ) : (
-                                <div style={{ color: "#6b7280", fontSize: "11px", marginTop: "4px" }}>Not uploaded</div>
-                              )}
-                            </div>
+                            {[
+                              { label: "Registration Cert", key: n.documents.registrationCertificate },
+                              { label: "12A Certificate",   key: n.documents.certificate12A },
+                              { label: "80G Certificate",   key: n.documents.certificate80G },
+                            ].map(({ label, key }) => {
+                              const hasDoc = key && key !== "not found";
+                              return (
+                                <div key={label} style={{ padding: "12px", backgroundColor: hasDoc ? "#f0f9ff" : "#f3f4f6", borderRadius: "6px", textAlign: "center", border: hasDoc ? "1px solid #bae6fd" : "1px solid #e5e7eb" }}>
+                                  <FileText size={20} style={{ margin: "0 auto 8px", color: hasDoc ? "#0284c7" : "#9ca3af" }} />
+                                  <div style={{ fontSize: "12px", fontWeight: "500", marginBottom: "4px" }}>{label}</div>
+                                  {hasDoc ? (
+                                    <button
+                                      onClick={() => viewDocument(key)}
+                                      style={{ color: "#0ea5e9", fontSize: "11px", background: "none", border: "none", cursor: "pointer", padding: 0, textDecoration: "underline" }}
+                                    >View →</button>
+                                  ) : (
+                                    <div style={{ color: "#9ca3af", fontSize: "11px" }}>Not uploaded</div>
+                                  )}
+                                </div>
+                              );
+                            })}
                           </div>
                         </div>
                       )}

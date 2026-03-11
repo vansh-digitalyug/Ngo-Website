@@ -1,11 +1,14 @@
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { Users, Building2, Clock, CheckCircle, Handshake, Mail, Bell } from "lucide-react";
+import { Users, Building2, Clock, CheckCircle, Handshake, Mail, Bell, IndianRupee, ClipboardList } from "lucide-react";
 import { API_BASE_URL } from "./AdminLayout.jsx";
+
+const fmt = (n) => new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 0 }).format(n);
 
 function AdminDashboard() {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [donations, setDonations] = useState([]);
 
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -17,6 +20,15 @@ function AdminDashboard() {
       .then(d => { if (d.success) setData(d.data); })
       .catch(() => {})
       .finally(() => setLoading(false));
+
+    // Fetch recent donations
+    fetch(`${API_BASE_URL}/api/tasks/admin/donations?limit=5`, {
+      headers: { Authorization: `Bearer ${token}` },
+      credentials: "include"
+    })
+      .then(r => r.json())
+      .then(d => { if (d.success) setDonations(d.data.donations || []); })
+      .catch(() => {});
   }, []);
 
   if (loading) return <div className="admin-loading">Loading dashboard...</div>;
@@ -57,6 +69,43 @@ function AdminDashboard() {
           </div>
         ))}
       </div>
+
+      {/* ── Recent Donation Activity Feed ──────────────────────────── */}
+      {donations.length > 0 && (
+        <div style={{ marginBottom: "28px" }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "12px" }}>
+            <h2 style={{ margin: 0, fontSize: "17px", fontWeight: "700", color: "#0f172a", display: "flex", alignItems: "center", gap: "8px" }}>
+              <IndianRupee size={18} color="#16a34a" /> Recent Donations
+            </h2>
+            <div style={{ display: "flex", gap: "12px", alignItems: "center" }}>
+              <Link to="/admin/tasks" style={{ fontSize: "0.82rem", color: "#16a34a", fontWeight: "600", textDecoration: "none", padding: "5px 12px", background: "#f0fdf4", border: "1px solid #bbf7d0", borderRadius: "7px", display: "flex", alignItems: "center", gap: "4px" }}>
+                <IndianRupee size={13} /> All Donations →
+              </Link>
+              <Link to="/admin/tasks" style={{ fontSize: "0.82rem", color: "#2563eb", textDecoration: "none", display: "flex", alignItems: "center", gap: "4px" }}>
+                <ClipboardList size={14} /> Manage Tasks →
+              </Link>
+            </div>
+          </div>
+          <div style={{ background: "#fff", border: "1px solid #e2e8f0", borderRadius: "12px", overflow: "hidden" }}>
+            {donations.slice(0, 5).map((d, i) => (
+              <div key={d._id} style={{ display: "flex", alignItems: "center", gap: "12px", padding: "12px 16px", borderBottom: i < Math.min(donations.length, 5) - 1 ? "1px solid #f1f5f9" : "none" }}>
+                <div style={{ width: "36px", height: "36px", borderRadius: "50%", background: "#f0fdf4", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                  <IndianRupee size={16} color="#16a34a" />
+                </div>
+                <p style={{ margin: 0, fontSize: "14px", color: "#374151", flex: 1 }}>
+                  <strong style={{ color: "#0f172a" }}>
+                    {d.isAnonymous ? "Anonymous" : (d.donorName || d.user?.name || "Someone")}
+                  </strong>
+                  {" donated "}
+                  <strong style={{ color: "#16a34a" }}>{fmt(d.amount)}</strong>
+                  {d.serviceTitle ? <> for <strong>{d.serviceTitle}</strong></> : ""}
+                </p>
+                <span style={{ fontSize: "12px", color: "#94a3b8", flexShrink: 0 }}>{formatDate(d.createdAt)}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       <div className="admin-recent-grid">
         {/* Recent NGOs */}

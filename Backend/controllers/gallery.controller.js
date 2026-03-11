@@ -7,7 +7,7 @@ import ApiResponse from "../utils/ApiResponse.js";
 import { GetObjectCommand } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { s3 } from "../config/s3Client.config.js";
-import ApiResponse from "../utils/ApiResponse.js";
+
 
 // Sign an S3 URL if it's an AWS URL, otherwise return as-is
 const signIfS3 = async (url) => {
@@ -104,12 +104,17 @@ export const getCategories = asyncHandler(async (req, res) => {
 // ============================================
 
 export const getAllGalleryItems = asyncHandler(async (req, res) => {
-  const { type, category, status, search, page = 1, limit = 20 } = req.query;
+  const { type, category, status, search, ngoId, page = 1, limit = 20 } = req.query;
 
-  const query = {};
+  // exclude volunteer task-completion uploads (both new and old items)
+  const query = {
+    sourceTask: null,
+    category: { $ne: "Volunteer Activities" }
+  };
   if (type) query.type = type;
   if (category && category !== "all") query.category = category;
   if (status && status !== "all") query.approvalStatus = status;
+  if (ngoId && ngoId !== "all") query.ngoId = ngoId;
   if (search) {
     query.$or = [
       { title: { $regex: search, $options: "i" } },
