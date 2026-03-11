@@ -1,85 +1,113 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import {
     FaChevronDown,
     FaHandHoldingHeart,
     FaRegClock,
     FaShieldAlt,
-    FaUserCircle,
+    FaCheckCircle,
+    FaStar,
+    FaHeartbeat,
+    FaSyringe,
+    FaTooth,
+    FaBrain,
+    FaUsers,
 } from "react-icons/fa";
-import { useLanguage, translate } from "../../../utils/useLanguage.jsx";
-import { orphanHealthTranslations } from "../../../utils/serviceTranslations.js";
-// Ensure you have a suitable image at this path
+import { useLanguage } from "../../../utils/useLanguage.jsx";
 import orphanHealth from "../../../assets/images/orphanage/health.jpg";
+import healthImg1 from "../../../assets/images/orphanage/medical/image1.png";
+import healthImg2 from "../../../assets/images/orphanage/medical/image2.png";
+import healthImg3 from "../../../assets/images/orphanage/medical/image3.png";
+import healthImg4 from "../../../assets/images/orphanage/medical/image4.png";
+import healthImg5 from "../../../assets/images/orphanage/medical/image5.png";
 import "./health.css";
 
-const DONATIONS = [
-    { name: "Rajesh Khanna", amount: 25000, note: "For emergency funds" },
-    { name: "Ananya Sharma", amount: 12000, note: "Top Donor" },
-    { name: "Mohit Agarwal", amount: 8000, note: "Vaccination drive" },
-    { name: "Priya Singh", amount: 5000, note: "Monthly supporter" },
-    { name: "Karan Johar", amount: 4500, note: "Quick recovery" },
-    { name: "Sneha Patel", amount: 3000, note: "For essential medicines" },
-    { name: "Anonymous", amount: 2500, note: "Joined today" },
-    { name: "V. R. Iyer", amount: 2000, note: "With gratitude" },
-    { name: "Jaspreet Singh", amount: 1500, note: "Stay healthy" },
-    { name: "Nisha Gupta", amount: 1100, note: "Best wishes" },
-    { name: "Amit Verma", amount: 1000, note: "Small effort" },
-    { name: "Deepak Kumar", amount: 800, note: "For the kids" },
-    { name: "Anonymous", amount: 500, note: "Blessings" },
-    { name: "Riya Sen", amount: 500, note: "Support healthcare" },
+const HEALTH_BENEFITS = [
+    {
+        icon: FaHeartbeat,
+        title: "Monthly Health Checkups for Every Child",
+        desc: "Every child undergoes a full health examination every month — height, weight, vision, hearing, and general physical assessment — so no health issue ever goes undetected or untreated.",
+    },
+    {
+        icon: FaSyringe,
+        title: "Complete Vaccination Program",
+        desc: "We follow the national immunization schedule strictly. Every child in our care is fully vaccinated against preventable diseases — from infancy through adolescence — at no cost to the orphanage.",
+    },
+    {
+        icon: FaTooth,
+        title: "Dental & Eye Care",
+        desc: "Regular dental checkups and eye tests are conducted twice a year. Children who need corrective glasses or dental treatment receive them promptly, ensuring they can learn and live without discomfort.",
+    },
+    {
+        icon: FaBrain,
+        title: "Mental Health & Counselling Support",
+        desc: "Our trained counsellors conduct weekly group sessions and individual counselling for children dealing with trauma, anxiety, or emotional difficulties — because mental health is as important as physical health.",
+    },
+];
+
+const WHAT_WE_PROVIDE = [
+    "Monthly full-body health checkups for every child by a qualified doctor",
+    "Complete national immunization schedule — all vaccines provided free of cost",
+    "Emergency medical treatment and hospital admission support when required",
+    "Essential medicines, first aid, and on-site medical supplies maintained at all times",
+    "Dental checkups and treatment twice a year for every child",
+    "Annual vision tests and prescription glasses provided for children who need them",
+    "Weekly mental health counselling sessions by trained child psychologists",
+    "Nutritional assessments and supplement programs for malnourished children",
+    "Health education sessions teaching children about hygiene, sanitation, and wellness",
+    "80G tax exemption certificates issued to all donors supporting this program",
+];
+
+const GOALS = [
+    { number: "150+", label: "Children Under Care" },
+    { number: "100%", label: "Vaccination Coverage" },
+    { number: "24/7", label: "Medical Support" },
+    { number: "6 yrs", label: "Program Running" },
 ];
 
 const FAQS = [
     {
-        question: "How does this healthcare fundraiser help children?",
-        answer:
-            "Funds are strictly utilized for regular medical checkups, vaccinations, emergency treatments, dental care, and essential medicines for children in orphanage care.",
-        questionHi: "यह स्वास्थ्यसेवा धन संचय बच्चों को कैसे मदद करता है?",
-        answerHi: "धन को नियमित चिकित्सा जांच, टीकाकरण, आपातकालीन उपचार, दंत चिकित्सा देखभाल और अनाथालय देखभाल में बच्चों के लिए आवश्यक दवाओं के लिए कड़ाई से उपयोग किया जाता है।",
+        question: "What medical services does this program cover?",
+        answer: "The program covers monthly health checkups, complete vaccinations, emergency treatments, hospitalisation support, dental care, eye tests, prescription glasses, mental health counselling, and essential medicines — everything a child needs to stay healthy.",
     },
     {
-        question: "Is my donation secure?",
-        answer:
-            "Yes. Donations are processed through secure payment channels and campaign-level records are maintained for accountability.",
-        questionHi: "क्या मेरा दान सुरक्षित है?",
-        answerHi: "हाँ। दान को सुरक्षित भुगतान चैनलों के माध्यम से संसाधित किया जाता है और जवाबदेही के लिए अभियान-स्तरीय रिकॉर्ड बनाए रखे जाते हैं।",
+        question: "Who provides the medical care to the children?",
+        answer: "We partner with qualified doctors, dentists, and child psychologists who visit the orphanage regularly. For emergencies and specialist care, children are taken to our partner hospitals where treatment is covered by our medical fund.",
     },
     {
-        question: "Will I get a donation confirmation?",
-        answer:
-            "Yes. You receive confirmation as soon as your contribution is completed successfully.",
-        questionHi: "क्या मुझे दान की पुष्टि मिलेगी?",
-        answerHi: "हाँ। आप अपना योगदान सफलतापूर्वक पूर्ण होते ही पुष्टि प्राप्त करते हैं।",
+        question: "How is emergency medical care handled?",
+        answer: "We maintain an emergency medical fund specifically for sudden illnesses, accidents, and urgent hospitalisations. Our staff are trained in first aid, and we have a direct helpline to our partner doctors for after-hours emergencies.",
     },
     {
-        question: "Can I support this fundraiser monthly?",
-        answer:
-            "Yes. You can return and donate again any time, or set up a recurring donation to ensure long-term medical security for the children.",
-        questionHi: "क्या मैं इस धन संचय को मासिक समर्थन कर सकता हूँ?",
-        answerHi: "हाँ। आप कभी भी वापस आ सकते हैं और फिर से दान कर सकते हैं, या बच्चों के लिए दीर्घकालीन चिकित्सा सुरक्षा सुनिश्चित करने के लिए एक आवर्ती दान स्थापित कर सकते हैं।",
+        question: "Does the program include mental health support?",
+        answer: "Yes. Many children in orphanage care have experienced trauma or loss. Our trained counsellors conduct weekly group therapy sessions and one-on-one sessions for children who need individual support. Mental wellness is a core part of our health program.",
     },
     {
-        question: "Can I share this campaign with friends?",
-        answer:
-            "Yes. You can use the Share button to quickly send this page to your contacts and help this medical cause reach more people.",
-        questionHi: "क्या मैं इस अभियान को दोस्तों के साथ साझा कर सकता हूँ?",
-        answerHi: "हाँ। आप इस पृष्ठ को अपने संपर्कों को जल्दी भेजने के लिए साझा बटन का उपयोग कर सकते हैं और इस चिकित्सा कारण को अधिक लोगों तक पहुंचने में मदद कर सकते हैं।",
+        question: "How much does it cost to support one child's healthcare?",
+        answer: "₹2,500 covers one child's complete monthly healthcare — checkups, medicines, vaccinations, and counselling. Your donation goes directly into our medical fund and is used only for the children's healthcare.",
+    },
+    {
+        question: "Is my donation eligible for tax exemption?",
+        answer: "Yes. All donations to our NGO are eligible for 80G tax deduction under the Income Tax Act. An official receipt and tax certificate will be sent to you after your donation.",
     },
 ];
 
 const STORY = [
     {
-        en: "Access to proper healthcare is vital for a child's growth, yet many children in orphanage care lack the necessary funds for regular checkups, vaccinations, and emergency medical treatments.",
-        hi: "उचित स्वास्थ्यसेवा तक पहुंच बच्चे के विकास के लिए महत्वपूर्ण है, फिर भी अनाथालय देखभाल में कई बच्चों के पास नियमित जांच, टीकाकरण और आपातकालीन चिकित्सा उपचार के लिए आवश्यक धन नहीं है।",
+        en: "A child who is unwell cannot learn. A child in pain cannot play. A child struggling with unaddressed trauma cannot grow into the confident adult they deserve to be. For children in orphanage care, access to consistent, professional medical attention is not a luxury — it is the difference between a childhood survived and a childhood truly lived.",
+        hi: "एक बीमार बच्चा सीख नहीं सकता। दर्द में रहने वाला बच्चा खेल नहीं सकता। अनसुलझे आघात से जूझता बच्चा उस आत्मविश्वासी वयस्क नहीं बन सकता जिसका वह हकदार है। अनाथालय में रहने वाले बच्चों के लिए निरंतर, पेशेवर चिकित्सा देखभाल तक पहुंच एक विलासिता नहीं है।",
     },
     {
-        en: "This healthcare fundraiser aims to build a robust medical fund to cover hospital bills, essential medicines, routine doctor visits, and specialized care for children who fall ill or have chronic conditions.",
-        hi: "यह स्वास्थ्य सेवा धन संचय अभियान अस्पताल के बिल, आवश्यक दवाएं, नियमित डॉक्टर की यात्राएं और बीमार बच्चों या पुरानी बीماरियों वाले बच्चों के लिए विशेष देखभाल को कवर करने के लिए एक मजबूत चिकित्सा कोष बनाने का लक्ष्य रखता है।",
+        en: "Our Health & Medical Care Program was built to ensure that no child in our care ever has to wait for medical attention, go without medicines, or suffer from a condition that could have been prevented or treated. Every child receives a full monthly health checkup, complete vaccinations, dental care, and annual vision tests — all funded through this program.",
+        hi: "हमारा स्वास्थ्य और चिकित्सा देखभाल कार्यक्रम यह सुनिश्चित करने के लिए बनाया गया था कि हमारी देखभाल में कोई भी बच्चा कभी भी चिकित्सा ध्यान का इंतजार न करे, दवाओं के बिना न जाए, या किसी ऐसी स्थिति से पीड़ित न हो जिसे रोका या उपचारित किया जा सकता था।",
     },
     {
-        en: "With your generous support, we can ensure these children receive timely and professional medical attention, helping them recover quickly, stay strong, and live healthy, active lives.",
-        hi: "आपके उदार समर्थन से, हम सुनिश्चित कर सकते हैं कि ये बच्चे समय पर और पेशेवर चिकित्सा ध्यान प्राप्त करते हैं, जिससे वे जल्दी ठीक हो जाते हैं, मजबूत रहते हैं और स्वस्थ, सक्रिय जीवन जीते हैं।",
+        en: "Beyond the physical, we recognise that many children in orphanage care carry invisible wounds. Our team of trained counsellors conducts weekly mental health sessions — group and individual — to help children process their experiences, build emotional resilience, and develop the confidence to face the world. Because health is not just the absence of illness; it is the presence of wellbeing.",
+        hi: "शारीरिक स्वास्थ्य से परे, हम पहचानते हैं कि अनाथालय में कई बच्चे अदृश्य घाव लिए चलते हैं। हमारे प्रशिक्षित परामर्शदाताओं की टीम साप्ताहिक मानसिक स्वास्थ्य सत्र आयोजित करती है — समूह और व्यक्तिगत — बच्चों को उनके अनुभवों को संसाधित करने में मदद करने के लिए।",
+    },
+    {
+        en: "When a child is healthy — physically and mentally — everything else becomes possible. They attend school with energy. They make friends with confidence. They dream about a future. That is what your donation to this program protects. Not just a body, but a whole life.",
+        hi: "जब एक बच्चा स्वस्थ होता है — शारीरिक और मानसिक रूप से — तो बाकी सब कुछ संभव हो जाता है। वे ऊर्जा के साथ स्कूल जाते हैं। वे आत्मविश्वास के साथ दोस्त बनाते हैं। वे भविष्य के बारे में सपने देखते हैं। यही वह है जो इस कार्यक्रम में आपका दान सुरक्षित करता है।",
     },
 ];
 
@@ -88,62 +116,29 @@ function OrphanageHealthPage() {
     const [storyExpanded, setStoryExpanded] = useState(false);
     const [openFaq, setOpenFaq] = useState(null);
     const [shareLabel, setShareLabel] = useState("Share");
-    const [donationModalType, setDonationModalType] = useState(null);
-
-    const isDonationModalOpen = donationModalType !== null;
-    const sortedDonations = useMemo(
-        () => [...DONATIONS].sort((a, b) => b.amount - a.amount),
-        []
-    );
-    const modalDonations =
-        donationModalType === "top" ? sortedDonations.slice(0, 10) : sortedDonations;
-    const modalTitle = donationModalType === "top" ? translate("topDonations", orphanHealthTranslations, language) : translate("allDonations", orphanHealthTranslations, language);
 
     useEffect(() => {
         window.scrollTo(0, 0);
     }, []);
-
-    useEffect(() => {
-        if (!isDonationModalOpen) return undefined;
-
-        const previousOverflow = document.body.style.overflow;
-        document.body.style.overflow = "hidden";
-
-        const closeOnEscape = (event) => {
-            if (event.key === "Escape") {
-                setDonationModalType(null);
-            }
-        };
-
-        window.addEventListener("keydown", closeOnEscape);
-
-        return () => {
-            document.body.style.overflow = previousOverflow;
-            window.removeEventListener("keydown", closeOnEscape);
-        };
-    }, [isDonationModalOpen]);
-
-    const formatAmount = (amount) => `Rs ${amount.toLocaleString("en-IN")}`;
 
     const handleShare = async () => {
         const pageUrl = window.location.href;
         try {
             if (navigator.share) {
                 await navigator.share({
-                    title: translate("title", orphanHealthTranslations, language),
-                    text: translate("supportDesc", orphanHealthTranslations, language),
+                    title: "Health & Medical Care for Orphanage Children",
+                    text: "Help provide complete healthcare for children in orphanage care — checkups, medicines, vaccines, and counselling.",
                     url: pageUrl,
                 });
                 return;
             }
-
             if (navigator.clipboard && navigator.clipboard.writeText) {
                 await navigator.clipboard.writeText(pageUrl);
-                setShareLabel(translate("linkCopied", orphanHealthTranslations, language));
-                window.setTimeout(() => setShareLabel(translate("share", orphanHealthTranslations, language)), 1600);
+                setShareLabel("Link Copied");
+                window.setTimeout(() => setShareLabel("Share"), 1600);
             }
         } catch {
-            setShareLabel(translate("share", orphanHealthTranslations, language));
+            setShareLabel("Share");
         }
     };
 
@@ -151,20 +146,218 @@ function OrphanageHealthPage() {
         <section className="health-detail-page">
             <div className="health-detail-shell">
                 <div className="health-content-grid">
+
+                    {/* LEFT — MAIN CONTENT */}
+                    <div className="health-main-stack">
+
+                        {/* Hero Banner */}
+                        <section className="health-hero-card">
+                            <div className="health-hero-img-wrap">
+                                <img src={orphanHealth} alt="Health and Medical Care for Orphanage Children" />
+                                <div className="health-hero-overlay">
+                                    <span className="health-badge">Orphanage Program</span>
+                                    <h1>Health & Medical Care Program</h1>
+                                    <p>We provide every orphaned child with complete healthcare — monthly checkups, vaccinations, dental care, emergency treatment, and mental health counselling — so every child grows up healthy, strong, and cared for</p>
+                                </div>
+                            </div>
+                        </section>
+
+                        {/* Journey Photo Strip */}
+                        <section className="health-section-card health-journey-section">
+                            <h2>A Child's Complete Healthcare Journey</h2>
+                            <p className="health-section-desc">From routine checkups to emergency care — this is the full healthcare safety net we build around every child in our orphanage program.</p>
+                            <div className="health-journey-grid">
+                                <div className="health-journey-item">
+                                    <img src={healthImg1} alt="Monthly health checkup for children" />
+                                    <div className="health-journey-caption">
+                                        <span className="health-journey-step">Monthly</span>
+                                        <strong>Health Checkups</strong>
+                                        <p>Full physical examination every month — weight, vision, hearing and overall health assessment</p>
+                                    </div>
+                                </div>
+                                <div className="health-journey-item">
+                                    <img src={healthImg2} alt="Vaccination program for children" />
+                                    <div className="health-journey-caption">
+                                        <span className="health-journey-step">Preventive</span>
+                                        <strong>Vaccinations</strong>
+                                        <p>Complete national immunization schedule followed for every child from infancy to adolescence</p>
+                                    </div>
+                                </div>
+                                <div className="health-journey-item">
+                                    <img src={healthImg3} alt="Dental and eye care for children" />
+                                    <div className="health-journey-caption">
+                                        <span className="health-journey-step">Twice Yearly</span>
+                                        <strong>Dental & Eye Care</strong>
+                                        <p>Regular dental checkups and annual vision tests with glasses provided for children who need them</p>
+                                    </div>
+                                </div>
+                                <div className="health-journey-item">
+                                    <img src={healthImg4} alt="Mental health counselling for children" />
+                                    <div className="health-journey-caption">
+                                        <span className="health-journey-step">Weekly</span>
+                                        <strong>Mental Wellness</strong>
+                                        <p>Trained counsellors conduct weekly sessions to support emotional health and build resilience</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </section>
+
+                        {/* Story */}
+                        <section className="health-section-card">
+                            <h2>{language === "hi" ? "हमारी पहल" : "Our Initiative"}</h2>
+                            <div className={`story-content ${storyExpanded ? "expanded" : ""}`}>
+                                {STORY.map((item, idx) => (
+                                    <p key={idx}>{language === "hi" ? item.hi : item.en}</p>
+                                ))}
+                            </div>
+                            <button
+                                type="button"
+                                className="text-action"
+                                onClick={() => setStoryExpanded((c) => !c)}
+                            >
+                                {storyExpanded ? "Read Less" : "Read More"}
+                            </button>
+                        </section>
+
+                        {/* Goals */}
+                        <section className="health-section-card">
+                            <h2>Our Impact So Far</h2>
+                            <div className="health-goals-grid">
+                                {GOALS.map((g) => (
+                                    <div key={g.label} className="health-goal-item">
+                                        <strong>{g.number}</strong>
+                                        <span>{g.label}</span>
+                                    </div>
+                                ))}
+                            </div>
+                        </section>
+
+                        {/* Benefits */}
+                        <section className="health-section-card">
+                            <h2>What Our Program Provides</h2>
+                            <p className="health-section-desc">Healthcare is more than treating illness — it is preventing it, supporting it, and nurturing every dimension of a child's wellbeing:</p>
+                            <div className="health-benefits-grid">
+                                {HEALTH_BENEFITS.map((b) => (
+                                    <article key={b.title} className="health-benefit-card">
+                                        <div className="health-benefit-icon">
+                                            <b.icon aria-hidden="true" />
+                                        </div>
+                                        <div>
+                                            <h3>{b.title}</h3>
+                                            <p>{b.desc}</p>
+                                        </div>
+                                    </article>
+                                ))}
+                            </div>
+                        </section>
+
+                        {/* What We Provide */}
+                        <section className="health-section-card">
+                            <h2>Everything We Cover</h2>
+                            <p className="health-section-desc">Our support covers every aspect of a child's health — from routine prevention to emergency response:</p>
+                            <ul className="health-provide-list">
+                                {WHAT_WE_PROVIDE.map((item) => (
+                                    <li key={item}>
+                                        <FaCheckCircle aria-hidden="true" className="health-check-icon" />
+                                        <span>{item}</span>
+                                    </li>
+                                ))}
+                            </ul>
+                        </section>
+
+                        {/* Trust Strip */}
+                        <section className="trust-strip">
+                            <h2>Why Trust Us</h2>
+                            <div className="trust-grid">
+                                <article>
+                                    <FaShieldAlt aria-hidden="true" />
+                                    <div>
+                                        <h3>Qualified Medical Partners</h3>
+                                        <p>All healthcare is provided by verified doctors, dentists, and licensed counsellors.</p>
+                                    </div>
+                                </article>
+                                <article>
+                                    <FaHandHoldingHeart aria-hidden="true" />
+                                    <div>
+                                        <h3>Real Impact</h3>
+                                        <p>Your donation directly funds medicines, checkups, and treatment for children in our care.</p>
+                                    </div>
+                                </article>
+                                <article>
+                                    <FaRegClock aria-hidden="true" />
+                                    <div>
+                                        <h3>24/7 Emergency Support</h3>
+                                        <p>Emergency medical funds are always maintained — no child ever waits for urgent treatment.</p>
+                                    </div>
+                                </article>
+                            </div>
+                        </section>
+
+                        {/* Impact CTA */}
+                        <section className="health-section-card health-impact-cta">
+                            <div className="health-impact-cta-content">
+                                <FaUsers className="health-impact-cta-icon" aria-hidden="true" />
+                                <div>
+                                    <h2>Protect a Child's Health Today</h2>
+                                    <p>₹2,500 covers one child's complete monthly healthcare — checkups, medicines, vaccinations, and counselling. Your donation goes directly into our medical fund and is used exclusively for the children's health and wellbeing. All contributions are eligible for 80G tax exemption.</p>
+                                </div>
+                            </div>
+                            <Link
+                                to="/donate"
+                                state={{ serviceImage: orphanHealth, serviceTitle: "Health & Medical Care for Orphanage Children" }}
+                                className="campaign-btn campaign-btn-primary health-impact-cta-btn"
+                            >
+                                Protect a Child
+                            </Link>
+                        </section>
+
+                        {/* FAQs */}
+                        <section className="health-section-card faq-section">
+                            <h2>Frequently Asked Questions</h2>
+                            <p className="faq-intro">Everything you need to know about how we care for children's health.</p>
+                            <div className="faq-list">
+                                {FAQS.map((faq, index) => {
+                                    const isOpen = openFaq === index;
+                                    return (
+                                        <article key={index} className={`faq-item ${isOpen ? "open" : ""}`}>
+                                            <button
+                                                type="button"
+                                                className="faq-question"
+                                                onClick={() => setOpenFaq(isOpen ? null : index)}
+                                                aria-expanded={isOpen}
+                                            >
+                                                <span>{faq.question}</span>
+                                                <FaChevronDown aria-hidden="true" />
+                                            </button>
+                                            {isOpen && <p className="faq-answer">{faq.answer}</p>}
+                                        </article>
+                                    );
+                                })}
+                            </div>
+                        </section>
+
+                    </div>
+
+                    {/* RIGHT — STICKY SIDEBAR */}
                     <aside className="health-side-stack">
                         <article className="campaign-card">
                             <div className="campaign-image-wrap">
-                                <img src={orphanHealth} alt="Children receiving medical checkups" />
-                                <span className="campaign-chip">Tax Benefits Available</span>
+                                <img src={healthImg5} alt="Health & Medical Care Program" />
+                                <span className="campaign-chip">Orphanage Healthcare</span>
                             </div>
 
                             <div className="campaign-body">
-                                <h1>{translate("title", orphanHealthTranslations, language)}</h1>
-                                <p className="campaign-org">{translate("organization", orphanHealthTranslations, language)}</p>
+                                <h1>Help provide complete healthcare for children in orphanage care</h1>
+                                <p className="campaign-org">Guardian of Angels Trust</p>
+
+                                <div className="health-premium-highlight">
+                                    <FaHeartbeat aria-hidden="true" />
+                                    <span>₹2,500 covers <strong>1 child's full monthly healthcare</strong></span>
+                                </div>
 
                                 <div className="campaign-amounts">
-                                    <strong>Rs 3,45,000</strong>
-                                    <span>{translate("raisedOf", orphanHealthTranslations, language)} Rs 5,00,000 {translate("goal", orphanHealthTranslations, language)}</span>
+                                    <strong>₹3,45,000</strong>
+                                    <span>raised of ₹5,00,000 goal</span>
                                 </div>
 
                                 <div className="campaign-progress" aria-hidden="true">
@@ -174,219 +367,86 @@ function OrphanageHealthPage() {
                                 <div className="campaign-stats">
                                     <div>
                                         <strong>189</strong>
-                                        <span>{translate("donors", orphanHealthTranslations, language)}</span>
+                                        <span>Donors</span>
                                     </div>
                                     <div>
-                                        <strong>21</strong>
-                                        <span>{translate("daysLeft", orphanHealthTranslations, language)}</span>
+                                        <strong>150+</strong>
+                                        <span>Children</span>
                                     </div>
                                     <div>
                                         <strong>69%</strong>
-                                        <span>{translate("funded", orphanHealthTranslations, language)}</span>
+                                        <span>Funded</span>
                                     </div>
                                 </div>
 
+                                <div className="health-impact-note">
+                                    <FaStar aria-hidden="true" />
+                                    <span>80G tax exemption on all donations</span>
+                                </div>
+
                                 <div className="campaign-actions">
-                                    <Link to="/donate" state={{ serviceImage: orphanHealth, serviceTitle: translate("title", orphanHealthTranslations, language) }} className="campaign-btn campaign-btn-primary">
-                                        {translate("donateNow", orphanHealthTranslations, language)}
+                                    <Link
+                                        to="/donate"
+                                        state={{ serviceImage: orphanHealth, serviceTitle: "Health & Medical Care for Orphanage Children" }}
+                                        className="campaign-btn campaign-btn-primary"
+                                    >
+                                        Help Now
                                     </Link>
                                     <button
                                         type="button"
                                         className="campaign-btn campaign-btn-secondary"
                                         onClick={handleShare}
                                     >
-                                        {shareLabel === translate("share", orphanHealthTranslations, language) ? translate("share", orphanHealthTranslations, language) : translate("linkCopied", orphanHealthTranslations, language)}
+                                        {shareLabel}
                                     </button>
                                 </div>
                             </div>
                         </article>
+
+                        <article className="health-how-it-works-card">
+                            <h3>How It Works</h3>
+                            <ol className="health-steps-list">
+                                <li>
+                                    <span className="health-step-num">1</span>
+                                    <div>
+                                        <strong>Monthly Health Assessment</strong>
+                                        <p>Every child is examined by a qualified doctor each month for full health screening</p>
+                                    </div>
+                                </li>
+                                <li>
+                                    <span className="health-step-num">2</span>
+                                    <div>
+                                        <strong>Vaccinations & Prevention</strong>
+                                        <p>All vaccines are administered on schedule to protect children from preventable diseases</p>
+                                    </div>
+                                </li>
+                                <li>
+                                    <span className="health-step-num">3</span>
+                                    <div>
+                                        <strong>Treatment & Medicines</strong>
+                                        <p>Sick children receive prompt treatment and medicines fully covered by our medical fund</p>
+                                    </div>
+                                </li>
+                                <li>
+                                    <span className="health-step-num">4</span>
+                                    <div>
+                                        <strong>Dental & Eye Care</strong>
+                                        <p>Biannual dental checkups and annual eye tests keep children healthy beyond the basics</p>
+                                    </div>
+                                </li>
+                                <li>
+                                    <span className="health-step-num">5</span>
+                                    <div>
+                                        <strong>Mental Health Support</strong>
+                                        <p>Weekly counselling sessions help children build emotional strength and resilience</p>
+                                    </div>
+                                </li>
+                            </ol>
+                        </article>
                     </aside>
 
-                    <div className="health-main-stack">
-                        <section className="health-section-card">
-                            <h2>{translate("storyTitle", orphanHealthTranslations, language) || "Story"}</h2>
-                            <div className={`story-content ${storyExpanded ? "expanded" : ""}`}>
-                                {STORY.map((paragraph, idx) => (
-                                    <p key={idx}>{language === 'hi' ? paragraph.hi : paragraph.en}</p>
-                                ))}
-                            </div>
-                            <button
-                                type="button"
-                                className="text-action"
-                                onClick={() => setStoryExpanded((current) => !current)}
-                            >
-                                {storyExpanded ? translate("readLess", orphanHealthTranslations, language) || "Read Less" : translate("readMore", orphanHealthTranslations, language) || "Read More"}
-                            </button>
-                        </section>
-
-                        <section className="health-section-card">
-                            <div className="section-head">
-                                <h2>{translate("recentDonations", orphanHealthTranslations, language) || "Recent Donations"}</h2>
-                                <span>189 Donations</span>
-                            </div>
-
-                            <div className="donation-list">
-                                {sortedDonations.slice(0, 3).map((donation) => (
-                                    <article key={`${donation.name}-${donation.amount}`} className="donation-item">
-                                        <FaUserCircle aria-hidden="true" />
-                                        <div>
-                                            <h3>{donation.name === "Anonymous" ? translate("anonymous", orphanHealthTranslations, language) : donation.name}</h3>
-                                            <p>{formatAmount(donation.amount)}</p>
-                                        </div>
-                                        <span>{donation.note}</span>
-                                    </article>
-                                ))}
-                            </div>
-
-                            <div className="section-links">
-                                <button type="button" onClick={() => setDonationModalType("top")}>
-                                    {translate("topDonations", orphanHealthTranslations, language) || "View Top Donations"}
-                                </button>
-                                <button type="button" onClick={() => setDonationModalType("all")}>
-                                    {translate("allDonations", orphanHealthTranslations, language) || "View All Donations"}
-                                </button>
-                            </div>
-                        </section>
-
-                        <section className="support-panel">
-                            <h2>{translate("supportTitle", orphanHealthTranslations, language)}</h2>
-                            <p>{translate("supportDesc", orphanHealthTranslations, language)}</p>
-                            <div className="support-actions">
-                                <Link to="/donate" state={{ serviceImage: orphanHealth, serviceTitle: translate("title", orphanHealthTranslations, language) }} className="campaign-btn campaign-btn-primary">
-                                    {translate("donateNow", orphanHealthTranslations, language)}
-                                </Link>
-                                <button
-                                    type="button"
-                                    className="campaign-btn campaign-btn-secondary"
-                                    onClick={handleShare}
-                                >
-                                    {translate("share", orphanHealthTranslations, language)}
-                                </button>
-                            </div>
-                        </section>
-
-                        <section className="health-section-card">
-                            <h2>Organizers</h2>
-                            <div className="organizer-list">
-                                <article className="organizer-item">
-                                    <span className="organizer-logo">GA</span>
-                                    <div>
-                                        <h3>Guardian of Angels Trust</h3>
-                                        <p>Verified Charity</p>
-                                    </div>
-                                </article>
-                                <article className="organizer-item">
-                                    <span className="organizer-logo organizer-logo-alt">g</span>
-                                    <div>
-                                        <h3>Give</h3>
-                                        <p>Organizer</p>
-                                    </div>
-                                </article>
-                            </div>
-                        </section>
-
-                        <section className="trust-strip">
-                            <h2>India&apos;s trusted online donation platform</h2>
-                            <div className="trust-grid">
-                                <article>
-                                    <FaShieldAlt aria-hidden="true" />
-                                    <div>
-                                        <h3>Easy</h3>
-                                        <p>Donate quickly and securely in a few steps.</p>
-                                    </div>
-                                </article>
-                                <article>
-                                    <FaHandHoldingHeart aria-hidden="true" />
-                                    <div>
-                                        <h3>Impactful</h3>
-                                        <p>Your support provides life-saving medicines and timely medical care.</p>
-                                    </div>
-                                </article>
-                                <article>
-                                    <FaRegClock aria-hidden="true" />
-                                    <div>
-                                        <h3>Credible</h3>
-                                        <p>Campaign records and charity details are maintained clearly.</p>
-                                    </div>
-                                </article>
-                            </div>
-                        </section>
-
-                        <section className="health-section-card faq-section">
-                            <h2>{translate("faqTitle", orphanHealthTranslations, language) || "FAQs"}</h2>
-                            <p className="faq-intro">{translate("faqIntro", orphanHealthTranslations, language) || "Everything you need to know before you donate."}</p>
-
-                            <div className="faq-list">
-                                {FAQS.map((faq, index) => {
-                                    const isOpen = openFaq === index;
-                                    const question = language === 'hi' ? faq.questionHi : faq.question;
-                                    const answer = language === 'hi' ? faq.answerHi : faq.answer;
-                                    return (
-                                        <article key={faq.question} className={`faq-item ${isOpen ? "open" : ""}`}>
-                                            <button
-                                                type="button"
-                                                className="faq-question"
-                                                onClick={() => setOpenFaq(isOpen ? null : index)}
-                                                aria-expanded={isOpen}
-                                            >
-                                                <span>{question}</span>
-                                                <FaChevronDown aria-hidden="true" />
-                                            </button>
-                                            {isOpen && <p className="faq-answer">{answer}</p>}
-                                        </article>
-                                    );
-                                })}
-                            </div>
-                        </section>
-                    </div>
                 </div>
             </div>
-
-            {isDonationModalOpen && (
-                <div
-                    className="donation-modal-backdrop"
-                    role="presentation"
-                    onClick={() => setDonationModalType(null)}
-                >
-                    <div
-                        className="donation-modal"
-                        role="dialog"
-                        aria-modal="true"
-                        aria-label={modalTitle}
-                        onClick={(event) => event.stopPropagation()}
-                    >
-                        <div className="donation-modal-head">
-                            <h3>{modalTitle}</h3>
-                            <button
-                                type="button"
-                                className="donation-modal-close"
-                                onClick={() => setDonationModalType(null)}
-                                aria-label="Close donations popup"
-                            >
-                                x
-                            </button>
-                        </div>
-                        <p className="donation-modal-subtitle">
-                            Showing {modalDonations.length} contributions to this fundraiser
-                        </p>
-                        <div className="donation-modal-list">
-                            {modalDonations.map((donation) => (
-                                <article
-                                    key={`${donation.name}-${donation.amount}-modal`}
-                                    className="donation-item donation-item-modal"
-                                >
-                                    <FaUserCircle aria-hidden="true" />
-                                    <div>
-                                        <h3>{donation.name === "Anonymous" ? translate("anonymous", orphanHealthTranslations, language) : donation.name}</h3>
-                                        <p>{formatAmount(donation.amount)}</p>
-                                    </div>
-                                    <span>{donation.note}</span>
-                                </article>
-                            ))}
-                        </div>
-                    </div>
-                </div>
-            )}
         </section>
     );
 }

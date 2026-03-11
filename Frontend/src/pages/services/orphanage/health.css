@@ -1,6 +1,8 @@
+/* health.css - Green & Light Green Theme (matches Education/Meal/Kanyadan design) */
+
 .health-detail-page {
-    background: #f3f3f5;
-    color: #232529;
+    background: #f4f9f5;
+    color: #1f2937;
     min-height: 100%;
     padding: 20px 12px 56px;
 }
@@ -18,26 +20,29 @@
     gap: 14px;
 }
 
+/* ── Shared Card Base ── */
 .campaign-card,
 .health-section-card,
 .support-panel,
 .trust-strip {
     background: #ffffff;
-    border: 1px solid #e7e8ec;
+    border: 1px solid #e5e7eb;
     border-radius: 14px;
     overflow: hidden;
 }
 
+/* ── Campaign Sidebar Card ── */
 .campaign-image-wrap {
     position: relative;
-    background: #eceef2;
+    background: #eaf5ec;
 }
 
 .campaign-image-wrap img {
     width: 100%;
-    height: clamp(220px, 45vw, 340px);
+    height: auto;
+    aspect-ratio: 16 / 9;
     object-fit: cover;
-    object-position: center;
+    object-position: center center;
     display: block;
 }
 
@@ -47,9 +52,8 @@
     bottom: 12px;
     font-size: 0.7rem;
     font-weight: 700;
-    /* Updated to green */
-    color: #15803d;
-    background: #f0fdf4;
+    color: #166534;
+    background: #dcfce7;
     border: 1px solid #bbf7d0;
     border-radius: 999px;
     padding: 6px 10px;
@@ -67,7 +71,7 @@
 
 .campaign-org {
     margin: 8px 0 14px;
-    color: #71747b;
+    color: #6b7280;
     font-size: 0.95rem;
 }
 
@@ -80,19 +84,19 @@
 
 .campaign-amounts strong {
     font-size: 1.2rem;
-    color: #111318;
+    color: #111827;
 }
 
 .campaign-amounts span {
     font-size: 0.86rem;
-    color: #69707b;
+    color: #6b7280;
 }
 
 .campaign-progress {
     width: 100%;
     height: 8px;
     border-radius: 999px;
-    background: #eceef3;
+    background: #e5e7eb;
     overflow: hidden;
 }
 
@@ -100,7 +104,6 @@
     display: block;
     height: 100%;
     border-radius: inherit;
-    /* Updated to green gradient */
     background: linear-gradient(90deg, #16a34a, #4ade80);
 }
 
@@ -112,8 +115,8 @@
 }
 
 .campaign-stats div {
-    background: #f7f8fb;
-    border: 1px solid #ebedf2;
+    background: #f9fafb;
+    border: 1px solid #f3f4f6;
     border-radius: 10px;
     padding: 10px;
     text-align: center;
@@ -126,7 +129,7 @@
 
 .campaign-stats span {
     display: block;
-    color: #6e7380;
+    color: #6b7280;
     font-size: 0.78rem;
     margin-top: 3px;
 }
@@ -149,20 +152,29 @@
     font-weight: 700;
     font-size: 0.95rem;
     cursor: pointer;
+    transition: background-color 0.2s ease;
 }
 
 .campaign-btn-primary {
-    /* Updated to green */
     background: #16a34a;
     color: #ffffff;
 }
 
-.campaign-btn-secondary {
-    background: #ffffff;
-    color: #2c313a;
-    border-color: #d8dbe2;
+.campaign-btn-primary:hover {
+    background: #15803d;
 }
 
+.campaign-btn-secondary {
+    background: #ffffff;
+    color: #374151;
+    border-color: #d1d5db;
+}
+
+.campaign-btn-secondary:hover {
+    background: #f3f4f6;
+}
+
+/* ── Section Card ── */
 .health-section-card {
     padding: 16px;
 }
@@ -174,35 +186,7 @@
     font-size: 1.08rem;
 }
 
-.donate-via-grid {
-    margin-top: 12px;
-    display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 8px;
-}
-
-.donate-via-item {
-    border: 1px solid #e7e9ef;
-    border-radius: 8px;
-    padding: 10px 8px;
-    background: #fafbfc;
-}
-
-.donate-via-item h3 {
-    margin: 0;
-    font-size: 0.82rem;
-    font-weight: 700;
-    color: #2b3039;
-}
-
-.donate-via-item p {
-    margin: 6px 0 0;
-    font-size: 0.76rem;
-    /* Updated to green */
-    color: #16a34a;
-    font-weight: 700;
-}
-
+/* ── Story ── */
 .story-content {
     margin-top: 10px;
     max-height: 122px;
@@ -217,7 +201,7 @@
     right: 0;
     bottom: 0;
     height: 44px;
-    background: linear-gradient(180deg, rgba(255, 255, 255, 0), #ffffff);
+    background: linear-gradient(180deg, rgba(255,255,255,0), #ffffff);
 }
 
 .story-content.expanded {
@@ -230,7 +214,7 @@
 
 .story-content p {
     margin: 0 0 10px;
-    color: #464c57;
+    color: #4b5563;
     line-height: 1.55;
     font-size: 0.92rem;
 }
@@ -240,179 +224,21 @@
     border: 0;
     padding: 0;
     background: transparent;
-    /* Updated to green */
     color: #16a34a;
     font-weight: 700;
     font-size: 0.88rem;
     cursor: pointer;
 }
 
-.section-head {
-    display: flex;
-    align-items: baseline;
-    justify-content: space-between;
-    gap: 8px;
-}
-
-.section-head span {
-    font-size: 0.82rem;
-    color: #6f7480;
-}
-
-.donation-list {
-    margin-top: 10px;
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-}
-
-.donation-item {
-    display: grid;
-    grid-template-columns: 28px minmax(0, 1fr) auto;
-    align-items: center;
-    gap: 10px;
-    padding: 10px;
-    border: 1px solid #eceef3;
-    border-radius: 10px;
-    background: #fbfcfd;
-}
-
-.donation-item svg {
-    font-size: 1.3rem;
-    /* Updated to green */
-    color: #16a34a;
-}
-
-.donation-item h3 {
-    margin: 0;
-    font-size: 0.9rem;
-}
-
-.donation-item p {
-    margin: 2px 0 0;
-    font-size: 0.8rem;
-    color: #606672;
-}
-
-.donation-item span {
-    /* Updated to light green */
-    border: 1px solid #bbf7d0;
-    background: #f0fdf4;
+.text-action:hover {
     color: #15803d;
-    border-radius: 999px;
-    padding: 4px 8px;
-    font-size: 0.72rem;
-    font-weight: 700;
-    white-space: nowrap;
 }
 
-.section-links {
-    display: flex;
-    gap: 14px;
-    margin-top: 12px;
-}
-
-.section-links button {
-    padding: 0;
-    border: 0;
-    background: transparent;
-    /* Updated to green */
-    color: #16a34a;
-    font-size: 0.83rem;
-    font-weight: 700;
-    text-decoration: none;
-    cursor: pointer;
-}
-
-.support-panel {
-    padding: 16px;
-    /* Updated to soft green background */
-    background: #f0fdf4;
-    border-color: #bbf7d0;
-}
-
-.support-panel p {
-    margin: 8px 0 12px;
-    color: #565b67;
-    font-size: 0.9rem;
-}
-
-.support-actions {
-    display: grid;
-    grid-template-columns: 1fr;
-    gap: 8px;
-}
-
-.organizer-list {
-    margin-top: 12px;
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-}
-
-.organizer-item {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-}
-
-.organizer-logo {
-    width: 40px;
-    height: 40px;
-    border-radius: 999px;
-    /* Updated to green */
-    background: #16a34a;
-    color: #ffffff;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 0.88rem;
-    font-weight: 800;
-}
-
-.organizer-logo-alt {
-    /* Updated to a slightly lighter green */
-    background: #22c55e;
-    font-size: 1rem;
-    text-transform: lowercase;
-}
-
-.organizer-item h3 {
-    margin: 0;
-    font-size: 0.92rem;
-}
-
-.organizer-item p {
-    margin: 2px 0 0;
-    color: #69707b;
-    font-size: 0.82rem;
-}
-
-.fundraiser-panel p {
-    margin: 10px 0 14px;
-    color: #4f5460;
-    line-height: 1.55;
-    font-size: 0.91rem;
-}
-
-.fundraiser-link {
-    min-height: 44px;
-    border: 1px solid #d9dce5;
-    border-radius: 8px;
-    display: inline-flex;
-    width: 100%;
-    align-items: center;
-    justify-content: center;
-    text-decoration: none;
-    color: #2e333d;
-    font-weight: 700;
-    font-size: 0.9rem;
-}
-
+/* ── Trust Strip ── */
 .trust-strip {
     padding: 16px;
-    background: #e9eff8;
-    border-color: #dce5f3;
+    background: #f9fafb;
+    border-color: #e5e7eb;
 }
 
 .trust-grid {
@@ -431,7 +257,7 @@
 
 .trust-grid svg {
     margin-top: 2px;
-    color: #344154;
+    color: #4b5563;
 }
 
 .trust-grid h3 {
@@ -442,16 +268,17 @@
 .trust-grid p {
     margin: 2px 0 0;
     font-size: 0.82rem;
-    color: #576176;
+    color: #6b7280;
 }
 
+/* ── FAQ ── */
 .faq-section {
     padding-bottom: 10px;
 }
 
 .faq-intro {
     margin: 8px 0 12px;
-    color: #666d79;
+    color: #6b7280;
     font-size: 0.9rem;
 }
 
@@ -462,10 +289,10 @@
 }
 
 .faq-item {
-    border: 1px solid #e6e9ef;
+    border: 1px solid #e5e7eb;
     border-radius: 10px;
     overflow: hidden;
-    background: #fbfcfe;
+    background: #f9fafb;
 }
 
 .faq-question {
@@ -479,7 +306,7 @@
     gap: 10px;
     text-align: left;
     font-weight: 600;
-    color: #2e333d;
+    color: #1f2937;
     cursor: pointer;
 }
 
@@ -500,80 +327,378 @@
 
 .faq-answer {
     margin: 0;
-    border-top: 1px solid #eceef3;
+    border-top: 1px solid #f3f4f6;
     padding: 10px 12px;
-    color: #5d6370;
+    color: #4b5563;
     line-height: 1.55;
     font-size: 0.86rem;
 }
 
-.donation-modal-backdrop {
-    position: fixed;
+/* ── Hero Card ── */
+.health-hero-card {
+    border-radius: 14px;
+    overflow: hidden;
+    border: 1px solid #e5e7eb;
+}
+
+.health-hero-img-wrap {
+    position: relative;
+}
+
+.health-hero-img-wrap img {
+    width: 100%;
+    height: clamp(220px, 40vw, 380px);
+    object-fit: cover;
+    object-position: center center;
+    display: block;
+}
+
+.health-hero-overlay {
+    position: absolute;
     inset: 0;
-    z-index: 1200;
-    background: rgba(12, 14, 18, 0.6);
+    background: linear-gradient(to top, rgba(0,0,0,0.75) 50%, transparent 100%);
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    padding: 24px 20px;
+}
+
+.health-badge {
+    display: inline-block;
+    background: #16a34a;
+    color: #fff;
+    font-size: 0.72rem;
+    font-weight: 700;
+    padding: 4px 12px;
+    border-radius: 999px;
+    margin-bottom: 10px;
+    width: fit-content;
+}
+
+.health-hero-overlay h1 {
+    margin: 0 0 6px;
+    font-size: clamp(1.4rem, 3.5vw, 2rem);
+    color: #ffffff;
+    line-height: 1.2;
+}
+
+.health-hero-overlay p {
+    margin: 0;
+    font-size: 0.92rem;
+    color: rgba(255,255,255,0.85);
+    line-height: 1.5;
+}
+
+/* ── Section Desc ── */
+.health-section-desc {
+    margin: 8px 0 14px;
+    color: #6b7280;
+    font-size: 0.9rem;
+    line-height: 1.5;
+}
+
+/* ── Goals Grid ── */
+.health-goals-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+    margin-top: 14px;
+}
+
+.health-goal-item {
+    background: #f0fdf4;
+    border: 1px solid #bbf7d0;
+    border-radius: 10px;
+    padding: 14px 12px;
+    text-align: center;
+}
+
+.health-goal-item strong {
+    display: block;
+    font-size: 1.4rem;
+    color: #16a34a;
+    font-weight: 800;
+}
+
+.health-goal-item span {
+    display: block;
+    font-size: 0.78rem;
+    color: #4b5563;
+    margin-top: 4px;
+}
+
+/* ── Benefits Grid ── */
+.health-benefits-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.health-benefit-card {
+    display: grid;
+    grid-template-columns: 44px 1fr;
+    gap: 14px;
+    align-items: start;
+    padding: 14px;
+    background: #f9fafb;
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+}
+
+.health-benefit-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 10px;
+    background: #dcfce7;
     display: flex;
     align-items: center;
     justify-content: center;
+    color: #16a34a;
+    font-size: 1.1rem;
+    flex-shrink: 0;
+}
+
+.health-benefit-card h3 {
+    margin: 0 0 4px;
+    font-size: 0.92rem;
+    color: #1f2937;
+}
+
+.health-benefit-card p {
+    margin: 0;
+    font-size: 0.83rem;
+    color: #6b7280;
+    line-height: 1.5;
+}
+
+/* ── What We Provide List ── */
+.health-provide-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.health-provide-list li {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    font-size: 0.9rem;
+    color: #374151;
+    line-height: 1.5;
+}
+
+.health-check-icon {
+    color: #16a34a;
+    font-size: 0.9rem;
+    margin-top: 3px;
+    flex-shrink: 0;
+}
+
+/* ── Highlight (sidebar) ── */
+.health-premium-highlight {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: #f0fdf4;
+    border: 1px solid #bbf7d0;
+    border-radius: 8px;
+    padding: 10px 12px;
+    margin-bottom: 14px;
+    font-size: 0.88rem;
+    color: #166534;
+}
+
+.health-premium-highlight svg {
+    color: #16a34a;
+    font-size: 1rem;
+    flex-shrink: 0;
+}
+
+.health-premium-highlight strong {
+    color: #15803d;
+}
+
+/* ── Impact Note ── */
+.health-impact-note {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.83rem;
+    color: #16a34a;
+    font-weight: 600;
+    margin: 12px 0 4px;
+}
+
+.health-impact-note svg {
+    font-size: 0.85rem;
+}
+
+/* ── Journey Photo Strip ── */
+.health-journey-section {
     padding: 16px;
 }
 
-.donation-modal {
-    width: min(620px, 100%);
-    max-height: min(86vh, 780px);
-    background: #ffffff;
-    border-radius: 14px;
-    border: 1px solid #e5e8ef;
-    box-shadow: 0 18px 42px rgba(8, 10, 16, 0.24);
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
+.health-journey-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+    margin-top: 14px;
 }
 
-.donation-modal-head {
+.health-journey-item {
+    border-radius: 10px;
+    overflow: hidden;
+    border: 1px solid #e5e7eb;
+    background: #ffffff;
+    transition: box-shadow 0.2s ease;
+}
+
+.health-journey-item:hover {
+    box-shadow: 0 4px 16px rgba(22, 163, 74, 0.12);
+    border-color: #86efac;
+}
+
+.health-journey-item img {
+    width: 100%;
+    height: auto;
+    aspect-ratio: 4 / 3;
+    object-fit: cover;
+    object-position: center top;
+    display: block;
+}
+
+.health-journey-caption {
+    padding: 10px 12px 12px;
+}
+
+.health-journey-step {
+    display: inline-block;
+    background: #dcfce7;
+    color: #166534;
+    font-size: 0.68rem;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 999px;
+    margin-bottom: 6px;
+    letter-spacing: 0.04em;
+}
+
+.health-journey-caption strong {
+    display: block;
+    font-size: 0.9rem;
+    color: #1f2937;
+    margin-bottom: 4px;
+    font-weight: 700;
+}
+
+.health-journey-caption p {
+    margin: 0;
+    font-size: 0.78rem;
+    color: #6b7280;
+    line-height: 1.45;
+}
+
+/* ── Impact CTA ── */
+.health-impact-cta {
+    background: linear-gradient(135deg, #f0fdf4, #dcfce7);
+    border-color: #bbf7d0;
+}
+
+.health-impact-cta-content {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    margin-bottom: 16px;
+}
+
+.health-impact-cta-icon {
+    font-size: 2rem;
+    color: #16a34a;
+    flex-shrink: 0;
+    margin-top: 2px;
+}
+
+.health-impact-cta-content h2 {
+    margin: 0 0 8px;
+    font-size: 1.1rem;
+    color: #166534;
+}
+
+.health-impact-cta-content p {
+    margin: 0;
+    font-size: 0.9rem;
+    color: #4b5563;
+    line-height: 1.6;
+}
+
+.health-impact-cta-btn {
+    width: 100%;
+    font-size: 1rem;
+    min-height: 48px;
+}
+
+/* ── How It Works Card (sidebar) ── */
+.health-how-it-works-card {
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 14px;
+    padding: 16px;
+}
+
+.health-how-it-works-card h3 {
+    margin: 0 0 14px;
+    font-size: 1rem;
+    color: #1f2937;
+}
+
+.health-steps-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.health-steps-list li {
+    display: grid;
+    grid-template-columns: 28px 1fr;
+    gap: 10px;
+    align-items: start;
+}
+
+.health-step-num {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: #16a34a;
+    color: #ffffff;
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    gap: 10px;
-    padding: 14px 16px;
-    border-bottom: 1px solid #eceff4;
+    justify-content: center;
+    font-size: 0.78rem;
+    font-weight: 800;
+    flex-shrink: 0;
 }
 
-.donation-modal-head h3 {
+.health-steps-list li strong {
+    display: block;
+    font-size: 0.88rem;
+    color: #1f2937;
+    margin-bottom: 2px;
+}
+
+.health-steps-list li p {
     margin: 0;
-    font-size: 1.05rem;
+    font-size: 0.8rem;
+    color: #6b7280;
+    line-height: 1.4;
 }
 
-.donation-modal-close {
-    width: 32px;
-    height: 32px;
-    border: 1px solid #d6dae3;
-    border-radius: 8px;
-    background: #ffffff;
-    color: #2f3540;
-    cursor: pointer;
-}
-
-.donation-modal-subtitle {
-    margin: 0;
-    padding: 10px 16px;
-    font-size: 0.86rem;
-    color: #676f7e;
-    border-bottom: 1px solid #eceff4;
-}
-
-.donation-modal-list {
-    padding: 12px 16px 16px;
-    overflow-y: auto;
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-}
-
-.donation-item-modal {
-    background: #f9fafc;
-}
-
+/* ── Responsive ── */
 @media (min-width: 768px) {
     .health-detail-page {
         padding: 28px 18px 64px;
@@ -590,21 +715,8 @@
         font-size: 1.75rem;
     }
 
-    .campaign-actions,
-    .support-actions {
+    .campaign-actions {
         grid-template-columns: 1fr 1fr;
-    }
-
-    .donate-via-item {
-        padding: 12px;
-    }
-
-    .donate-via-item h3 {
-        font-size: 0.9rem;
-    }
-
-    .donate-via-item p {
-        font-size: 0.82rem;
     }
 
     .story-content {
@@ -638,16 +750,12 @@
         top: 92px;
     }
 
-    .campaign-image-wrap img {
-        height: 250px;
+    .health-journey-grid {
+        grid-template-columns: repeat(4, 1fr);
     }
 }
 
 @media (max-width: 420px) {
-    .donate-via-grid {
-        grid-template-columns: 1fr;
-    }
-
     .campaign-stats {
         grid-template-columns: 1fr;
     }
@@ -656,20 +764,8 @@
         grid-template-columns: 1fr;
     }
 
-    .donation-item,
-    .donation-item-modal {
-        grid-template-columns: 24px minmax(0, 1fr);
-    }
-
-    .donation-item span,
-    .donation-item-modal span {
-        grid-column: 2 / -1;
-        justify-self: start;
-        margin-top: 4px;
-    }
-
-    .section-links {
+    .health-impact-cta-content {
         flex-direction: column;
-        gap: 8px;
+        gap: 10px;
     }
 }
