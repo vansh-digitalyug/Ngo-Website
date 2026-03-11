@@ -338,7 +338,7 @@ export const getAllUsers = asyncHandler(async (req, res) => {
                 .sort({ createdAt: -1 })
                 .skip(skip)
                 .limit(Number(limit))
-                .select("name email role emailVerified aadhaarVerified authProvider createdAt")
+                .select("name email phone city avatar role emailVerified aadhaarVerified authProvider createdAt")
                 .lean(),
             User.countDocuments(filter)
         ]);

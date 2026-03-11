@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useOutletContext } from 'react-router-dom';
-import { Users, Clock, CheckCircle, Check, X, Hand, Lightbulb, Mail, Phone, Calendar, AlertCircle, UserCheck, UserX } from 'lucide-react';
+import { Users, Clock, CheckCircle, Check, X, Hand, Lightbulb, Mail, Phone, Calendar, AlertCircle, UserCheck, UserX, UserPlus } from 'lucide-react';
 import { API_BASE_URL } from './NgoLayout';
 import './ngo.css';
 
@@ -10,6 +10,10 @@ export default function NgoVolunteers() {
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('all');
   const [message, setMessage] = useState({ type: '', text: '' });
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [addForm, setAddForm] = useState({ fullName: '', email: '', phone: '', role: '' });
+  const [addLoading, setAddLoading] = useState(false);
+  const [addError, setAddError] = useState('');
 
   useEffect(() => {
     fetchVolunteers();
@@ -24,12 +28,54 @@ export default function NgoVolunteers() {
 
       if (res.ok) {
         const data = await res.json();
-        setVolunteers(data.volunteers || []);
+        const raw = data.data || data.volunteers || [];
+        setVolunteers(raw.map(v => ({
+          ...v,
+          name: v.fullName || v.name || v.user?.name || '',
+          status: (v.status || '').toLowerCase()
+        })));
       }
     } catch (err) {
       console.error('Failed to fetch volunteers:', err);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleAddVolunteer = async (e) => {
+    e.preventDefault();
+    if (!addForm.fullName.trim() || !addForm.email.trim()) return;
+    setAddLoading(true);
+    setAddError('');
+    try {
+      const token = localStorage.getItem('token');
+      const res = await fetch(`${API_BASE_URL}/api/ngo-dashboard/volunteers/add`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify(addForm)
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setAddError(data.message || 'Failed to add volunteer');
+        return;
+      }
+      const added = data.data;
+      setVolunteers(prev => [{
+        _id: added._id,
+        name: added.fullName,
+        email: added.email,
+        phone: added.phone !== 'N/A' ? added.phone : '',
+        status: 'approved',
+        createdAt: added.createdAt || new Date().toISOString()
+      }, ...prev]);
+      setMessage({ type: 'success', text: `${added.fullName} added as volunteer!` });
+      setTimeout(() => setMessage({ type: '', text: '' }), 3000);
+      setShowAddModal(false);
+      setAddForm({ fullName: '', email: '', phone: '', role: '' });
+    } catch {
+      setAddError('Something went wrong. Please try again.');
+    } finally {
+      setAddLoading(false);
     }
   };
 
@@ -42,13 +88,13 @@ export default function NgoVolunteers() {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`
         },
-        body: JSON.stringify({ status: newStatus })
+        body: JSON.stringify({ status: newStatus.charAt(0).toUpperCase() + newStatus.slice(1) })
       });
 
       if (res.ok) {
-        setVolunteers(prev => 
-          prev.map(v => 
-            v._id === volunteerId ? { ...v, status: newStatus } : v
+        setVolunteers(prev =>
+          prev.map(v =>
+            v._id === volunteerId ? { ...v, status: newStatus.toLowerCase() } : v
           )
         );
         setMessage({ 
@@ -110,12 +156,76 @@ export default function NgoVolunteers() {
           <h1>Volunteer Management</h1>
           <p>Review applications and manage your volunteer team</p>
         </div>
-        {stats.pending > 0 && (
-          <div className="header-badge attention">
-            <Clock size={14} /> {stats.pending} pending review
-          </div>
-        )}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          {stats.pending > 0 && (
+            <div className="header-badge attention">
+              <Clock size={14} /> {stats.pending} pending review
+            </div>
+          )}
+          <button
+            className="ngo-btn ngo-btn-primary"
+            onClick={() => { setShowAddModal(true); setAddError(''); setAddForm({ fullName: '', email: '', phone: '', role: '' }); }}
+          >
+            <UserPlus size={16} /> Add Volunteer
+          </button>
+        </div>
       </div>
+
+      {/* Add Volunteer Modal */}
+      {showAddModal && (
+        <div className="ngo-modal-overlay" onClick={() => setShowAddModal(false)}>
+          <div className="ngo-modal" onClick={e => e.stopPropagation()}>
+            <div className="modal-header">
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <div style={{ background: 'linear-gradient(135deg,#6366f1,#8b5cf6)', borderRadius: '10px', padding: '8px', display: 'flex' }}>
+                  <UserPlus size={20} color="#fff" />
+                </div>
+                <h2>Add Volunteer</h2>
+              </div>
+              <button className="modal-close" onClick={() => setShowAddModal(false)}><X size={18} /></button>
+            </div>
+            <p className="modal-subtitle">Add a volunteer directly — no registration needed.</p>
+            <form onSubmit={handleAddVolunteer}>
+              {[
+                { label: 'Full Name', key: 'fullName', type: 'text', placeholder: 'e.g. Rahul Sharma', required: true },
+                { label: 'Email', key: 'email', type: 'email', placeholder: 'volunteer@example.com', required: true },
+                { label: 'Phone', key: 'phone', type: 'tel', placeholder: '10-digit mobile number', required: false },
+                { label: 'Role / Designation', key: 'role', type: 'text', placeholder: 'e.g. Field Coordinator, Event Helper...', required: false }
+              ].map(({ label, key, type, placeholder, required }) => (
+                <div key={key} style={{ marginBottom: '14px' }}>
+                  <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 600, color: '#374151', marginBottom: '5px' }}>
+                    {label} {required ? <span style={{ color: '#ef4444' }}>*</span> : <span style={{ color: '#9ca3af', fontWeight: 400 }}>(optional)</span>}
+                  </label>
+                  <input
+                    type={type}
+                    style={{ width: '100%', padding: '10px 14px', border: '1.5px solid #e5e7eb', borderRadius: '10px', fontSize: '0.9rem', outline: 'none', boxSizing: 'border-box' }}
+                    placeholder={placeholder}
+                    value={addForm[key]}
+                    onChange={e => setAddForm(f => ({ ...f, [key]: e.target.value }))}
+                    required={required}
+                    autoFocus={key === 'fullName'}
+                    onFocus={e => e.target.style.borderColor = '#6366f1'}
+                    onBlur={e => e.target.style.borderColor = '#e5e7eb'}
+                    maxLength={key === 'role' ? 60 : undefined}
+                  />
+                </div>
+              ))}
+              {addError && (
+                <div className="ngo-alert error" style={{ marginBottom: '12px' }}>
+                  <AlertCircle size={16} />
+                  <span>{addError}</span>
+                </div>
+              )}
+              <div className="modal-actions">
+                <button type="button" className="ngo-btn-secondary ngo-btn" onClick={() => setShowAddModal(false)}>Cancel</button>
+                <button type="submit" className="ngo-btn-primary ngo-btn" disabled={addLoading || !addForm.fullName.trim() || !addForm.email.trim()}>
+                  {addLoading ? 'Adding...' : <><UserPlus size={15} /> Add Volunteer</>}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
       {/* Alert Message */}
       {message.text && (

@@ -24,6 +24,10 @@ import AdminUsers from "../pages/admin/AdminUsers.jsx";
 import AdminGallery from "../pages/admin/AdminGallery.jsx";
 import AdminKanyadan from "../pages/admin/AdminKanyadan.jsx";
 import AdminTasks from "../pages/admin/AdminTasks.jsx";
+import AdminDonations from "../pages/admin/AdminDonations.jsx";
+import AdminFundRequests from "../pages/admin/AdminFundRequests.jsx";
+import AdminPayments from "../pages/admin/AdminPayments.jsx";
+import AdminCompletedTasks from "../pages/admin/AdminCompletedTasks.jsx";
 
 // NGO Dashboard imports
 import {
@@ -186,7 +190,11 @@ function AppRoutes() {
           <Route path="gallery" element={<AdminGallery />} />
           <Route path="users" element={<AdminUsers />} />
           <Route path="kanyadan" element={<AdminKanyadan />} />
+          <Route path="donations" element={<AdminDonations />} />
           <Route path="tasks" element={<AdminTasks />} />
+          <Route path="funds" element={<AdminFundRequests />} />
+          <Route path="payments" element={<AdminPayments />} />
+          <Route path="completed-tasks" element={<AdminCompletedTasks />} />
         </Route>
 
         {/* NGO Dashboard Routes */}

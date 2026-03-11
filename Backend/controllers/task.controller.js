@@ -71,22 +71,51 @@ const sendDonorCompletionEmail = async ({ donorEmail, donorName, serviceTitle, v
 
 // ─── ADMIN: Get all paid donations (for task creation feed) ─────────────────
 export const getAdminDonations = asyncHandler(async (req, res) => {
-  const page  = Math.max(1, parseInt(req.query.page)  || 1);
-  const limit = Math.min(50, parseInt(req.query.limit) || 20);
-  const skip  = (page - 1) * limit;
+  const page    = Math.max(1, parseInt(req.query.page)  || 1);
+  const limit   = Math.min(100, parseInt(req.query.limit) || 20);
+  const skip    = (page - 1) * limit;
+  const { search, serviceType } = req.query; // serviceType: "general" | "specific"
+
+  const filter = { status: "paid" };
+
+  if (search) {
+    filter.$or = [
+      { donorName:    { $regex: search, $options: "i" } },
+      { serviceTitle: { $regex: search, $options: "i" } },
+    ];
+  }
+
+  if (serviceType === "general") {
+    filter.$and = [
+      { $or: [{ serviceTitle: { $in: ["", "General Donation", null] } }, { serviceTitle: { $exists: false } }] },
+    ];
+  } else if (serviceType === "specific") {
+    filter.serviceTitle = { $nin: ["", "General Donation", null] };
+  }
 
   const [donations, total] = await Promise.all([
-    Payment.find({ status: "paid" })
+    Payment.find(filter)
       .populate("user", "name email phone")
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(limit)
       .lean(),
-    Payment.countDocuments({ status: "paid" }),
+    Payment.countDocuments(filter),
   ]);
 
+  // Mark donations that already have a task created (include taskId for delete)
+  const donationIds = donations.map(d => d._id);
+  const existingTasks = await Task.find({ donationId: { $in: donationIds } }).select("donationId status volunteerName").lean();
+  const taskedMap = new Map(existingTasks.map(t => [t.donationId.toString(), t]));
+  const donationsWithFlag = donations.map(d => {
+    const task = taskedMap.get(d._id.toString());
+    return task
+      ? { ...d, hasTask: true, taskId: task._id.toString(), taskStatus: task.status, taskVolunteer: task.volunteerName }
+      : { ...d, hasTask: false };
+  });
+
   res.status(200).json(new ApiResponse(200, "Donations fetched", {
-    donations,
+    donations: donationsWithFlag,
     total,
     page,
     pages: Math.ceil(total / limit),

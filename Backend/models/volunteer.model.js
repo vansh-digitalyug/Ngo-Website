@@ -1,11 +1,11 @@
 import mongoose from "mongoose";
 
 const volunteerSchema = new mongoose.Schema({
-  // Link each volunteer application to exactly one logged-in user
+  // Link to a registered user (optional for NGO-added volunteers)
   user: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "User",
-    required: [true, "User is required"]
+    default: null
   },
 
   // --- 1. Personal Information ---
@@ -119,6 +119,13 @@ const volunteerSchema = new mongoose.Schema({
     }
   },
 
+  // --- NGO Link ---
+  ngoId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Ngo",
+    default: null
+  },
+
   // --- System Fields ---
   status: {
     type: String,
@@ -141,10 +148,10 @@ const volunteerSchema = new mongoose.Schema({
   }
 });
 
-// Enforce one volunteer application per user account
+// Enforce one application per user per NGO (only for registered users)
 volunteerSchema.index(
-  { user: 1 },
-  { unique: true, partialFilterExpression: { user: { $exists: true } } }
+  { user: 1, ngoId: 1 },
+  { unique: true, sparse: true, partialFilterExpression: { user: { $ne: null } } }
 );
 
 export default mongoose.model("Volunteer", volunteerSchema);

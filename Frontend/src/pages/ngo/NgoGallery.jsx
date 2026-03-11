@@ -97,7 +97,7 @@ export default function NgoGallery() {
       const urlRes = await fetch(`${API_BASE_URL}/api/s3/generate-upload-url`, {
         method: 'POST',
         headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ fileName: file.name, fileType: file.type, location: `${ngoData.ngoS3Id}/gallery` }),
+        body: JSON.stringify({ fileName: file.name, fileType: file.type, location: `gallery/${ngoData.ngoS3Id}` }),
       });
       if (!urlRes.ok) { const e = await urlRes.json(); throw new Error(e.message || 'Failed to get upload URL'); }
       const { data: { uploadUrl, key } } = await urlRes.json();

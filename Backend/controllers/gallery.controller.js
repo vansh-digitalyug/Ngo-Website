@@ -4,14 +4,29 @@ import path from "path";
 import asyncHandler from "../utils/asyncHandler.js";
 import ApiError from "../utils/ApiError.js";
 import ApiResponse from "../utils/ApiResponse.js";
-<<<<<<< HEAD
 import { GetObjectCommand } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { s3 } from "../config/s3Client.config.js";
 
-=======
->>>>>>> 31d23d24ccb2adabff38352913522fa2e3328b1a
+// Sign a private S3 URL; returns original url if not an S3 URL
+const signUrl = async (url, expiresIn = 3600) => {
+  if (!url || !url.includes(".amazonaws.com/")) return url;
+  try {
+    const key = url.split(".amazonaws.com/")[1];
+    const command = new GetObjectCommand({ Bucket: process.env.BUCKET_NAME, Key: key });
+    return await getSignedUrl(s3, command, { expiresIn });
+  } catch {
+    return url;
+  }
+};
 
+const signItems = (items) =>
+  Promise.all(items.map(async (item) => {
+    const obj = item.toObject ? item.toObject() : { ...item };
+    obj.url = await signUrl(obj.url);
+    if (obj.thumbnail) obj.thumbnail = await signUrl(obj.thumbnail);
+    return obj;
+  }));
 
 export const getImages = asyncHandler(async (req, res) => {
   const { category, page = 1, limit = 20 } = req.query;
@@ -32,7 +47,7 @@ export const getImages = asyncHandler(async (req, res) => {
 
   return res.json({
     success: true,
-    images,
+    images: await signItems(images),
     pagination: {
       total,
       page: parseInt(page),
@@ -61,7 +76,7 @@ export const getVideos = asyncHandler(async (req, res) => {
 
   return res.json({
     success: true,
-    videos,
+    videos: await signItems(videos),
     pagination: {
       total,
       page: parseInt(page),
@@ -96,11 +111,8 @@ export const getCategories = asyncHandler(async (req, res) => {
 export const getAllGalleryItems = asyncHandler(async (req, res) => {
   const { type, category, status, search, ngoId, page = 1, limit = 20 } = req.query;
 
-  // exclude volunteer task-completion uploads (both new and old items)
-  const query = {
-    sourceTask: null,
-    category: { $ne: "Volunteer Activities" }
-  };
+  // exclude volunteer task-completion uploads (sourceTask is set for those)
+  const query = { sourceTask: null };
   if (type) query.type = type;
   if (category && category !== "all") query.category = category;
   if (status && status !== "all") query.approvalStatus = status;
@@ -127,10 +139,8 @@ export const getAllGalleryItems = asyncHandler(async (req, res) => {
     Gallery.countDocuments({ approvalStatus: "pending" })
   ]);
 
-  const itemsWithStatus = items.map(item => ({
-    ...item.toObject(),
-    status: item.approvalStatus
-  }));
+  const signed = await signItems(items);
+  const itemsWithStatus = signed.map(obj => ({ ...obj, status: obj.approvalStatus }));
 
   return res.json({
     success: true,

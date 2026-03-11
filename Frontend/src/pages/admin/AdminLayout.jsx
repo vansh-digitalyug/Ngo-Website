@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Link, useLocation, useNavigate, Outlet } from "react-router-dom";
-import { LayoutDashboard, Building2, Users, Mail, Image, UserCircle, Heart, ClipboardList } from "lucide-react";
+import { LayoutDashboard, Building2, Users, Mail, Image, UserCircle, Heart, ClipboardList, Wallet, IndianRupee, CheckCircle2, Coins } from "lucide-react";
 import "./admin.css";
 // Removed remove-admin-padding.css import
 
@@ -14,13 +14,17 @@ const NAV_ITEMS = [
   { path: "/admin/gallery", label: "Gallery", icon: Image },
   { path: "/admin/users", label: "Users", icon: UserCircle },
   { path: "/admin/kanyadan", label: "Kanyadan", icon: Heart },
+  { path: "/admin/donations", label: "Donations", icon: Coins },
   { path: "/admin/tasks", label: "Tasks", icon: ClipboardList },
+  { path: "/admin/funds", label: "Fund Requests", icon: Wallet },
+  { path: "/admin/payments", label: "Payments", icon: IndianRupee },
+  { path: "/admin/completed-tasks", label: "Completed Tasks", icon: CheckCircle2 },
 ];
 
 function AdminLayout() {
   const location = useLocation();
   const navigate = useNavigate();
-  const [pendingCounts, setPendingCounts] = useState({ ngos: 0, volunteers: 0, contacts: 0, kanyadan: 0 });
+  const [pendingCounts, setPendingCounts] = useState({ ngos: 0, volunteers: 0, contacts: 0, kanyadan: 0, funds: 0 });
 
   // Removed body class toggling for admin dashboard to restore default spacing
 
@@ -63,6 +67,17 @@ function AdminLayout() {
         if (d?.success) {
           setPendingCounts(prev => ({ ...prev, kanyadan: d.data?.pending || 0 }));
         }
+        const token2 = localStorage.getItem("token");
+        return fetch(`${API_BASE_URL}/api/admin/funds?status=Pending&limit=1`, {
+          headers: { Authorization: `Bearer ${token2}` },
+          credentials: "include"
+        });
+      })
+      .then(r => r?.json?.())
+      .then(d => {
+        if (d?.success) {
+          setPendingCounts(prev => ({ ...prev, funds: d.data?.pagination?.total || 0 }));
+        }
       })
       .catch(() => {});
   }, [location.pathname]);
@@ -77,6 +92,7 @@ function AdminLayout() {
     if (label === "Volunteers" && pendingCounts.volunteers > 0) return pendingCounts.volunteers;
     if (label === "Contacts" && pendingCounts.contacts > 0) return pendingCounts.contacts;
     if (label === "Kanyadan" && pendingCounts.kanyadan > 0) return pendingCounts.kanyadan;
+    if (label === "Fund Requests" && pendingCounts.funds > 0) return pendingCounts.funds;
     return null;
   };
 

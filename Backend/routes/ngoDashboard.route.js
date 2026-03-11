@@ -11,6 +11,7 @@ import {
     deleteGalleryItem,
     getNgoVolunteers,
     updateVolunteerStatus,
+    addNgoVolunteer,
     getNgoStatus,
     getNgoDonationHistory
 } from "../controllers/ngoDashboard.controller.js";
@@ -47,6 +48,7 @@ router.delete("/gallery/:id", requireNgoAuth, deleteGalleryItem);
 
 // Volunteers
 router.get("/volunteers", requireNgoAuth, getNgoVolunteers);
+router.post("/volunteers/add", requireNgoAuth, addNgoVolunteer);
 router.put("/volunteers/:id", requireNgoAuth, updateVolunteerStatus);
 
 // Fund Requests

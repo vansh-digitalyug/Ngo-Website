@@ -27,6 +27,18 @@ const Donate = () => {
   const [wantsTaxCertificate, setWantsTaxCertificate] = useState(true);
   const [citizenConfirmed, setCitizenConfirmed] = useState(false);
 
+  // Pre-fill from logged-in user profile
+  useEffect(() => {
+    try {
+      const user = JSON.parse(localStorage.getItem("user"));
+      if (!user) return;
+      if (user.name)    setDonorName(user.name);
+      if (user.email)   setEmail(user.email);
+      if (user.phone)   setMobile(user.phone.replace(/^\+91/, "").replace(/\D/g, "").slice(0, 10));
+      if (user.address) setAddress(user.address);
+    } catch {}
+  }, []);
+
   // Calculate amounts
   const donationAmount = customAmount ? parseInt(customAmount) : (selectedAmount || 3000);
   const totalAmount = donationAmount;

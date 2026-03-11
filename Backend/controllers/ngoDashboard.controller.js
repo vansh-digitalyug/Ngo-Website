@@ -241,10 +241,18 @@ export const uploadToGallery = asyncHandler(async (req, res) => {
 
   await Ngo.findByIdAndUpdate(ngoId, { $inc: { "stats.totalGalleryItems": 1 } });
 
+  // Return a signed URL so the newly added item renders immediately in the frontend
+  const itemObj = galleryItem.toObject();
+  try {
+    const key = s3Url.split(".amazonaws.com/")[1];
+    const command = new GetObjectCommand({ Bucket: process.env.BUCKET_NAME, Key: key });
+    itemObj.url = await getSignedUrl(s3, command, { expiresIn: 3600 });
+  } catch { /* fallback to raw url */ }
+
   return res.status(201).json({
     success: true,
     message: "Uploaded successfully. Pending admin approval.",
-    data: galleryItem
+    data: itemObj
   });
 });
 
@@ -324,6 +332,46 @@ export const updateVolunteerStatus = asyncHandler(async (req, res) => {
   return res.status(200).json({
     success: true,
     message: `Volunteer ${status.toLowerCase()} successfully`,
+    data: volunteer
+  });
+});
+
+export const addNgoVolunteer = asyncHandler(async (req, res) => {
+  const ngoId = req.ngo._id;
+  const { fullName, email, phone, role } = req.body;
+
+  if (!fullName?.trim()) throw new ApiError(400, "Full name is required");
+  if (!email?.trim()) throw new ApiError(400, "Email is required");
+
+  const emailLower = email.toLowerCase().trim();
+
+  // Check if already added to this NGO by email
+  const existing = await Volunteer.findOne({ email: emailLower, ngoId }).lean();
+  if (existing) throw new ApiError(409, "A volunteer with this email already exists for your NGO");
+
+  const volunteer = await Volunteer.create({
+    user: null,
+    ngoId,
+    fullName: fullName.trim(),
+    email: emailLower,
+    phone: phone?.trim() || "N/A",
+    dob: new Date("2000-01-01"),
+    city: "N/A",
+    state: "N/A",
+    interests: ["General"],
+    idType: "Aadhaar",
+    idNumber: "000000000000",
+    motivation: "Added directly by NGO",
+    declaration: true,
+    status: "Approved",
+    role: role?.trim() || ""
+  });
+
+  await Ngo.findByIdAndUpdate(ngoId, { $inc: { "stats.totalVolunteers": 1 } });
+
+  return res.status(201).json({
+    success: true,
+    message: "Volunteer added successfully",
     data: volunteer
   });
 });
@@ -446,6 +494,7 @@ export default {
   deleteGalleryItem,
   getNgoVolunteers,
   updateVolunteerStatus,
+  addNgoVolunteer,
   getNgoStatus,
   getNgoDonationHistory
 };
