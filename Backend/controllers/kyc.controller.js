@@ -2,6 +2,7 @@ import User from "../models/user.model.js";
 import { generateAadhaarOtp, verifyAadhaarOtp, verifyPanDetails } from "../services/sandbox.service.js";
 import asyncHandler from "../utils/asyncHandler.js";
 
+
 const REQUEST_TIMEOUT = 30000; // 30 seconds max for controller-level timeout
 
 export const requestAadhaarOtp = asyncHandler(async (req, res) => {

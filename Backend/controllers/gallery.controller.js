@@ -4,24 +4,7 @@ import path from "path";
 import asyncHandler from "../utils/asyncHandler.js";
 import ApiError from "../utils/ApiError.js";
 import ApiResponse from "../utils/ApiResponse.js";
-import { GetObjectCommand } from "@aws-sdk/client-s3";
-import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
-import { s3 } from "../config/s3Client.config.js";
-import ApiResponse from "../utils/ApiResponse.js";
 
-// Sign an S3 URL if it's an AWS URL, otherwise return as-is
-const signIfS3 = async (url) => {
-  if (!url || !url.includes('.amazonaws.com/')) return url;
-  try {
-    const key = url.split('.amazonaws.com/')[1];
-    const command = new GetObjectCommand({ Bucket: process.env.BUCKET_NAME, Key: key });
-    return await getSignedUrl(s3, command, { expiresIn: 3600 });
-  } catch (_) { return url; }
-};
-
-// ============================================
-// PUBLIC ENDPOINTS
-// ============================================
 
 export const getImages = asyncHandler(async (req, res) => {
   const { category, page = 1, limit = 20 } = req.query;
@@ -132,14 +115,10 @@ export const getAllGalleryItems = asyncHandler(async (req, res) => {
     Gallery.countDocuments({ approvalStatus: "pending" })
   ]);
 
-  const itemsWithStatus = await Promise.all(
-    items.map(async (item) => {
-      const obj = { ...item.toObject(), status: item.approvalStatus };
-      obj.url = await signIfS3(obj.url);
-      if (obj.thumbnail) obj.thumbnail = await signIfS3(obj.thumbnail);
-      return obj;
-    })
-  );
+  const itemsWithStatus = items.map(item => ({
+    ...item.toObject(),
+    status: item.approvalStatus
+  }));
 
   return res.json({
     success: true,
