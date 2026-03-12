@@ -43,6 +43,8 @@ import {
 import GalleryImages from "../pages/gallery/GalleryImages.jsx";
 import GalleryVideos from "../pages/gallery/GalleryVideos.jsx";
 import NgoPublicProfile from "../pages/NgoPublicProfile.jsx";
+import PrivacyPolicy from "../pages/PrivacyPolicy.jsx";
+import TermsOfService from "../pages/TermsOfService.jsx";
 
 import OrphanageEducationPage from "../pages/services/orphanage/education.jsx";
 import Meal from "../pages/services/orphanage/meal.jsx";
@@ -164,6 +166,8 @@ function AppRoutes() {
         <Route path="/reset-password" element={<ResetPassword />} />
         <Route path="/reset-password/:token" element={<ResetPassword />} />
         <Route path="/contact" element={<Contact />} />
+        <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+        <Route path="/terms-of-service" element={<TermsOfService />} />
         <Route
           path="/profile"
           element={

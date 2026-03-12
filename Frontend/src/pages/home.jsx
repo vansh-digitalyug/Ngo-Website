@@ -71,6 +71,11 @@ export default function Home() {
   const [ngoTotal, setNgoTotal]   = useState(500);
   const [ngoLoading, setNgoLoading] = useState(true);
 
+  /* ── live platform stats ── */
+  const [liveStats, setLiveStats] = useState(null);
+  const [liveRecentDonations, setLiveRecentDonations] = useState([]);
+  const [liveCauses, setLiveCauses] = useState([]);
+
   /* ── slides ── */
   const slides = [
     {
@@ -99,7 +104,7 @@ export default function Home() {
     return () => clearInterval(id);
   }, [slides.length]);
 
-  /* scroll reveal — watches all 4 animation classes */
+  /* scroll reveal — watches all 4 animation classes on initial elements */
   useEffect(() => {
     const obs = new IntersectionObserver(
       es => es.forEach(e => { if (e.isIntersecting) e.target.classList.add("sv"); }),
@@ -139,20 +144,78 @@ export default function Home() {
       .finally(() => setNgoLoading(false));
   }, []);
 
-  /* animated counters — n1 uses live ngoTotal once fetched */
-  const [statsRef, statsHit] = useInView(0.3);
-  const n1 = useCountUp(ngoTotal, 2000, statsHit);
-  const n2 = useCountUp(10000,    2200, statsHit);
-  const n3 = useCountUp(25,       1500, statsHit);
-  const n4 = useCountUp(3200,     2000, statsHit);
+  /* ── fetch public platform stats (counters + causes) ── */
+  useEffect(() => {
+    fetch(`${API}/api/public/stats`)
+      .then(r => r.ok ? r.json() : null)
+      .then(json => {
+        if (json?.success && json.data) {
+          setLiveStats(json.data.stats);
+          if (Array.isArray(json.data.topCauses) && json.data.topCauses.length > 0) {
+            setLiveCauses(json.data.topCauses);
+          }
+          if (Array.isArray(json.data.recentDonations) && json.data.recentDonations.length > 0) {
+            setLiveRecentDonations(json.data.recentDonations);
+          }
+        }
+      })
+      .catch(err => console.error("[Home] Stats fetch error:", err))
+  }, []);
 
-  /* ── data ── */
-  const causes = [
-    { img: orphanEducation, cat: "Child Welfare",  title: "Education for Every Orphaned Child",  raised: 148000, goal: 250000, link: "/services/orphanage" },
-    { img: elderMedical,    cat: "Elderly Care",   title: "Medical Aid for Senior Citizens",     raised: 92000,  goal: 150000, link: "/services/elderly"  },
-    { img: medicalCamp,     cat: "Medical Aid",    title: "Free Health Camps in Rural Areas",    raised: 67000,  goal: 100000, link: "/services"           },
-    { img: kandyaDan,       cat: "Kanya Daan",     title: "Support for Girls' Weddings",         raised: 78000,  goal: 120000, link: "/services"           },
+  /* animated counters — use live stats when available */
+  const [statsRef, statsHit] = useInView(0.3);
+  const n1 = useCountUp(liveStats?.totalNgos       || ngoTotal, 2000, statsHit);
+  const n2 = useCountUp(liveStats?.totalDonations  || 0,        2200, statsHit);
+  const n3 = useCountUp(liveStats?.statesCovered   || 25,       1500, statsHit);
+  const n4 = useCountUp(liveStats?.totalVolunteers || 0,        2000, statsHit);
+
+  /* ── causes — live data with image lookup, static fallback ── */
+  const CAUSE_IMG_MAP = [
+    { keywords: ["orphan", "child", "education", "school"],   img: orphanEducation, link: "/services/orphanage/education" },
+    { keywords: ["elder", "senior"],                           img: elderMedical,    link: "/services/elder/medical"        },
+    { keywords: ["meal", "food", "nutrition"],                 img: orphanFood,      link: "/services/orphanage/meal"       },
+    { keywords: ["kanya", "wedding", "marriage", "girl"],      img: kandyaDan,       link: "/services/welfare/kanyadan"     },
+    { keywords: ["widow", "women", "woman", "empowerment"],    img: widow,           link: "/services/women/widow-women"    },
+    { keywords: ["road", "infrastructure", "construction"],    img: road,            link: "/services/infrastructure/road-construction" },
+    { keywords: ["cancer", "kidney"],                          img: medicalCamp,     link: "/services/medical/cancer"       },
+    { keywords: ["camp", "health", "medical"],                 img: medicalCamp,     link: "/services/medical/camp"         },
   ];
+
+  const getCauseImg = (title) => {
+    const lower = (title || "").toLowerCase();
+    for (const m of CAUSE_IMG_MAP) {
+      if (m.keywords.some(k => lower.includes(k))) return { img: m.img, link: m.link };
+    }
+    return { img: medicalCamp, link: "/services" };
+  };
+
+  const staticCauses = [
+    { img: orphanEducation, cat: "Child Welfare", title: "Education for Every Orphaned Child", raised: 148000, goal: 250000, link: "/services/orphanage/education" },
+    { img: elderMedical,    cat: "Elderly Care",  title: "Medical Aid for Senior Citizens",    raised: 92000,  goal: 150000, link: "/services/elder/medical"       },
+    { img: medicalCamp,     cat: "Medical Aid",   title: "Free Health Camps in Rural Areas",   raised: 67000,  goal: 100000, link: "/services/medical/camp"         },
+    { img: kandyaDan,       cat: "Kanya Daan",    title: "Support for Girls' Weddings",        raised: 78000,  goal: 120000, link: "/services/welfare/kanyadan"     },
+  ];
+
+  const causes = liveCauses.length > 0
+    ? liveCauses.map(c => {
+        const { img, link } = getCauseImg(c.title);
+        return { img, cat: c.cat, title: c.title, raised: c.raised, goal: c.goal, donors: c.donors, link };
+      })
+    : staticCauses;
+
+  const staticDonations = [
+    { initials: "RK", color: "#1a2d5a", name: "Rahul K.",    cause: "Education for Orphaned Children", amount: "₹2,000",  time: "2 hr ago"   },
+    { initials: "PS", color: "#b45309", name: "Priya S.",    cause: "Medical Aid for Senior Citizens",  amount: "₹5,000",  time: "5 hr ago"   },
+    { initials: "AM", color: "#065f46", name: "Amit M.",     cause: "Free Health Camps",               amount: "₹1,500",  time: "8 hr ago"   },
+    { initials: "SG", color: "#5b21b6", name: "Sneha G.",    cause: "Kanya Daan Yojana",               amount: "₹10,000", time: "1 day ago"  },
+    { initials: "VR", color: "#9f1239", name: "Vikram R.",   cause: "Daily Meals for Orphans",         amount: "₹3,000",  time: "1 day ago"  },
+    { initials: "AN", color: "#1e3a5f", name: "Anonymous",   cause: "Women Empowerment",               amount: "₹7,500",  time: "2 days ago" },
+    { initials: "NP", color: "#78350f", name: "Neha P.",     cause: "Rural Infrastructure",            amount: "₹2,500",  time: "2 days ago" },
+    { initials: "KS", color: "#14532d", name: "Karan S.",    cause: "Medical Aid for Senior Citizens", amount: "₹4,000",  time: "3 days ago" },
+    { initials: "DT", color: "#312e81", name: "Divya T.",    cause: "Education for Orphaned Children", amount: "₹1,000",  time: "3 days ago" },
+  ];
+
+  const recentDonations = liveRecentDonations.length > 0 ? liveRecentDonations : staticDonations;
 
   const programs = [
     { img: orphanFood,   Icon: FaChild,       title: "Child Nutrition",      desc: "Daily meals and nutrition for orphaned children in partner shelters across India.",               link: "/services/orphanage" },
@@ -189,30 +252,20 @@ export default function Home() {
   // After loading: use live DB data. If DB empty, show nothing (handled by skeleton/loading state).
   const ngos = liveNgos;
 
-  /* marquee ticker items — ngoTotal is live from API */
+  /* marquee ticker items — use live data where available */
+  const totalRaisedCr = liveStats?.totalRaised
+    ? (liveStats.totalRaised / 10000000).toFixed(1)
+    : null;
   const marqueeItems = [
-    { Icon: FaStar,             text: <><strong>{ngoTotal}+</strong> Verified NGOs</> },
-    { Icon: FaHandHoldingUsd,   text: <><strong>₹2.4 Crore+</strong> Donated</> },
-    { Icon: FaMapMarkerAlt,     text: <><strong>25 States</strong> Covered</> },
-    { Icon: FaUsers,            text: <><strong>3,200+</strong> Active Donors</> },
-    { Icon: FaCheckCircle,      text: <><strong>100%</strong> Transparent</> },
-    { Icon: FaFileAlt,          text: <><strong>80G</strong> Tax Benefits</> },
-    { Icon: FaHeart,            text: <><strong>10,000+</strong> Lives Changed</> },
-    { Icon: FaShieldAlt,        text: <><strong>KYC-Verified</strong> Every NGO</> },
-    { Icon: FaHandshake,        text: <><strong>1,200+</strong> Volunteers</> },
-  ];
-
-  /* recent donations feed */
-  const recentDonations = [
-    { initials: "RM", color: "#1a2d5a", name: "Rahul M.",       cause: "Education for Orphaned Children",  amount: "₹2,500",  time: "2 min ago"  },
-    { initials: "PS", color: "#b45309", name: "Priya S.",        cause: "Medical Aid for Senior Citizens",  amount: "₹5,000",  time: "8 min ago"  },
-    { initials: "AK", color: "#065f46", name: "Amit K.",         cause: "Nutritious Meal Programme",        amount: "₹1,000",  time: "15 min ago" },
-    { initials: "ST", color: "#5b21b6", name: "Sunita T.",       cause: "Kanya Daan Yojana",                amount: "₹10,000", time: "22 min ago" },
-    { initials: "VR", color: "#9f1239", name: "Vikram R.",       cause: "Rural Infrastructure Project",     amount: "₹3,000",  time: "31 min ago" },
-    { initials: "MN", color: "#1e3a5f", name: "Meena N.",        cause: "Women Empowerment Programme",      amount: "₹1,500",  time: "45 min ago" },
-    { initials: "DJ", color: "#78350f", name: "Dev J.",          cause: "Free Health Camps",                amount: "₹7,500",  time: "1 hr ago"   },
-    { initials: "RP", color: "#14532d", name: "Ritu P.",         cause: "Education for Orphaned Children",  amount: "₹2,000",  time: "1 hr ago"   },
-    { initials: "NK", color: "#312e81", name: "Nikhil K.",       cause: "Elderly Care Support",             amount: "₹4,000",  time: "2 hrs ago"  },
+    { Icon: FaStar,           text: <><strong>{liveStats?.totalNgos || ngoTotal}+</strong> Verified NGOs</> },
+    { Icon: FaHandHoldingUsd, text: <><strong>{totalRaisedCr ? `₹${totalRaisedCr} Cr+` : "₹2.4 Crore+"}</strong> Donated</> },
+    { Icon: FaMapMarkerAlt,   text: <><strong>{liveStats?.statesCovered || 25} States</strong> Covered</> },
+    { Icon: FaUsers,          text: <><strong>{(liveStats?.totalDonations || 3200).toLocaleString("en-IN")}+</strong> Donations Made</> },
+    { Icon: FaCheckCircle,    text: <><strong>100%</strong> Transparent</> },
+    { Icon: FaFileAlt,        text: <><strong>80G</strong> Tax Benefits</> },
+    { Icon: FaHeart,          text: <><strong>10,000+</strong> Lives Changed</> },
+    { Icon: FaShieldAlt,      text: <><strong>KYC-Verified</strong> Every NGO</> },
+    { Icon: FaHandshake,      text: <><strong>{(liveStats?.totalVolunteers || 1200).toLocaleString("en-IN")}+</strong> Volunteers</> },
   ];
 
   return (
@@ -265,9 +318,9 @@ export default function Home() {
         <div className="stats-inner">
           {[
             { n: n1, s: "+", label: "Verified NGOs",  Icon: FaBuilding      },
-            { n: n2, s: "+", label: "Lives Changed",  Icon: FaHeart         },
+            { n: n2, s: "+", label: "Donations Made", Icon: FaHeart         },
             { n: n3, s: "+", label: "States Covered", Icon: FaMapMarkerAlt  },
-            { n: n4, s: "+", label: "Active Donors",  Icon: FaHandshake     },
+            { n: n4, s: "+", label: "Volunteers",     Icon: FaHandshake     },
           ].map((st, i) => (
             <div key={i} className="stat-cell">
               <st.Icon />
@@ -339,7 +392,11 @@ export default function Home() {
             <div className="about-badge">
               <FaHeart />
               <div>
-                <div style={{ fontSize: "1.28rem", fontWeight: 900, lineHeight: 1 }}>₹2.4 Cr+</div>
+                <div style={{ fontSize: "1.28rem", fontWeight: 900, lineHeight: 1 }}>
+                  {liveStats?.totalRaised
+                    ? `₹${(liveStats.totalRaised / 10000000).toFixed(1)} Cr+`
+                    : "₹2.4 Cr+"}
+                </div>
                 <div style={{ fontSize: ".7rem", opacity: .88, marginTop: 3 }}>Channelled to verified causes</div>
               </div>
             </div>
@@ -372,16 +429,27 @@ export default function Home() {
                 <div className="cause-body">
                   <h3>{c.title}</h3>
                   <div className="cause-amounts">
-                    <span className="cause-raised">₹{(c.raised / 1000).toFixed(0)}K raised</span>
-                    <span className="cause-goal">of ₹{(c.goal / 1000).toFixed(0)}K</span>
+                    <span className="cause-raised">
+                      {c.raised >= 100000
+                        ? `₹${(c.raised / 100000).toFixed(1)}L raised`
+                        : `₹${(c.raised / 1000).toFixed(0)}K raised`}
+                    </span>
+                    <span className="cause-goal">
+                      of {c.goal >= 100000
+                        ? `₹${(c.goal / 100000).toFixed(0)}L`
+                        : `₹${(c.goal / 1000).toFixed(0)}K`}
+                    </span>
                   </div>
                   <div className="cause-bar">
                     <div
                       className="cause-bar-fill"
-                      style={{ width: `${Math.round((c.raised / c.goal) * 100)}%` }}
+                      style={{ width: `${Math.min(Math.round((c.raised / c.goal) * 100), 100)}%` }}
                     />
                   </div>
-                  <div className="cause-pct">{Math.round((c.raised / c.goal) * 100)}% funded</div>
+                  <div className="cause-pct">
+                    {Math.min(Math.round((c.raised / c.goal) * 100), 100)}% funded
+                    {c.donors ? <span style={{ marginLeft: 8, opacity: 0.65, fontSize: "0.78rem" }}>· {c.donors} donors</span> : null}
+                  </div>
                   <Link to={c.link} className="cause-cta">Support This Cause →</Link>
                 </div>
               </div>
@@ -726,7 +794,11 @@ export default function Home() {
                 <FaHandHoldingUsd />
               </div>
               <div>
-                <h3>₹2,40,87,450</h3>
+                <h3>
+                  {liveStats?.totalRaised
+                    ? `₹${Number(liveStats.totalRaised).toLocaleString("en-IN")}`
+                    : "₹2,40,87,450"}
+                </h3>
                 <p>Total funds raised to date</p>
               </div>
             </div>
