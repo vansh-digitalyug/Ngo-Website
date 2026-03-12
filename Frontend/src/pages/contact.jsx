@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
 
 const Contact = () => {
   // 1. State Management
@@ -466,7 +467,7 @@ const Contact = () => {
                   onChange={handleChange}
                 />
                 <label htmlFor="privacy" style={{ color: errors.privacy ? '#ef4444' : '' }}>
-                  I agree to the <a href="#" style={{ color: '#2563eb', textDecoration: 'none' }}>privacy policy</a> and consent to being contacted.
+                  I agree to the <Link to="/privacy-policy" style={{ color: '#2563eb', textDecoration: 'none' }}>privacy policy</Link> and consent to being contacted.
                 </label>
               </div>
               {errors.privacy && <span className="error-msg" style={{ marginTop: '-15px', marginBottom: '20px' }}>{errors.privacy}</span>}

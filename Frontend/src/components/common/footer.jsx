@@ -59,8 +59,8 @@ function Footer() {
         <div className="footer-bottom">
           <p>© {new Date().getFullYear()} SevaIndia. Built with ❤ for a better India.</p>
           <div className="footer-legal">
-            <a href="#">Privacy Policy</a>
-            <a href="#">Terms of Service</a>
+            <Link to="/privacy-policy">Privacy Policy</Link>
+            <Link to="/terms-of-service">Terms of Service</Link>
           </div>
         </div>
       </div>

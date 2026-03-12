@@ -13,6 +13,7 @@ import paymentRoutes from "./routes/payment.routes.js";
 import s3Routes from "./routes/s3.routes.js";
 import kanyadanRoutes from "./routes/kanyadanApplication.routes.js";
 import taskRoutes from "./routes/task.routes.js";
+import publicRoutes from "./routes/public.route.js";
 
 import "./config/loadEnv.js";
 import cors from "cors";
@@ -66,6 +67,8 @@ app.use("/api/s3", s3Routes);
 app.use("/api/kanyadan", kanyadanRoutes);
 // Task management (donation → assign volunteer → complete → notify donor)
 app.use("/api/tasks", taskRoutes);
+// Public stats (home page — no auth)
+app.use("/api/public", publicRoutes);
 app.use(errorHandler);
 
 const PORT = process.env.PORT || 5000;
