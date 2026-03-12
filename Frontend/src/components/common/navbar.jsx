@@ -59,6 +59,7 @@ function Navbar() {
     }
   }, [isLoggedIn, isAdmin]);
 
+
   useEffect(() => {
     const syncAuth = () => {
       setIsLoggedIn(Boolean(localStorage.getItem("token")));

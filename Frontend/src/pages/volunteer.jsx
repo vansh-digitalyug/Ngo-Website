@@ -1,6 +1,5 @@
-import React, { useState } from "react";
-// If you are using react-router-dom:
-import { Link } from "react-router-dom";
+import React, { useState, useEffect } from "react";
+import { Link, useNavigate } from "react-router-dom";
 
 // --- CONSTANTS ---
 const INDIAN_STATES = [
@@ -396,11 +395,29 @@ const styles = {
 };
 
 function Volunteer() {
+  const navigate = useNavigate();
   const [formData, setFormData] = useState(INITIAL_FORM_DATA);
   const [errors, setErrors] = useState({});
   const [submitLoading, setSubmitLoading] = useState(false);
   const [applicationLocked, setApplicationLocked] = useState(false);
   const [successMessage, setSuccessMessage] = useState("");
+  const [volunteerStatus, setVolunteerStatus] = useState(null);
+  const [statusChecked, setStatusChecked] = useState(false);
+
+  // Block access if already approved or pending
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (!token) { setStatusChecked(true); return; }
+    fetch(`${API_BASE_URL}/api/volunteer/status`, {
+      headers: { Authorization: `Bearer ${token}` }
+    })
+      .then(r => r.ok ? r.json() : null)
+      .then(data => {
+        if (data?.hasApplied) setVolunteerStatus(data.status);
+      })
+      .catch(() => {})
+      .finally(() => setStatusChecked(true));
+  }, []);
 
   // --- KYC Verification State ---
   const [idVerified, setIdVerified] = useState(false);
@@ -716,6 +733,32 @@ function Volunteer() {
   const scrollToForm = () => {
     document.getElementById("apply-form").scrollIntoView({ behavior: "smooth" });
   };
+
+  // Show nothing while checking status
+  if (!statusChecked) return null;
+
+  // Block access if already approved or pending
+  if (volunteerStatus === "Approved" || volunteerStatus === "Pending") {
+    const isApproved = volunteerStatus === "Approved";
+    return (
+      <div style={{ minHeight: "70vh", display: "flex", alignItems: "center", justifyContent: "center", padding: "40px 20px", fontFamily: "'Inter', sans-serif" }}>
+        <div style={{ textAlign: "center", maxWidth: 480 }}>
+          <div style={{ fontSize: "4rem", marginBottom: "16px" }}>{isApproved ? "🎉" : "⏳"}</div>
+          <h2 style={{ fontSize: "1.6rem", fontWeight: 800, color: "#1a2d5a", marginBottom: "12px" }}>
+            {isApproved ? "You're Already a Volunteer!" : "Application Under Review"}
+          </h2>
+          <p style={{ color: "#4b5563", lineHeight: 1.7, marginBottom: "28px" }}>
+            {isApproved
+              ? "Your volunteer application has been approved. Thank you for being part of SevaIndia!"
+              : "Your volunteer application has been submitted and is currently being reviewed. We'll notify you once it's approved."}
+          </p>
+          <Link to="/" style={{ display: "inline-block", background: "#1a2d5a", color: "#fff", padding: "12px 28px", borderRadius: "8px", textDecoration: "none", fontWeight: 700 }}>
+            Back to Home
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div style={styles.container}>

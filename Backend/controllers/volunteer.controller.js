@@ -5,6 +5,23 @@ import ApiError from "../utils/ApiError.js";
 import ApiResponse from "../utils/ApiResponse.js";
 import { sendVolunteerApplicationEmail } from "../services/mail.service.js";
 
+// Get volunteer application status for the logged-in user
+export const getVolunteerStatus = asyncHandler(async (req, res) => {
+  if (!req.userId) {
+    return res.status(401).json({ success: false, message: "Unauthorized" });
+  }
+
+  const volunteer = await Volunteer.findOne({ user: req.userId })
+    .select("status")
+    .lean();
+
+  return res.status(200).json({
+    success: true,
+    hasApplied: Boolean(volunteer),
+    status: volunteer ? volunteer.status : null
+  });
+});
+
 // Create a new volunteer application
 
 export const applyVolunteer = asyncHandler(async (req, res) => {
