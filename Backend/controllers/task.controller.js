@@ -4,7 +4,7 @@ import Volunteer from "../models/volunteer.model.js";
 import Gallery from "../models/gallery.model.js";
 import User from "../models/user.model.js";
 import ApiError from "../utils/ApiError.js";
-import ApiResponse from "../utils/Apiresponse.js";
+import ApiResponse from "../utils/ApiResponse.js";
 import asyncHandler from "../utils/asyncHandler.js";
 import { getTransporter, getSenderAddress, emailLayout, escapeHtml } from "../config/nodemailer.config.js";
 import { GetObjectCommand } from "@aws-sdk/client-s3";
@@ -50,7 +50,7 @@ const sendDonorCompletionEmail = async ({ donorEmail, donorName, serviceTitle, v
         Great news! The volunteer <strong>${escapeHtml(volunteerName)}</strong> has completed the work for your donation
         towards <strong>${escapeHtml(serviceTitle)}</strong>.
       </p>
-      <div style="background:#f0fdf4;border-left:4px solid #2e7d32;padding:16px;border-radius:6px;margin:0 0 20px;">
+      <div style="background:#f0fdf4;border-left:4px solid #B2BEB5 ;padding:16px;border-radius:6px;margin:0 0 20px;">
         <p style="margin:0;font-weight:600;color:#166534;">Task: ${escapeHtml(taskTitle)}</p>
       </div>
       ${mediaSection}
@@ -304,4 +304,52 @@ export const getApprovedVolunteers = asyncHandler(async (req, res) => {
     .lean();
 
   res.status(200).json(new ApiResponse(200, "Approved volunteers fetched", volunteers));
+});
+
+
+export const getTaskStats = asyncHandler(async (req, res) => {
+  const totalTasks = await Task.countDocuments();
+  const statusCounts = await Task.aggregate([
+    { $group: { _id: "$status", count: { $sum: 1 } } },
+  ]);
+
+  const stats = {
+    totalTasks,
+    byStatus: statusCounts.reduce((acc, curr) => {
+      acc[curr._id] = curr.count;
+      return acc;
+    }, {}),
+  };
+
+  res.status(200).json(new ApiResponse(200, "Task statistics fetched", stats));
+});
+
+export const getTaskById = asyncHandler(async (req, res) => {
+  const task = await Task.findById(req.params.id).lean();
+  if (!task) throw new ApiError(404, "Task not found", "NOT_FOUND");
+
+  const signedTask = await signTaskMedia(task);
+  res.status(200).json(new ApiResponse(200, "Task details fetched", signedTask));
+}); 
+
+export const taskDetails = asyncHandler(async (req, res) => {
+  const task = await Task.findById(req.params.id)
+    .populate("donorId", "name email")
+    .populate("volunteerId", "fullName email")
+    .lean();
+
+  if (!task) throw new ApiError(404, "Task not found", "NOT_FOUND");
+
+  const signedTask = await signTaskMedia(task);
+  res.status(200).json(new ApiResponse(200, "Task details fetched", signedTask));
+});
+
+export const getAllTasks = asyncHandler(async (req, res) => {
+  const tasks = await Task.find()
+    .populate("donorId", "name email")
+    .populate("volunteerId", "fullName email")
+    .lean();
+
+  const signedTasks = await Promise.all(tasks.map(signTaskMedia));
+  res.status(200).json(new ApiResponse(200, "All tasks fetched", signedTasks));
 });

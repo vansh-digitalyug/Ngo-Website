@@ -107,8 +107,13 @@ export default function Home() {
   /* scroll reveal — watches all 4 animation classes on initial elements */
   useEffect(() => {
     const obs = new IntersectionObserver(
-      es => es.forEach(e => { if (e.isIntersecting) e.target.classList.add("sv"); }),
-      { threshold: 0.07 }
+      es => es.forEach(e => {
+        if (e.isIntersecting) {
+          e.target.classList.add("sv");
+          obs.unobserve(e.target);
+        }
+      }),
+      { threshold: 0.07, rootMargin: "0px 0px -40px 0px" }
     );
     document.querySelectorAll(".sr,.sl,.sfr,.ssc").forEach(el => obs.observe(el));
     return () => obs.disconnect();

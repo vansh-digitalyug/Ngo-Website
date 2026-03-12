@@ -14,6 +14,7 @@ import s3Routes from "./routes/s3.routes.js";
 import kanyadanRoutes from "./routes/kanyadanApplication.routes.js";
 import taskRoutes from "./routes/task.routes.js";
 import publicRoutes from "./routes/public.route.js";
+import servicesRoutes from "./routes/services.routes.js";
 
 import "./config/loadEnv.js";
 import cors from "cors";
@@ -69,6 +70,8 @@ app.use("/api/kanyadan", kanyadanRoutes);
 app.use("/api/tasks", taskRoutes);
 // Public stats (home page — no auth)
 app.use("/api/public", publicRoutes);
+// Services — categories & programs
+app.use("/api/services", servicesRoutes);
 app.use(errorHandler);
 
 const PORT = process.env.PORT || 5000;

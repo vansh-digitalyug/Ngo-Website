@@ -39,12 +39,12 @@
 /* ══════════════════════════════════════════
    SCROLL REVEAL
 ══════════════════════════════════════════ */
-.sr  { opacity: 0; transform: translateY(32px); transition: opacity .7s ease, transform .7s ease; }
-.sl  { opacity: 0; transform: translateX(-48px); transition: opacity .7s ease, transform .7s ease; }
-.sfr { opacity: 0; transform: translateX(48px);  transition: opacity .7s ease, transform .7s ease; }
-.ssc { opacity: 0; transform: scale(.94);        transition: opacity .6s ease, transform .6s ease; }
+.sr  { opacity: 0; transform: translateY(32px); transition: opacity .7s ease, transform .7s ease; will-change: opacity, transform; }
+.sl  { opacity: 0; transform: translateX(-48px); transition: opacity .7s ease, transform .7s ease; will-change: opacity, transform; }
+.sfr { opacity: 0; transform: translateX(48px);  transition: opacity .7s ease, transform .7s ease; will-change: opacity, transform; }
+.ssc { opacity: 0; transform: scale(.94);        transition: opacity .6s ease, transform .6s ease; will-change: opacity, transform; }
 
-.sr.sv, .sl.sv, .sfr.sv, .ssc.sv { opacity: 1; transform: none; }
+.sr.sv, .sl.sv, .sfr.sv, .ssc.sv { opacity: 1; transform: none; will-change: auto; }
 
 .d1 { transition-delay: .06s }
 .d2 { transition-delay: .14s }
@@ -180,6 +180,7 @@
   position: absolute; inset: 0;
   opacity: 0;
   transition: opacity 1s ease;
+  will-change: opacity;
 }
 .hero-slide.active { opacity: 1; }
 
@@ -189,6 +190,7 @@
   display: block;
   transform: scale(1.04);
   transition: transform 8s ease;
+  will-change: transform;
 }
 .hero-slide.active img { transform: scale(1); }
 

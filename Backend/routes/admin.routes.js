@@ -19,6 +19,21 @@ import {
     getAllDonations,
     getDonationsByNgo
 } from "../controllers/admin.controller.js";
+
+import { createCategory,
+    createProgram,
+    getAllCategories,
+    getProgramsByCategory,
+    getAllPrograms,
+    getProgramById,
+    getProgramByTitle,
+    updateProgram,
+    deleteProgram,
+    deleteCategory
+} from "../controllers/services.controller.js";
+
+
+        
 import {
     getAllKanyadanApplications,
     updateKanyadanApplicationStatus,
@@ -68,5 +83,24 @@ router.get("/kanyadan", getAllKanyadanApplications);
 router.get("/kanyadan/stats", getKanyadanStats);
 router.put("/kanyadan/:id/status", updateKanyadanApplicationStatus);
 router.delete("/kanyadan/:id", deleteKanyadanApplication);
+
+// Service categories and programs
+router.post("/categories", createCategory);
+router.post("/programs", createProgram);
+router.get("/categories", getAllCategories);
+router.get("/categories/:categoryId/programs", getProgramsByCategory);
+router.get("/programs", getAllPrograms);
+router.get("/programs/:programId", getProgramById);
+router.get("/programs/title/:title", getProgramByTitle);
+router.put("/programs/:programId", updateProgram);
+router.delete("/programs/:programId", deleteProgram);
+router.delete("/categories/:categoryId", deleteCategory);
+
+
+
+
+
+
+
 
 export default router;
