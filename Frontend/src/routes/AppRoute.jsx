@@ -60,6 +60,8 @@ import CancerSupport from "../pages/services/medical/cancer.jsx";
 import KidneySupport from "../pages/services/medical/kidney.jsx";
 import RoadConstruction from "../pages/services/infrastructure/road-construction.jsx";
 import WidowWomen from "../pages/services/women/widow-women.jsx";
+import WomenEmpowerment from "../pages/services/women/empowerment.jsx";
+import GauSeva from "../pages/services/animal/cowHelp.jsx";
 
 
 
@@ -141,6 +143,8 @@ function AppRoutes() {
         <Route path="/services/medical/kidney" element={<KidneySupport />} />
         <Route path="/services/infrastructure/road-construction" element={<RoadConstruction />} />
         <Route path="/services/women/widow-women" element={<WidowWomen />} />
+        <Route path="/services/women/empowerment" element={<WomenEmpowerment />} />
+        <Route path="/services/animal/gau-seva" element={<GauSeva />} />
 
         {/* Gallery Routes */}
         <Route path="/gallery/images" element={<GalleryImages />} />

@@ -1,0 +1,798 @@
+/* empowerment.css - Women Empowerment Green Theme */
+
+.emp-detail-page {
+    background: #f4f9f5;
+    color: #1f2937;
+    min-height: 100%;
+    padding: 20px 12px 56px;
+}
+
+.emp-detail-shell {
+    max-width: 760px;
+    margin: 0 auto;
+}
+
+.emp-content-grid,
+.emp-side-stack,
+.emp-main-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.emp-campaign-card,
+.emp-section-card,
+.emp-trust-strip {
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 14px;
+    overflow: hidden;
+}
+
+/* ── Campaign Image ── */
+.emp-campaign-image-wrap {
+    position: relative;
+    background: #eaf5ec;
+}
+
+.emp-campaign-image-wrap img {
+    width: 100%;
+    height: auto;
+    aspect-ratio: 16 / 9;
+    object-fit: cover;
+    object-position: center center;
+    display: block;
+}
+
+.emp-campaign-chip {
+    position: absolute;
+    left: 12px;
+    bottom: 12px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: #166534;
+    background: #dcfce7;
+    border: 1px solid #bbf7d0;
+    border-radius: 999px;
+    padding: 6px 10px;
+}
+
+/* ── Campaign Body ── */
+.emp-campaign-body {
+    padding: 16px;
+}
+
+.emp-campaign-body h1 {
+    margin: 0;
+    font-size: clamp(1.2rem, 2.6vw, 1.65rem);
+    line-height: 1.35;
+}
+
+.emp-campaign-org {
+    margin: 8px 0 14px;
+    color: #6b7280;
+    font-size: 0.95rem;
+}
+
+.emp-campaign-amounts {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    margin-bottom: 10px;
+}
+
+.emp-campaign-amounts strong {
+    font-size: 1.2rem;
+    color: #111827;
+}
+
+.emp-campaign-amounts span {
+    font-size: 0.86rem;
+    color: #6b7280;
+}
+
+.emp-campaign-progress {
+    width: 100%;
+    height: 8px;
+    border-radius: 999px;
+    background: #e5e7eb;
+    overflow: hidden;
+}
+
+.emp-campaign-progress-fill {
+    display: block;
+    height: 100%;
+    border-radius: inherit;
+    background: linear-gradient(90deg, #16a34a, #4ade80);
+}
+
+.emp-campaign-stats {
+    margin-top: 12px;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 10px;
+}
+
+.emp-campaign-stats div {
+    background: #f9fafb;
+    border: 1px solid #f3f4f6;
+    border-radius: 10px;
+    padding: 10px;
+    text-align: center;
+}
+
+.emp-campaign-stats strong {
+    display: block;
+    font-size: 1rem;
+}
+
+.emp-campaign-stats span {
+    display: block;
+    color: #6b7280;
+    font-size: 0.78rem;
+    margin-top: 3px;
+}
+
+.emp-campaign-actions {
+    margin-top: 14px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+}
+
+.emp-campaign-btn {
+    min-height: 44px;
+    border-radius: 8px;
+    border: 1px solid transparent;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
+    font-weight: 700;
+    font-size: 0.95rem;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.emp-campaign-btn-primary {
+    background: #16a34a;
+    color: #ffffff;
+}
+
+.emp-campaign-btn-primary:hover {
+    background: #15803d;
+}
+
+.emp-campaign-btn-secondary {
+    background: #ffffff;
+    color: #374151;
+    border-color: #d1d5db;
+}
+
+.emp-campaign-btn-secondary:hover {
+    background: #f3f4f6;
+}
+
+/* ── Section Card ── */
+.emp-section-card {
+    padding: 16px;
+}
+
+.emp-section-card h2,
+.emp-trust-strip h2 {
+    margin: 0;
+    font-size: 1.08rem;
+}
+
+/* ── Section Desc ── */
+.emp-section-desc {
+    margin: 8px 0 14px;
+    color: #6b7280;
+    font-size: 0.9rem;
+    line-height: 1.5;
+}
+
+/* ── Story ── */
+.emp-story-content {
+    margin-top: 10px;
+    max-height: 122px;
+    overflow: hidden;
+    position: relative;
+}
+
+.emp-story-content::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 44px;
+    background: linear-gradient(180deg, rgba(255,255,255,0), #ffffff);
+}
+
+.emp-story-content.expanded {
+    max-height: none;
+}
+
+.emp-story-content.expanded::after {
+    content: none;
+}
+
+.emp-story-content p {
+    margin: 0 0 10px;
+    color: #4b5563;
+    line-height: 1.55;
+    font-size: 0.92rem;
+}
+
+.emp-text-action {
+    margin-top: 6px;
+    border: 0;
+    padding: 0;
+    background: transparent;
+    color: #16a34a;
+    font-weight: 700;
+    font-size: 0.88rem;
+    cursor: pointer;
+}
+
+.emp-text-action:hover {
+    color: #15803d;
+}
+
+/* ── Goals Grid ── */
+.emp-goals-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+    margin-top: 14px;
+}
+
+.emp-goal-item {
+    background: #f0fdf4;
+    border: 1px solid #bbf7d0;
+    border-radius: 10px;
+    padding: 14px 12px;
+    text-align: center;
+}
+
+.emp-goal-item strong {
+    display: block;
+    font-size: 1.4rem;
+    color: #16a34a;
+    font-weight: 800;
+}
+
+.emp-goal-item span {
+    display: block;
+    font-size: 0.78rem;
+    color: #4b5563;
+    margin-top: 4px;
+}
+
+/* ── Benefits Grid ── */
+.emp-benefits-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.emp-benefit-card {
+    display: grid;
+    grid-template-columns: 44px 1fr;
+    gap: 14px;
+    align-items: start;
+    padding: 14px;
+    background: #f9fafb;
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+}
+
+.emp-benefit-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 10px;
+    background: #dcfce7;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #16a34a;
+    font-size: 1.1rem;
+    flex-shrink: 0;
+}
+
+.emp-benefit-card h3 {
+    margin: 0 0 4px;
+    font-size: 0.92rem;
+    color: #1f2937;
+}
+
+.emp-benefit-card p {
+    margin: 0;
+    font-size: 0.83rem;
+    color: #6b7280;
+    line-height: 1.5;
+}
+
+/* ── What We Provide List ── */
+.emp-provide-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.emp-provide-list li {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    font-size: 0.9rem;
+    color: #374151;
+    line-height: 1.5;
+}
+
+.emp-check-icon {
+    color: #16a34a;
+    font-size: 0.9rem;
+    margin-top: 3px;
+    flex-shrink: 0;
+}
+
+/* ── Trust Strip ── */
+.emp-trust-strip {
+    padding: 16px;
+    background: #f9fafb;
+    border-color: #e5e7eb;
+}
+
+.emp-trust-grid {
+    margin-top: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.emp-trust-grid article {
+    display: grid;
+    grid-template-columns: 22px minmax(0, 1fr);
+    gap: 10px;
+    align-items: start;
+}
+
+.emp-trust-grid svg {
+    margin-top: 2px;
+    color: #4b5563;
+}
+
+.emp-trust-grid h3 {
+    margin: 0;
+    font-size: 0.9rem;
+}
+
+.emp-trust-grid p {
+    margin: 2px 0 0;
+    font-size: 0.82rem;
+    color: #6b7280;
+}
+
+/* ── Premium Highlight (sidebar) ── */
+.emp-premium-highlight {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: #f0fdf4;
+    border: 1px solid #bbf7d0;
+    border-radius: 8px;
+    padding: 10px 12px;
+    margin-bottom: 14px;
+    font-size: 0.88rem;
+    color: #166534;
+}
+
+.emp-premium-highlight svg {
+    color: #16a34a;
+    font-size: 1rem;
+    flex-shrink: 0;
+}
+
+.emp-premium-highlight strong {
+    color: #15803d;
+}
+
+/* ── Impact Note ── */
+.emp-impact-note {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.83rem;
+    color: #16a34a;
+    font-weight: 600;
+    margin: 12px 0 4px;
+}
+
+.emp-impact-note svg {
+    font-size: 0.85rem;
+}
+
+/* ── Page Carousel ── */
+.emp-carousel-section {
+    padding: 16px;
+}
+
+.emp-page-carousel {
+    margin-top: 14px;
+}
+
+.emp-page-carousel-track {
+    position: relative;
+    border-radius: 12px;
+    overflow: hidden;
+    aspect-ratio: 16 / 9;
+    background: #eaf5ec;
+}
+
+.emp-page-carousel-slide {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    transition: opacity 0.5s ease;
+}
+
+.emp-page-carousel-slide.active {
+    opacity: 1;
+}
+
+.emp-page-carousel-slide img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center;
+    display: block;
+}
+
+.emp-carousel-arrow {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    border: none;
+    background: rgba(255, 255, 255, 0.88);
+    color: #1f2937;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.85rem;
+    cursor: pointer;
+    z-index: 2;
+    transition: background 0.2s ease;
+}
+
+.emp-carousel-arrow:hover {
+    background: #ffffff;
+}
+
+.emp-carousel-arrow.left {
+    left: 10px;
+}
+
+.emp-carousel-arrow.right {
+    right: 10px;
+}
+
+.emp-carousel-dots {
+    position: absolute;
+    bottom: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 6px;
+    z-index: 2;
+}
+
+.emp-carousel-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.55);
+    cursor: pointer;
+    transition: background 0.2s ease;
+}
+
+.emp-carousel-dot.active {
+    background: #ffffff;
+}
+
+.emp-page-carousel-caption {
+    margin: 12px 0 0;
+    font-size: 0.86rem;
+    color: #4b5563;
+    line-height: 1.55;
+    text-align: center;
+    min-height: 3.5em;
+}
+
+/* ── Impact CTA Section ── */
+.emp-impact-cta {
+    background: linear-gradient(135deg, #f0fdf4, #dcfce7);
+    border-color: #bbf7d0;
+}
+
+.emp-impact-cta-content {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    margin-bottom: 16px;
+}
+
+.emp-impact-cta-icon {
+    font-size: 2rem;
+    color: #16a34a;
+    flex-shrink: 0;
+    margin-top: 2px;
+}
+
+.emp-impact-cta-content h2 {
+    margin: 0 0 8px;
+    font-size: 1.1rem;
+    color: #166534;
+}
+
+.emp-impact-cta-content p {
+    margin: 0;
+    font-size: 0.9rem;
+    color: #4b5563;
+    line-height: 1.6;
+}
+
+.emp-impact-cta-btn {
+    width: 100%;
+    font-size: 1rem;
+    min-height: 48px;
+}
+
+/* ── FAQ ── */
+.emp-faq-section {
+    padding-bottom: 10px;
+}
+
+.emp-faq-intro {
+    margin: 8px 0 12px;
+    color: #6b7280;
+    font-size: 0.9rem;
+}
+
+.emp-faq-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.emp-faq-item {
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+    overflow: hidden;
+    background: #f9fafb;
+}
+
+.emp-faq-question {
+    width: 100%;
+    border: 0;
+    background: transparent;
+    padding: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    text-align: left;
+    font-weight: 600;
+    color: #1f2937;
+    cursor: pointer;
+}
+
+.emp-faq-question span {
+    font-size: 0.88rem;
+    line-height: 1.4;
+}
+
+.emp-faq-question svg {
+    flex-shrink: 0;
+    font-size: 0.8rem;
+    transition: transform 0.2s ease;
+}
+
+.emp-faq-item.open .emp-faq-question svg {
+    transform: rotate(180deg);
+}
+
+.emp-faq-answer {
+    margin: 0;
+    border-top: 1px solid #f3f4f6;
+    padding: 10px 12px;
+    color: #4b5563;
+    line-height: 1.55;
+    font-size: 0.86rem;
+}
+
+/* ── Hero Card ── */
+.emp-hero-card {
+    border-radius: 14px;
+    overflow: hidden;
+    border: 1px solid #e5e7eb;
+}
+
+.emp-hero-img-wrap {
+    position: relative;
+}
+
+.emp-hero-img-wrap img {
+    width: 100%;
+    height: clamp(220px, 40vw, 380px);
+    object-fit: cover;
+    object-position: center top;
+    display: block;
+}
+
+.emp-hero-overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to top, rgba(0,0,0,0.75) 50%, transparent 100%);
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    padding: 24px 20px;
+}
+
+.emp-badge {
+    display: inline-block;
+    background: #16a34a;
+    color: #fff;
+    font-size: 0.72rem;
+    font-weight: 700;
+    padding: 4px 12px;
+    border-radius: 999px;
+    margin-bottom: 10px;
+    width: fit-content;
+}
+
+.emp-hero-overlay h1 {
+    margin: 0 0 6px;
+    font-size: clamp(1.4rem, 3.5vw, 2rem);
+    color: #ffffff;
+    line-height: 1.2;
+}
+
+.emp-hero-overlay p {
+    margin: 0;
+    font-size: 0.92rem;
+    color: rgba(255, 255, 255, 0.88);
+    line-height: 1.5;
+}
+
+/* ── How It Works Card (sidebar) ── */
+.emp-how-it-works-card {
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 14px;
+    padding: 16px;
+}
+
+.emp-how-it-works-card h3 {
+    margin: 0 0 14px;
+    font-size: 1rem;
+    color: #1f2937;
+}
+
+.emp-steps-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.emp-steps-list li {
+    display: grid;
+    grid-template-columns: 28px 1fr;
+    gap: 10px;
+    align-items: start;
+}
+
+.emp-step-num {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: #16a34a;
+    color: #ffffff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.78rem;
+    font-weight: 800;
+    flex-shrink: 0;
+}
+
+.emp-steps-list li strong {
+    display: block;
+    font-size: 0.88rem;
+    color: #1f2937;
+    margin-bottom: 2px;
+}
+
+.emp-steps-list li p {
+    margin: 0;
+    font-size: 0.8rem;
+    color: #6b7280;
+    line-height: 1.4;
+}
+
+/* ── Responsive ── */
+@media (min-width: 768px) {
+    .emp-detail-page {
+        padding: 28px 18px 64px;
+    }
+
+    .emp-campaign-body,
+    .emp-section-card,
+    .emp-trust-strip {
+        padding: 20px;
+    }
+
+    .emp-campaign-body h1 {
+        font-size: 1.75rem;
+    }
+
+    .emp-campaign-actions {
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .emp-story-content {
+        max-height: 146px;
+    }
+}
+
+@media (min-width: 1080px) {
+    .emp-detail-page {
+        padding: 28px 18px 70px;
+    }
+
+    .emp-detail-shell {
+        max-width: 1240px;
+    }
+
+    .emp-content-grid {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 390px;
+        gap: 22px;
+        align-items: start;
+    }
+
+    .emp-main-stack {
+        order: 1;
+    }
+
+    .emp-side-stack {
+        order: 2;
+        position: sticky;
+        top: 92px;
+    }
+}
+
+@media (max-width: 420px) {
+    .emp-campaign-stats {
+        grid-template-columns: 1fr;
+    }
+
+    .emp-campaign-actions {
+        grid-template-columns: 1fr;
+    }
+
+    .emp-impact-cta-content {
+        flex-direction: column;
+        gap: 10px;
+    }
+}

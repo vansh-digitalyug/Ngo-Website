@@ -3,13 +3,10 @@ import { useEffect } from "react";
 import { useLocation } from "react-router-dom";
 import { FaCheckCircle, FaLock } from "react-icons/fa";
 import cowImage from "../assets/images/elderly/elder.png";
-import { useLanguage } from "../utils/useLanguage.jsx";
 const API_BASE_URL = String(import.meta.env.VITE_API_BASE_URL || "http://localhost:5000").replace(/\/$/, "");
 
 const Donate = () => {
   const location = useLocation();
-  const { language } = useLanguage();
-  const isHi = language === "hi";
   const serviceImage = location.state?.serviceImage || cowImage;
   const serviceTitle = location.state?.serviceTitle || "General Donation";
   const ngoId = location.state?.ngoId || null;

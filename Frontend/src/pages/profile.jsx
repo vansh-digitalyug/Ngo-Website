@@ -17,6 +17,7 @@ import {
   FaSync
 } from 'react-icons/fa';
 import './profile.css';
+import './volunteer/volunteer-dashboard.css';
 
 const API_BASE_URL = String(import.meta.env.VITE_API_BASE_URL || "http://localhost:5000").replace(/\/$/, "");
 
@@ -164,6 +165,8 @@ const Profile = () => {
   const [kanyadanLoading, setKanyadanLoading] = useState(false);
   const [donorTasks, setDonorTasks] = useState([]);
   const [donorTasksLoading, setDonorTasksLoading] = useState(false);
+  const [volunteerTasks, setVolunteerTasks] = useState([]);
+  const [volunteerTasksLoading, setVolunteerTasksLoading] = useState(false);
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -275,11 +278,28 @@ const Profile = () => {
     }
   }, []);
 
+  const fetchVolunteerTasks = useCallback(async () => {
+    const token = localStorage.getItem('token');
+    if (!token) return;
+    setVolunteerTasksLoading(true);
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/tasks/volunteer/my-tasks`, {
+        headers: { Authorization: `Bearer ${token}` },
+        credentials: 'include',
+      });
+      const data = await res.json().catch(() => ({}));
+      if (data?.success) setVolunteerTasks(data.data || []);
+    } catch { /* silent */ } finally {
+      setVolunteerTasksLoading(false);
+    }
+  }, []);
+
   useEffect(() => {
     if (activeTab === 'donations') fetchDonations();
     if (activeTab === 'kanyadan') fetchKanyadan();
     if (activeTab === 'tasks') fetchDonorTasks();
-  }, [activeTab, fetchDonations, fetchKanyadan, fetchDonorTasks]);
+    if (activeTab === 'volunteer') fetchVolunteerTasks();
+  }, [activeTab, fetchDonations, fetchKanyadan, fetchDonorTasks, fetchVolunteerTasks]);
 
   const handleProfileInputChange = (field, value) => {
     setProfileForm((prev) => ({ ...prev, [field]: value }));
@@ -484,11 +504,11 @@ const Profile = () => {
           <FaClipboardList className="nav-icon" /> My Donated Tasks
           {donorTasks.length > 0 && <span style={{ background: "#16a34a", color: "#fff", fontSize: "11px", borderRadius: "10px", padding: "1px 7px", marginLeft: "6px" }}>{donorTasks.length}</span>}
         </button>
-        {isVolunteer ? (
-          <Link to="/volunteer-dashboard" className="nav-item">
+        {isVolunteer && (
+          <button className={`nav-item ${activeTab === 'volunteer' ? 'active' : ''}`} onClick={() => setActiveTab('volunteer')}>
             <FaHandHoldingHeart className="nav-icon" /> Volunteer Dashboard
-          </Link>
-        ) : null}
+          </button>
+        )}
         <button className="nav-item logout-btn" onClick={handleLogout}>
           <FaSignOutAlt className="nav-icon" /> Logout
         </button>
@@ -783,6 +803,144 @@ const Profile = () => {
     </div>
   );
 
+  const renderVolunteerDashboard = () => {
+    const v = volunteerData;
+    if (!v) return null;
+    const joinedDate = v.createdAt
+      ? new Date(v.createdAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'long', year: 'numeric' })
+      : '—';
+    const dobFmt = v.dob
+      ? new Date(v.dob).toLocaleDateString('en-IN', { day: '2-digit', month: 'long', year: 'numeric' })
+      : '—';
+
+    return (
+      <div className="tab-content fade-in">
+        {/* Hero card */}
+        <div className="vd-hero-card">
+          <div className="vd-hero-left">
+            <div className="vd-hero-avatar">
+              {visibleAvatar ? <img src={visibleAvatar} alt="Profile" /> : userInitial}
+            </div>
+            <div>
+              <h2 className="vd-hero-name">{v.fullName || user.name}</h2>
+              <div className="vd-hero-badges">
+                <span className={`vd-badge vd-badge-${v.status?.toLowerCase()}`}>{v.status}</span>
+                <span className="vd-role-badge"><FaHandHoldingHeart /> Volunteer</span>
+              </div>
+              <p className="vd-hero-since"><FaClock /> Member since {joinedDate}</p>
+            </div>
+          </div>
+          {v.city && (
+            <div className="vd-hero-area">
+              <FaMapMarkerAlt />
+              <div>
+                <p className="vd-area-label">Location</p>
+                <p className="vd-area-value">{v.city}{v.state ? `, ${v.state}` : ''}</p>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Info grid */}
+        <div className="vd-grid">
+          {/* Personal */}
+          <div className="vd-card">
+            <div className="vd-card-header"><FaUser className="vd-card-icon" /><h3>Personal Details</h3></div>
+            <div className="vd-card-body">
+              <div className="vd-info-row"><span className="vd-info-label">Full Name</span><span className="vd-info-value">{v.fullName}</span></div>
+              <div className="vd-info-row"><span className="vd-info-label">Email</span><span className="vd-info-value">{v.email}</span></div>
+              <div className="vd-info-row"><span className="vd-info-label">Phone</span><span className="vd-info-value">{v.phone}</span></div>
+              <div className="vd-info-row"><span className="vd-info-label">Date of Birth</span><span className="vd-info-value">{dobFmt}</span></div>
+              <div className="vd-info-row"><span className="vd-info-label">Occupation</span><span className="vd-info-value">{v.occupation || '—'}</span></div>
+              <div className="vd-info-row"><span className="vd-info-label">Education</span><span className="vd-info-value">{v.education || '—'}</span></div>
+            </div>
+          </div>
+
+          {/* Volunteer details */}
+          <div className="vd-card">
+            <div className="vd-card-header"><FaHandHoldingHeart className="vd-card-icon" /><h3>Volunteer Details</h3></div>
+            <div className="vd-card-body">
+              <div className="vd-info-row"><span className="vd-info-label">Mode</span><span className="vd-info-value">{v.mode || '—'}</span></div>
+              <div className="vd-info-row"><span className="vd-info-label">Availability</span><span className="vd-info-value">{v.availability || '—'}</span></div>
+              <div className="vd-info-row"><span className="vd-info-label">Skills</span><span className="vd-info-value">{v.skills || '—'}</span></div>
+              <div className="vd-info-row">
+                <span className="vd-info-label">ID Verified</span>
+                <span className={`vd-verify-tag ${v.idVerified ? 'vd-verify-yes' : 'vd-verify-no'}`}>
+                  {v.idVerified ? <><FaCheckCircle /> Verified</> : 'Not Verified'}
+                </span>
+              </div>
+              <div className="vd-info-row"><span className="vd-info-label">ID Type</span><span className="vd-info-value">{v.idType || '—'}</span></div>
+            </div>
+          </div>
+
+          {/* Interests */}
+          {v.interests?.length > 0 && (
+            <div className="vd-card">
+              <div className="vd-card-header"><FaStar className="vd-card-icon" /><h3>Areas of Interest</h3></div>
+              <div className="vd-card-body">
+                <div className="vd-interest-tags">
+                  {v.interests.map((tag, i) => (
+                    <span key={i} className="vd-interest-tag">{tag}</span>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Motivation */}
+          {v.motivation && (
+            <div className="vd-card">
+              <div className="vd-card-header"><FaHeart className="vd-card-icon" /><h3>Motivation</h3></div>
+              <div className="vd-card-body">
+                <p className="vd-motivation-text">"{v.motivation}"</p>
+              </div>
+            </div>
+          )}
+
+          {/* Assigned Tasks */}
+          <div className="vd-card vd-card-wide">
+            <div className="vd-card-header" style={{ justifyContent: 'space-between' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <FaClipboardList className="vd-card-icon" /><h3>My Assigned Tasks</h3>
+              </div>
+              <button onClick={fetchVolunteerTasks} disabled={volunteerTasksLoading} style={{ background: 'none', border: '1px solid #e5e7eb', borderRadius: '8px', padding: '5px 12px', cursor: 'pointer', fontSize: '12px', color: '#6b7280', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                <FaSync className={volunteerTasksLoading ? 'spinner-icon' : ''} /> Refresh
+              </button>
+            </div>
+            <div className="vd-card-body">
+              {volunteerTasksLoading ? (
+                <div className="loading-inline"><FaSpinner className="spinner-icon" /> Loading tasks...</div>
+              ) : volunteerTasks.length === 0 ? (
+                <div style={{ textAlign: 'center', padding: '24px', color: '#9ca3af' }}>
+                  <FaClipboardList style={{ fontSize: '2rem', marginBottom: '8px' }} />
+                  <p style={{ margin: 0 }}>No tasks assigned yet.</p>
+                </div>
+              ) : (
+                volunteerTasks.map(task => {
+                  const statusColor = { assigned: '#f59e0b', in_progress: '#3b82f6', completed: '#22c55e' }[task.status] || '#9ca3af';
+                  const statusLabel = { assigned: 'Assigned', in_progress: 'In Progress', completed: 'Completed' }[task.status] || task.status;
+                  return (
+                    <div key={task._id} style={{ border: '1px solid #e5e7eb', borderRadius: '10px', padding: '16px', marginBottom: '12px', borderLeft: `4px solid ${statusColor}` }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '8px', marginBottom: '8px' }}>
+                        <div>
+                          <p style={{ margin: '0 0 4px', fontWeight: '700', color: '#0f172a', fontSize: '14px' }}>{task.title}</p>
+                          <p style={{ margin: 0, fontSize: '12px', color: '#64748b' }}>Service: <strong>{task.serviceTitle || '—'}</strong> · Donor: <strong>{task.donorName || '—'}</strong></p>
+                        </div>
+                        <span style={{ background: statusColor + '22', color: statusColor, fontSize: '11px', fontWeight: '700', padding: '3px 10px', borderRadius: '20px', whiteSpace: 'nowrap' }}>{statusLabel}</span>
+                      </div>
+                      {task.description && <p style={{ margin: '0 0 8px', fontSize: '13px', color: '#374151' }}>{task.description}</p>}
+                      {task.completedAt && <p style={{ margin: 0, fontSize: '12px', color: '#9ca3af' }}>Completed: {new Date(task.completedAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}</p>}
+                    </div>
+                  );
+                })
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   return (
     <div className="profile-layout">
       {saveNotice.message && (
@@ -820,6 +978,7 @@ const Profile = () => {
           {activeTab === 'donations' && renderDonations()}
           {activeTab === 'kanyadan' && renderKanyadan()}
           {activeTab === 'tasks' && renderDonorTasks()}
+          {activeTab === 'volunteer' && renderVolunteerDashboard()}
         </main>
       </div>
     </div>

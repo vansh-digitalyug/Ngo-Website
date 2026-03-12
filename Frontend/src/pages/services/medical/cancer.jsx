@@ -9,8 +9,6 @@ import {
     FaStethoscope,
     FaRibbon
 } from "react-icons/fa";
-import { useLanguage, translate } from "../../../utils/useLanguage.jsx";
-import { medicalCancerTranslations as T } from "../../../utils/serviceTranslations.js";
 
 // Replace with your actual image path
 import cancerCareImg from "../../../assets/images/Medical/cancer.png";
@@ -92,8 +90,6 @@ const STORY = [
 ];
 
 function CancerSupport() {
-    const { language } = useLanguage();
-    const t = (key) => translate(key, T, language);
     const [storyExpanded, setStoryExpanded] = useState(false);
     const [openFaq, setOpenFaq] = useState(null);
     const [shareLabel, setShareLabel] = useState("Share");
@@ -106,7 +102,7 @@ function CancerSupport() {
     );
     const modalDonations =
         donationModalType === "top" ? sortedDonations.slice(0, 10) : sortedDonations;
-    const modalTitle = donationModalType === "top" ? t("topDonations") || "Top Donations" : t("allDonations") || "All Donations";
+    const modalTitle = donationModalType === "top" ? "Top Donations" : "All Donations";
 
     useEffect(() => {
         window.scrollTo(0, 0);
@@ -168,12 +164,12 @@ function CancerSupport() {
                             </div>
 
                             <div className="cancer-campaign-body">
-                                <h1>{t("title")}</h1>
-                                <p className="cancer-campaign-org">{t("organization")}</p>
+                                <h1>Support Life-Saving Cancer Treatments & Care</h1>
+                                <p className="cancer-campaign-org">by Arogya Care Foundation</p>
 
                                 <div className="cancer-campaign-amounts">
                                     <strong>Rs 5,12,000</strong>
-                                    <span>{language === 'hi' ? 'के' : 'raised of'} Rs 10,00,000 {language === 'hi' ? 'लक्ष्य' : 'goal'}</span>
+                                    <span>raised of Rs 10,00,000 goal</span>
                                 </div>
 
                                 <div className="cancer-campaign-progress" aria-hidden="true">
@@ -183,28 +179,28 @@ function CancerSupport() {
                                 <div className="cancer-campaign-stats">
                                     <div>
                                         <strong>342</strong>
-                                        <span>{language === 'hi' ? 'दानकर्ता' : 'Donors'}</span>
+                                        <span>Donors</span>
                                     </div>
                                     <div>
                                         <strong>15</strong>
-                                        <span>{language === 'hi' ? 'दिन बचे' : 'Days left'}</span>
+                                        <span>Days left</span>
                                     </div>
                                     <div>
                                         <strong>51%</strong>
-                                        <span>{language === 'hi' ? 'वित्त पोषित' : 'Funded'}</span>
+                                        <span>Funded</span>
                                     </div>
                                 </div>
 
                                 <div className="cancer-campaign-actions">
-                                    <Link to="/donate" state={{ serviceTitle: t("title") }} className="cancer-campaign-btn cancer-campaign-btn-primary">
-                                        {t("donateNow")}
+                                    <Link to="/donate" state={{ serviceTitle: "Support Life-Saving Cancer Treatments & Care" }} className="cancer-campaign-btn cancer-campaign-btn-primary">
+                                        Help Now
                                     </Link>
                                     <button
                                         type="button"
                                         className="cancer-campaign-btn cancer-campaign-btn-secondary"
                                         onClick={handleShare}
                                     >
-                                        {shareLabel === "Share" ? t("share") : shareLabel}
+                                        {shareLabel}
                                     </button>
                                 </div>
                             </div>
@@ -213,10 +209,10 @@ function CancerSupport() {
 
                     <div className="cancer-main-stack">
                         <section className="cancer-section-card">
-                            <h2>{language === 'hi' ? 'कहानी' : 'Story'}</h2>
+                            <h2>Story</h2>
                             <div className={`cancer-story-content ${storyExpanded ? "expanded" : ""}`}>
                                 {STORY.map((item, idx) => (
-                                    <p key={idx}>{language === 'hi' ? item.hi : item.en}</p>
+                                    <p key={idx}>{item.en}</p>
                                 ))}
                             </div>
                             <button
@@ -224,14 +220,14 @@ function CancerSupport() {
                                 className="cancer-text-action"
                                 onClick={() => setStoryExpanded((current) => !current)}
                             >
-                                {storyExpanded ? (language === 'hi' ? 'कम दिखाएं' : 'Read Less') : (language === 'hi' ? 'और पढ़ें' : 'Read More')}
+                                {storyExpanded ? "Read Less" : "Read More"}
                             </button>
                         </section>
 
                         <section className="cancer-section-card">
                             <div className="cancer-section-head">
-                                <h2>{language === 'hi' ? 'हाल के दान' : 'Recent Donations'}</h2>
-                                <span>342 {language === 'hi' ? 'दान' : 'Donations'}</span>
+                                <h2>Recent Donations</h2>
+                                <span>342 Donations</span>
                             </div>
 
                             <div className="cancer-donation-list">
@@ -249,27 +245,27 @@ function CancerSupport() {
 
                             <div className="cancer-section-links">
                                 <button type="button" onClick={() => setDonationModalType("top")}>
-                                    {language === 'hi' ? 'शीर्ष दान देखें' : 'View Top Donations'}
+                                    View Top Donations
                                 </button>
                                 <button type="button" onClick={() => setDonationModalType("all")}>
-                                    {language === 'hi' ? 'सभी दान देखें' : 'View All Donations'}
+                                    View All Donations
                                 </button>
                             </div>
                         </section>
 
                         <section className="cancer-support-panel">
-                            <h2>{t("supportTitle")}</h2>
-                            <p>{t("supportDesc")}</p>
+                            <h2>Support this mission</h2>
+                            <p>Every small contribution brings us one step closer to a cancer-free future.</p>
                             <div className="cancer-support-actions">
-                                <Link to="/donate" state={{ serviceTitle: t("title") }} className="cancer-campaign-btn cancer-campaign-btn-primary">
-                                    {t("donateNow")}
+                                <Link to="/donate" state={{ serviceTitle: "Support Life-Saving Cancer Treatments & Care" }} className="cancer-campaign-btn cancer-campaign-btn-primary">
+                                    Help Now
                                 </Link>
                                 <button
                                     type="button"
                                     className="cancer-campaign-btn cancer-campaign-btn-secondary"
                                     onClick={handleShare}
                                 >
-                                    {t("share")}
+                                    Share
                                 </button>
                             </div>
                         </section>
@@ -324,8 +320,8 @@ function CancerSupport() {
                         </section>
 
                         <section className="cancer-section-card cancer-faq-section">
-                            <h2>{t("faqTitle")}</h2>
-                            <p className="cancer-faq-intro">{t("faqIntro")}</p>
+                            <h2>FAQs</h2>
+                            <p className="cancer-faq-intro">Common questions about this cancer support initiative.</p>
 
                             <div className="cancer-faq-list">
                                 {FAQS.map((faq, index) => {
@@ -338,10 +334,10 @@ function CancerSupport() {
                                                 onClick={() => setOpenFaq(isOpen ? null : index)}
                                                 aria-expanded={isOpen}
                                             >
-                                                <span>{language === 'hi' ? faq.questionHi : faq.question}</span>
+                                                <span>{faq.question}</span>
                                                 <FaChevronDown aria-hidden="true" />
                                             </button>
-                                            {isOpen && <p className="cancer-faq-answer">{language === 'hi' ? faq.answerHi : faq.answer}</p>}
+                                            {isOpen && <p className="cancer-faq-answer">{faq.answer}</p>}
                                         </article>
                                     );
                                 })}

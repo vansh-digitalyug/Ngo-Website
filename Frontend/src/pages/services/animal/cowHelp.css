@@ -1,0 +1,669 @@
+/* cowHelp.css — Gau Seva — Saffron & Earthy Orange Theme */
+
+.gau-detail-page {
+    background: #fffbf5;
+    color: #1f2937;
+    min-height: 100%;
+    padding: 20px 12px 56px;
+}
+
+.gau-detail-shell {
+    max-width: 1100px;
+    margin: 0 auto;
+}
+
+.gau-content-grid {
+    display: grid;
+    grid-template-columns: 1fr 340px;
+    gap: 24px;
+    align-items: start;
+}
+
+.gau-main-stack,
+.gau-side-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.gau-side-stack {
+    position: sticky;
+    top: 80px;
+}
+
+/* ── Section Card ─────────────────────────────────────────────────────────── */
+.gau-section-card,
+.gau-trust-strip,
+.gau-campaign-card,
+.gau-how-it-works-card,
+.gau-impact-sidebar-card {
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 14px;
+    overflow: hidden;
+    padding: 24px;
+}
+
+.gau-section-card h2,
+.gau-trust-strip h2 {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #111827;
+    margin: 0 0 8px;
+}
+
+.gau-section-desc {
+    font-size: 0.92rem;
+    color: #6b7280;
+    margin: 0 0 18px;
+    line-height: 1.65;
+}
+
+/* ── Hero ─────────────────────────────────────────────────────────────────── */
+.gau-hero-card {
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 14px;
+    overflow: hidden;
+}
+
+.gau-hero-img-wrap {
+    position: relative;
+}
+
+.gau-hero-img-wrap img {
+    width: 100%;
+    height: auto;
+    aspect-ratio: 16 / 7;
+    object-fit: cover;
+    display: block;
+}
+
+.gau-hero-overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to top, rgba(0,0,0,0.72) 0%, rgba(0,0,0,0.15) 60%, transparent 100%);
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    padding: 24px;
+    color: #fff;
+}
+
+.gau-badge {
+    display: inline-block;
+    font-size: 0.7rem;
+    font-weight: 700;
+    background: #fef3c7;
+    color: #92400e;
+    border: 1px solid #fde68a;
+    border-radius: 999px;
+    padding: 5px 12px;
+    margin-bottom: 10px;
+    width: fit-content;
+}
+
+.gau-hero-overlay h1 {
+    margin: 0 0 8px;
+    font-size: clamp(1.6rem, 4vw, 2.4rem);
+    font-weight: 800;
+    line-height: 1.2;
+}
+
+.gau-hero-overlay p {
+    margin: 0;
+    font-size: 0.95rem;
+    line-height: 1.6;
+    max-width: 600px;
+    opacity: 0.9;
+}
+
+/* ── 3 Services ───────────────────────────────────────────────────────────── */
+.gau-services-section {
+    padding: 24px;
+}
+
+.gau-services-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+}
+
+.gau-service-item {
+    display: flex;
+    gap: 16px;
+    align-items: flex-start;
+    padding: 16px;
+    background: #fffbf5;
+    border: 1px solid #fde68a;
+    border-radius: 10px;
+}
+
+.gau-service-icon-wrap {
+    width: 44px;
+    height: 44px;
+    background: #fef3c7;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.3rem;
+    color: #d97706;
+    flex-shrink: 0;
+}
+
+.gau-service-item h3 {
+    margin: 0 0 6px;
+    font-size: 1rem;
+    font-weight: 700;
+    color: #111827;
+}
+
+.gau-service-item p {
+    margin: 0;
+    font-size: 0.88rem;
+    color: #4b5563;
+    line-height: 1.65;
+}
+
+/* ── Photo Grid ───────────────────────────────────────────────────────────── */
+.gau-photo-section {
+    padding: 24px;
+}
+
+.gau-photo-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 14px;
+}
+
+.gau-photo-item {
+    border-radius: 10px;
+    overflow: hidden;
+    border: 1px solid #e5e7eb;
+}
+
+.gau-photo-item img {
+    width: 100%;
+    aspect-ratio: 4 / 3;
+    object-fit: cover;
+    display: block;
+}
+
+.gau-photo-caption {
+    padding: 10px 12px;
+    background: #fffbf5;
+}
+
+.gau-photo-caption strong {
+    display: block;
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: #92400e;
+    margin-bottom: 3px;
+}
+
+.gau-photo-caption p {
+    margin: 0;
+    font-size: 0.78rem;
+    color: #6b7280;
+    line-height: 1.5;
+}
+
+/* ── Story ────────────────────────────────────────────────────────────────── */
+.gau-story-content {
+    max-height: 120px;
+    overflow: hidden;
+    transition: max-height 0.4s ease;
+    position: relative;
+}
+
+.gau-story-content.expanded {
+    max-height: 800px;
+}
+
+.gau-story-content p {
+    font-size: 0.92rem;
+    color: #374151;
+    line-height: 1.75;
+    margin: 0 0 12px;
+}
+
+.gau-text-action {
+    background: none;
+    border: none;
+    color: #d97706;
+    font-size: 0.88rem;
+    font-weight: 600;
+    cursor: pointer;
+    padding: 8px 0 0;
+}
+
+/* ── Goals ────────────────────────────────────────────────────────────────── */
+.gau-goals-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 14px;
+    margin-top: 8px;
+}
+
+.gau-goal-item {
+    background: #fffbf5;
+    border: 1px solid #fde68a;
+    border-radius: 10px;
+    padding: 18px 16px;
+    text-align: center;
+}
+
+.gau-goal-item strong {
+    display: block;
+    font-size: 1.8rem;
+    font-weight: 800;
+    color: #d97706;
+    margin-bottom: 4px;
+}
+
+.gau-goal-item span {
+    font-size: 0.82rem;
+    color: #6b7280;
+    line-height: 1.4;
+}
+
+/* ── Provide List ─────────────────────────────────────────────────────────── */
+.gau-provide-list {
+    list-style: none;
+    padding: 0;
+    margin: 8px 0 0;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.gau-provide-list li {
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+    font-size: 0.9rem;
+    color: #374151;
+    line-height: 1.6;
+}
+
+.gau-check-icon {
+    color: #d97706;
+    font-size: 0.9rem;
+    margin-top: 3px;
+    flex-shrink: 0;
+}
+
+/* ── Donation Impact ──────────────────────────────────────────────────────── */
+.gau-impact-section {
+    padding: 24px;
+}
+
+.gau-impact-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+    margin-top: 8px;
+}
+
+.gau-impact-item {
+    background: #fffbf5;
+    border: 1px solid #fde68a;
+    border-radius: 10px;
+    padding: 16px;
+    text-align: center;
+}
+
+.gau-impact-amount {
+    display: block;
+    font-size: 1.4rem;
+    font-weight: 800;
+    color: #d97706;
+    margin-bottom: 4px;
+}
+
+.gau-impact-label {
+    font-size: 0.82rem;
+    color: #6b7280;
+    line-height: 1.4;
+}
+
+/* ── Trust Strip ──────────────────────────────────────────────────────────── */
+.gau-trust-strip {
+    padding: 24px;
+}
+
+.gau-trust-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 14px;
+    margin-top: 12px;
+}
+
+.gau-trust-grid article {
+    display: flex;
+    gap: 14px;
+    align-items: flex-start;
+}
+
+.gau-trust-grid svg {
+    font-size: 1.3rem;
+    color: #d97706;
+    flex-shrink: 0;
+    margin-top: 2px;
+}
+
+.gau-trust-grid h3 {
+    margin: 0 0 4px;
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: #111827;
+}
+
+.gau-trust-grid p {
+    margin: 0;
+    font-size: 0.85rem;
+    color: #6b7280;
+    line-height: 1.55;
+}
+
+/* ── FAQ ──────────────────────────────────────────────────────────────────── */
+.gau-faq-section {
+    padding: 24px;
+}
+
+.gau-faq-list {
+    margin-top: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.gau-faq-item {
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+.gau-faq-item.open {
+    border-color: #fde68a;
+}
+
+.gau-faq-question {
+    width: 100%;
+    background: none;
+    border: none;
+    padding: 14px 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    font-size: 0.92rem;
+    font-weight: 600;
+    color: #111827;
+    text-align: left;
+}
+
+.gau-faq-item.open .gau-faq-question {
+    background: #fffbf5;
+    color: #92400e;
+}
+
+.gau-faq-question svg {
+    font-size: 0.8rem;
+    flex-shrink: 0;
+    transition: transform 0.25s;
+    color: #d97706;
+}
+
+.gau-faq-item.open .gau-faq-question svg {
+    transform: rotate(180deg);
+}
+
+.gau-faq-answer {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.35s ease;
+}
+
+.gau-faq-item.open .gau-faq-answer {
+    max-height: 300px;
+}
+
+.gau-faq-answer p {
+    margin: 0;
+    padding: 0 16px 14px;
+    font-size: 0.88rem;
+    color: #4b5563;
+    line-height: 1.7;
+}
+
+/* ── Campaign Card (sidebar) ──────────────────────────────────────────────── */
+.gau-campaign-card {
+    padding: 0;
+}
+
+.gau-campaign-image-wrap {
+    position: relative;
+}
+
+.gau-campaign-image-wrap img {
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    object-fit: cover;
+    display: block;
+}
+
+.gau-campaign-chip {
+    position: absolute;
+    left: 12px;
+    bottom: 12px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: #92400e;
+    background: #fef3c7;
+    border: 1px solid #fde68a;
+    border-radius: 999px;
+    padding: 5px 10px;
+}
+
+.gau-campaign-body {
+    padding: 18px;
+}
+
+.gau-campaign-body h1 {
+    margin: 0 0 4px;
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #111827;
+    line-height: 1.35;
+}
+
+.gau-campaign-org {
+    margin: 0 0 14px;
+    font-size: 0.85rem;
+    color: #6b7280;
+}
+
+.gau-premium-highlight {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: #fffbf5;
+    border: 1px solid #fde68a;
+    border-radius: 8px;
+    padding: 10px 12px;
+    font-size: 0.88rem;
+    color: #92400e;
+    margin-bottom: 14px;
+}
+
+.gau-premium-highlight svg {
+    font-size: 1.2rem;
+    color: #d97706;
+    flex-shrink: 0;
+}
+
+.gau-campaign-actions {
+    display: flex;
+    gap: 10px;
+}
+
+/* ── Buttons ──────────────────────────────────────────────────────────────── */
+.gau-btn {
+    padding: 11px 20px;
+    border-radius: 10px;
+    font-weight: 700;
+    font-size: 0.9rem;
+    cursor: pointer;
+    border: none;
+    text-decoration: none;
+    display: inline-block;
+    transition: background 0.15s, color 0.15s;
+}
+
+.gau-btn-primary {
+    background: #d97706;
+    color: #fff;
+    flex: 1;
+    text-align: center;
+}
+.gau-btn-primary:hover { background: #b45309; }
+
+.gau-btn-secondary {
+    background: #fff;
+    color: #374151;
+    border: 1px solid #d1d5db;
+    flex: 1;
+    text-align: center;
+}
+.gau-btn-secondary:hover { background: #f9fafb; }
+
+/* ── How It Works ─────────────────────────────────────────────────────────── */
+.gau-how-it-works-card {
+    padding: 20px;
+}
+
+.gau-how-it-works-card h3 {
+    font-size: 1rem;
+    font-weight: 700;
+    color: #111827;
+    margin: 0 0 14px;
+}
+
+.gau-steps-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.gau-steps-list li {
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+}
+
+.gau-step-num {
+    width: 26px;
+    height: 26px;
+    background: #fef3c7;
+    color: #92400e;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.78rem;
+    font-weight: 700;
+    flex-shrink: 0;
+}
+
+.gau-steps-list strong {
+    display: block;
+    font-size: 0.88rem;
+    font-weight: 700;
+    color: #111827;
+    margin-bottom: 2px;
+}
+
+.gau-steps-list p {
+    margin: 0;
+    font-size: 0.8rem;
+    color: #6b7280;
+    line-height: 1.5;
+}
+
+/* ── Impact Sidebar Card ──────────────────────────────────────────────────── */
+.gau-impact-sidebar-card {
+    padding: 18px;
+}
+
+.gau-impact-sidebar-card h3 {
+    font-size: 1rem;
+    font-weight: 700;
+    color: #111827;
+    margin: 0 0 14px;
+}
+
+.gau-quick-impact {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+}
+
+.gau-quick-impact > div {
+    background: #fffbf5;
+    border: 1px solid #fde68a;
+    border-radius: 8px;
+    padding: 10px;
+    text-align: center;
+}
+
+.qi-amount {
+    display: block;
+    font-size: 1rem;
+    font-weight: 800;
+    color: #d97706;
+}
+
+.qi-label {
+    display: block;
+    font-size: 0.72rem;
+    color: #6b7280;
+    margin-top: 2px;
+    line-height: 1.3;
+}
+
+/* ── Responsive ───────────────────────────────────────────────────────────── */
+@media (max-width: 900px) {
+    .gau-content-grid {
+        grid-template-columns: 1fr;
+    }
+    .gau-side-stack {
+        position: static;
+        order: -1;
+    }
+    .gau-photo-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 600px) {
+    .gau-goals-grid,
+    .gau-impact-grid {
+        grid-template-columns: 1fr 1fr;
+    }
+    .gau-hero-overlay h1 {
+        font-size: 1.4rem;
+    }
+    .gau-hero-overlay p {
+        font-size: 0.85rem;
+    }
+    .gau-photo-grid {
+        grid-template-columns: 1fr;
+    }
+}

@@ -8,8 +8,6 @@ import {
     FaUserCircle,
     FaTools
 } from "react-icons/fa";
-import { useLanguage, translate } from "../../../utils/useLanguage.jsx";
-import { infrastructureRoadTranslations as T } from "../../../utils/serviceTranslations.js";
 
 // Replace with your actual image path
 import roadConstructionImg from "../../../assets/images/infrastructure/road.jpg"; 
@@ -91,9 +89,6 @@ const STORY = [
 ];
 
 function RoadConstruction() {
-    const { language } = useLanguage();
-    const t = (key) => translate(key, T, language);
-
     const [storyExpanded, setStoryExpanded] = useState(false);
     const [openFaq, setOpenFaq] = useState(null);
     const [shareLabel, setShareLabel] = useState("Share");
@@ -106,7 +101,7 @@ function RoadConstruction() {
     );
     const modalDonations =
         donationModalType === "top" ? sortedDonations.slice(0, 10) : sortedDonations;
-    const modalTitle = donationModalType === "top" ? (language === 'hi' ? 'शीर्ष दान' : 'Top Donations') : (language === 'hi' ? 'सभी दान' : 'All Donations');
+    const modalTitle = donationModalType === "top" ? "Top Donations" : "All Donations";
 
     useEffect(() => {
         window.scrollTo(0, 0);
@@ -168,12 +163,12 @@ function RoadConstruction() {
                             </div>
 
                             <div className="campaign-body">
-                                <h1>{t("title")}</h1>
-                                <p className="campaign-org">{t("organization")}</p>
+                                <h1>Support Rural Road Construction for Community Connectivity</h1>
+                                <p className="campaign-org">by Rural Infrastructure Development Trust</p>
 
                                 <div className="campaign-amounts">
                                     <strong>Rs 45,00,000</strong>
-                                    <span>{language === 'hi' ? 'के' : 'raised of'} Rs 1,00,00,000 {language === 'hi' ? 'लक्ष्य' : 'goal'}</span>
+                                    <span>raised of Rs 1,00,00,000 goal</span>
                                 </div>
 
                                 <div className="campaign-progress" aria-hidden="true">
@@ -183,28 +178,28 @@ function RoadConstruction() {
                                 <div className="campaign-stats">
                                     <div>
                                         <strong>342</strong>
-                                        <span>{language === 'hi' ? 'दानकर्ता' : 'Donors'}</span>
+                                        <span>Donors</span>
                                     </div>
                                     <div>
                                         <strong>45</strong>
-                                        <span>{language === 'hi' ? 'दिन बचे' : 'Days left'}</span>
+                                        <span>Days left</span>
                                     </div>
                                     <div>
                                         <strong>45%</strong>
-                                        <span>{language === 'hi' ? 'वित्त पोषित' : 'Funded'}</span>
+                                        <span>Funded</span>
                                     </div>
                                 </div>
 
                                 <div className="campaign-actions">
-                                    <Link to="/donate" state={{ serviceImage: roadConstructionImg, serviceTitle: t("title") }} className="campaign-btn campaign-btn-primary">
-                                        {t("donateNow")}
+                                    <Link to="/donate" state={{ serviceImage: roadConstructionImg, serviceTitle: "Support Rural Road Construction for Community Connectivity" }} className="campaign-btn campaign-btn-primary">
+                                        Help Now
                                     </Link>
                                     <button
                                         type="button"
                                         className="campaign-btn campaign-btn-secondary"
                                         onClick={handleShare}
                                     >
-                                        {shareLabel === "Share" ? t("share") : shareLabel}
+                                        {shareLabel}
                                     </button>
                                 </div>
                             </div>
@@ -213,10 +208,10 @@ function RoadConstruction() {
 
                     <div className="road-main-stack">
                         <section className="road-section-card">
-                            <h2>{language === 'hi' ? 'कहानी' : 'The Cause'}</h2>
+                            <h2>The Cause</h2>
                             <div className={`story-content ${storyExpanded ? "expanded" : ""}`}>
                                 {STORY.map((item, idx) => (
-                                    <p key={idx}>{language === 'hi' ? item.hi : item.en}</p>
+                                    <p key={idx}>{item.en}</p>
                                 ))}
                             </div>
                             <button
@@ -224,14 +219,14 @@ function RoadConstruction() {
                                 className="text-action"
                                 onClick={() => setStoryExpanded((current) => !current)}
                             >
-                                {storyExpanded ? (language === 'hi' ? 'कम दिखाएं' : 'Read Less') : (language === 'hi' ? 'और पढ़ें' : 'Read More')}
+                                {storyExpanded ? "Read Less" : "Read More"}
                             </button>
                         </section>
 
                         <section className="road-section-card">
                             <div className="section-head">
-                                <h2>{language === 'hi' ? 'हाल के दान' : 'Recent Donations'}</h2>
-                                <span>{sortedDonations.length} {language === 'hi' ? 'दान' : 'Donations'}</span>
+                                <h2>Recent Donations</h2>
+                                <span>{sortedDonations.length} Donations</span>
                             </div>
 
                             <div className="donation-list">
@@ -249,27 +244,27 @@ function RoadConstruction() {
 
                             <div className="section-links">
                                 <button type="button" onClick={() => setDonationModalType("top")}>
-                                    {language === 'hi' ? 'शीर्ष दान देखें' : 'View Top Donations'}
+                                    View Top Donations
                                 </button>
                                 <button type="button" onClick={() => setDonationModalType("all")}>
-                                    {language === 'hi' ? 'सभी दान देखें' : 'View All Donations'}
+                                    View All Donations
                                 </button>
                             </div>
                         </section>
 
                         <section className="support-panel">
-                            <h2>{t("supportTitle")}</h2>
-                            <p>{t("supportDesc")}</p>
+                            <h2>Support this infrastructure mission</h2>
+                            <p>Every donation funds quality materials and skilled workers for road construction.</p>
                             <div className="support-actions">
-                                <Link to="/donate" state={{ serviceImage: roadConstructionImg, serviceTitle: t("title") }} className="campaign-btn campaign-btn-primary">
-                                    {t("donateNow")}
+                                <Link to="/donate" state={{ serviceImage: roadConstructionImg, serviceTitle: "Support Rural Road Construction for Community Connectivity" }} className="campaign-btn campaign-btn-primary">
+                                    Help Now
                                 </Link>
                                 <button
                                     type="button"
                                     className="campaign-btn campaign-btn-secondary"
                                     onClick={handleShare}
                                 >
-                                    {t("share")}
+                                    {shareLabel}
                                 </button>
                             </div>
                         </section>
@@ -324,8 +319,8 @@ function RoadConstruction() {
                         </section>
 
                         <section className="road-section-card faq-section">
-                            <h2>{language === 'hi' ? 'अक्सर पूछे जाने वाले प्रश्न' : 'FAQs'}</h2>
-                            <p className="faq-intro">{language === 'hi' ? 'सड़क निर्माण परियोजनाओं के बारे में सामान्य प्रश्न।' : 'Common questions about road construction projects.'}</p>
+                            <h2>FAQs</h2>
+                            <p className="faq-intro">Common questions about road construction projects.</p>
 
                             <div className="faq-list">
                                 {FAQS.map((faq, index) => {
@@ -338,10 +333,10 @@ function RoadConstruction() {
                                                 onClick={() => setOpenFaq(isOpen ? null : index)}
                                                 aria-expanded={isOpen}
                                             >
-                                                <span>{language === 'hi' ? faq.questionHi : faq.question}</span>
+                                                <span>{faq.question}</span>
                                                 <FaChevronDown aria-hidden="true" />
                                             </button>
-                                            {isOpen && <p className="faq-answer">{language === 'hi' ? faq.answerHi : faq.answer}</p>}
+                                            {isOpen && <p className="faq-answer">{faq.answer}</p>}
                                         </article>
                                     );
                                 })}

@@ -7,8 +7,6 @@ import {
   FaShieldAlt,
   FaUserCircle,
 } from "react-icons/fa";
-import { useLanguage, translate } from "../../../utils/useLanguage.jsx";
-import { elderMedicalTranslations as T } from "../../../utils/serviceTranslations.js";
 
 // Make sure to add a relevant image to this path in your project
 import medicalAssistanceImg from "../../../assets/images/elderly/medical.webp";
@@ -72,8 +70,6 @@ const STORY = [
 ];
 
 function MedicalAssistancePage() {
-  const { language } = useLanguage();
-  const t = (key) => translate(key, T, language);
   const [storyExpanded, setStoryExpanded] = useState(false);
   const [openFaq, setOpenFaq] = useState(null);
   const [shareLabel, setShareLabel] = useState("Share");
@@ -86,7 +82,7 @@ function MedicalAssistancePage() {
   );
   const modalDonations =
     donationModalType === "top" ? sortedDonations.slice(0, 10) : sortedDonations;
-  const modalTitle = donationModalType === "top" ? t("topDonations") || "Top Donations" : t("allDonations") || "All Donations";
+  const modalTitle = donationModalType === "top" ? "Top Donations" : "All Donations";
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -148,12 +144,12 @@ function MedicalAssistancePage() {
               </div>
 
               <div className="campaign-body">
-                <h1>{t("title")}</h1>
-                <p className="campaign-org">{t("organization")}</p>
+                <h1>Provide urgent medical assistance and life-saving care</h1>
+                <p className="campaign-org">by Guardian of Angels Trust</p>
 
                 <div className="campaign-amounts">
                   <strong>Rs 12,40,000</strong>
-                  <span>{language === 'hi' ? 'के' : 'raised of'} Rs 20,00,000 {language === 'hi' ? 'लक्ष्य' : 'goal'}</span>
+                  <span>raised of Rs 20,00,000 goal</span>
                 </div>
 
                 <div className="campaign-progress" aria-hidden="true">
@@ -163,28 +159,28 @@ function MedicalAssistancePage() {
                 <div className="campaign-stats">
                   <div>
                     <strong>845</strong>
-                    <span>{language === 'hi' ? 'दानकर्ता' : 'Donors'}</span>
+                    <span>Donors</span>
                   </div>
                   <div>
                     <strong>15</strong>
-                    <span>{language === 'hi' ? 'दिन बचे' : 'Days left'}</span>
+                    <span>Days left</span>
                   </div>
                   <div>
                     <strong>62%</strong>
-                    <span>{language === 'hi' ? 'वित्त पोषित' : 'Funded'}</span>
+                    <span>Funded</span>
                   </div>
                 </div>
 
                 <div className="campaign-actions">
-                  <Link to="/donate" state={{ serviceImage: medicalAssistanceImg, serviceTitle: t("title") }} className="campaign-btn campaign-btn-primary">
-                    {t("donateNow")}
+                  <Link to="/donate" state={{ serviceImage: medicalAssistanceImg, serviceTitle: "Provide urgent medical assistance and life-saving care" }} className="campaign-btn campaign-btn-primary">
+                    Help Now
                   </Link>
                   <button
                     type="button"
                     className="campaign-btn campaign-btn-secondary"
                     onClick={handleShare}
                   >
-                    {shareLabel === "Share" ? t("share") : shareLabel}
+                    {shareLabel}
                   </button>
                 </div>
               </div>
@@ -193,10 +189,10 @@ function MedicalAssistancePage() {
 
           <div className="medical-assistance-main-stack">
             <section className="medical-assistance-section-card">
-              <h2>{language === 'hi' ? 'कहानी' : 'Story'}</h2>
+              <h2>Story</h2>
               <div className={`story-content ${storyExpanded ? "expanded" : ""}`}>
                 {STORY.map((item, idx) => (
-                  <p key={idx}>{language === 'hi' ? item.hi : item.en}</p>
+                  <p key={idx}>{item.en}</p>
                 ))}
               </div>
               <button
@@ -204,14 +200,14 @@ function MedicalAssistancePage() {
                 className="text-action"
                 onClick={() => setStoryExpanded((current) => !current)}
               >
-                {storyExpanded ? (language === 'hi' ? 'कम दिखाएं' : 'Read Less') : (language === 'hi' ? 'और पढ़ें' : 'Read More')}
+                {storyExpanded ? "Read Less" : "Read More"}
               </button>
             </section>
 
             <section className="medical-assistance-section-card">
               <div className="section-head">
-                <h2>{language === 'hi' ? 'हाल के दान' : 'Recent Donations'}</h2>
-                <span>845 {language === 'hi' ? 'दान' : 'Donations'}</span>
+                <h2>Recent Donations</h2>
+                <span>845 Donations</span>
               </div>
 
               <div className="donation-list">
@@ -229,27 +225,27 @@ function MedicalAssistancePage() {
 
               <div className="section-links">
                 <button type="button" onClick={() => setDonationModalType("top")}>
-                  {language === 'hi' ? 'शीर्ष दान' : 'View Top Donations'}
+                  View Top Donations
                 </button>
                 <button type="button" onClick={() => setDonationModalType("all")}>
-                  {language === 'hi' ? 'सभी दान' : 'View All Donations'}
+                  View All Donations
                 </button>
               </div>
             </section>
 
             <section className="support-panel">
-              <h2>{t("supportTitle") || "Support the fundraiser"}</h2>
-              <p>{t("supportDesc") || "Every small share and donation helps fund a life-saving treatment."}</p>
+              <h2>Support medical care for elderly</h2>
+              <p>Your donation provides essential medical assistance to vulnerable elderly.</p>
               <div className="support-actions">
-                <Link to="/donate" state={{ serviceImage: medicalAssistanceImg, serviceTitle: t("title") }} className="campaign-btn campaign-btn-primary">
-                  {t("donateNow")}
+                <Link to="/donate" state={{ serviceImage: medicalAssistanceImg, serviceTitle: "Provide urgent medical assistance and life-saving care" }} className="campaign-btn campaign-btn-primary">
+                  Help Now
                 </Link>
                 <button
                   type="button"
                   className="campaign-btn campaign-btn-secondary"
                   onClick={handleShare}
                 >
-                  {t("share")}
+                  Share
                 </button>
               </div>
             </section>
@@ -302,8 +298,8 @@ function MedicalAssistancePage() {
             </section>
 
             <section className="medical-assistance-section-card faq-section">
-              <h2>{language === 'hi' ? 'अक्सर पूछे जाने वाले प्रश्न' : 'FAQs'}</h2>
-              <p className="faq-intro">{language === 'hi' ? 'दान करने से पहले आपको जो कुछ जानने की जरूरत है।' : 'Everything you need to know before you donate.'}</p>
+              <h2>FAQs</h2>
+              <p className="faq-intro">Everything you need to know before you donate.</p>
 
               <div className="faq-list">
                 {FAQS.map((faq, index) => {
@@ -316,10 +312,10 @@ function MedicalAssistancePage() {
                         onClick={() => setOpenFaq(isOpen ? null : index)}
                         aria-expanded={isOpen}
                       >
-                        <span>{language === 'hi' ? faq.questionHi : faq.question}</span>
+                        <span>{faq.question}</span>
                         <FaChevronDown aria-hidden="true" />
                       </button>
-                      {isOpen && <p className="faq-answer">{language === 'hi' ? faq.answerHi : faq.answer}</p>}
+                      {isOpen && <p className="faq-answer">{faq.answer}</p>}
                     </article>
                   );
                 })}

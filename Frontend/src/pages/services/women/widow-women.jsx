@@ -8,8 +8,6 @@ import {
     FaUserCircle,
     FaHandsHelping
 } from "react-icons/fa";
-import { useLanguage, translate } from "../../../utils/useLanguage.jsx";
-import { womenWidowTranslations as T } from "../../../utils/serviceTranslations.js";
 
 // Replace with your actual image path
 import widowWomenImg from "../../../assets/images/women/widow.png"; 
@@ -82,8 +80,6 @@ const STORY = [
 ];
 
 function WidowWomen() {
-    const { language } = useLanguage();
-    const t = (key) => translate(key, T, language);
     const [storyExpanded, setStoryExpanded] = useState(false);
     const [openFaq, setOpenFaq] = useState(null);
     const [shareLabel, setShareLabel] = useState("Share");
@@ -96,7 +92,7 @@ function WidowWomen() {
     );
     const modalDonations =
         donationModalType === "top" ? sortedDonations.slice(0, 10) : sortedDonations;
-    const modalTitle = donationModalType === "top" ? (language === 'hi' ? 'शीर्ष दान' : 'Top Donations') : (language === 'hi' ? 'सभी दान' : 'All Donations');
+    const modalTitle = donationModalType === "top" ? "Top Donations" : "All Donations";
 
     useEffect(() => {
         window.scrollTo(0, 0);
@@ -158,12 +154,12 @@ function WidowWomen() {
                             </div>
 
                             <div className="campaign-body">
-                                <h1>{t("title")}</h1>
-                                <p className="campaign-org">{t("organization")}</p>
+                                <h1>Empower Widow Women with Financial and Social Support</h1>
+                                <p className="campaign-org">by Women Welfare Foundation</p>
 
                                 <div className="campaign-amounts">
                                     <strong>Rs 28,50,000</strong>
-                                    <span>{language === 'hi' ? 'के' : 'raised of'} Rs 75,00,000 {language === 'hi' ? 'लक्ष्य' : 'goal'}</span>
+                                    <span>raised of Rs 75,00,000 goal</span>
                                 </div>
 
                                 <div className="campaign-progress" aria-hidden="true">
@@ -173,28 +169,28 @@ function WidowWomen() {
                                 <div className="campaign-stats">
                                     <div>
                                         <strong>521</strong>
-                                        <span>{language === 'hi' ? 'दानकर्ता' : 'Donors'}</span>
+                                        <span>Donors</span>
                                     </div>
                                     <div>
                                         <strong>60</strong>
-                                        <span>{language === 'hi' ? 'दिन बचे' : 'Days left'}</span>
+                                        <span>Days left</span>
                                     </div>
                                     <div>
                                         <strong>38%</strong>
-                                        <span>{language === 'hi' ? 'वित्त पोषित' : 'Funded'}</span>
+                                        <span>Funded</span>
                                     </div>
                                 </div>
 
                                 <div className="campaign-actions">
-                                    <Link to="/donate" state={{ serviceImage: widowWomenImg, serviceTitle: t("title") }} className="campaign-btn campaign-btn-primary">
-                                        {t("donateNow")}
+                                    <Link to="/donate" state={{ serviceImage: widowWomenImg, serviceTitle: "Empower Widow Women with Financial and Social Support" }} className="campaign-btn campaign-btn-primary">
+                                        Help Now
                                     </Link>
                                     <button
                                         type="button"
                                         className="campaign-btn campaign-btn-secondary"
                                         onClick={handleShare}
                                     >
-                                        {shareLabel === "Share" ? t("share") : shareLabel}
+                                        {shareLabel}
                                     </button>
                                 </div>
                             </div>
@@ -203,10 +199,10 @@ function WidowWomen() {
 
                     <div className="widow-main-stack">
                         <section className="widow-section-card">
-                            <h2>{language === 'hi' ? 'कहानी' : 'The Cause'}</h2>
+                            <h2>The Cause</h2>
                             <div className={`story-content ${storyExpanded ? "expanded" : ""}`}>
                                 {STORY.map((item, idx) => (
-                                    <p key={idx}>{language === 'hi' ? item.hi : item.en}</p>
+                                    <p key={idx}>{item.en}</p>
                                 ))}
                             </div>
                             <button
@@ -214,14 +210,14 @@ function WidowWomen() {
                                 className="text-action"
                                 onClick={() => setStoryExpanded((current) => !current)}
                             >
-                                {storyExpanded ? (language === 'hi' ? 'कम दिखाएं' : 'Read Less') : (language === 'hi' ? 'और पढ़ें' : 'Read More')}
+                                {storyExpanded ? "Read Less" : "Read More"}
                             </button>
                         </section>
 
                         <section className="widow-section-card">
                             <div className="section-head">
-                                <h2>{language === 'hi' ? 'हाल के दान' : 'Recent Donations'}</h2>
-                                <span>{sortedDonations.length} {language === 'hi' ? 'दान' : 'Donations'}</span>
+                                <h2>Recent Donations</h2>
+                                <span>{sortedDonations.length} Donations</span>
                             </div>
 
                             <div className="donation-list">
@@ -239,27 +235,27 @@ function WidowWomen() {
 
                             <div className="section-links">
                                 <button type="button" onClick={() => setDonationModalType("top")}>
-                                    {language === 'hi' ? 'शीर्ष दान देखें' : 'View Top Donations'}
+                                    View Top Donations
                                 </button>
                                 <button type="button" onClick={() => setDonationModalType("all")}>
-                                    {language === 'hi' ? 'सभी दान देखें' : 'View All Donations'}
+                                    View All Donations
                                 </button>
                             </div>
                         </section>
 
                         <section className="support-panel">
-                            <h2>{t("supportTitle")}</h2>
-                            <p>{t("supportDesc")}</p>
+                            <h2>Support widow women empowerment</h2>
+                            <p>Every donation provides financial assistance, skill training, and social support.</p>
                             <div className="support-actions">
-                                <Link to="/donate" state={{ serviceImage: widowWomenImg, serviceTitle: t("title") }} className="campaign-btn campaign-btn-primary">
-                                    {t("donateNow")}
+                                <Link to="/donate" state={{ serviceImage: widowWomenImg, serviceTitle: "Empower Widow Women with Financial and Social Support" }} className="campaign-btn campaign-btn-primary">
+                                    Help Now
                                 </Link>
                                 <button
                                     type="button"
                                     className="campaign-btn campaign-btn-secondary"
                                     onClick={handleShare}
                                 >
-                                    {t("share")}
+                                    {shareLabel}
                                 </button>
                             </div>
                         </section>
@@ -314,8 +310,8 @@ function WidowWomen() {
                         </section>
 
                         <section className="widow-section-card faq-section">
-                            <h2>{language === 'hi' ? 'अक्सर पूछे जाने वाले प्रश्न' : 'FAQs'}</h2>
-                            <p className="faq-intro">{language === 'hi' ? 'विधवा महिला सशक्तिकरण के बारे में सामान्य प्रश्न।' : 'Common questions about widow women empowerment.'}</p>
+                            <h2>FAQs</h2>
+                            <p className="faq-intro">Common questions about widow women empowerment.</p>
 
                             <div className="faq-list">
                                 {FAQS.map((faq, index) => {
@@ -328,10 +324,10 @@ function WidowWomen() {
                                                 onClick={() => setOpenFaq(isOpen ? null : index)}
                                                 aria-expanded={isOpen}
                                             >
-                                                <span>{language === 'hi' ? faq.questionHi : faq.question}</span>
+                                                <span>{faq.question}</span>
                                                 <FaChevronDown aria-hidden="true" />
                                             </button>
-                                            {isOpen && <p className="faq-answer">{language === 'hi' ? faq.answerHi : faq.answer}</p>}
+                                            {isOpen && <p className="faq-answer">{faq.answer}</p>}
                                         </article>
                                     );
                                 })}

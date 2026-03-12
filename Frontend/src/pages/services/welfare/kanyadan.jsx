@@ -14,7 +14,6 @@ import {
     FaTimes,
     FaUsers,
 } from "react-icons/fa";
-import { useLanguage } from "../../../utils/useLanguage.jsx";
 import kanyadanImage from "../../../assets/images/socialWelfare/kanyadan.png";
 import heroImg from "../../../assets/images/socialWelfare/Kanyadan/hero.png";
 import beginningImg from "../../../assets/images/socialWelfare/Kanyadan/Beggining.png";
@@ -116,7 +115,6 @@ const STORY = [
 ];
 
 function KanyadanYojnaPage() {
-    const { language } = useLanguage();
     const [storyExpanded, setStoryExpanded] = useState(false);
     const [openFaq, setOpenFaq] = useState(null);
     const [shareLabel, setShareLabel] = useState("Share");
@@ -258,10 +256,10 @@ function KanyadanYojnaPage() {
 
                         {/* Story */}
                         <section className="kanyadan-section-card">
-                            <h2>{language === 'hi' ? 'हमारी पहल' : 'Our Initiative'}</h2>
+                            <h2>Our Initiative</h2>
                             <div className={`story-content ${storyExpanded ? "expanded" : ""}`}>
                                 {STORY.map((item, idx) => (
-                                    <p key={idx}>{language === 'hi' ? item.hi : item.en}</p>
+                                    <p key={idx}>{item.en}</p>
                                 ))}
                             </div>
                             <button

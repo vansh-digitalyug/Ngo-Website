@@ -8,8 +8,6 @@ import {
     FaUserCircle,
     FaStethoscope
 } from "react-icons/fa";
-import { useLanguage, translate } from "../../../utils/useLanguage.jsx";
-import { medicalKidneyTranslations as T } from "../../../utils/serviceTranslations.js";
 
 // Replace with your actual image path
 import kidneyCareImg from "../../../assets/images/Medical/kidney.jpg";
@@ -91,8 +89,6 @@ const STORY = [
 ];
 
 function KidneySupport() {
-    const { language } = useLanguage();
-    const t = (key) => translate(key, T, language);
     const [storyExpanded, setStoryExpanded] = useState(false);
     const [openFaq, setOpenFaq] = useState(null);
     const [shareLabel, setShareLabel] = useState("Share");
@@ -105,7 +101,7 @@ function KidneySupport() {
     );
     const modalDonations =
         donationModalType === "top" ? sortedDonations.slice(0, 10) : sortedDonations;
-    const modalTitle = donationModalType === "top" ? t("topDonations") || "Top Donations" : t("allDonations") || "All Donations";
+    const modalTitle = donationModalType === "top" ? "Top Donations" : "All Donations";
 
     useEffect(() => {
         window.scrollTo(0, 0);
@@ -167,12 +163,12 @@ function KidneySupport() {
                             </div>
 
                             <div className="kidney-campaign-body">
-                                <h1>{t("title")}</h1>
-                                <p className="kidney-campaign-org">{t("organization")}</p>
+                                <h1>Support Life-Saving Kidney Dialysis & Care</h1>
+                                <p className="kidney-campaign-org">by Arogya Care Foundation</p>
 
                                 <div className="kidney-campaign-amounts">
                                     <strong>Rs 4,20,000</strong>
-                                    <span>{language === 'hi' ? 'के' : 'raised of'} Rs 8,00,000 {language === 'hi' ? 'लक्ष्य' : 'goal'}</span>
+                                    <span>raised of Rs 8,00,000 goal</span>
                                 </div>
 
                                 <div className="kidney-campaign-progress" aria-hidden="true">
@@ -182,28 +178,28 @@ function KidneySupport() {
                                 <div className="kidney-campaign-stats">
                                     <div>
                                         <strong>275</strong>
-                                        <span>{language === 'hi' ? 'दानकर्ता' : 'Donors'}</span>
+                                        <span>Donors</span>
                                     </div>
                                     <div>
                                         <strong>12</strong>
-                                        <span>{language === 'hi' ? 'दिन बचे' : 'Days left'}</span>
+                                        <span>Days left</span>
                                     </div>
                                     <div>
                                         <strong>52%</strong>
-                                        <span>{language === 'hi' ? 'वित्त पोषित' : 'Funded'}</span>
+                                        <span>Funded</span>
                                     </div>
                                 </div>
 
                                 <div className="kidney-campaign-actions">
-                                    <Link to="/donate" state={{ serviceImage: kidneyCareImg, serviceTitle: t("title") }} className="kidney-campaign-btn kidney-campaign-btn-primary">
-                                        {t("donateNow")}
+                                    <Link to="/donate" state={{ serviceImage: kidneyCareImg, serviceTitle: "Support Life-Saving Kidney Dialysis & Care" }} className="kidney-campaign-btn kidney-campaign-btn-primary">
+                                        Help Now
                                     </Link>
                                     <button
                                         type="button"
                                         className="kidney-campaign-btn kidney-campaign-btn-secondary"
                                         onClick={handleShare}
                                     >
-                                        {shareLabel === "Share" ? t("share") : shareLabel}
+                                        {shareLabel}
                                     </button>
                                 </div>
                             </div>
@@ -212,10 +208,10 @@ function KidneySupport() {
 
                     <div className="kidney-main-stack">
                         <section className="kidney-section-card">
-                            <h2>{language === 'hi' ? 'कहानी' : 'Story'}</h2>
+                            <h2>Story</h2>
                             <div className={`kidney-story-content ${storyExpanded ? "expanded" : ""}`}>
                                 {STORY.map((item, idx) => (
-                                    <p key={idx}>{language === 'hi' ? item.hi : item.en}</p>
+                                    <p key={idx}>{item.en}</p>
                                 ))}
                             </div>
                             <button
@@ -223,14 +219,14 @@ function KidneySupport() {
                                 className="kidney-text-action"
                                 onClick={() => setStoryExpanded((current) => !current)}
                             >
-                                {storyExpanded ? (language === 'hi' ? 'कम दिखाएं' : 'Read Less') : (language === 'hi' ? 'और पढ़ें' : 'Read More')}
+                                {storyExpanded ? "Read Less" : "Read More"}
                             </button>
                         </section>
 
                         <section className="kidney-section-card">
                             <div className="kidney-section-head">
-                                <h2>{language === 'hi' ? 'हाल के दान' : 'Recent Donations'}</h2>
-                                <span>275 {language === 'hi' ? 'दान' : 'Donations'}</span>
+                                <h2>Recent Donations</h2>
+                                <span>275 Donations</span>
                             </div>
 
                             <div className="kidney-donation-list">
@@ -248,27 +244,27 @@ function KidneySupport() {
 
                             <div className="kidney-section-links">
                                 <button type="button" onClick={() => setDonationModalType("top")}>
-                                    {language === 'hi' ? 'शीर्ष दान देखें' : 'View Top Donations'}
+                                    View Top Donations
                                 </button>
                                 <button type="button" onClick={() => setDonationModalType("all")}>
-                                    {language === 'hi' ? 'सभी दान देखें' : 'View All Donations'}
+                                    View All Donations
                                 </button>
                             </div>
                         </section>
 
                         <section className="kidney-support-panel">
-                            <h2>{t("supportTitle")}</h2>
-                            <p>{t("supportDesc")}</p>
+                            <h2>Support this mission</h2>
+                            <p>Every small contribution ensures a dialysis session for someone in need.</p>
                             <div className="kidney-support-actions">
-                                <Link to="/donate" state={{ serviceImage: kidneyCareImg, serviceTitle: t("title") }} className="kidney-campaign-btn kidney-campaign-btn-primary">
-                                    {t("donateNow")}
+                                <Link to="/donate" state={{ serviceImage: kidneyCareImg, serviceTitle: "Support Life-Saving Kidney Dialysis & Care" }} className="kidney-campaign-btn kidney-campaign-btn-primary">
+                                    Help Now
                                 </Link>
                                 <button
                                     type="button"
                                     className="kidney-campaign-btn kidney-campaign-btn-secondary"
                                     onClick={handleShare}
                                 >
-                                    {t("share")}
+                                    Share
                                 </button>
                             </div>
                         </section>
@@ -323,8 +319,8 @@ function KidneySupport() {
                         </section>
 
                         <section className="kidney-section-card kidney-faq-section">
-                            <h2>{t("faqTitle")}</h2>
-                            <p className="kidney-faq-intro">{t("faqIntro")}</p>
+                            <h2>FAQs</h2>
+                            <p className="kidney-faq-intro">Common questions about this kidney dialysis initiative.</p>
 
                             <div className="kidney-faq-list">
                                 {FAQS.map((faq, index) => {
@@ -337,10 +333,10 @@ function KidneySupport() {
                                                 onClick={() => setOpenFaq(isOpen ? null : index)}
                                                 aria-expanded={isOpen}
                                             >
-                                                <span>{language === 'hi' ? faq.questionHi : faq.question}</span>
+                                                <span>{faq.question}</span>
                                                 <FaChevronDown aria-hidden="true" />
                                             </button>
-                                            {isOpen && <p className="kidney-faq-answer">{language === 'hi' ? faq.answerHi : faq.answer}</p>}
+                                            {isOpen && <p className="kidney-faq-answer">{faq.answer}</p>}
                                         </article>
                                     );
                                 })}

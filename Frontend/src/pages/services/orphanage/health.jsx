@@ -13,7 +13,6 @@ import {
     FaBrain,
     FaUsers,
 } from "react-icons/fa";
-import { useLanguage } from "../../../utils/useLanguage.jsx";
 import orphanHealth from "../../../assets/images/orphanage/health.jpg";
 import healthImg1 from "../../../assets/images/orphanage/medical/image1.png";
 import healthImg2 from "../../../assets/images/orphanage/medical/image2.png";
@@ -112,7 +111,6 @@ const STORY = [
 ];
 
 function OrphanageHealthPage() {
-    const { language } = useLanguage();
     const [storyExpanded, setStoryExpanded] = useState(false);
     const [openFaq, setOpenFaq] = useState(null);
     const [shareLabel, setShareLabel] = useState("Share");
@@ -204,10 +202,10 @@ function OrphanageHealthPage() {
 
                         {/* Story */}
                         <section className="health-section-card">
-                            <h2>{language === "hi" ? "हमारी पहल" : "Our Initiative"}</h2>
+                            <h2>Our Initiative</h2>
                             <div className={`story-content ${storyExpanded ? "expanded" : ""}`}>
                                 {STORY.map((item, idx) => (
-                                    <p key={idx}>{language === "hi" ? item.hi : item.en}</p>
+                                    <p key={idx}>{item.en}</p>
                                 ))}
                             </div>
                             <button
