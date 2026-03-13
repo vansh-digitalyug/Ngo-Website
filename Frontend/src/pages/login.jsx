@@ -859,19 +859,18 @@ const styles = {
 
 
   container: {
-    height: "100vh",
+    minHeight: "calc(100vh - 60px)",
     width: "100%",
     backgroundColor: "#f0f2f5",
     fontFamily: "'Inter', 'Segoe UI', sans-serif",
     display: "flex",
-    alignItems: "center",
+    alignItems: "stretch",
     justifyContent: "center",
-    overflow: "hidden",
   },
   splitLayout: {
     display: "flex",
     width: "100%",
-    height: "100%",
+    minHeight: "calc(100vh - 60px)",
     maxWidth: "1440px",
     backgroundColor: "white",
     boxShadow: "0 20px 60px rgba(0,0,0,0.1)",

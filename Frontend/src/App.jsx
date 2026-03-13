@@ -14,14 +14,13 @@ function App() {
   const hideNavFooter = (
     location.pathname.startsWith("/admin") ||
     location.pathname.startsWith("/ngo") ||
-    location.pathname === "/login/admin" ||
-    location.pathname === "/login/ngo"
+    location.pathname === "/login/admin"
   );
 
   // Add body padding-top only for non-dashboard pages
   useEffect(() => {
     if (!hideNavFooter) {
-      document.body.style.paddingTop = "70px";
+      document.body.style.paddingTop = "60px";
     } else {
       document.body.style.paddingTop = "0px";
     }
@@ -69,7 +68,7 @@ function App() {
           </button>
         </div>
       )}
-      <main className="app-content">
+      <main>
         <AppRoutes />
        
 
