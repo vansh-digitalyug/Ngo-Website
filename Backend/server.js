@@ -72,6 +72,8 @@ app.use("/api/tasks", taskRoutes);
 app.use("/api/public", publicRoutes);
 // Services — categories & programs
 app.use("/api/services", servicesRoutes);
+app.use("/api/blogs", (await import("./routes/blog.routes.js")).default);
+app.use("/api/otp",   (await import("./routes/otp.routes.js")).default);
 app.use(errorHandler);
 
 const PORT = process.env.PORT || 5000;

@@ -142,8 +142,9 @@ export const getProgramByTitle = asyncHandler(async (req, res) => {
     const { title } = req.params;
     if (!title || title.trim() === "") throw new ApiError(400, "Program title is required");
 
+    const escaped = title.trim().replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
     const program = await Program.findOne({
-        title: { $regex: new RegExp(`^${title.trim()}$`, "i") },
+        title: { $regex: new RegExp(`^${escaped}$`, "i") },
         isActive: true,
     }).populate("categoryId", "name");
 
@@ -200,16 +201,22 @@ export const deleteProgram = asyncHandler(async (req, res) => {
 // PUBLIC — all categories with their programs in one response (used by frontend)
 // ─────────────────────────────────────────────────────────────────────────────
 export const getServicesWithPrograms = asyncHandler(async (_req, res) => {
-    const categories = await Category.find({ isActive: true }).sort({ createdAt: 1 }).lean();
-
-    const result = await Promise.all(
-        categories.map(async (cat) => {
-            const programs = await Program.find({ categoryId: cat._id, isActive: true })
-                .sort({ createdAt: 1 })
-                .lean();
-            return { ...cat, programs };
-        })
-    );
+    const result = await Category.aggregate([
+        { $match: { isActive: true } },
+        { $sort:  { createdAt: 1 } },
+        {
+            $lookup: {
+                from:         "programs",
+                localField:   "_id",
+                foreignField: "categoryId",
+                as:           "programs",
+                pipeline: [
+                    { $match: { isActive: true } },
+                    { $sort:  { createdAt: 1 } },
+                ],
+            },
+        },
+    ]);
 
     return res.status(200).json(new ApiResponse(200, "Services fetched successfully", result));
 });

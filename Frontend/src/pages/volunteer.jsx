@@ -431,6 +431,77 @@ function Volunteer() {
   const [panName, setPanName] = useState("");
   const [panDob, setPanDob] = useState("");
 
+  // --- Phone OTP State ---
+  const [phoneOtpSent, setPhoneOtpSent] = useState(false);
+  const [phoneOtpValue, setPhoneOtpValue] = useState("");
+  const [phoneVerified, setPhoneVerified] = useState(false);
+  const [phoneOtpLoading, setPhoneOtpLoading] = useState(false);
+  const [phoneOtpError, setPhoneOtpError] = useState("");
+  const [phoneOtpSuccess, setPhoneOtpSuccess] = useState("");
+  const [phoneOtpCooldown, setPhoneOtpCooldown] = useState(0);
+
+  const startPhoneCooldown = () => {
+    setPhoneOtpCooldown(60);
+    const timer = setInterval(() => {
+      setPhoneOtpCooldown(prev => {
+        if (prev <= 1) { clearInterval(timer); return 0; }
+        return prev - 1;
+      });
+    }, 1000);
+  };
+
+  const handleSendPhoneOtp = async () => {
+    if (!/^[0-9]{10}$/.test(formData.phone)) {
+      setErrors(prev => ({ ...prev, phone: "Enter a valid 10-digit number before sending OTP" }));
+      return;
+    }
+    setPhoneOtpLoading(true);
+    setPhoneOtpError("");
+    setPhoneOtpSuccess("");
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/otp/send-phone`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ phone: formData.phone }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.message || "Failed to send OTP");
+      setPhoneOtpSent(true);
+      setPhoneOtpSuccess("OTP sent! Check your phone.");
+      startPhoneCooldown();
+    } catch (err) {
+      setPhoneOtpError(err.message);
+    } finally {
+      setPhoneOtpLoading(false);
+    }
+  };
+
+  const handleVerifyPhoneOtp = async () => {
+    if (!phoneOtpValue || phoneOtpValue.length < 6) {
+      setPhoneOtpError("Enter the 6-digit OTP");
+      return;
+    }
+    setPhoneOtpLoading(true);
+    setPhoneOtpError("");
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/otp/verify-phone`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ phone: formData.phone, otp: phoneOtpValue }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.message || "Verification failed");
+      setPhoneVerified(true);
+      setPhoneOtpSent(false);
+      setPhoneOtpSuccess("✓ Phone number verified!");
+      setPhoneOtpError("");
+    } catch (err) {
+      setPhoneOtpError(err.message);
+    } finally {
+      setPhoneOtpLoading(false);
+    }
+  };
+
   const resetKycState = () => {
     setIdVerified(false);
     setKycLoading(false);
@@ -584,6 +655,16 @@ function Volunteer() {
         formatted = value.toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 10);
       }
       setFormData({ ...formData, [name]: formatted });
+    } else if (name === "phone") {
+      // Reset phone OTP if user changes the number
+      if (phoneVerified || phoneOtpSent) {
+        setPhoneVerified(false);
+        setPhoneOtpSent(false);
+        setPhoneOtpValue("");
+        setPhoneOtpError("");
+        setPhoneOtpSuccess("");
+      }
+      setFormData({ ...formData, [name]: value.replace(/\D/g, "").slice(0, 10) });
     } else {
       setFormData({ ...formData, [name]: value });
     }
@@ -601,7 +682,11 @@ function Volunteer() {
     let newErrors = {};
     if (!formData.fullName.trim()) newErrors.fullName = "Full Name is required";
     if (!formData.email.match(/^[\w.-]+@([\w-]+\.)+[\w-]{2,4}$/)) newErrors.email = "Invalid email address";
-    if (!formData.phone.match(/^[0-9]{10}$/)) newErrors.phone = "Enter a valid 10-digit number";
+    if (!formData.phone.match(/^[0-9]{10}$/)) {
+      newErrors.phone = "Enter a valid 10-digit number";
+    } else if (!phoneVerified) {
+      newErrors.phone = "Please verify your phone number with OTP";
+    }
     if (!formData.dob) newErrors.dob = "Date of Birth is required";
     if (!formData.city.trim()) newErrors.city = "City is required";
     if (!formData.state) newErrors.state = "State is required";
@@ -967,9 +1052,42 @@ function Volunteer() {
                   </div>
                   <div style={styles.inputGroup}>
                     <label style={styles.label}>Phone Number *</label>
-                    <input style={{ ...styles.input, borderColor: errors.phone ? 'red' : '#ddd' }}
-                      type="tel" name="phone" value={formData.phone} onChange={handleChange} placeholder="98765*****" maxLength="10" />
+                    <div style={{ display: "flex", gap: "8px", alignItems: "flex-start" }}>
+                      <input
+                        style={{ ...styles.input, borderColor: errors.phone ? "red" : "#ddd", flex: 1 }}
+                        type="tel" name="phone" value={formData.phone}
+                        onChange={handleChange} placeholder="98765*****" maxLength="10"
+                        disabled={phoneVerified}
+                      />
+                      {!phoneVerified && (
+                        <button type="button" onClick={handleSendPhoneOtp}
+                          disabled={phoneOtpLoading || phoneOtpCooldown > 0}
+                          style={{ padding: "10px 14px", fontSize: "13px", whiteSpace: "nowrap", background: "#1d4ed8", color: "#fff", border: "none", borderRadius: "8px", cursor: phoneOtpLoading || phoneOtpCooldown > 0 ? "not-allowed" : "pointer", opacity: phoneOtpLoading || phoneOtpCooldown > 0 ? 0.6 : 1 }}>
+                          {phoneOtpLoading ? "Sending..." : phoneOtpCooldown > 0 ? `Resend (${phoneOtpCooldown}s)` : phoneOtpSent ? "Resend OTP" : "Send OTP"}
+                        </button>
+                      )}
+                      {phoneVerified && (
+                        <span style={{ color: "#16a34a", fontWeight: 600, paddingTop: "10px", whiteSpace: "nowrap", fontSize: "14px" }}>✓ Verified</span>
+                      )}
+                    </div>
                     {errors.phone && <span style={styles.errorMsg}>{errors.phone}</span>}
+
+                    {/* OTP input row */}
+                    {phoneOtpSent && !phoneVerified && (
+                      <div style={{ display: "flex", gap: "8px", marginTop: "8px", alignItems: "center" }}>
+                        <input
+                          type="text" value={phoneOtpValue} maxLength={6} placeholder="Enter 6-digit OTP"
+                          onChange={e => { setPhoneOtpValue(e.target.value.replace(/\D/g, "").slice(0, 6)); setPhoneOtpError(""); }}
+                          style={{ ...styles.input, maxWidth: "160px" }}
+                        />
+                        <button type="button" onClick={handleVerifyPhoneOtp} disabled={phoneOtpLoading}
+                          style={{ padding: "10px 14px", fontSize: "13px", background: "#16a34a", color: "#fff", border: "none", borderRadius: "8px", cursor: phoneOtpLoading ? "not-allowed" : "pointer" }}>
+                          {phoneOtpLoading ? "Verifying..." : "Verify OTP"}
+                        </button>
+                      </div>
+                    )}
+                    {phoneOtpError && <span style={{ ...styles.errorMsg, display: "block", marginTop: "6px" }}>{phoneOtpError}</span>}
+                    {phoneOtpSuccess && !phoneOtpError && <span style={{ color: "#16a34a", fontSize: "13px", display: "block", marginTop: "6px" }}>{phoneOtpSuccess}</span>}
                   </div>
                 </div>
 

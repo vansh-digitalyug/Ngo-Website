@@ -5,10 +5,13 @@ import { generateUploadUrl, getUrl, getFileUrl } from "../controllers/s3.control
 
 const router = express.Router();
 
+// Get presigned PUT URL for uploading a file to S3
 router.post("/generate-upload-url", asyncHandler(generateUploadUrl));
-// presigned GET link (short-lived) for downloads or preview
-router.get("/get-url", asyncHandler(getUrl));
-// public URL for display (bucket/object must be publicly readable)
 
+// Get presigned GET URL (short-lived, for downloads or preview)
+router.get("/get-url", asyncHandler(getUrl));
+
+// Get public URL for display (bucket/object must be publicly readable)
+router.get("/file-url", asyncHandler(getFileUrl));
 
 export default router;

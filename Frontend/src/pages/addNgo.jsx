@@ -13,8 +13,11 @@ import {
   Facebook,
   Instagram,
   FileText,
-  Loader2, // Added for loading state
+  Loader2,
+  ShieldCheck,
 } from 'lucide-react';
+
+const API = String(import.meta.env.VITE_API_BASE_URL || "http://localhost:5000").replace(/\/$/, "");
 
 // --- REUSABLE COMPONENTS ---
 
@@ -130,6 +133,15 @@ const AddNGOPage = () => {
   const [apiError, setApiError] = useState('');
   const [errors, setErrors] = useState({});
 
+  // Phone OTP state
+  const [otpSent, setOtpSent] = useState(false);
+  const [otpValue, setOtpValue] = useState('');
+  const [phoneVerified, setPhoneVerified] = useState(false);
+  const [otpLoading, setOtpLoading] = useState(false);
+  const [otpError, setOtpError] = useState('');
+  const [otpSuccess, setOtpSuccess] = useState('');
+  const [otpCooldown, setOtpCooldown] = useState(0);
+
   // Generate a unique S3 folder ID once when the form loads
   // This is used as the S3 folder name: Uploads/ngoDocs/{ngoS3Id}/filename
   const [ngoS3Id] = useState(() => crypto.randomUUID());
@@ -221,6 +233,82 @@ const AddNGOPage = () => {
     if (errors.services) setErrors(prev => ({ ...prev, services: '' }));
   };
 
+  // --- PHONE OTP HANDLERS ---
+
+  const startCooldown = () => {
+    setOtpCooldown(60);
+    const timer = setInterval(() => {
+      setOtpCooldown(prev => {
+        if (prev <= 1) { clearInterval(timer); return 0; }
+        return prev - 1;
+      });
+    }, 1000);
+  };
+
+  const handleSendOtp = async () => {
+    if (!/^\d{10}$/.test(formData.phone)) {
+      setErrors(prev => ({ ...prev, phone: "Enter valid 10-digit number before sending OTP" }));
+      return;
+    }
+    setOtpLoading(true);
+    setOtpError('');
+    setOtpSuccess('');
+    try {
+      const res = await fetch(`${API}/api/otp/send-phone`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ phone: formData.phone }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.message || "Failed to send OTP");
+      setOtpSent(true);
+      setOtpSuccess("OTP sent! Check your phone.");
+      startCooldown();
+    } catch (err) {
+      setOtpError(err.message);
+    } finally {
+      setOtpLoading(false);
+    }
+  };
+
+  const handleVerifyOtp = async () => {
+    if (!otpValue || otpValue.length < 6) {
+      setOtpError("Enter the 6-digit OTP");
+      return;
+    }
+    setOtpLoading(true);
+    setOtpError('');
+    try {
+      const res = await fetch(`${API}/api/otp/verify-phone`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ phone: formData.phone, otp: otpValue }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.message || "Verification failed");
+      setPhoneVerified(true);
+      setOtpSent(false);
+      setOtpSuccess("✓ Phone number verified!");
+      setOtpError('');
+    } catch (err) {
+      setOtpError(err.message);
+    } finally {
+      setOtpLoading(false);
+    }
+  };
+
+  // Reset OTP state when phone number changes
+  const handlePhoneChange = (e) => {
+    handleInputChange(e);
+    if (phoneVerified || otpSent) {
+      setPhoneVerified(false);
+      setOtpSent(false);
+      setOtpValue('');
+      setOtpError('');
+      setOtpSuccess('');
+    }
+  };
+
   // --- VALIDATION ---
 
   const validateStep = (step) => {
@@ -260,6 +348,8 @@ const AddNGOPage = () => {
         newErrors.phone = "Phone Number is required";
       } else if (!/^\d{10}$/.test(formData.phone.replace(/[^0-9]/g, ""))) {
         newErrors.phone = "Enter valid 10-digit number";
+      } else if (!phoneVerified) {
+        newErrors.phone = "Please verify your phone number with OTP";
       }
 
       if (!formData.whatsapp.trim()) {
@@ -560,8 +650,71 @@ const AddNGOPage = () => {
                   <InputField label="Role / Designation" name="contactRole" required placeholder="e.g. Secretary" value={formData.contactRole} onChange={handleInputChange} error={errors.contactRole} />
                 </div>
 
-                <div className="form-grid">
-                  <InputField label="Phone Number" name="phone" type="number" required placeholder="Enter 10-digit number" value={formData.phone} onChange={handleInputChange} error={errors.phone} />
+                {/* Phone Number with OTP Verification */}
+                <div className="form-group">
+                  <label className="form-label">
+                    Phone Number <span className="required-star">*</span>
+                  </label>
+                  <div style={{ display: 'flex', gap: '8px', alignItems: 'flex-start' }}>
+                    <div style={{ flex: 1 }}>
+                      <input
+                        type="tel"
+                        name="phone"
+                        value={formData.phone}
+                        onChange={handlePhoneChange}
+                        placeholder="Enter 10-digit number"
+                        maxLength={10}
+                        disabled={phoneVerified}
+                        className={`form-input ${errors.phone ? 'error' : ''}`}
+                      />
+                    </div>
+                    {!phoneVerified && (
+                      <button
+                        type="button"
+                        onClick={handleSendOtp}
+                        disabled={otpLoading || otpCooldown > 0}
+                        className="btn btn-secondary"
+                        style={{ whiteSpace: 'nowrap', padding: '10px 16px', fontSize: '13px' }}
+                      >
+                        {otpLoading ? <Loader2 size={14} className="animate-spin" /> : otpCooldown > 0 ? `Resend (${otpCooldown}s)` : otpSent ? "Resend OTP" : "Send OTP"}
+                      </button>
+                    )}
+                    {phoneVerified && (
+                      <span style={{ display: 'flex', alignItems: 'center', gap: '4px', color: '#16a34a', fontWeight: 600, whiteSpace: 'nowrap', paddingTop: '10px' }}>
+                        <ShieldCheck size={18} /> Verified
+                      </span>
+                    )}
+                  </div>
+                  {errors.phone && <span className="error-msg">{errors.phone}</span>}
+
+                  {/* OTP Input Row */}
+                  {otpSent && !phoneVerified && (
+                    <div style={{ display: 'flex', gap: '8px', marginTop: '10px', alignItems: 'center' }}>
+                      <input
+                        type="text"
+                        value={otpValue}
+                        onChange={e => { setOtpValue(e.target.value.replace(/\D/g, '').slice(0, 6)); setOtpError(''); }}
+                        placeholder="Enter 6-digit OTP"
+                        maxLength={6}
+                        className="form-input"
+                        style={{ maxWidth: '180px' }}
+                      />
+                      <button
+                        type="button"
+                        onClick={handleVerifyOtp}
+                        disabled={otpLoading}
+                        className="btn btn-primary"
+                        style={{ padding: '10px 16px', fontSize: '13px' }}
+                      >
+                        {otpLoading ? <Loader2 size={14} className="animate-spin" /> : "Verify OTP"}
+                      </button>
+                    </div>
+                  )}
+                  {otpError   && <span className="error-msg" style={{ marginTop: '6px', display: 'block' }}>{otpError}</span>}
+                  {otpSuccess && !otpError && <span style={{ color: '#16a34a', fontSize: '13px', marginTop: '6px', display: 'block' }}>{otpSuccess}</span>}
+                </div>
+
+                <div className="form-group" style={{ marginTop: 0 }}>
                   <InputField label="WhatsApp Number" name="whatsapp" type="number" required placeholder="Enter 10-digit number" value={formData.whatsapp} onChange={handleInputChange} error={errors.whatsapp} />
                 </div>
 

@@ -63,8 +63,6 @@ import WidowWomen from "../pages/services/women/widow-women.jsx";
 import WomenEmpowerment from "../pages/services/women/empowerment.jsx";
 import GauSeva from "../pages/services/animal/cowHelp.jsx";
 
-
-
 function RequireVolunteerAuth({ children }) {
   const location = useLocation();
   const isLoggedIn = Boolean(localStorage.getItem("user"));
@@ -99,7 +97,7 @@ function ProfileOrAdmin() {
   try {
     const user = JSON.parse(localStorage.getItem("user"));
     if (user?.role === "admin") return <Navigate to="/admin" replace />;
-  } catch {}
+  } catch { /* invalid JSON in localStorage — treat as regular user */ }
   return <Profile />;
 }
 
