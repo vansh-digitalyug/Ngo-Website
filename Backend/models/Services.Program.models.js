@@ -65,6 +65,10 @@ const programSchema = new mongoose.Schema({
     },
 }, { timestamps: true });
 
+// Unique per category, fast lookups by category
+programSchema.index({ title: 1, categoryId: 1 }, { unique: true });
+programSchema.index({ categoryId: 1 });
+
 const Program = mongoose.model("Program", programSchema);
 
 export default Program;
