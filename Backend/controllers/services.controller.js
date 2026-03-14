@@ -1,4 +1,7 @@
 import mongoose from "mongoose";
+import { GetObjectCommand } from "@aws-sdk/client-s3";
+import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
+import { s3 } from "../config/s3Client.config.js";
 import Category from "../models/Services.Category.models.js";
 import Program from "../models/Services.Program.models.js";
 import ApiError from "../utils/ApiError.js";
@@ -200,23 +203,58 @@ export const deleteProgram = asyncHandler(async (req, res) => {
 // ─────────────────────────────────────────────────────────────────────────────
 // PUBLIC — all categories with their programs in one response (used by frontend)
 // ─────────────────────────────────────────────────────────────────────────────
+
+// Resolve a raw key to a URL:
+//   - already an http(s) URL (Pexels etc.) → return as-is
+//   - S3 key → generate a presigned GET URL valid for 7 days
+async function resolveImageUrl(key) {
+    if (!key) return null;
+    if (typeof key === "string" && key.startsWith("http")) return key;
+    const command = new GetObjectCommand({
+        Bucket: process.env.BUCKET_NAME,
+        Key: key,
+    });
+    return getSignedUrl(s3, command, { expiresIn: 604800 }); // 7 days
+}
+
 export const getServicesWithPrograms = asyncHandler(async (_req, res) => {
+    // Use let/$expr form so this works on MongoDB 3.6+ (not just 5.0+)
     const result = await Category.aggregate([
         { $match: { isActive: true } },
         { $sort:  { createdAt: 1 } },
         {
             $lookup: {
-                from:         "programs",
-                localField:   "_id",
-                foreignField: "categoryId",
-                as:           "programs",
+                from: "programs",
+                let:  { catId: "$_id" },
                 pipeline: [
-                    { $match: { isActive: true } },
-                    { $sort:  { createdAt: 1 } },
+                    {
+                        $match: {
+                            $expr: { $eq: ["$categoryId", "$$catId"] },
+                            isActive: true,
+                        },
+                    },
+                    { $sort: { createdAt: 1 } },
                 ],
+                as: "programs",
             },
         },
     ]);
 
-    return res.status(200).json(new ApiResponse(200, "Services fetched successfully", result));
+    // Resolve all S3 keys to signed URLs in parallel (local crypto ops, no network calls)
+    const transformed = await Promise.all(
+        result.map(async (cat) => ({
+            ...cat,
+            programs: await Promise.all(
+                cat.programs.map(async (p) => ({
+                    ...p,
+                    imagekeys: await resolveImageUrl(p.imagekeys),
+                    galleryImageKeys: (
+                        await Promise.all((p.galleryImageKeys || []).map(resolveImageUrl))
+                    ).filter(Boolean),
+                }))
+            ),
+        }))
+    );
+
+    return res.status(200).json(new ApiResponse(200, "Services fetched successfully", transformed));
 });
