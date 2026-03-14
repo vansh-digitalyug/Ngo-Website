@@ -21,6 +21,7 @@ import cors from "cors";
 import cookieParser from "cookie-parser";
 import connectDB from "./config/db.js";
 import seedAdmin from "./utils/seedAdmin.js";
+import seedServices from "./seed/servicesSeed.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -72,8 +73,9 @@ app.use("/api/tasks", taskRoutes);
 app.use("/api/public", publicRoutes);
 // Services — categories & programs
 app.use("/api/services", servicesRoutes);
-app.use("/api/blogs", (await import("./routes/blog.routes.js")).default);
-app.use("/api/otp",   (await import("./routes/otp.routes.js")).default);
+app.use("/api/blogs",  (await import("./routes/blog.routes.js")).default);
+app.use("/api/otp",    (await import("./routes/otp.routes.js")).default);
+app.use("/api/events", (await import("./routes/event.routes.js")).default);
 app.use(errorHandler);
 
 const PORT = process.env.PORT || 5000;
@@ -82,7 +84,8 @@ const startServer = async () => {
   try {
     await connectDB();
     await seedAdmin();
-    
+ 
+
     app.listen(PORT, () => {
       console.log(`Server is running on port ${PORT}`);
     });

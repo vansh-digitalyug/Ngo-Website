@@ -293,55 +293,71 @@ const SERVICE_SEED_DATA = [
 // SEED FUNCTION
 // ─────────────────────────────────────────────────────────────────────────────
 const seedServices = async () => {
-  try {
-    await connectDB();
-    console.log("\n🌱 Starting services seed (upsert — no data will be lost)…\n");
+  // When called from server.js, DB is already connected — skip connectDB()
+  const runningDirectly = process.argv[1] === (await import("url")).fileURLToPath(import.meta.url);
+  if (runningDirectly) await connectDB();
 
-    let catCreated = 0, catUpdated = 0, progCreated = 0, progUpdated = 0;
+  console.log("\n  Starting services seed (upsert)…\n");
 
-    for (const catData of SERVICE_SEED_DATA) {
-      const { programs, imageUrl, ...catFields } = catData;
+  let catCreated = 0, catUpdated = 0, progCreated = 0, progUpdated = 0;
 
-      // ── Upsert category ──────────────────────────────────────────────────
-      const catBefore = await Category.findOne({ name: catFields.name });
-      const category = await Category.findOneAndUpdate(
-        { name: catFields.name },
-        { $set: catFields },
+  for (const catData of SERVICE_SEED_DATA) {
+    const { programs, imageUrl, ...catFields } = catData;
+
+    // ── Upsert category (text fields only) ──────────────────────────────────
+    const catBefore = await Category.findOne({ name: catFields.name });
+    const category = await Category.findOneAndUpdate(
+      { name: catFields.name },
+      { $set: catFields },
+      { upsert: true, new: true, setDefaultsOnInsert: true }
+    );
+
+    if (catBefore) { catUpdated++; console.log(`    Category updated : ${category.name}`); }
+    else           { catCreated++; console.log(`    Category created : ${category.name}`); }
+
+    // ── Upsert each program ──────────────────────────────────────────────────
+    for (const progData of programs) {
+      const { imagekeys, galleryImageKeys, ...textFields } = progData;
+      const progBefore = await Program.findOne({ title: progData.title, categoryId: category._id });
+
+      await Program.findOneAndUpdate(
+        { title: progData.title, categoryId: category._id },
+        {
+          // Always update text/meta fields
+          $set: {
+            ...textFields,
+            categoryId:   category._id,
+            categoryName: category.name,
+          },
+          // Image keys: only set when CREATING — never overwrite uploaded S3 keys
+          $setOnInsert: {
+            imagekeys:        imagekeys ?? null,
+            galleryImageKeys: galleryImageKeys || [],
+          },
+        },
         { upsert: true, new: true, setDefaultsOnInsert: true }
       );
 
-      if (catBefore) { catUpdated++; console.log(`  ✏️  Category updated : ${category.name}`); }
-      else           { catCreated++; console.log(`  ✅ Category created  : ${category.name}`); }
-
-      // ── Upsert each program ──────────────────────────────────────────────
-      for (const progData of programs) {
-        const progBefore = await Program.findOne({ title: progData.title, categoryId: category._id });
-
-        await Program.findOneAndUpdate(
-          { title: progData.title, categoryId: category._id },
-          { $set: { ...progData, categoryId: category._id, categoryName: category.name } },
-          { upsert: true, new: true, setDefaultsOnInsert: true }
-        );
-
-        if (progBefore) { progUpdated++; console.log(`     ✏️  Program updated : ${progData.title}`); }
-        else            { progCreated++; console.log(`     ✅ Program created : ${progData.title}`); }
-      }
-
-      console.log();
+      if (progBefore) { progUpdated++; console.log(`       Program updated : ${progData.title}`); }
+      else            { progCreated++; console.log(`       Program created : ${progData.title}`); }
     }
 
-    console.log("────────────────────────────────────────");
-    console.log(`📂 Categories — created: ${catCreated}, updated: ${catUpdated}`);
-    console.log(`📋 Programs   — created: ${progCreated}, updated: ${progUpdated}`);
-    console.log("✅ Services seed completed successfully!\n");
-    process.exit(0);
-  } catch (error) {
-    console.error("❌ Services seed error:", error.message);
-    process.exit(1);
+    console.log();
   }
+
+  console.log("  ----------------------------------------");
+  console.log(`  Categories — created: ${catCreated}, updated: ${catUpdated}`);
+  console.log(`  Programs   — created: ${progCreated}, updated: ${progUpdated}`);
+  console.log("  Services seed completed.\n");
+
+  // Only exit when run as a standalone script, not when imported by server.js
+  if (runningDirectly) process.exit(0);
 };
 
 export default seedServices;
 
 // Run when executed directly: node seed/servicesSeed.js
-seedServices();
+import { fileURLToPath } from "url";
+if (process.argv[1] === fileURLToPath(import.meta.url)) {
+  seedServices().catch((err) => { console.error(err.message); process.exit(1); });
+}

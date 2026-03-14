@@ -60,196 +60,194 @@ const IMAGES_ROOT = path.resolve(__dirname, "../../Frontend/src/assets/images");
 // ─────────────────────────────────────────────────────────────────────────────
 const UPLOADS = [
 
-  // ── Women Empowerment ─────────────────────────────────────────────────────
-  // {
-  //   file:       "women/widow.png",
-  //   location:   "services/programs",
-  //   collection: "program",
-  //   match:      { title: "Hope for Widowed Women" },
-  //   field:      "imagekeys",
-  // },
-  // {
-  //   file:       "women/skillDevelopment/cover.jpg",
-  //   location:   "services/programs",
-  //   collection: "program",
-  //   match:      { title: "Women Skill Development" },
-  //   field:      "imagekeys",
-  // },
-  // {
-  //   file:       "women/shg/cover.jpg",
-  //   location:   "services/programs",
-  //   collection: "program",
-  //   match:      { title: "Self-Help Group (SHG) Support" },
-  //   field:      "imagekeys",
-  // },
-  // {
-  //   file:       "women/healthCamps/cover.jpg",
-  //   location:   "services/programs",
-  //   collection: "program",
-  //   match:      { title: "Women's Health Camps" },
-  //   field:      "imagekeys",
-  // },
-  // {
-  //   file:       "women/legalAid/cover.jpg",
-  //   location:   "services/programs",
-  //   collection: "program",
-  //   match:      { title: "Legal Aid for Women" },
-  //   field:      "imagekeys",
-  // },
+  // ═══════════════════════════════════════════════════════════════════════════
+  // WOMEN EMPOWERMENT
+  // ═══════════════════════════════════════════════════════════════════════════
 
-  // ── Orphan ────────────────────────────────────────────────────────────────
-  // {
-  //   file:       "orphanage/education.jpg",
-  //   location:   "services/programs",
-  //   collection: "program",
-  //   match:      { title: "Education Support" },
-  //   field:      "imagekeys",
-  // },
-  // Gallery images for Education Support (each entry appends one image)
-  // {
-  //   file:       "orphanage/education/image1.png",
-  //   location:   "services/programs/gallery",
-  //   collection: "program",
-  //   match:      { title: "Education Support" },
-  //   field:      "galleryImageKeys",
-  // },
-  // {
-  //   file:       "orphanage/education/image2.png",
-  //   location:   "services/programs/gallery",
-  //   collection: "program",
-  //   match:      { title: "Education Support" },
-  //   field:      "galleryImageKeys",
-  // },
-  // {
-  //   file:       "orphanage/food.webp",
-  //   location:   "services/programs",
-  //   collection: "program",
-  //   match:      { title: "Nutritious Meal Program" },
-  //   field:      "imagekeys",
-  // },
-  // {
-  //   file:       "orphanage/health.jpg",
-  //   location:   "services/programs",
-  //   collection: "program",
-  //   match:      { title: "Health & Medical Care" },
-  //   field:      "imagekeys",
-  // },
+  // Cover image — Hope for Widowed Women
+  {
+    file:       "women/widow.png",
+    location:   "services/programs",
+    collection: "program",
+    match:      { title: "Hope for Widowed Women" },
+    field:      "imagekeys",
+  },
 
-  // ── Elderly ───────────────────────────────────────────────────────────────
-  // {
-  //   file:       "elderly/food.jpg",
-  //   location:   "services/programs",
-  //   collection: "program",
-  //   match:      { title: "Daily Meal Care" },
-  //   field:      "imagekeys",
-  // },
-  // {
-  //   file:       "elderly/living.jpg",
-  //   location:   "services/programs",
-  //   collection: "program",
-  //   match:      { title: "Dignified Living Support" },
-  //   field:      "imagekeys",
-  // },
-  // {
-  //   file:       "elderly/medical.webp",
-  //   location:   "services/programs",
-  //   collection: "program",
-  //   match:      { title: "Medical Assistance" },
-  //   field:      "imagekeys",
-  // },
+  // Gallery — Hope for Widowed Women
+  { file: "women/empowerment/image1.png", location: "services/programs/gallery", collection: "program", match: { title: "Hope for Widowed Women" }, field: "galleryImageKeys" },
+  { file: "women/empowerment/image2.png", location: "services/programs/gallery", collection: "program", match: { title: "Hope for Widowed Women" }, field: "galleryImageKeys" },
+  { file: "women/empowerment/image3.png", location: "services/programs/gallery", collection: "program", match: { title: "Hope for Widowed Women" }, field: "galleryImageKeys" },
+  { file: "women/empowerment/image4.png", location: "services/programs/gallery", collection: "program", match: { title: "Hope for Widowed Women" }, field: "galleryImageKeys" },
+  { file: "women/empowerment/image5.png", location: "services/programs/gallery", collection: "program", match: { title: "Hope for Widowed Women" }, field: "galleryImageKeys" },
 
-  // ── Community Safety ──────────────────────────────────────────────────────
-  // {
-  //   file:       "communitySafety/helmet.png",
-  //   location:   "services/programs",
-  //   collection: "program",
-  //   match:      { title: "Helmet Distribution Drive" },
-  //   field:      "imagekeys",
-  // },
-  // {
-  //   file:       "communitySafety/fireSafety/cover.jpg",
-  //   location:   "services/programs",
-  //   collection: "program",
-  //   match:      { title: "Fire Safety Awareness Camps" },
-  //   field:      "imagekeys",
-  // },
-  // {
-  //   file:       "communitySafety/childSafety/cover.jpg",
-  //   location:   "services/programs",
-  //   collection: "program",
-  //   match:      { title: "Child Safety & Protection" },
-  //   field:      "imagekeys",
-  // },
+  // ═══════════════════════════════════════════════════════════════════════════
+  // ORPHAN
+  // ═══════════════════════════════════════════════════════════════════════════
 
-  // ── Social Welfare ────────────────────────────────────────────────────────
-  // {
-  //   file:       "socialWelfare/kanyadan.png",
-  //   location:   "services/programs",
-  //   collection: "program",
-  //   match:      { title: "Kanyadan Yojna — LIC Support" },
-  //   field:      "imagekeys",
-  // },
-  // Gallery for Kanyadan
-  // { file: "socialWelfare/Kanyadan/hero.png",       location: "services/programs/gallery", collection: "program", match: { title: "Kanyadan Yojna — LIC Support" }, field: "galleryImageKeys" },
-  // { file: "socialWelfare/Kanyadan/Beggining.png",  location: "services/programs/gallery", collection: "program", match: { title: "Kanyadan Yojna — LIC Support" }, field: "galleryImageKeys" },
-  // { file: "socialWelfare/Kanyadan/Help.png",       location: "services/programs/gallery", collection: "program", match: { title: "Kanyadan Yojna — LIC Support" }, field: "galleryImageKeys" },
-  // { file: "socialWelfare/Kanyadan/Support.png",    location: "services/programs/gallery", collection: "program", match: { title: "Kanyadan Yojna — LIC Support" }, field: "galleryImageKeys" },
-  // { file: "socialWelfare/Kanyadan/Future.png",     location: "services/programs/gallery", collection: "program", match: { title: "Kanyadan Yojna — LIC Support" }, field: "galleryImageKeys" },
-  // {
-  //   file:       "socialWelfare/rites.png",
-  //   location:   "services/programs",
-  //   collection: "program",
-  //   match:      { title: "Dignified Last Rites" },
-  //   field:      "imagekeys",
-  // },
+  // Cover — Education Support
+  {
+    file:       "orphanage/education.jpg",
+    location:   "services/programs",
+    collection: "program",
+    match:      { title: "Education Support" },
+    field:      "imagekeys",
+  },
 
-  // ── Medical Support ───────────────────────────────────────────────────────
-  // {
-  //   file:       "Medical/camp.jpg",
-  //   location:   "services/programs",
-  //   collection: "program",
-  //   match:      { title: "Free Health Camp Checkups" },
-  //   field:      "imagekeys",
-  // },
-  // {
-  //   file:       "Medical/cancer.png",
-  //   location:   "services/programs",
-  //   collection: "program",
-  //   match:      { title: "Cancer Treatment Support" },
-  //   field:      "imagekeys",
-  // },
-  // {
-  //   file:       "Medical/kidney.jpg",
-  //   location:   "services/programs",
-  //   collection: "program",
-  //   match:      { title: "Kidney Dialysis Support" },
-  //   field:      "imagekeys",
-  // },
-  // {
-  //   file:       "Medical/bloodDonation/cover.jpg",
-  //   location:   "services/programs",
-  //   collection: "program",
-  //   match:      { title: "Blood Donation Camps" },
-  //   field:      "imagekeys",
-  // },
+  // Gallery — Education Support
+  { file: "orphanage/education/image1.png", location: "services/programs/gallery", collection: "program", match: { title: "Education Support" }, field: "galleryImageKeys" },
+  { file: "orphanage/education/image2.png", location: "services/programs/gallery", collection: "program", match: { title: "Education Support" }, field: "galleryImageKeys" },
+  { file: "orphanage/education/image3.png", location: "services/programs/gallery", collection: "program", match: { title: "Education Support" }, field: "galleryImageKeys" },
+  { file: "orphanage/education/image4.png", location: "services/programs/gallery", collection: "program", match: { title: "Education Support" }, field: "galleryImageKeys" },
+  { file: "orphanage/education/image5.png", location: "services/programs/gallery", collection: "program", match: { title: "Education Support" }, field: "galleryImageKeys" },
 
-  // ── Infrastructure ────────────────────────────────────────────────────────
-  // {
-  //   file:       "infrastructure/road.jpg",
-  //   location:   "services/programs",
-  //   collection: "program",
-  //   match:      { title: "Road Construction" },
-  //   field:      "imagekeys",
-  // },
+  // Cover — Nutritious Meal Program
+  {
+    file:       "orphanage/food.webp",
+    location:   "services/programs",
+    collection: "program",
+    match:      { title: "Nutritious Meal Program" },
+    field:      "imagekeys",
+  },
 
-  // ── Category covers ───────────────────────────────────────────────────────
-  // {
-  //   file:       "women/category-cover.jpg",
-  //   location:   "services/categories",
-  //   collection: "category",
-  //   match:      { name: "Women Empowerment" },
-  //   field:      "imageUrl",
-  // },
+  // Gallery — Nutritious Meal Program
+  { file: "orphanage/meal/image1.png",   location: "services/programs/gallery", collection: "program", match: { title: "Nutritious Meal Program" }, field: "galleryImageKeys" },
+  { file: "orphanage/meal/image2.png",   location: "services/programs/gallery", collection: "program", match: { title: "Nutritious Meal Program" }, field: "galleryImageKeys" },
+  { file: "orphanage/meal/image3.png",   location: "services/programs/gallery", collection: "program", match: { title: "Nutritious Meal Program" }, field: "galleryImageKeys" },
+  { file: "orphanage/meal/image 4.png",  location: "services/programs/gallery", collection: "program", match: { title: "Nutritious Meal Program" }, field: "galleryImageKeys" },
+  { file: "orphanage/meal/image5.png",   location: "services/programs/gallery", collection: "program", match: { title: "Nutritious Meal Program" }, field: "galleryImageKeys" },
+
+  // Cover — Health & Medical Care
+  {
+    file:       "orphanage/health.jpg",
+    location:   "services/programs",
+    collection: "program",
+    match:      { title: "Health & Medical Care" },
+    field:      "imagekeys",
+  },
+
+  // Gallery — Health & Medical Care
+  { file: "orphanage/medical/image1.png", location: "services/programs/gallery", collection: "program", match: { title: "Health & Medical Care" }, field: "galleryImageKeys" },
+  { file: "orphanage/medical/image2.png", location: "services/programs/gallery", collection: "program", match: { title: "Health & Medical Care" }, field: "galleryImageKeys" },
+  { file: "orphanage/medical/image3.png", location: "services/programs/gallery", collection: "program", match: { title: "Health & Medical Care" }, field: "galleryImageKeys" },
+  { file: "orphanage/medical/image4.png", location: "services/programs/gallery", collection: "program", match: { title: "Health & Medical Care" }, field: "galleryImageKeys" },
+  { file: "orphanage/medical/image5.png", location: "services/programs/gallery", collection: "program", match: { title: "Health & Medical Care" }, field: "galleryImageKeys" },
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // ELDERLY
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  // Cover — Daily Meal Care
+  {
+    file:       "elderly/food.jpg",
+    location:   "services/programs",
+    collection: "program",
+    match:      { title: "Daily Meal Care" },
+    field:      "imagekeys",
+  },
+
+  // Cover — Dignified Living Support
+  {
+    file:       "elderly/living.jpg",
+    location:   "services/programs",
+    collection: "program",
+    match:      { title: "Dignified Living Support" },
+    field:      "imagekeys",
+  },
+
+  // Cover — Medical Assistance
+  {
+    file:       "elderly/medical.webp",
+    location:   "services/programs",
+    collection: "program",
+    match:      { title: "Medical Assistance" },
+    field:      "imagekeys",
+  },
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // COMMUNITY SAFETY
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  // Cover — Helmet Distribution Drive
+  {
+    file:       "communitySafety/helmet.png",
+    location:   "services/programs",
+    collection: "program",
+    match:      { title: "Helmet Distribution Drive" },
+    field:      "imagekeys",
+  },
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // SOCIAL WELFARE
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  // Cover — Kanyadan Yojna
+  {
+    file:       "socialWelfare/kanyadan.png",
+    location:   "services/programs",
+    collection: "program",
+    match:      { title: "Kanyadan Yojna — LIC Support" },
+    field:      "imagekeys",
+  },
+
+  // Gallery — Kanyadan Yojna
+  { file: "socialWelfare/Kanyadan/hero.png",      location: "services/programs/gallery", collection: "program", match: { title: "Kanyadan Yojna — LIC Support" }, field: "galleryImageKeys" },
+  { file: "socialWelfare/Kanyadan/Beggining.png", location: "services/programs/gallery", collection: "program", match: { title: "Kanyadan Yojna — LIC Support" }, field: "galleryImageKeys" },
+  { file: "socialWelfare/Kanyadan/Help.png",      location: "services/programs/gallery", collection: "program", match: { title: "Kanyadan Yojna — LIC Support" }, field: "galleryImageKeys" },
+  { file: "socialWelfare/Kanyadan/Support.png",   location: "services/programs/gallery", collection: "program", match: { title: "Kanyadan Yojna — LIC Support" }, field: "galleryImageKeys" },
+  { file: "socialWelfare/Kanyadan/Future.png",    location: "services/programs/gallery", collection: "program", match: { title: "Kanyadan Yojna — LIC Support" }, field: "galleryImageKeys" },
+
+  // Cover — Dignified Last Rites
+  {
+    file:       "socialWelfare/rites.png",
+    location:   "services/programs",
+    collection: "program",
+    match:      { title: "Dignified Last Rites" },
+    field:      "imagekeys",
+  },
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // MEDICAL SUPPORT
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  // Cover — Free Health Camp Checkups
+  {
+    file:       "Medical/camp.jpg",
+    location:   "services/programs",
+    collection: "program",
+    match:      { title: "Free Health Camp Checkups" },
+    field:      "imagekeys",
+  },
+
+  // Cover — Cancer Treatment Support
+  {
+    file:       "Medical/cancer.png",
+    location:   "services/programs",
+    collection: "program",
+    match:      { title: "Cancer Treatment Support" },
+    field:      "imagekeys",
+  },
+
+  // Cover — Kidney Dialysis Support
+  {
+    file:       "Medical/kidney.jpg",
+    location:   "services/programs",
+    collection: "program",
+    match:      { title: "Kidney Dialysis Support" },
+    field:      "imagekeys",
+  },
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // INFRASTRUCTURE DEVELOPMENT
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  // Cover — Road Construction
+  {
+    file:       "infrastructure/road.jpg",
+    location:   "services/programs",
+    collection: "program",
+    match:      { title: "Road Construction" },
+    field:      "imagekeys",
+  },
 
 ];
 
