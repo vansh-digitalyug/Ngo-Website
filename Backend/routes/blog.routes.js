@@ -1,12 +1,18 @@
 import express from "express";
 import { createBlog, getAllBlogs, getBlogById, deleteBlog, updateBlog } from "../controllers/blog.controller.js";
+import { verifyToken } from "../middlewares/auth.middleware.js";
+import { verifyAdmin } from "../middlewares/admin.middleware.js";
+import asyncHandler from "../utils/asyncHandler.js";
 
 const router = express.Router();
 
-router.get("/get-all-blog", getAllBlogs);
-router.get("/get-blog/:id", getBlogById);
-router.post("/create-blog", createBlog);
-router.put("/update-blog/:id", updateBlog);
-router.delete("/delete-blog/:id", deleteBlog);
+// Public routes
+router.get("/get-all-blog", asyncHandler(getAllBlogs));
+router.get("/get-blog/:id", asyncHandler(getBlogById));
+
+// Admin-only routes
+router.post("/create-blog", verifyToken, verifyAdmin, asyncHandler(createBlog));
+router.put("/update-blog/:id", verifyToken, verifyAdmin, asyncHandler(updateBlog));
+router.delete("/delete-blog/:id", verifyToken, verifyAdmin, asyncHandler(deleteBlog));
 
 export default router;

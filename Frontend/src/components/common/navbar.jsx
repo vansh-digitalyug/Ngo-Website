@@ -118,6 +118,12 @@ function Navbar() {
     { name: "Contact", path: "/contact" },
   ];
 
+  const mediaLinks = [
+    { name: "Image Gallery", path: "/gallery/images" },
+    { name: "Events", path: "/events" },
+    { name: "Blog", path: "/blog" },
+  ];
+
   const languageOptions = [
     { value: "en", label: "English" },
     { value: "hi", label: "Hindi" },
@@ -188,17 +194,41 @@ function Navbar() {
         </div>
 
         {/* Desktop Links */}
-        <ul className="hidden lg:flex items-center gap-4 m-0 p-0 list-none text-sm h-full">
+        <ul className="hidden lg:flex items-center gap-6 m-0 p-0 list-none text-sm h-full">
           {navLinks.map((link) => (
             <li key={link.name} className="flex items-center h-full">
               <Link 
                 to={link.path} 
-                className="text-gray-700 font-medium hover:text-green-700 relative after:content-[''] after:absolute after:-bottom-1 after:left-0 after:w-0 after:h-[1.5px] after:bg-green-700 after:transition-all after:duration-300 hover:after:w-full transition-colors duration-300 flex items-center h-full"
+                className="text-gray-700 font-medium px-3 py-1.5 rounded-md hover:text-green-800 hover:bg-green-100 transition-colors duration-300 flex items-center h-auto"
               >
                 {link.name}
               </Link>
             </li>
           ))}
+          <li className="relative group flex items-center h-full">
+            <button
+              type="button"
+              className="text-gray-700 font-medium px-3 py-1.5 rounded-md hover:text-green-800 hover:bg-green-100 transition-colors duration-300 flex items-center gap-1 h-auto"
+              aria-label="Open media menu"
+            >
+              Media
+              <span className="text-[10px]">▼</span>
+            </button>
+            <div className="absolute left-0 top-[48px] pt-2 w-44 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 transform translate-y-1 group-hover:translate-y-0 z-50">
+              <ul className="bg-white border border-gray-100 rounded shadow-lg py-1 text-sm">
+                {mediaLinks.map((item) => (
+                  <li key={item.name}>
+                    <Link
+                      to={item.path}
+                      className="block px-4 py-1.5 text-gray-800 font-medium hover:bg-gray-50 hover:text-green-700 transition-colors"
+                    >
+                      {item.name}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </li>
         </ul>
 
         {/* Desktop Auth & Translate */}
@@ -333,6 +363,21 @@ function Navbar() {
                 className="block px-4 py-2 text-gray-700 font-medium hover:text-green-700 hover:bg-green-50 transition-colors"
               >
                 {link.name}
+              </Link>
+            </li>
+          ))}
+
+          <li className="mt-1 border-t border-gray-100 pt-1">
+            <div className="px-4 py-2 text-gray-900 font-semibold">Media</div>
+          </li>
+          {mediaLinks.map((item) => (
+            <li key={item.name}>
+              <Link
+                to={item.path}
+                onClick={closeMenu}
+                className="block px-8 py-2 text-gray-700 font-medium hover:text-green-700 hover:bg-green-50 transition-colors"
+              >
+                {item.name}
               </Link>
             </li>
           ))}

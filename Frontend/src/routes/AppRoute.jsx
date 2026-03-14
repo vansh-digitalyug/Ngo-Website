@@ -10,6 +10,8 @@ import Volunteer from "../pages/volunteer.jsx";
 import AddNGO from "../pages/addNgo.jsx";
 import Login from "../pages/login.jsx";
 import Contact from "../pages/contact.jsx";
+import EventsPage from "../pages/events.jsx";
+import BlogPage from "../pages/blog.jsx";
 import ResetPassword from "../pages/resetPassword.jsx";
 import Profile from "../pages/profile.jsx";
 import VolunteerDashboard from "../pages/volunteer/VolunteerDashboard.jsx";
@@ -22,6 +24,7 @@ import AdminVolunteers from "../pages/admin/AdminVolunteers.jsx";
 import AdminContacts from "../pages/admin/AdminContacts.jsx";
 import AdminUsers from "../pages/admin/AdminUsers.jsx";
 import AdminGallery from "../pages/admin/AdminGallery.jsx";
+import AdminBlogs from "../pages/admin/AdminBlogs.jsx";
 import AdminKanyadan from "../pages/admin/AdminKanyadan.jsx";
 import AdminTasks from "../pages/admin/AdminTasks.jsx";
 import AdminDonations from "../pages/admin/AdminDonations.jsx";
@@ -147,6 +150,9 @@ function AppRoutes() {
         {/* Gallery Routes */}
         <Route path="/gallery/images" element={<GalleryImages />} />
         <Route path="/gallery/videos" element={<GalleryVideos />} />
+        <Route path="/events" element={<EventsPage />} />
+        <Route path="/blog" element={<BlogPage />} />
+        <Route path="/blog/:id" element={<BlogPage />} />
 
         <Route path="/find-ngos" element={<FindNGOs />} />
         <Route path="/ngo-profile/:id" element={<NgoPublicProfile />} />
@@ -194,6 +200,7 @@ function AppRoutes() {
           <Route path="volunteers" element={<AdminVolunteers />} />
           <Route path="contacts" element={<AdminContacts />} />
           <Route path="gallery" element={<AdminGallery />} />
+          <Route path="blogs" element={<AdminBlogs />} />
           <Route path="users" element={<AdminUsers />} />
           <Route path="kanyadan" element={<AdminKanyadan />} />
           <Route path="donations" element={<AdminDonations />} />

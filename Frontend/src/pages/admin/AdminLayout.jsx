@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Link, useLocation, useNavigate, Outlet } from "react-router-dom";
-import { LayoutDashboard, Building2, Users, Mail, Image, UserCircle, Heart, ClipboardList, Wallet, IndianRupee, CheckCircle2, Coins } from "lucide-react";
+import { LayoutDashboard, Building2, Users, Mail, Image, UserCircle, Heart, ClipboardList, Wallet, IndianRupee, CheckCircle2, Coins, BookOpenText } from "lucide-react";
 import "./admin.css";
 // Removed remove-admin-padding.css import
 
@@ -12,6 +12,7 @@ const NAV_ITEMS = [
   { path: "/admin/volunteers", label: "Volunteers", icon: Users },
   { path: "/admin/contacts", label: "Contacts", icon: Mail },
   { path: "/admin/gallery", label: "Gallery", icon: Image },
+  { path: "/admin/blogs", label: "Blogs", icon: BookOpenText },
   { path: "/admin/users", label: "Users", icon: UserCircle },
   { path: "/admin/kanyadan", label: "Kanyadan", icon: Heart },
   { path: "/admin/donations", label: "Donations", icon: Coins },
