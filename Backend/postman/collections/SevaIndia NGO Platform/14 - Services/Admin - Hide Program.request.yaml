@@ -1,0 +1,6 @@
+$kind: http-request
+url: "{{base_url}}/api/services/admin/programs/PROGRAM_ID_HERE/hide"
+method: PUT
+headers:
+  Authorization: Bearer {{admin_token}}
+order: 17000

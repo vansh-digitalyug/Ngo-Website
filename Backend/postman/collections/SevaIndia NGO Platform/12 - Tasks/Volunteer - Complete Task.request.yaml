@@ -1,0 +1,14 @@
+$kind: http-request
+url: "{{base_url}}/api/tasks/volunteer/TASK_ID_HERE/complete"
+method: PUT
+headers:
+  Content-Type: application/json
+  Authorization: Bearer {{user_token}}
+body:
+  type: json
+  content: >-
+    {
+      "completionNote": "Successfully distributed 200 food packets to 200 families. All families received their share without any issues.",
+      "mediaUrls": ["task-proofs/photo1.jpg", "task-proofs/photo2.jpg"]
+    }
+order: 9000

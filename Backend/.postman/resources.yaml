@@ -2,6 +2,12 @@
 workspace:
   id: b76d137e-43bc-40df-8a6a-6e540ced03d3
 
+# Each entry here maps a local resource to one or more corresponding objects in Postman Cloud
+cloudResources:
+  collections:
+    ../postman/collections/SevaIndia API Collection: 69d4846f-a00b-4e00-b846-37da53fee069
+    ../postman/collections/SevaIndia NGO Platform: 10d6435c-f613-4ea9-8fa6-5f3b2f0fd66e
+
 # All resources in the `postman/` folder are automatically registered in Local View.
 # Point to additional files outside the `postman/` folder to register them individually. Example:
 #localResources:

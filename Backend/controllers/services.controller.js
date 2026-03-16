@@ -30,8 +30,10 @@ export const createCategory = asyncHandler(async (req, res) => {
     return res.status(201).json(new ApiResponse(201, "Category created successfully", category));
 });
 
-export const getAllCategories = asyncHandler(async (_req, res) => {
-    const categories = await Category.find({ isActive: true }).sort({ createdAt: 1 });
+export const getAllCategories = asyncHandler(async (req, res) => {
+    const includeHidden = req.query.includeHidden === "true";
+    const query = includeHidden ? {} : { isActive: true };
+    const categories = await Category.find(query).sort({ createdAt: 1 });
     return res.status(200).json(new ApiResponse(200, "Categories fetched successfully", categories));
 });
 
@@ -65,17 +67,45 @@ export const deleteCategory = asyncHandler(async (req, res) => {
     const { categoryId } = req.params;
     if (!mongoose.Types.ObjectId.isValid(categoryId)) throw new ApiError(400, "Invalid category ID");
 
+    const category = await Category.findByIdAndDelete(categoryId);
+    if (!category || !category.isActive) throw new ApiError(404, "Category not found");
+
+    return res.status(200).json(new ApiResponse(200, "Category deleted successfully", category));
+});
+
+export const unhideCategory = asyncHandler(async (req, res) => {
+    const { categoryId } = req.params;
+    if (!mongoose.Types.ObjectId.isValid(categoryId)) throw new ApiError(400, "Invalid category ID");
     const category = await Category.findById(categoryId);
     if (!category) throw new ApiError(404, "Category not found");
+    category.isActive = true;
+    await category.save();
+    return res.status(200).json(new ApiResponse(200, "Category unhidden successfully", null));
+});
 
+const deleteCategoryAndPrograms = async (categoryId) => {
+    await Category.findByIdAndDelete(categoryId);
+    await Program.deleteMany({ categoryId });
+}
+
+export const hideCategory = asyncHandler(async(req, res) =>{
+    const { categoryId } = req.params;
+    if (!mongoose.Types.ObjectId.isValid(categoryId)) throw new ApiError(400, "Invalid category ID");
+    const category = await Category.findById(categoryId);
+    if (!category) throw new ApiError(404, "Category not found");
     category.isActive = false;
     await category.save();
-
-    // soft-delete all programs under this category too
     await Program.updateMany({ categoryId }, { isActive: false });
+    return res.status(200).json(new ApiResponse(200, "Category hidden successfully", null));
+})
 
-    return res.status(200).json(new ApiResponse(200, "Category deleted successfully", null));
-});
+
+
+
+
+
+
+
 
 // ─────────────────────────────────────────────────────────────────────────────
 // PROGRAM
@@ -127,7 +157,9 @@ export const getProgramsByCategory = asyncHandler(async (req, res) => {
     const { categoryId } = req.params;
     if (!mongoose.Types.ObjectId.isValid(categoryId)) throw new ApiError(400, "Invalid category ID");
 
-    const programs = await Program.find({ categoryId, isActive: true }).sort({ createdAt: 1 });
+    const includeHidden = req.query.includeHidden === "true";
+    const query = includeHidden ? { categoryId } : { categoryId, isActive: true };
+    const programs = await Program.find(query).sort({ createdAt: 1 });
     return res.status(200).json(new ApiResponse(200, "Programs fetched successfully", programs));
 });
 
@@ -221,6 +253,35 @@ export const deleteProgram = asyncHandler(async (req, res) => {
     await program.save();
     return res.status(200).json(new ApiResponse(200, "Program deleted successfully", null));
 });
+
+export const unhideProgram = asyncHandler(async (req, res) => {
+    const { programId } = req.params;
+    if (!mongoose.Types.ObjectId.isValid(programId)) throw new ApiError(400, "Invalid program ID");
+    const program = await Program.findById(programId);
+    if (!program) throw new ApiError(404, "Program not found");
+    program.isActive = true;
+    await program.save();
+    return res.status(200).json(new ApiResponse(200, "Program unhidden successfully", null));
+});
+
+export const hardDeleteProgram = asyncHandler(async (req, res) => {
+    const { programId } = req.params;
+    if (!mongoose.Types.ObjectId.isValid(programId)) throw new ApiError(400, "Invalid program ID");
+    const program = await Program.findByIdAndDelete(programId);
+    if (!program) throw new ApiError(404, "Program not found");
+    return res.status(200).json(new ApiResponse(200, "Program permanently deleted successfully", null));
+});
+
+export const hideProgram = asyncHandler(async(req, res) =>{
+    const { programId } = req.params;
+    if (!mongoose.Types.ObjectId.isValid(programId)) throw new ApiError(400, "Invalid program ID");
+    const program = await Program.findById(programId);
+    if (!program) throw new ApiError(404, "Program not found");
+    program.isActive = false;
+    await program.save();
+    return res.status(200).json(new ApiResponse(200, "Program hidden successfully", null));
+})
+
 
 // ─────────────────────────────────────────────────────────────────────────────
 // PUBLIC — all categories with their programs in one response (used by frontend)

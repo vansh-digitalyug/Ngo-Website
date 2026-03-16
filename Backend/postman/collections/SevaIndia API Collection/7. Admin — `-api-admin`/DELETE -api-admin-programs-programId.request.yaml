@@ -1,0 +1,9 @@
+$kind: http-request
+name: DELETE /api/admin/programs/:programId
+url: "{{baseUrl}}/api/admin/programs/:programId"
+method: DELETE
+headers:
+  Content-Type: application/json
+pathVariables:
+  programId: ""
+order: 29000

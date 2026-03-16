@@ -1,0 +1,16 @@
+$kind: http-request
+url: "{{base_url}}/api/gallery/admin/GALLERY_ITEM_ID"
+method: PUT
+headers:
+  Content-Type: application/json
+  Authorization: Bearer {{admin_token}}
+body:
+  type: json
+  content: |-
+    {
+      "title": "Updated Gallery Title",
+      "description": "Updated description for this gallery item.",
+      "category": "Events",
+      "tags": ["community", "health"]
+    }
+order: 8000

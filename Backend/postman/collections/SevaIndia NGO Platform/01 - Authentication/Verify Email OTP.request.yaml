@@ -1,0 +1,13 @@
+$kind: http-request
+url: "{{base_url}}/api/email-verification/verify-otp"
+method: POST
+headers:
+  Content-Type: application/json
+  Authorization: Bearer {{user_token}}
+body:
+  type: json
+  content: |-
+    {
+      "otp": "123456"
+    }
+order: 11000

@@ -1,0 +1,15 @@
+$kind: http-request
+url: "{{base_url}}/api/ngo-dashboard/funds/request"
+method: POST
+headers:
+  Content-Type: application/json
+  Authorization: Bearer {{ngo_token}}
+body:
+  type: json
+  content: >-
+    {
+      "amount": 75000,
+      "purpose": "Medical supplies for children",
+      "description": "We need funds to purchase medicines and medical equipment for 200 underprivileged children in our area."
+    }
+order: 12000

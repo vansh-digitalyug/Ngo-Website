@@ -1,0 +1,6 @@
+$kind: http-request
+url: "{{base_url}}/api/ngo-dashboard/gallery/GALLERY_ITEM_ID"
+method: DELETE
+headers:
+  Authorization: Bearer {{ngo_token}}
+order: 8000

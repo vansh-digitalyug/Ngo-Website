@@ -1,0 +1,15 @@
+$kind: http-request
+url: "{{base_url}}/api/ngo?page=1&limit=10"
+method: GET
+queryParams:
+  - key: page
+    value: "1"
+  - key: limit
+    value: "10"
+  - key: city
+    value: ""
+    disabled: true
+  - key: state
+    value: ""
+    disabled: true
+order: 2000

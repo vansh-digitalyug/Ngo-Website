@@ -1,0 +1,14 @@
+$kind: http-request
+url: "{{base_url}}/api/login"
+method: POST
+headers:
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "email": "ngo@example.com",
+      "password": "Password@123",
+      "loginType": "ngo"
+    }
+order: 4000

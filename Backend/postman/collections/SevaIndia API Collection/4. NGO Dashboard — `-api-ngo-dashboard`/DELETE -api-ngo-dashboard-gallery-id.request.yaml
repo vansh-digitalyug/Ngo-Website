@@ -1,0 +1,9 @@
+$kind: http-request
+name: DELETE /api/ngo-dashboard/gallery/:id
+url: "{{baseUrl}}/api/ngo-dashboard/gallery/:id"
+method: DELETE
+headers:
+  Content-Type: application/json
+pathVariables:
+  id: ""
+order: 8000

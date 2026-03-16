@@ -1,0 +1,12 @@
+$kind: http-request
+url: "{{base_url}}/api/google-login"
+method: POST
+headers:
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "credential": "<google_id_token_here>"
+    }
+order: 5000

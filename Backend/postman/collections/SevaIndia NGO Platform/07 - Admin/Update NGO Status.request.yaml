@@ -1,0 +1,13 @@
+$kind: http-request
+url: "{{base_url}}/api/admin/ngos/NGO_ID_HERE/status"
+method: PUT
+headers:
+  Content-Type: application/json
+  Authorization: Bearer {{admin_token}}
+body:
+  type: json
+  content: |-
+    {
+      "status": "approved"
+    }
+order: 4000

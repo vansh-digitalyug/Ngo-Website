@@ -1,0 +1,9 @@
+$kind: http-request
+name: PATCH /api/events/admin/:id/publish
+url: "{{baseUrl}}/api/events/admin/:id/publish"
+method: PATCH
+headers:
+  Content-Type: application/json
+pathVariables:
+  id: ""
+order: 5000

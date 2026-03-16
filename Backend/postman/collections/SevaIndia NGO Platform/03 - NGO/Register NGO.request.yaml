@@ -1,0 +1,23 @@
+$kind: http-request
+url: "{{base_url}}/api/ngo/create"
+method: POST
+headers:
+  Content-Type: application/json
+body:
+  type: json
+  content: >-
+    {
+      "name": "Hope Foundation",
+      "email": "hopefoundation@example.com",
+      "phone": "9876543210",
+      "password": "NGO@Secure123",
+      "city": "Delhi",
+      "state": "Delhi",
+      "description": "We are dedicated to providing education and healthcare to underprivileged children.",
+      "registrationNumber": "NGO/DEL/2023/001",
+      "panNumber": "ABCDE1234F",
+      "registrationCertificateKey": "ngo-docs/reg-cert.pdf",
+      "panCardKey": "ngo-docs/pan-card.pdf",
+      "logo": "ngo-docs/logo.jpg"
+    }
+order: 1000

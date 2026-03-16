@@ -1,0 +1,14 @@
+$kind: http-request
+url: "{{base_url}}/api/events/ngo/EVENT_ID_HERE"
+method: PUT
+headers:
+  Content-Type: application/json
+  Authorization: Bearer {{ngo_token}}
+body:
+  type: json
+  content: |-
+    {
+      "title": "Health Awareness Camp - Updated",
+      "maxParticipants": 250
+    }
+order: 14000

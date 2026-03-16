@@ -1,0 +1,6 @@
+$kind: http-request
+url: "{{base_url}}/api/s3/get-url?key=ngo-documents/registration-certificate.pdf"
+method: GET
+queryParams:
+  key: ngo-documents/registration-certificate.pdf
+order: 2000

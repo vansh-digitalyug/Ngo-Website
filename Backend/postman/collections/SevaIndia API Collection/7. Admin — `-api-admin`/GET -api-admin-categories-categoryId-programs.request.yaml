@@ -1,0 +1,9 @@
+$kind: http-request
+name: GET /api/admin/categories/:categoryId/programs
+url: "{{baseUrl}}/api/admin/categories/:categoryId/programs"
+method: GET
+headers:
+  Content-Type: application/json
+pathVariables:
+  categoryId: ""
+order: 24000

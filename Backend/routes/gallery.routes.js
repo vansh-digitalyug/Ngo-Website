@@ -8,6 +8,7 @@ import {
   getImages,
   getVideos,
   getCategories,
+  searchGallery,
   getAllGalleryItems,
   addImage,
   addVideo,
@@ -67,6 +68,9 @@ router.get("/videos", getVideos);
 
 // Get categories with counts
 router.get("/categories", getCategories);
+
+// Search gallery (public)
+router.get("/search", searchGallery);
 
 // ============================================
 // ADMIN ROUTES

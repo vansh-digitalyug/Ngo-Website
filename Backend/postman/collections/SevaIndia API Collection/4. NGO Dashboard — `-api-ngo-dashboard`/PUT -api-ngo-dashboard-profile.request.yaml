@@ -1,0 +1,7 @@
+$kind: http-request
+name: PUT /api/ngo-dashboard/profile
+url: "{{baseUrl}}/api/ngo-dashboard/profile"
+method: PUT
+headers:
+  Content-Type: application/json
+order: 4000

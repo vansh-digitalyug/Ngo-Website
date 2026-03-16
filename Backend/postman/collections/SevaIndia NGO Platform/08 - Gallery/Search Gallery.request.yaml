@@ -1,0 +1,17 @@
+$kind: http-request
+url: "{{base_url}}/api/gallery/search?q=community&page=1&limit=20"
+method: GET
+queryParams:
+  - key: q
+    value: community
+  - key: type
+    value: image
+    disabled: true
+  - key: category
+    value: Events
+    disabled: true
+  - key: page
+    value: "1"
+  - key: limit
+    value: "20"
+order: 4000

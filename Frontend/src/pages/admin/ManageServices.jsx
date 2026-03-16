@@ -1,13 +1,13 @@
-import React, { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
-  Layers, FolderOpen, Pencil, Trash2, ChevronDown, ChevronRight,
+  FolderOpen, Pencil, Trash2, ChevronDown, ChevronRight,
   Save, X, Plus, Upload, Image as ImageIcon, Loader2, CheckCircle,
-  AlertCircle, Eye, RefreshCw
+  AlertCircle, Eye, RefreshCw, EyeOff
 } from "lucide-react";
 import {
-  fetchCategories, fetchProgramsByCategory,
-  updateCategory, deleteCategory,
-  updateProgram, deleteProgram,
+  fetchCategoriesAdmin, fetchProgramsByCategoryAdmin,
+  updateCategory, hideCategory, unhideCategory,
+  updateProgram, hideProgram, unhideProgram, hardDeleteProgram,
 } from "../../services/serviceService.js";
 import {
   generateUploadUrl, uploadfileToS3, getDownloadUrl,
@@ -353,12 +353,16 @@ function EditProgramModal({ program, onClose, onSaved }) {
 // ══════════════════════════════════════════════════════════════════════════════
 // PROGRAM ROW
 // ══════════════════════════════════════════════════════════════════════════════
-function ProgramRow({ program, onEdit, onDelete }) {
+function ProgramRow({ program, onEdit, onHide, onUnhide, onHardDelete }) {
+  const isHidden = !program.isActive;
   return (
-    <div className="flex items-center gap-4 px-5 py-3.5 border-b border-slate-50 last:border-0 bg-white hover:bg-slate-50/70 transition group">
+    <div className={`flex items-center gap-4 px-5 py-3.5 border-b border-slate-50 last:border-0 hover:bg-slate-50/70 transition group ${isHidden ? "bg-slate-50/60 opacity-60" : "bg-white"}`}>
       <S3Thumb s3Key={program.imagekeys} />
       <div className="flex-1 min-w-0">
-        <p className="font-semibold text-slate-800 text-sm truncate">{program.title}</p>
+        <div className="flex items-center gap-2">
+          <p className="font-semibold text-slate-800 text-sm truncate">{program.title}</p>
+          {isHidden && <span className="text-[10px] font-semibold bg-slate-200 text-slate-500 px-1.5 py-0.5 rounded-full shrink-0">Hidden</span>}
+        </div>
         <p className="text-xs text-slate-400 truncate mt-0.5">{program.description}</p>
         <div className="flex items-center gap-2 mt-1 flex-wrap">
           {program.href && (
@@ -378,14 +382,29 @@ function ProgramRow({ program, onEdit, onDelete }) {
         </div>
       </div>
       <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition">
-        <button onClick={() => onEdit(program)}
-          className="p-2 rounded-lg hover:bg-indigo-50 text-slate-400 hover:text-indigo-600 transition">
-          <Pencil size={15} />
-        </button>
-        <button onClick={() => onDelete(program)}
-          className="p-2 rounded-lg hover:bg-red-50 text-slate-400 hover:text-red-500 transition">
-          <Trash2 size={15} />
-        </button>
+        {!isHidden && (
+          <button onClick={() => onEdit(program)}
+            className="p-2 rounded-lg hover:bg-indigo-50 text-slate-400 hover:text-indigo-600 transition" title="Edit">
+            <Pencil size={15} />
+          </button>
+        )}
+        {isHidden ? (
+          <>
+            <button onClick={() => onUnhide(program)}
+              className="p-2 rounded-lg hover:bg-green-50 text-slate-400 hover:text-green-600 transition" title="Unhide">
+              <Eye size={15} />
+            </button>
+            <button onClick={() => onHardDelete(program)}
+              className="p-2 rounded-lg hover:bg-red-50 text-slate-400 hover:text-red-500 transition" title="Delete permanently">
+              <Trash2 size={15} />
+            </button>
+          </>
+        ) : (
+          <button onClick={() => onHide(program)}
+            className="p-2 rounded-lg hover:bg-amber-50 text-slate-400 hover:text-amber-500 transition" title="Hide">
+            <EyeOff size={15} />
+          </button>
+        )}
       </div>
     </div>
   );
@@ -394,48 +413,57 @@ function ProgramRow({ program, onEdit, onDelete }) {
 // ══════════════════════════════════════════════════════════════════════════════
 // CATEGORY CARD (collapsible)
 // ══════════════════════════════════════════════════════════════════════════════
-function CategoryCard({ category, onEditCat, onDeleteCat, onEditProg, onDeleteProg, showToast }) {
+function CategoryCard({ category, showHidden, onEditCat, onHideCat, onUnhideCat, onEditProg, onHideProg, onUnhideProg, onHardDeleteProg }) {
   const [open, setOpen] = useState(true);
   const [programs, setPrograms] = useState([]);
   const [loadingProgs, setLoadingProgs] = useState(false);
+  const isHidden = !category.isActive;
 
-  useEffect(() => {
-    if (!open) return;
+  const loadPrograms = () => {
     setLoadingProgs(true);
-    fetchProgramsByCategory(category._id)
-      .then(setPrograms)
-      .catch(() => { })
-      .finally(() => setLoadingProgs(false));
-  }, [open, category._id]);
-
-  const refresh = () => {
-    setLoadingProgs(true);
-    fetchProgramsByCategory(category._id)
+    fetchProgramsByCategoryAdmin(category._id, showHidden)
       .then(setPrograms)
       .catch(() => { })
       .finally(() => setLoadingProgs(false));
   };
 
+  useEffect(() => {
+    if (!open) return;
+    loadPrograms();
+  }, [open, category._id, showHidden]); // eslint-disable-line react-hooks/exhaustive-deps
+
   return (
-    <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+    <div className={`rounded-2xl border shadow-sm overflow-hidden ${isHidden ? "bg-slate-50 border-slate-300 opacity-70" : "bg-white border-slate-200"}`}>
       {/* Category header */}
       <div className="flex items-center gap-4 px-5 py-4 cursor-pointer select-none hover:bg-slate-50 transition"
         onClick={() => setOpen(o => !o)}>
         <S3Thumb s3Key={category.imageUrl} className="w-12 h-12 object-cover rounded-xl" />
         <div className="flex-1 min-w-0">
-          <p className="font-bold text-slate-800 text-sm">{category.name}</p>
+          <div className="flex items-center gap-2">
+            <p className="font-bold text-slate-800 text-sm">{category.name}</p>
+            {isHidden && <span className="text-[10px] font-semibold bg-slate-200 text-slate-500 px-2 py-0.5 rounded-full">Hidden</span>}
+          </div>
           <p className="text-xs text-slate-400 truncate">{category.description}</p>
         </div>
         <div className="flex items-center gap-1" onClick={e => e.stopPropagation()}>
           <span className="text-xs text-slate-400 mr-2">{programs.length} program{programs.length !== 1 ? "s" : ""}</span>
-          <button onClick={() => onEditCat(category)}
-            className="p-2 rounded-lg hover:bg-indigo-50 text-slate-400 hover:text-indigo-600 transition">
-            <Pencil size={15} />
-          </button>
-          <button onClick={() => onDeleteCat(category)}
-            className="p-2 rounded-lg hover:bg-red-50 text-slate-400 hover:text-red-500 transition">
-            <Trash2 size={15} />
-          </button>
+          {!isHidden && (
+            <button onClick={() => onEditCat(category)}
+              className="p-2 rounded-lg hover:bg-indigo-50 text-slate-400 hover:text-indigo-600 transition" title="Edit">
+              <Pencil size={15} />
+            </button>
+          )}
+          {isHidden ? (
+            <button onClick={() => onUnhideCat(category)}
+              className="p-2 rounded-lg hover:bg-green-50 text-slate-400 hover:text-green-600 transition" title="Unhide">
+              <Eye size={15} />
+            </button>
+          ) : (
+            <button onClick={() => onHideCat(category)}
+              className="p-2 rounded-lg hover:bg-amber-50 text-slate-400 hover:text-amber-500 transition" title="Hide">
+              <EyeOff size={15} />
+            </button>
+          )}
         </div>
         <div className="text-slate-300">
           {open ? <ChevronDown size={18} /> : <ChevronRight size={18} />}
@@ -456,8 +484,10 @@ function CategoryCard({ category, onEditCat, onDeleteCat, onEditProg, onDeletePr
               <ProgramRow
                 key={prog._id}
                 program={prog}
-                onEdit={(p) => onEditProg(p, refresh)}
-                onDelete={(p) => onDeleteProg(p, refresh)}
+                onEdit={(p) => onEditProg(p, loadPrograms)}
+                onHide={(p) => onHideProg(p, loadPrograms)}
+                onUnhide={(p) => onUnhideProg(p, loadPrograms)}
+                onHardDelete={(p) => onHardDeleteProg(p, loadPrograms)}
               />
             ))
           )}
@@ -470,20 +500,20 @@ function CategoryCard({ category, onEditCat, onDeleteCat, onEditProg, onDeletePr
 // ══════════════════════════════════════════════════════════════════════════════
 // CONFIRM DELETE DIALOG
 // ══════════════════════════════════════════════════════════════════════════════
-function ConfirmDialog({ title, subtitle, onConfirm, onCancel, loading }) {
+function ConfirmDialog({ title, subtitle, confirmLabel = "Confirm", confirmClass = "bg-red-500 hover:bg-red-600", icon, iconBg = "bg-red-100", onConfirm, onCancel, loading }) {
   return (
     <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6 text-center">
-        <div className="w-14 h-14 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-          <Trash2 size={24} className="text-red-500" />
+        <div className={`w-14 h-14 ${iconBg} rounded-full flex items-center justify-center mx-auto mb-4`}>
+          {icon ?? <Trash2 size={24} className="text-red-500" />}
         </div>
         <h3 className="font-bold text-slate-800 text-base mb-1">{title}</h3>
         <p className="text-sm text-slate-500 mb-6">{subtitle}</p>
         <div className="flex gap-3 justify-center">
           <button onClick={onCancel} className="px-5 py-2 rounded-lg border border-slate-200 text-sm font-semibold text-slate-600 hover:bg-slate-50 transition">Cancel</button>
           <button onClick={onConfirm} disabled={loading}
-            className="inline-flex items-center gap-2 px-5 py-2 rounded-lg bg-red-500 hover:bg-red-600 text-white text-sm font-semibold disabled:opacity-50 transition">
-            {loading ? <Loader2 size={14} className="animate-spin" /> : <Trash2 size={14} />} Delete
+            className={`inline-flex items-center gap-2 px-5 py-2 rounded-lg text-white text-sm font-semibold disabled:opacity-50 transition ${confirmClass}`}>
+            {loading ? <Loader2 size={14} className="animate-spin" /> : null} {confirmLabel}
           </button>
         </div>
       </div>
@@ -496,15 +526,19 @@ function ConfirmDialog({ title, subtitle, onConfirm, onCancel, loading }) {
 // ══════════════════════════════════════════════════════════════════════════════
 export default function ManageServices() {
   const [categories, setCategories] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [toast, setToast] = useState(null);
+  const [loading, setLoading]       = useState(true);
+  const [showHidden, setShowHidden] = useState(false);
+  const [toast, setToast]           = useState(null);
 
-  // Modal state
-  const [editingCat, setEditingCat] = useState(null);
-  const [editingProg, setEditingProg] = useState(null);   // { prog, refresh }
-  const [deletingCat, setDeletingCat] = useState(null);
-  const [deletingProg, setDeletingProg] = useState(null); // { prog, refresh }
-  const [deleteLoading, setDeleteLoading] = useState(false);
+  // Modal / action state
+  const [editingCat, setEditingCat]         = useState(null);
+  const [editingProg, setEditingProg]       = useState(null); // { prog, refresh }
+  const [hidingCat, setHidingCat]           = useState(null);
+  const [unhidingCat, setUnhidingCat]       = useState(null);
+  const [hidingProg, setHidingProg]         = useState(null); // { prog, refresh }
+  const [unhidingProg, setUnhidingProg]     = useState(null); // { prog, refresh }
+  const [hardDeletingProg, setHardDeletingProg] = useState(null); // { prog, refresh }
+  const [actionLoading, setActionLoading]   = useState(false);
 
   const showToast = (type, msg) => {
     setToast({ type, msg });
@@ -513,43 +547,91 @@ export default function ManageServices() {
 
   const loadCategories = () => {
     setLoading(true);
-    fetchCategories()
+    fetchCategoriesAdmin(showHidden)
       .then(setCategories)
       .catch(() => showToast("error", "Failed to load categories"))
       .finally(() => setLoading(false));
   };
 
-  useEffect(() => { loadCategories(); }, []);
+  useEffect(() => { loadCategories(); }, [showHidden]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // ── Delete category ────────────────────────────────────────────────
-  const confirmDeleteCat = async () => {
-    if (!deletingCat) return;
-    setDeleteLoading(true);
+  // ── Hide category ──────────────────────────────────────────────────
+  const confirmHideCat = async () => {
+    if (!hidingCat) return;
+    setActionLoading(true);
     try {
-      await deleteCategory(deletingCat._id);
-      showToast("success", `Category "${deletingCat.name}" deleted`);
-      setDeletingCat(null);
+      await hideCategory(hidingCat._id);
+      showToast("success", `Category "${hidingCat.name}" hidden`);
+      setHidingCat(null);
       loadCategories();
     } catch (err) {
-      showToast("error", err?.response?.data?.message || "Failed to delete");
+      showToast("error", err?.response?.data?.message || "Failed to hide category");
     } finally {
-      setDeleteLoading(false);
+      setActionLoading(false);
     }
   };
 
-  // ── Delete program ─────────────────────────────────────────────────
-  const confirmDeleteProg = async () => {
-    if (!deletingProg) return;
-    setDeleteLoading(true);
+  // ── Unhide category ────────────────────────────────────────────────
+  const confirmUnhideCat = async () => {
+    if (!unhidingCat) return;
+    setActionLoading(true);
     try {
-      await deleteProgram(deletingProg.prog._id);
-      showToast("success", `Program "${deletingProg.prog.title}" deleted`);
-      deletingProg.refresh();
-      setDeletingProg(null);
+      await unhideCategory(unhidingCat._id);
+      showToast("success", `Category "${unhidingCat.name}" is now visible`);
+      setUnhidingCat(null);
+      loadCategories();
     } catch (err) {
-      showToast("error", err?.response?.data?.message || "Failed to delete");
+      showToast("error", err?.response?.data?.message || "Failed to unhide category");
     } finally {
-      setDeleteLoading(false);
+      setActionLoading(false);
+    }
+  };
+
+  // ── Hide program ───────────────────────────────────────────────────
+  const confirmHideProg = async () => {
+    if (!hidingProg) return;
+    setActionLoading(true);
+    try {
+      await hideProgram(hidingProg.prog._id);
+      showToast("success", `Program "${hidingProg.prog.title}" hidden`);
+      hidingProg.refresh();
+      setHidingProg(null);
+    } catch (err) {
+      showToast("error", err?.response?.data?.message || "Failed to hide program");
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  // ── Unhide program ─────────────────────────────────────────────────
+  const confirmUnhideProg = async () => {
+    if (!unhidingProg) return;
+    setActionLoading(true);
+    try {
+      await unhideProgram(unhidingProg.prog._id);
+      showToast("success", `Program "${unhidingProg.prog.title}" is now visible`);
+      unhidingProg.refresh();
+      setUnhidingProg(null);
+    } catch (err) {
+      showToast("error", err?.response?.data?.message || "Failed to unhide program");
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  // ── Hard delete program ────────────────────────────────────────────
+  const confirmHardDeleteProg = async () => {
+    if (!hardDeletingProg) return;
+    setActionLoading(true);
+    try {
+      await hardDeleteProgram(hardDeletingProg.prog._id);
+      showToast("success", `Program "${hardDeletingProg.prog.title}" permanently deleted`);
+      hardDeletingProg.refresh();
+      setHardDeletingProg(null);
+    } catch (err) {
+      showToast("error", err?.response?.data?.message || "Failed to delete program");
+    } finally {
+      setActionLoading(false);
     }
   };
 
@@ -572,22 +654,69 @@ export default function ManageServices() {
           onSaved={() => { setEditingProg(null); showToast("success", "Program updated!"); editingProg.refresh(); }}
         />
       )}
-      {deletingCat && (
+      {hidingCat && (
         <ConfirmDialog
-          title={`Delete "${deletingCat.name}"?`}
-          subtitle="This will also soft-delete all programs under this category."
-          onConfirm={confirmDeleteCat}
-          onCancel={() => setDeletingCat(null)}
-          loading={deleteLoading}
+          title={`Hide "${hidingCat.name}"?`}
+          subtitle="This will hide the category and all its programs from the public site. You can unhide it anytime."
+          confirmLabel="Hide"
+          confirmClass="bg-amber-500 hover:bg-amber-600"
+          icon={<EyeOff size={24} className="text-amber-500" />}
+          iconBg="bg-amber-100"
+          onConfirm={confirmHideCat}
+          onCancel={() => setHidingCat(null)}
+          loading={actionLoading}
         />
       )}
-      {deletingProg && (
+      {unhidingCat && (
         <ConfirmDialog
-          title={`Delete "${deletingProg.prog.title}"?`}
-          subtitle="The program will be soft-deleted and hidden from the site."
-          onConfirm={confirmDeleteProg}
-          onCancel={() => setDeletingProg(null)}
-          loading={deleteLoading}
+          title={`Unhide "${unhidingCat.name}"?`}
+          subtitle="This will make the category and its active programs visible on the public site again."
+          confirmLabel="Unhide"
+          confirmClass="bg-green-600 hover:bg-green-700"
+          icon={<Eye size={24} className="text-green-600" />}
+          iconBg="bg-green-100"
+          onConfirm={confirmUnhideCat}
+          onCancel={() => setUnhidingCat(null)}
+          loading={actionLoading}
+        />
+      )}
+      {hidingProg && (
+        <ConfirmDialog
+          title={`Hide "${hidingProg.prog.title}"?`}
+          subtitle="The program will be hidden from the public site. You can unhide it anytime."
+          confirmLabel="Hide"
+          confirmClass="bg-amber-500 hover:bg-amber-600"
+          icon={<EyeOff size={24} className="text-amber-500" />}
+          iconBg="bg-amber-100"
+          onConfirm={confirmHideProg}
+          onCancel={() => setHidingProg(null)}
+          loading={actionLoading}
+        />
+      )}
+      {unhidingProg && (
+        <ConfirmDialog
+          title={`Unhide "${unhidingProg.prog.title}"?`}
+          subtitle="The program will be visible on the public site again."
+          confirmLabel="Unhide"
+          confirmClass="bg-green-600 hover:bg-green-700"
+          icon={<Eye size={24} className="text-green-600" />}
+          iconBg="bg-green-100"
+          onConfirm={confirmUnhideProg}
+          onCancel={() => setUnhidingProg(null)}
+          loading={actionLoading}
+        />
+      )}
+      {hardDeletingProg && (
+        <ConfirmDialog
+          title={`Permanently delete "${hardDeletingProg.prog.title}"?`}
+          subtitle="This cannot be undone. The program will be removed from the database forever."
+          confirmLabel="Delete Forever"
+          confirmClass="bg-red-500 hover:bg-red-600"
+          icon={<Trash2 size={24} className="text-red-500" />}
+          iconBg="bg-red-100"
+          onConfirm={confirmHardDeleteProg}
+          onCancel={() => setHardDeletingProg(null)}
+          loading={actionLoading}
         />
       )}
 
@@ -596,12 +725,21 @@ export default function ManageServices() {
         <div className="flex items-center justify-between mb-8">
           <div>
             <h1 className="text-2xl font-bold text-slate-800">Manage Services</h1>
-            <p className="text-slate-500 text-sm mt-1">Edit or delete categories and their programs.</p>
+            <p className="text-slate-500 text-sm mt-1">Edit, hide, or restore categories and programs.</p>
           </div>
-          <button onClick={loadCategories}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-slate-200 text-sm font-medium text-slate-600 hover:bg-slate-100 transition">
-            <RefreshCw size={15} /> Refresh
-          </button>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => setShowHidden(h => !h)}
+              className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg border text-sm font-medium transition ${showHidden ? "border-indigo-300 bg-indigo-50 text-indigo-700" : "border-slate-200 text-slate-600 hover:bg-slate-100"}`}
+            >
+              {showHidden ? <Eye size={15} /> : <EyeOff size={15} />}
+              {showHidden ? "Showing hidden" : "Show hidden"}
+            </button>
+            <button onClick={loadCategories}
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-slate-200 text-sm font-medium text-slate-600 hover:bg-slate-100 transition">
+              <RefreshCw size={15} /> Refresh
+            </button>
+          </div>
         </div>
 
         {/* Content */}
@@ -621,11 +759,14 @@ export default function ManageServices() {
               <CategoryCard
                 key={cat._id}
                 category={cat}
-                showToast={showToast}
+                showHidden={showHidden}
                 onEditCat={setEditingCat}
-                onDeleteCat={setDeletingCat}
+                onHideCat={setHidingCat}
+                onUnhideCat={setUnhidingCat}
                 onEditProg={(prog, refresh) => setEditingProg({ prog, refresh })}
-                onDeleteProg={(prog, refresh) => setDeletingProg({ prog, refresh })}
+                onHideProg={(prog, refresh) => setHidingProg({ prog, refresh })}
+                onUnhideProg={(prog, refresh) => setUnhidingProg({ prog, refresh })}
+                onHardDeleteProg={(prog, refresh) => setHardDeletingProg({ prog, refresh })}
               />
             ))}
           </div>

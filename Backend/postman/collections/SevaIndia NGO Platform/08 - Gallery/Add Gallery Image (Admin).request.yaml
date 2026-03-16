@@ -1,0 +1,25 @@
+$kind: http-request
+url: "{{base_url}}/api/gallery/admin/image"
+method: POST
+headers:
+  Authorization: Bearer {{admin_token}}
+body:
+  type: formdata
+  content:
+    - type: file
+      key: image
+      src:
+        - ""
+    - type: text
+      key: title
+      value: Annual Food Drive 2024
+    - type: text
+      key: description
+      value: Volunteers distributing food packets to 500 families.
+    - type: text
+      key: category
+      value: Food Distribution
+    - type: text
+      key: tags
+      value: food, community, volunteers
+order: 6000

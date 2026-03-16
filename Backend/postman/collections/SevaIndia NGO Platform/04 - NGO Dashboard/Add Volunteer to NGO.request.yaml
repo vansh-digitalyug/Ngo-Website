@@ -1,0 +1,13 @@
+$kind: http-request
+url: "{{base_url}}/api/ngo-dashboard/volunteers/add"
+method: POST
+headers:
+  Content-Type: application/json
+  Authorization: Bearer {{ngo_token}}
+body:
+  type: json
+  content: |-
+    {
+      "volunteerId": "VOLUNTEER_MONGO_ID_HERE"
+    }
+order: 10000

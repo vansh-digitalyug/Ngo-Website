@@ -1,0 +1,6 @@
+$kind: http-request
+url: "{{base_url}}/api/services/admin/programs/PROGRAM_ID_HERE/hard"
+method: DELETE
+headers:
+  Authorization: Bearer {{admin_token}}
+order: 20000

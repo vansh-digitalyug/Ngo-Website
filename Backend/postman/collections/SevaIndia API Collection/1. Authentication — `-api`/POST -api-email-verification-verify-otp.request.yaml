@@ -1,0 +1,7 @@
+$kind: http-request
+name: POST /api/email-verification/verify-otp
+url: "{{baseUrl}}/api/email-verification/verify-otp"
+method: POST
+headers:
+  Content-Type: application/json
+order: 10000

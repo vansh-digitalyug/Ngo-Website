@@ -1,0 +1,6 @@
+$kind: collection
+variables:
+  baseUrl: http://localhost:5000
+  token: ""
+  adminToken: ""
+  ngoToken: ""

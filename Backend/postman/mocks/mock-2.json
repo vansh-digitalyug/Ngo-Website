@@ -1,0 +1,13 @@
+{
+  "id": "9c1e7bee-34d3-4032-ac23-9b10a378ad0d",
+  "version": 1,
+  "name": "NGO Setup Script",
+  "protocol": "http",
+  "port": 4501,
+  "mockSrc": "./mock-2.js",
+  "autoRestartOnChange": true,
+  "logging": {
+    "level": "verbose",
+    "showBody": true
+  }
+}

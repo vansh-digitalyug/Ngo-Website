@@ -102,5 +102,6 @@ const gallerySchema = new mongoose.Schema({
 gallerySchema.index({ type: 1, isActive: 1, createdAt: -1 });
 gallerySchema.index({ category: 1 });
 gallerySchema.index({ ngoId: 1, approvalStatus: 1 });
+gallerySchema.index({ title: "text", description: "text" });
 
 export default mongoose.model("Gallery", gallerySchema);

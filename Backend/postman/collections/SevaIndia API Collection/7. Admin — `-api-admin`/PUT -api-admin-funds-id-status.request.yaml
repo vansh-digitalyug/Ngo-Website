@@ -1,0 +1,9 @@
+$kind: http-request
+name: PUT /api/admin/funds/:id/status
+url: "{{baseUrl}}/api/admin/funds/:id/status"
+method: PUT
+headers:
+  Content-Type: application/json
+pathVariables:
+  id: ""
+order: 14000

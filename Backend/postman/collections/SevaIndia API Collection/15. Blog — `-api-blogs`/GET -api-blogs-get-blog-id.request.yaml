@@ -1,0 +1,9 @@
+$kind: http-request
+name: GET /api/blogs/get-blog/:id
+url: "{{baseUrl}}/api/blogs/get-blog/:id"
+method: GET
+headers:
+  Content-Type: application/json
+pathVariables:
+  id: ""
+order: 2000

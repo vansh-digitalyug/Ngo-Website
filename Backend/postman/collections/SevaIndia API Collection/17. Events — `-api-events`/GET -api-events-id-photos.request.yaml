@@ -1,0 +1,9 @@
+$kind: http-request
+name: GET /api/events/:id/photos
+url: "{{baseUrl}}/api/events/:id/photos"
+method: GET
+headers:
+  Content-Type: application/json
+pathVariables:
+  id: ""
+order: 3000

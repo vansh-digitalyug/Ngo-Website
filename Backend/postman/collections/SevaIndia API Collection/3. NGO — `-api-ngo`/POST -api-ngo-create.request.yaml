@@ -1,0 +1,7 @@
+$kind: http-request
+name: POST /api/ngo/create
+url: "{{baseUrl}}/api/ngo/create"
+method: POST
+headers:
+  Content-Type: application/json
+order: 1000

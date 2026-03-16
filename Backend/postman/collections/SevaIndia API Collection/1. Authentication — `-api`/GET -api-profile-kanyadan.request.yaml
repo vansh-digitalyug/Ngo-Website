@@ -1,0 +1,7 @@
+$kind: http-request
+name: GET /api/profile/kanyadan
+url: "{{baseUrl}}/api/profile/kanyadan"
+method: GET
+headers:
+  Content-Type: application/json
+order: 15000

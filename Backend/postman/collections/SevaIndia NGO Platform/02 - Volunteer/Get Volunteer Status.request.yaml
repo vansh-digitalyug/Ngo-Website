@@ -1,0 +1,6 @@
+$kind: http-request
+url: "{{base_url}}/api/volunteer/status"
+method: GET
+headers:
+  Authorization: Bearer {{user_token}}
+order: 1000

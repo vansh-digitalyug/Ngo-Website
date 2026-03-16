@@ -1,0 +1,9 @@
+$kind: http-request
+name: DELETE /api/contact/:id
+url: "{{baseUrl}}/api/contact/:id"
+method: DELETE
+headers:
+  Content-Type: application/json
+pathVariables:
+  id: ""
+order: 6000

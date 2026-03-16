@@ -1,0 +1,13 @@
+$kind: http-request
+url: "{{base_url}}/api/contact/CONTACT_ID_HERE/reply"
+method: POST
+headers:
+  Content-Type: application/json
+  Authorization: Bearer {{admin_token}}
+body:
+  type: json
+  content: >-
+    {
+      "message": "Thank you for reaching out! We appreciate your interest in our programs. Your donation helps us run education and healthcare camps for underprivileged communities."
+    }
+order: 5000

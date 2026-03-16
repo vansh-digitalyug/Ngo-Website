@@ -1,0 +1,7 @@
+$kind: http-request
+name: POST /api/google-login
+url: "{{baseUrl}}/api/google-login"
+method: POST
+headers:
+  Content-Type: application/json
+order: 4000

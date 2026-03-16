@@ -120,6 +120,40 @@ export const deleteCategory = async (categoryId) => {
   return response.data;
 };
 
+export const hideCategory = async (categoryId) => {
+  const response = await axios.put(
+    `${API_BASE_URL}/services/admin/categories/${categoryId}/hide`,
+    {},
+    { headers: getAuthHeaders() }
+  );
+  return response.data;
+};
+
+export const unhideCategory = async (categoryId) => {
+  const response = await axios.put(
+    `${API_BASE_URL}/services/admin/categories/${categoryId}/unhide`,
+    {},
+    { headers: getAuthHeaders() }
+  );
+  return response.data;
+};
+
+export const fetchCategoriesAdmin = async (includeHidden = false) => {
+  const response = await axios.get(
+    `${API_BASE_URL}/services/admin/categories`,
+    { headers: getAuthHeaders(), params: includeHidden ? { includeHidden: "true" } : {} }
+  );
+  return response.data.data;
+};
+
+export const fetchProgramsByCategoryAdmin = async (categoryId, includeHidden = false) => {
+  const response = await axios.get(
+    `${API_BASE_URL}/services/categories/${categoryId}/programs`,
+    { params: includeHidden ? { includeHidden: "true" } : {} }
+  );
+  return response.data.data;
+};
+
 // PROGRAM
 export const createProgram = async (payload) => {
   const response = await axios.post(
@@ -142,6 +176,32 @@ export const updateProgram = async (programId, payload) => {
 export const deleteProgram = async (programId) => {
   const response = await axios.delete(
     `${API_BASE_URL}/services/admin/programs/${programId}`,
+    { headers: getAuthHeaders() }
+  );
+  return response.data;
+};
+
+export const hideProgram = async (programId) => {
+  const response = await axios.put(
+    `${API_BASE_URL}/services/admin/programs/${programId}/hide`,
+    {},
+    { headers: getAuthHeaders() }
+  );
+  return response.data;
+};
+
+export const unhideProgram = async (programId) => {
+  const response = await axios.put(
+    `${API_BASE_URL}/services/admin/programs/${programId}/unhide`,
+    {},
+    { headers: getAuthHeaders() }
+  );
+  return response.data;
+};
+
+export const hardDeleteProgram = async (programId) => {
+  const response = await axios.delete(
+    `${API_BASE_URL}/services/admin/programs/${programId}/hard`,
     { headers: getAuthHeaders() }
   );
   return response.data;

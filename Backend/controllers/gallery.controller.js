@@ -105,6 +105,54 @@ export const getCategories = asyncHandler(async (req, res) => {
 });
 
 // ============================================
+// PUBLIC SEARCH
+// ============================================
+
+export const searchGallery = asyncHandler(async (req, res) => {
+  const { q = "", type, category, page = 1, limit = 20 } = req.query;
+
+  const term = q.trim();
+  if (!term) {
+    return res.status(400).json({ success: false, message: "Search query is required" });
+  }
+
+  const query = {
+    isActive: true,
+    approvalStatus: "approved",
+    $or: [
+      { title: { $regex: term, $options: "i" } },
+      { description: { $regex: term, $options: "i" } },
+    ],
+  };
+
+  if (type && type !== "all") query.type = type;
+  if (category && category !== "all") query.category = category;
+
+  const skip = (parseInt(page) - 1) * parseInt(limit);
+
+  const [items, total] = await Promise.all([
+    Gallery.find(query)
+      .sort({ order: 1, createdAt: -1 })
+      .skip(skip)
+      .limit(parseInt(limit))
+      .select("-uploadedBy"),
+    Gallery.countDocuments(query),
+  ]);
+
+  return res.json({
+    success: true,
+    query: term,
+    items: await signItems(items),
+    pagination: {
+      total,
+      page: parseInt(page),
+      pages: Math.ceil(total / parseInt(limit)),
+      limit: parseInt(limit),
+    },
+  });
+});
+
+// ============================================
 // ADMIN ENDPOINTS
 // ============================================
 

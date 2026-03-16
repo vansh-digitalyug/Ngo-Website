@@ -1,0 +1,9 @@
+$kind: http-request
+name: DELETE /api/services/admin/categories/:categoryId
+url: "{{baseUrl}}/api/services/admin/categories/:categoryId"
+method: DELETE
+headers:
+  Content-Type: application/json
+pathVariables:
+  categoryId: ""
+order: 14000

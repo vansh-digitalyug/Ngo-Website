@@ -1,0 +1,4 @@
+$kind: http-request
+url: "{{base_url}}/api/ngo/NGO_ID_HERE"
+method: GET
+order: 3000

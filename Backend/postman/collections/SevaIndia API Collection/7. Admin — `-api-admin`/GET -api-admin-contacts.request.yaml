@@ -1,0 +1,7 @@
+$kind: http-request
+name: GET /api/admin/contacts
+url: "{{baseUrl}}/api/admin/contacts"
+method: GET
+headers:
+  Content-Type: application/json
+order: 9000

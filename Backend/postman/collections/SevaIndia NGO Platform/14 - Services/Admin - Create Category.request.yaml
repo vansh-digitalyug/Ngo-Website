@@ -1,0 +1,15 @@
+$kind: http-request
+url: "{{base_url}}/api/services/admin/categories"
+method: POST
+headers:
+  Content-Type: application/json
+  Authorization: Bearer {{admin_token}}
+body:
+  type: json
+  content: >-
+    {
+      "name": "Healthcare",
+      "description": "Medical support and healthcare programs for underprivileged communities.",
+      "imageKey": "services/healthcare-cover.jpg"
+    }
+order: 10000

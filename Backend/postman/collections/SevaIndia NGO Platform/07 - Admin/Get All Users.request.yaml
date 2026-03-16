@@ -1,0 +1,6 @@
+$kind: http-request
+url: "{{base_url}}/api/admin/users"
+method: GET
+headers:
+  Authorization: Bearer {{admin_token}}
+order: 12000

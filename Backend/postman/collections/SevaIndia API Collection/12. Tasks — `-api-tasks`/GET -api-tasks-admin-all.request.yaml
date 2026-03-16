@@ -1,0 +1,7 @@
+$kind: http-request
+name: GET /api/tasks/admin/all
+url: "{{baseUrl}}/api/tasks/admin/all"
+method: GET
+headers:
+  Content-Type: application/json
+order: 2000

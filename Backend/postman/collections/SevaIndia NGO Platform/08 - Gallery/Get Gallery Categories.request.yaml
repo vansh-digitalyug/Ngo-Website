@@ -1,0 +1,6 @@
+$kind: http-request
+url: "{{base_url}}/api/gallery/categories?type=image"
+method: GET
+queryParams:
+  type: image
+order: 3000

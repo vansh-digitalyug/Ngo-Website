@@ -1,0 +1,1746 @@
+{
+  "info": {
+    "name": "SevaIndia NGO Platform",
+    "description": "Complete API collection for SevaIndia NGO Platform",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:5000",
+      "type": "string"
+    },
+    {
+      "key": "user_token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "admin_token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "ngo_token",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "01 - Authentication",
+      "item": [
+        {
+          "name": "Send Register OTP",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{base_url}}/api/send-register-otp", "host": ["{{base_url}}"], "path": ["api", "send-register-otp"] },
+            "body": {
+              "mode": "raw",
+              "options": { "raw": { "language": "json" } },
+              "raw": "{\n  \"email\": \"john.doe@example.com\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Register User",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{base_url}}/api/register", "host": ["{{base_url}}"], "path": ["api", "register"] },
+            "body": {
+              "mode": "raw",
+              "options": { "raw": { "language": "json" } },
+              "raw": "{\n  \"name\": \"John Doe\",\n  \"email\": \"john.doe@example.com\",\n  \"password\": \"Password@123\",\n  \"phone\": \"9876543210\",\n  \"otp\": \"123456\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Login User",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{base_url}}/api/login", "host": ["{{base_url}}"], "path": ["api", "login"] },
+            "body": {
+              "mode": "raw",
+              "options": { "raw": { "language": "json" } },
+              "raw": "{\n  \"email\": \"john.doe@example.com\",\n  \"password\": \"Password@123\",\n  \"loginType\": \"user\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Login NGO",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{base_url}}/api/login", "host": ["{{base_url}}"], "path": ["api", "login"] },
+            "body": {
+              "mode": "raw",
+              "options": { "raw": { "language": "json" } },
+              "raw": "{\n  \"email\": \"ngo@example.com\",\n  \"password\": \"Password@123\",\n  \"loginType\": \"ngo\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Google Login",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{base_url}}/api/google-login", "host": ["{{base_url}}"], "path": ["api", "google-login"] },
+            "body": {
+              "mode": "raw",
+              "options": { "raw": { "language": "json" } },
+              "raw": "{\n  \"credential\": \"<google_id_token_here>\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Forgot Password",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{base_url}}/api/forgot-password", "host": ["{{base_url}}"], "path": ["api", "forgot-password"] },
+            "body": {
+              "mode": "raw",
+              "options": { "raw": { "language": "json" } },
+              "raw": "{\n  \"email\": \"john.doe@example.com\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Reset Password",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{base_url}}/api/reset-password/RESET_TOKEN_HERE", "host": ["{{base_url}}"], "path": ["api", "reset-password", "RESET_TOKEN_HERE"] },
+            "body": {
+              "mode": "raw",
+              "options": { "raw": { "language": "json" } },
+              "raw": "{\n  \"password\": \"NewPassword@456\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Get Profile",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{user_token}}" }],
+            "url": { "raw": "{{base_url}}/api/profile", "host": ["{{base_url}}"], "path": ["api", "profile"] }
+          }
+        },
+        {
+          "name": "Update Profile",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Authorization", "value": "Bearer {{user_token}}" }],
+            "url": { "raw": "{{base_url}}/api/profile", "host": ["{{base_url}}"], "path": ["api", "profile"] },
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                { "key": "name", "value": "John Updated", "type": "text" },
+                { "key": "phone", "value": "9876543210", "type": "text" },
+                { "key": "avatar", "type": "file", "src": "" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Send Email Verification OTP",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{user_token}}" }],
+            "url": { "raw": "{{base_url}}/api/email-verification/send-otp", "host": ["{{base_url}}"], "path": ["api", "email-verification", "send-otp"] }
+          }
+        },
+        {
+          "name": "Verify Email OTP",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{user_token}}" }
+            ],
+            "url": { "raw": "{{base_url}}/api/email-verification/verify-otp", "host": ["{{base_url}}"], "path": ["api", "email-verification", "verify-otp"] },
+            "body": {
+              "mode": "raw",
+              "options": { "raw": { "language": "json" } },
+              "raw": "{\n  \"otp\": \"123456\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Change Password",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{user_token}}" }
+            ],
+            "url": { "raw": "{{base_url}}/api/change-password", "host": ["{{base_url}}"], "path": ["api", "change-password"] },
+            "body": {
+              "mode": "raw",
+              "options": { "raw": { "language": "json" } },
+              "raw": "{\n  \"currentPassword\": \"Password@123\",\n  \"newPassword\": \"NewPassword@456\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Logout",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{user_token}}" }],
+            "url": { "raw": "{{base_url}}/api/logout", "host": ["{{base_url}}"], "path": ["api", "logout"] }
+          }
+        },
+        {
+          "name": "Get User Donations",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{user_token}}" }],
+            "url": { "raw": "{{base_url}}/api/profile/donations", "host": ["{{base_url}}"], "path": ["api", "profile", "donations"] }
+          }
+        },
+        {
+          "name": "Get User Volunteer Application",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{user_token}}" }],
+            "url": { "raw": "{{base_url}}/api/profile/volunteer", "host": ["{{base_url}}"], "path": ["api", "profile", "volunteer"] }
+          }
+        },
+        {
+          "name": "Get User Kanyadan Applications",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{user_token}}" }],
+            "url": { "raw": "{{base_url}}/api/profile/kanyadan", "host": ["{{base_url}}"], "path": ["api", "profile", "kanyadan"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "02 - Volunteer",
+      "item": [
+        {
+          "name": "Get Volunteer Status",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{user_token}}" }],
+            "url": { "raw": "{{base_url}}/api/volunteer/status", "host": ["{{base_url}}"], "path": ["api", "volunteer", "status"] }
+          }
+        },
+        {
+          "name": "Apply as Volunteer",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{user_token}}" }
+            ],
+            "url": { "raw": "{{base_url}}/api/volunteer/apply", "host": ["{{base_url}}"], "path": ["api", "volunteer", "apply"] },
+            "body": {
+              "mode": "raw",
+              "options": { "raw": { "language": "json" } },
+              "raw": "{\n  \"name\": \"John Doe\",\n  \"phone\": \"9876543210\",\n  \"city\": \"Mumbai\",\n  \"skills\": [\"teaching\", \"first-aid\"],\n  \"availability\": \"weekends\",\n  \"motivation\": \"I want to contribute to society and help underprivileged communities.\"\n}"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "03 - NGO",
+      "item": [
+        {
+          "name": "Register NGO",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{base_url}}/api/ngo/create", "host": ["{{base_url}}"], "path": ["api", "ngo", "create"] },
+            "body": {
+              "mode": "raw",
+              "options": { "raw": { "language": "json" } },
+              "raw": "{\n  \"name\": \"Hope Foundation\",\n  \"email\": \"hopefoundation@example.com\",\n  \"phone\": \"9876543210\",\n  \"password\": \"NGO@Secure123\",\n  \"city\": \"Delhi\",\n  \"state\": \"Delhi\",\n  \"description\": \"We are dedicated to providing education and healthcare to underprivileged children.\",\n  \"registrationNumber\": \"NGO/DEL/2023/001\",\n  \"panNumber\": \"ABCDE1234F\",\n  \"registrationCertificateKey\": \"ngo-docs/reg-cert.pdf\",\n  \"panCardKey\": \"ngo-docs/pan-card.pdf\",\n  \"logo\": \"ngo-docs/logo.jpg\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Get All NGOs",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/ngo?page=1&limit=10",
+              "host": ["{{base_url}}"],
+              "path": ["api", "ngo"],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "limit", "value": "10" },
+                { "key": "city", "value": "", "disabled": true },
+                { "key": "state", "value": "", "disabled": true }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get NGO by ID",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{base_url}}/api/ngo/NGO_ID_HERE", "host": ["{{base_url}}"], "path": ["api", "ngo", "NGO_ID_HERE"] }
+          }
+        },
+        {
+          "name": "Get NGO Gallery",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{base_url}}/api/ngo/NGO_ID_HERE/gallery", "host": ["{{base_url}}"], "path": ["api", "ngo", "NGO_ID_HERE", "gallery"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "04 - NGO Dashboard",
+      "item": [
+        {
+          "name": "Get NGO Status",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{base_url}}/api/ngo-dashboard/status", "host": ["{{base_url}}"], "path": ["api", "ngo-dashboard", "status"] }
+          }
+        },
+        {
+          "name": "Get Dashboard Stats",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{ngo_token}}" }],
+            "url": { "raw": "{{base_url}}/api/ngo-dashboard/dashboard", "host": ["{{base_url}}"], "path": ["api", "ngo-dashboard", "dashboard"] }
+          }
+        },
+        {
+          "name": "Get NGO Profile",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{ngo_token}}" }],
+            "url": { "raw": "{{base_url}}/api/ngo-dashboard/profile", "host": ["{{base_url}}"], "path": ["api", "ngo-dashboard", "profile"] }
+          }
+        },
+        {
+          "name": "Update NGO Profile",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{ngo_token}}" }
+            ],
+            "url": { "raw": "{{base_url}}/api/ngo-dashboard/profile", "host": ["{{base_url}}"], "path": ["api", "ngo-dashboard", "profile"] },
+            "body": {
+              "mode": "raw",
+              "options": { "raw": { "language": "json" } },
+              "raw": "{\n  \"name\": \"Hope Foundation Updated\",\n  \"description\": \"Updated description for our NGO.\",\n  \"phone\": \"9123456789\",\n  \"city\": \"Mumbai\",\n  \"state\": \"Maharashtra\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Get NGO Gallery",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{ngo_token}}" }],
+            "url": { "raw": "{{base_url}}/api/ngo-dashboard/gallery", "host": ["{{base_url}}"], "path": ["api", "ngo-dashboard", "gallery"] }
+          }
+        },
+        {
+          "name": "Get Gallery Upload URL",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{ngo_token}}" }],
+            "url": {
+              "raw": "{{base_url}}/api/ngo-dashboard/gallery/upload-url?filename=event-photo.jpg&contentType=image/jpeg",
+              "host": ["{{base_url}}"],
+              "path": ["api", "ngo-dashboard", "gallery", "upload-url"],
+              "query": [
+                { "key": "filename", "value": "event-photo.jpg" },
+                { "key": "contentType", "value": "image/jpeg" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Add Gallery Item",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{ngo_token}}" }
+            ],
+            "url": { "raw": "{{base_url}}/api/ngo-dashboard/gallery", "host": ["{{base_url}}"], "path": ["api", "ngo-dashboard", "gallery"] },
+            "body": {
+              "mode": "raw",
+              "options": { "raw": { "language": "json" } },
+              "raw": "{\n  \"title\": \"Annual Community Event 2024\",\n  \"description\": \"Photos from our annual community gathering.\",\n  \"imageKey\": \"ngo-gallery/event-photo.jpg\",\n  \"type\": \"image\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Delete Gallery Item",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{ngo_token}}" }],
+            "url": { "raw": "{{base_url}}/api/ngo-dashboard/gallery/GALLERY_ITEM_ID", "host": ["{{base_url}}"], "path": ["api", "ngo-dashboard", "gallery", "GALLERY_ITEM_ID"] }
+          }
+        },
+        {
+          "name": "Get NGO Volunteers",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{ngo_token}}" }],
+            "url": { "raw": "{{base_url}}/api/ngo-dashboard/volunteers", "host": ["{{base_url}}"], "path": ["api", "ngo-dashboard", "volunteers"] }
+          }
+        },
+        {
+          "name": "Add Volunteer to NGO",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{ngo_token}}" }
+            ],
+            "url": { "raw": "{{base_url}}/api/ngo-dashboard/volunteers/add", "host": ["{{base_url}}"], "path": ["api", "ngo-dashboard", "volunteers", "add"] },
+            "body": {
+              "mode": "raw",
+              "options": { "raw": { "language": "json" } },
+              "raw": "{\n  \"volunteerId\": \"VOLUNTEER_MONGO_ID_HERE\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Update Volunteer Status",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{ngo_token}}" }
+            ],
+            "url": { "raw": "{{base_url}}/api/ngo-dashboard/volunteers/VOLUNTEER_ID", "host": ["{{base_url}}"], "path": ["api", "ngo-dashboard", "volunteers", "VOLUNTEER_ID"] },
+            "body": {
+              "mode": "raw",
+              "options": { "raw": { "language": "json" } },
+              "raw": "{\n  \"status\": \"active\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Request Funds",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{ngo_token}}" }
+            ],
+            "url": { "raw": "{{base_url}}/api/ngo-dashboard/funds/request", "host": ["{{base_url}}"], "path": ["api", "ngo-dashboard", "funds", "request"] },
+            "body": {
+              "mode": "raw",
+              "options": { "raw": { "language": "json" } },
+              "raw": "{\n  \"amount\": 75000,\n  \"purpose\": \"Medical supplies for children\",\n  \"description\": \"We need funds to purchase medicines and medical equipment for 200 underprivileged children in our area.\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Get My Fund Requests",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{ngo_token}}" }],
+            "url": { "raw": "{{base_url}}/api/ngo-dashboard/funds", "host": ["{{base_url}}"], "path": ["api", "ngo-dashboard", "funds"] }
+          }
+        },
+        {
+          "name": "Resolve Fund Ticket",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{ngo_token}}" }
+            ],
+            "url": { "raw": "{{base_url}}/api/ngo-dashboard/funds/FUND_REQUEST_ID/resolve", "host": ["{{base_url}}"], "path": ["api", "ngo-dashboard", "funds", "FUND_REQUEST_ID", "resolve"] },
+            "body": {
+              "mode": "raw",
+              "options": { "raw": { "language": "json" } },
+              "raw": "{\n  \"resolution\": \"Funds received. Thank you for the support.\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Get NGO Donation History",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{ngo_token}}" }],
+            "url": { "raw": "{{base_url}}/api/ngo-dashboard/donations", "host": ["{{base_url}}"], "path": ["api", "ngo-dashboard", "donations"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "05 - Contact",
+      "item": [
+        {
+          "name": "Submit Contact Message",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{base_url}}/api/contact", "host": ["{{base_url}}"], "path": ["api", "contact"] },
+            "body": {
+              "mode": "raw",
+              "options": { "raw": { "language": "json" } },
+              "raw": "{\n  \"name\": \"Priya Sharma\",\n  \"email\": \"priya@example.com\",\n  \"phone\": \"9123456789\",\n  \"subject\": \"Donation Query\",\n  \"message\": \"I would like to know more about how my donation will be used and which programs are currently active.\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Get All Contacts (Admin)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{admin_token}}" }],
+            "url": { "raw": "{{base_url}}/api/contact/all", "host": ["{{base_url}}"], "path": ["api", "contact", "all"] }
+          }
+        },
+        {
+          "name": "Get Contact by ID",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{admin_token}}" }],
+            "url": { "raw": "{{base_url}}/api/contact/CONTACT_ID_HERE", "host": ["{{base_url}}"], "path": ["api", "contact", "CONTACT_ID_HERE"] }
+          }
+        },
+        {
+          "name": "Update Contact Status",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{admin_token}}" }
+            ],
+            "url": { "raw": "{{base_url}}/api/contact/CONTACT_ID_HERE/status", "host": ["{{base_url}}"], "path": ["api", "contact", "CONTACT_ID_HERE", "status"] },
+            "body": {
+              "mode": "raw",
+              "options": { "raw": { "language": "json" } },
+              "raw": "{\n  \"status\": \"resolved\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Reply to Contact",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{admin_token}}" }
+            ],
+            "url": { "raw": "{{base_url}}/api/contact/CONTACT_ID_HERE/reply", "host": ["{{base_url}}"], "path": ["api", "contact", "CONTACT_ID_HERE", "reply"] },
+            "body": {
+              "mode": "raw",
+              "options": { "raw": { "language": "json" } },
+              "raw": "{\n  \"message\": \"Thank you for reaching out! We appreciate your interest in our programs. Your donation helps us run education and healthcare camps for underprivileged communities.\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Delete Contact",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{admin_token}}" }],
+            "url": { "raw": "{{base_url}}/api/contact/CONTACT_ID_HERE", "host": ["{{base_url}}"], "path": ["api", "contact", "CONTACT_ID_HERE"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "06 - KYC",
+      "item": [
+        {
+          "name": "Request Aadhaar OTP",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{user_token}}" }
+            ],
+            "url": { "raw": "{{base_url}}/api/kyc/aadhaar-otp", "host": ["{{base_url}}"], "path": ["api", "kyc", "aadhaar-otp"] },
+            "body": {
+              "mode": "raw",
+              "options": { "raw": { "language": "json" } },
+              "raw": "{\n  \"aadhaarNumber\": \"123456789012\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Verify Aadhaar",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{user_token}}" }
+            ],
+            "url": { "raw": "{{base_url}}/api/kyc/verify-aadhaar", "host": ["{{base_url}}"], "path": ["api", "kyc", "verify-aadhaar"] },
+            "body": {
+              "mode": "raw",
+              "options": { "raw": { "language": "json" } },
+              "raw": "{\n  \"aadhaarNumber\": \"123456789012\",\n  \"otp\": \"654321\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Verify PAN",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{user_token}}" }
+            ],
+            "url": { "raw": "{{base_url}}/api/kyc/verify-pan", "host": ["{{base_url}}"], "path": ["api", "kyc", "verify-pan"] },
+            "body": {
+              "mode": "raw",
+              "options": { "raw": { "language": "json" } },
+              "raw": "{\n  \"panNumber\": \"ABCDE1234F\"\n}"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "07 - Admin",
+      "item": [
+        {
+          "name": "Admin Login",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{base_url}}/api/admin/login", "host": ["{{base_url}}"], "path": ["api", "admin", "login"] },
+            "body": {
+              "mode": "raw",
+              "options": { "raw": { "language": "json" } },
+              "raw": "{\n  \"email\": \"admin@sevaindia.org\",\n  \"password\": \"Admin@Secure123\",\n  \"loginType\": \"admin\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Get Dashboard Stats",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{admin_token}}" }],
+            "url": { "raw": "{{base_url}}/api/admin/dashboard", "host": ["{{base_url}}"], "path": ["api", "admin", "dashboard"] }
+          }
+        },
+        {
+          "name": "Get All NGOs",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{admin_token}}" }],
+            "url": { "raw": "{{base_url}}/api/admin/ngos", "host": ["{{base_url}}"], "path": ["api", "admin", "ngos"] }
+          }
+        },
+        {
+          "name": "Update NGO Status",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{admin_token}}" }
+            ],
+            "url": { "raw": "{{base_url}}/api/admin/ngos/NGO_ID_HERE/status", "host": ["{{base_url}}"], "path": ["api", "admin", "ngos", "NGO_ID_HERE", "status"] },
+            "body": {
+              "mode": "raw",
+              "options": { "raw": { "language": "json" } },
+              "raw": "{\n  \"status\": \"approved\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Delete NGO",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{admin_token}}" }],
+            "url": { "raw": "{{base_url}}/api/admin/ngos/NGO_ID_HERE", "host": ["{{base_url}}"], "path": ["api", "admin", "ngos", "NGO_ID_HERE"] }
+          }
+        },
+        {
+          "name": "Get All Volunteers",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{admin_token}}" }],
+            "url": { "raw": "{{base_url}}/api/admin/volunteers", "host": ["{{base_url}}"], "path": ["api", "admin", "volunteers"] }
+          }
+        },
+        {
+          "name": "Update Volunteer Status",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{admin_token}}" }
+            ],
+            "url": { "raw": "{{base_url}}/api/admin/volunteers/VOLUNTEER_ID_HERE/status", "host": ["{{base_url}}"], "path": ["api", "admin", "volunteers", "VOLUNTEER_ID_HERE", "status"] },
+            "body": {
+              "mode": "raw",
+              "options": { "raw": { "language": "json" } },
+              "raw": "{\n  \"status\": \"approved\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Delete Volunteer",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{admin_token}}" }],
+            "url": { "raw": "{{base_url}}/api/admin/volunteers/VOLUNTEER_ID_HERE", "host": ["{{base_url}}"], "path": ["api", "admin", "volunteers", "VOLUNTEER_ID_HERE"] }
+          }
+        },
+        {
+          "name": "Get All Contacts",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{admin_token}}" }],
+            "url": { "raw": "{{base_url}}/api/admin/contacts", "host": ["{{base_url}}"], "path": ["api", "admin", "contacts"] }
+          }
+        },
+        {
+          "name": "Update Contact Status",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{admin_token}}" }
+            ],
+            "url": { "raw": "{{base_url}}/api/admin/contacts/CONTACT_ID_HERE/status", "host": ["{{base_url}}"], "path": ["api", "admin", "contacts", "CONTACT_ID_HERE", "status"] },
+            "body": {
+              "mode": "raw",
+              "options": { "raw": { "language": "json" } },
+              "raw": "{\n  \"status\": \"resolved\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Delete Contact",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{admin_token}}" }],
+            "url": { "raw": "{{base_url}}/api/admin/contacts/CONTACT_ID_HERE", "host": ["{{base_url}}"], "path": ["api", "admin", "contacts", "CONTACT_ID_HERE"] }
+          }
+        },
+        {
+          "name": "Get All Users",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{admin_token}}" }],
+            "url": { "raw": "{{base_url}}/api/admin/users", "host": ["{{base_url}}"], "path": ["api", "admin", "users"] }
+          }
+        },
+        {
+          "name": "Get All Fund Requests",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{admin_token}}" }],
+            "url": { "raw": "{{base_url}}/api/admin/funds", "host": ["{{base_url}}"], "path": ["api", "admin", "funds"] }
+          }
+        },
+        {
+          "name": "Update Fund Request Status",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{admin_token}}" }
+            ],
+            "url": { "raw": "{{base_url}}/api/admin/funds/FUND_ID_HERE/status", "host": ["{{base_url}}"], "path": ["api", "admin", "funds", "FUND_ID_HERE", "status"] },
+            "body": {
+              "mode": "raw",
+              "options": { "raw": { "language": "json" } },
+              "raw": "{\n  \"status\": \"approved\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Get All Donations",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{admin_token}}" }],
+            "url": { "raw": "{{base_url}}/api/admin/donations", "host": ["{{base_url}}"], "path": ["api", "admin", "donations"] }
+          }
+        },
+        {
+          "name": "Get Donations by NGO",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{admin_token}}" }],
+            "url": { "raw": "{{base_url}}/api/admin/donations/by-ngo", "host": ["{{base_url}}"], "path": ["api", "admin", "donations", "by-ngo"] }
+          }
+        },
+        {
+          "name": "Get All Kanyadan Applications",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{admin_token}}" }],
+            "url": { "raw": "{{base_url}}/api/admin/kanyadan", "host": ["{{base_url}}"], "path": ["api", "admin", "kanyadan"] }
+          }
+        },
+        {
+          "name": "Get Kanyadan Stats",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{admin_token}}" }],
+            "url": { "raw": "{{base_url}}/api/admin/kanyadan/stats", "host": ["{{base_url}}"], "path": ["api", "admin", "kanyadan", "stats"] }
+          }
+        },
+        {
+          "name": "Update Kanyadan Application Status",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{admin_token}}" }
+            ],
+            "url": { "raw": "{{base_url}}/api/admin/kanyadan/APPLICATION_ID_HERE/status", "host": ["{{base_url}}"], "path": ["api", "admin", "kanyadan", "APPLICATION_ID_HERE", "status"] },
+            "body": {
+              "mode": "raw",
+              "options": { "raw": { "language": "json" } },
+              "raw": "{\n  \"status\": \"approved\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Delete Kanyadan Application",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{admin_token}}" }],
+            "url": { "raw": "{{base_url}}/api/admin/kanyadan/APPLICATION_ID_HERE", "host": ["{{base_url}}"], "path": ["api", "admin", "kanyadan", "APPLICATION_ID_HERE"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "08 - Gallery",
+      "item": [
+        {
+          "name": "Get Images (Public)",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/gallery/images?page=1&limit=20",
+              "host": ["{{base_url}}"],
+              "path": ["api", "gallery", "images"],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "limit", "value": "20" },
+                { "key": "category", "value": "Food Distribution", "disabled": true }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Videos (Public)",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/gallery/videos?page=1&limit=20",
+              "host": ["{{base_url}}"],
+              "path": ["api", "gallery", "videos"],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "limit", "value": "20" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Gallery Categories",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/gallery/categories?type=image",
+              "host": ["{{base_url}}"],
+              "path": ["api", "gallery", "categories"],
+              "query": [{ "key": "type", "value": "image" }]
+            }
+          }
+        },
+        {
+          "name": "Search Gallery",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/gallery/search?q=community&page=1&limit=20",
+              "host": ["{{base_url}}"],
+              "path": ["api", "gallery", "search"],
+              "query": [
+                { "key": "q", "value": "community" },
+                { "key": "type", "value": "image", "disabled": true },
+                { "key": "category", "value": "Events", "disabled": true },
+                { "key": "page", "value": "1" },
+                { "key": "limit", "value": "20" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get All Gallery Items (Admin)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{admin_token}}" }],
+            "url": {
+              "raw": "{{base_url}}/api/gallery/admin/all?page=1&limit=20",
+              "host": ["{{base_url}}"],
+              "path": ["api", "gallery", "admin", "all"],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "limit", "value": "20" },
+                { "key": "type", "value": "image", "disabled": true },
+                { "key": "status", "value": "pending", "disabled": true }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Add Gallery Image (Admin)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{admin_token}}" }],
+            "url": { "raw": "{{base_url}}/api/gallery/admin/image", "host": ["{{base_url}}"], "path": ["api", "gallery", "admin", "image"] },
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                { "key": "image", "type": "file", "src": "" },
+                { "key": "title", "value": "Annual Food Drive 2024", "type": "text" },
+                { "key": "description", "value": "Volunteers distributing food packets to 500 families.", "type": "text" },
+                { "key": "category", "value": "Food Distribution", "type": "text" },
+                { "key": "tags", "value": "food, community, volunteers", "type": "text" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Add Gallery Video (Admin)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{admin_token}}" }],
+            "url": { "raw": "{{base_url}}/api/gallery/admin/video", "host": ["{{base_url}}"], "path": ["api", "gallery", "admin", "video"] },
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                { "key": "thumbnail", "type": "file", "src": "" },
+                { "key": "title", "value": "Impact Story - Education Program", "type": "text" },
+                { "key": "description", "value": "A short film showcasing the impact of our education program.", "type": "text" },
+                { "key": "videoUrl", "value": "https://www.youtube.com/watch?v=example123", "type": "text" },
+                { "key": "category", "value": "Education", "type": "text" },
+                { "key": "tags", "value": "education, impact, children", "type": "text" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Update Gallery Item (Admin)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{admin_token}}" }
+            ],
+            "url": { "raw": "{{base_url}}/api/gallery/admin/GALLERY_ITEM_ID", "host": ["{{base_url}}"], "path": ["api", "gallery", "admin", "GALLERY_ITEM_ID"] },
+            "body": {
+              "mode": "raw",
+              "options": { "raw": { "language": "json" } },
+              "raw": "{\n  \"title\": \"Updated Gallery Title\",\n  \"description\": \"Updated description for this gallery item.\",\n  \"category\": \"Events\",\n  \"tags\": [\"community\", \"health\"]\n}"
+            }
+          }
+        },
+        {
+          "name": "Approve Gallery Item (Admin)",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Authorization", "value": "Bearer {{admin_token}}" }],
+            "url": { "raw": "{{base_url}}/api/gallery/admin/GALLERY_ITEM_ID/approve", "host": ["{{base_url}}"], "path": ["api", "gallery", "admin", "GALLERY_ITEM_ID", "approve"] }
+          }
+        },
+        {
+          "name": "Reject Gallery Item (Admin)",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Authorization", "value": "Bearer {{admin_token}}" }],
+            "url": { "raw": "{{base_url}}/api/gallery/admin/GALLERY_ITEM_ID/reject", "host": ["{{base_url}}"], "path": ["api", "gallery", "admin", "GALLERY_ITEM_ID", "reject"] }
+          }
+        },
+        {
+          "name": "Delete Gallery Item (Admin)",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{admin_token}}" }],
+            "url": { "raw": "{{base_url}}/api/gallery/admin/GALLERY_ITEM_ID", "host": ["{{base_url}}"], "path": ["api", "gallery", "admin", "GALLERY_ITEM_ID"] }
+          }
+        },
+        {
+          "name": "Bulk Delete Gallery Items (Admin)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{admin_token}}" }
+            ],
+            "url": { "raw": "{{base_url}}/api/gallery/admin/bulk-delete", "host": ["{{base_url}}"], "path": ["api", "gallery", "admin", "bulk-delete"] },
+            "body": {
+              "mode": "raw",
+              "options": { "raw": { "language": "json" } },
+              "raw": "{\n  \"ids\": [\"ID_1_HERE\", \"ID_2_HERE\", \"ID_3_HERE\"]\n}"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "09 - Payment",
+      "item": [
+        {
+          "name": "Create Razorpay Order",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{user_token}}", "disabled": true }
+            ],
+            "url": { "raw": "{{base_url}}/api/payment/order", "host": ["{{base_url}}"], "path": ["api", "payment", "order"] },
+            "body": {
+              "mode": "raw",
+              "options": { "raw": { "language": "json" } },
+              "raw": "{\n  \"amount\": 500,\n  \"currency\": \"INR\",\n  \"ngoId\": \"NGO_MONGO_ID_HERE\",\n  \"donorName\": \"Rahul Verma\",\n  \"donorEmail\": \"rahul.verma@example.com\",\n  \"donorPhone\": \"9876543210\",\n  \"message\": \"Supporting education for children.\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Verify Payment",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{base_url}}/api/payment/verify", "host": ["{{base_url}}"], "path": ["api", "payment", "verify"] },
+            "body": {
+              "mode": "raw",
+              "options": { "raw": { "language": "json" } },
+              "raw": "{\n  \"razorpay_order_id\": \"order_XxXxXxXxXxXxXx\",\n  \"razorpay_payment_id\": \"pay_XxXxXxXxXxXxXx\",\n  \"razorpay_signature\": \"signature_hash_here\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Razorpay Webhook",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "x-razorpay-signature", "value": "webhook_signature_here" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": { "raw": "{{base_url}}/api/payment/webhook", "host": ["{{base_url}}"], "path": ["api", "payment", "webhook"] },
+            "body": {
+              "mode": "raw",
+              "options": { "raw": { "language": "json" } },
+              "raw": "{\n  \"event\": \"payment.captured\",\n  \"payload\": {\n    \"payment\": {\n      \"entity\": {\n        \"id\": \"pay_XxXxXxXx\",\n        \"order_id\": \"order_XxXxXxXx\",\n        \"amount\": 50000,\n        \"currency\": \"INR\",\n        \"status\": \"captured\"\n      }\n    }\n  }\n}"
+            }
+          }
+        },
+        {
+          "name": "Get Payment History",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{user_token}}" }],
+            "url": { "raw": "{{base_url}}/api/payment/history", "host": ["{{base_url}}"], "path": ["api", "payment", "history"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "10 - S3",
+      "item": [
+        {
+          "name": "Generate Upload URL",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{base_url}}/api/s3/generate-upload-url", "host": ["{{base_url}}"], "path": ["api", "s3", "generate-upload-url"] },
+            "body": {
+              "mode": "raw",
+              "options": { "raw": { "language": "json" } },
+              "raw": "{\n  \"filename\": \"registration-certificate.pdf\",\n  \"contentType\": \"application/pdf\",\n  \"folder\": \"ngo-documents\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Get Presigned GET URL",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/s3/get-url?key=ngo-documents/registration-certificate.pdf",
+              "host": ["{{base_url}}"],
+              "path": ["api", "s3", "get-url"],
+              "query": [{ "key": "key", "value": "ngo-documents/registration-certificate.pdf" }]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "11 - Kanyadan Yojna",
+      "item": [
+        {
+          "name": "Submit Kanyadan Application",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{base_url}}/api/kanyadan/apply", "host": ["{{base_url}}"], "path": ["api", "kanyadan", "apply"] },
+            "body": {
+              "mode": "raw",
+              "options": { "raw": { "language": "json" } },
+              "raw": "{\n  \"applicantName\": \"Ramesh Kumar\",\n  \"phone\": \"9876543210\",\n  \"email\": \"ramesh.kumar@example.com\",\n  \"address\": \"123 Gandhi Nagar, Sector 5\",\n  \"state\": \"Uttar Pradesh\",\n  \"city\": \"Lucknow\",\n  \"pincode\": \"226001\",\n  \"daughterName\": \"Priya Kumar\",\n  \"daughterAge\": 22,\n  \"marriageDate\": \"2025-06-15\",\n  \"income\": 18000,\n  \"aadharNumber\": \"987612345678\",\n  \"bankAccount\": \"12345678901234\",\n  \"ifscCode\": \"SBIN0001234\",\n  \"documents\": {\n    \"aadharKey\": \"kanyadan-docs/aadhar.pdf\",\n    \"incomeProofKey\": \"kanyadan-docs/income-cert.pdf\"\n  }\n}"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "12 - Tasks",
+      "item": [
+        {
+          "name": "Admin - Get Paid Donations",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{admin_token}}" }],
+            "url": { "raw": "{{base_url}}/api/tasks/admin/donations", "host": ["{{base_url}}"], "path": ["api", "tasks", "admin", "donations"] }
+          }
+        },
+        {
+          "name": "Admin - Get All Tasks",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{admin_token}}" }],
+            "url": { "raw": "{{base_url}}/api/tasks/admin/all", "host": ["{{base_url}}"], "path": ["api", "tasks", "admin", "all"] }
+          }
+        },
+        {
+          "name": "Admin - Get Approved Volunteers",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{admin_token}}" }],
+            "url": { "raw": "{{base_url}}/api/tasks/admin/volunteers", "host": ["{{base_url}}"], "path": ["api", "tasks", "admin", "volunteers"] }
+          }
+        },
+        {
+          "name": "Admin - Create Task",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{admin_token}}" }
+            ],
+            "url": { "raw": "{{base_url}}/api/tasks/admin/create", "host": ["{{base_url}}"], "path": ["api", "tasks", "admin", "create"] },
+            "body": {
+              "mode": "raw",
+              "options": { "raw": { "language": "json" } },
+              "raw": "{\n  \"title\": \"Food Distribution in Dharavi\",\n  \"description\": \"Distribute 200 food packets to families in Dharavi, Mumbai. Coordinate with local community leaders.\",\n  \"volunteerId\": \"VOLUNTEER_MONGO_ID_HERE\",\n  \"donationId\": \"DONATION_MONGO_ID_HERE\",\n  \"deadline\": \"2025-04-30\",\n  \"location\": \"Dharavi, Mumbai, Maharashtra\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Admin - Delete Task",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{admin_token}}" }],
+            "url": { "raw": "{{base_url}}/api/tasks/admin/TASK_ID_HERE", "host": ["{{base_url}}"], "path": ["api", "tasks", "admin", "TASK_ID_HERE"] }
+          }
+        },
+        {
+          "name": "Admin - Get Task Details",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{admin_token}}" }],
+            "url": { "raw": "{{base_url}}/api/tasks/admin/task/TASK_ID_HERE", "host": ["{{base_url}}"], "path": ["api", "tasks", "admin", "task", "TASK_ID_HERE"] }
+          }
+        },
+        {
+          "name": "Volunteer - Get My Tasks",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{user_token}}" }],
+            "url": { "raw": "{{base_url}}/api/tasks/volunteer/my-tasks", "host": ["{{base_url}}"], "path": ["api", "tasks", "volunteer", "my-tasks"] }
+          }
+        },
+        {
+          "name": "Volunteer - Start Task",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Authorization", "value": "Bearer {{user_token}}" }],
+            "url": { "raw": "{{base_url}}/api/tasks/volunteer/TASK_ID_HERE/start", "host": ["{{base_url}}"], "path": ["api", "tasks", "volunteer", "TASK_ID_HERE", "start"] }
+          }
+        },
+        {
+          "name": "Volunteer - Complete Task",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{user_token}}" }
+            ],
+            "url": { "raw": "{{base_url}}/api/tasks/volunteer/TASK_ID_HERE/complete", "host": ["{{base_url}}"], "path": ["api", "tasks", "volunteer", "TASK_ID_HERE", "complete"] },
+            "body": {
+              "mode": "raw",
+              "options": { "raw": { "language": "json" } },
+              "raw": "{\n  \"completionNote\": \"Successfully distributed 200 food packets to 200 families. All families received their share without any issues.\",\n  \"mediaUrls\": [\"task-proofs/photo1.jpg\", \"task-proofs/photo2.jpg\"]\n}"
+            }
+          }
+        },
+        {
+          "name": "Volunteer - Get Task Details",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{user_token}}" }],
+            "url": { "raw": "{{base_url}}/api/tasks/volunteer/task/TASK_ID_HERE", "host": ["{{base_url}}"], "path": ["api", "tasks", "volunteer", "task", "TASK_ID_HERE"] }
+          }
+        },
+        {
+          "name": "Volunteer - Get Task Stats",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{user_token}}" }],
+            "url": { "raw": "{{base_url}}/api/tasks/volunteer/task-stats", "host": ["{{base_url}}"], "path": ["api", "tasks", "volunteer", "task-stats"] }
+          }
+        },
+        {
+          "name": "Donor - Get My Tasks",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{user_token}}" }],
+            "url": { "raw": "{{base_url}}/api/tasks/donor/my-tasks", "host": ["{{base_url}}"], "path": ["api", "tasks", "donor", "my-tasks"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "13 - Public",
+      "item": [
+        {
+          "name": "Get Public Stats",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{base_url}}/api/public/stats", "host": ["{{base_url}}"], "path": ["api", "public", "stats"] }
+          }
+        },
+        {
+          "name": "Get All Categories",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{base_url}}/api/public/categories", "host": ["{{base_url}}"], "path": ["api", "public", "categories"] }
+          }
+        },
+        {
+          "name": "Get All Programs",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{base_url}}/api/public/programs", "host": ["{{base_url}}"], "path": ["api", "public", "programs"] }
+          }
+        },
+        {
+          "name": "Get Program by ID",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{base_url}}/api/public/programs/PROGRAM_ID_HERE", "host": ["{{base_url}}"], "path": ["api", "public", "programs", "PROGRAM_ID_HERE"] }
+          }
+        },
+        {
+          "name": "Get Programs by Category",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{base_url}}/api/public/categories/CATEGORY_ID_HERE/programs", "host": ["{{base_url}}"], "path": ["api", "public", "categories", "CATEGORY_ID_HERE", "programs"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "14 - Services",
+      "item": [
+        {
+          "name": "Get All Services with Programs",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{base_url}}/api/services", "host": ["{{base_url}}"], "path": ["api", "services"] }
+          }
+        },
+        {
+          "name": "Get All Categories (Public)",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{base_url}}/api/services/categories", "host": ["{{base_url}}"], "path": ["api", "services", "categories"] }
+          }
+        },
+        {
+          "name": "Get Category by ID",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{base_url}}/api/services/categories/CATEGORY_ID_HERE", "host": ["{{base_url}}"], "path": ["api", "services", "categories", "CATEGORY_ID_HERE"] }
+          }
+        },
+        {
+          "name": "Get All Programs (Public)",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{base_url}}/api/services/programs", "host": ["{{base_url}}"], "path": ["api", "services", "programs"] }
+          }
+        },
+        {
+          "name": "Get Program by Title",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{base_url}}/api/services/programs/by-title/Free%20Medical%20Camp", "host": ["{{base_url}}"], "path": ["api", "services", "programs", "by-title", "Free%20Medical%20Camp"] }
+          }
+        },
+        {
+          "name": "Get Program by Href",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/services/programs/by-href?href=/services/medical-camp",
+              "host": ["{{base_url}}"],
+              "path": ["api", "services", "programs", "by-href"],
+              "query": [{ "key": "href", "value": "/services/medical-camp" }]
+            }
+          }
+        },
+        {
+          "name": "Get Program by ID",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{base_url}}/api/services/programs/PROGRAM_ID_HERE", "host": ["{{base_url}}"], "path": ["api", "services", "programs", "PROGRAM_ID_HERE"] }
+          }
+        },
+        {
+          "name": "Get Programs by Category (Public)",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/services/categories/CATEGORY_ID_HERE/programs",
+              "host": ["{{base_url}}"],
+              "path": ["api", "services", "categories", "CATEGORY_ID_HERE", "programs"],
+              "query": [{ "key": "includeHidden", "value": "true", "disabled": true }]
+            }
+          }
+        },
+        {
+          "name": "Admin - Get All Categories",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{admin_token}}" }],
+            "url": {
+              "raw": "{{base_url}}/api/services/admin/categories?includeHidden=true",
+              "host": ["{{base_url}}"],
+              "path": ["api", "services", "admin", "categories"],
+              "query": [{ "key": "includeHidden", "value": "true" }]
+            }
+          }
+        },
+        {
+          "name": "Admin - Create Category",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{admin_token}}" }
+            ],
+            "url": { "raw": "{{base_url}}/api/services/admin/categories", "host": ["{{base_url}}"], "path": ["api", "services", "admin", "categories"] },
+            "body": {
+              "mode": "raw",
+              "options": { "raw": { "language": "json" } },
+              "raw": "{\n  \"name\": \"Healthcare\",\n  \"description\": \"Medical support and healthcare programs for underprivileged communities.\",\n  \"imageKey\": \"services/healthcare-cover.jpg\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Admin - Update Category",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{admin_token}}" }
+            ],
+            "url": { "raw": "{{base_url}}/api/services/admin/categories/CATEGORY_ID_HERE", "host": ["{{base_url}}"], "path": ["api", "services", "admin", "categories", "CATEGORY_ID_HERE"] },
+            "body": {
+              "mode": "raw",
+              "options": { "raw": { "language": "json" } },
+              "raw": "{\n  \"name\": \"Healthcare & Wellness\",\n  \"description\": \"Updated description for healthcare programs.\",\n  \"imageUrl\": \"services/healthcare-new.jpg\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Admin - Hide Category",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Authorization", "value": "Bearer {{admin_token}}" }],
+            "url": { "raw": "{{base_url}}/api/services/admin/categories/CATEGORY_ID_HERE/hide", "host": ["{{base_url}}"], "path": ["api", "services", "admin", "categories", "CATEGORY_ID_HERE", "hide"] }
+          }
+        },
+        {
+          "name": "Admin - Unhide Category",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Authorization", "value": "Bearer {{admin_token}}" }],
+            "url": { "raw": "{{base_url}}/api/services/admin/categories/CATEGORY_ID_HERE/unhide", "host": ["{{base_url}}"], "path": ["api", "services", "admin", "categories", "CATEGORY_ID_HERE", "unhide"] }
+          }
+        },
+        {
+          "name": "Admin - Delete Category",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{admin_token}}" }],
+            "url": { "raw": "{{base_url}}/api/services/admin/categories/CATEGORY_ID_HERE", "host": ["{{base_url}}"], "path": ["api", "services", "admin", "categories", "CATEGORY_ID_HERE"] }
+          }
+        },
+        {
+          "name": "Admin - Create Program",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{admin_token}}" }
+            ],
+            "url": { "raw": "{{base_url}}/api/services/admin/programs", "host": ["{{base_url}}"], "path": ["api", "services", "admin", "programs"] },
+            "body": {
+              "mode": "raw",
+              "options": { "raw": { "language": "json" } },
+              "raw": "{\n  \"title\": \"Free Medical Camp\",\n  \"description\": \"Monthly free medical checkups and medicines for underprivileged families.\",\n  \"fullDescription\": \"Our Free Medical Camp program organizes monthly camps in rural and urban slum areas, providing free consultations, medicines, and basic diagnostic tests to families who cannot afford healthcare.\",\n  \"categoryId\": \"CATEGORY_MONGO_ID_HERE\",\n  \"imagekeys\": \"services/medical-camp-cover.jpg\",\n  \"galleryImageKeys\": [\"services/gallery/img1.jpg\", \"services/gallery/img2.jpg\"],\n  \"donationTitle\": \"Support Our Medical Camp\",\n  \"cta\": \"Donate Now\",\n  \"href\": \"/services/free-medical-camp\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Admin - Update Program",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{admin_token}}" }
+            ],
+            "url": { "raw": "{{base_url}}/api/services/admin/programs/PROGRAM_ID_HERE", "host": ["{{base_url}}"], "path": ["api", "services", "admin", "programs", "PROGRAM_ID_HERE"] },
+            "body": {
+              "mode": "raw",
+              "options": { "raw": { "language": "json" } },
+              "raw": "{\n  \"title\": \"Free Medical Camp - Updated\",\n  \"description\": \"Updated short description.\",\n  \"fullDescription\": \"Updated full description with more details.\",\n  \"donationTitle\": \"Help Us Reach More Families\",\n  \"cta\": \"Support Now\",\n  \"href\": \"/services/free-medical-camp-updated\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Admin - Hide Program",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Authorization", "value": "Bearer {{admin_token}}" }],
+            "url": { "raw": "{{base_url}}/api/services/admin/programs/PROGRAM_ID_HERE/hide", "host": ["{{base_url}}"], "path": ["api", "services", "admin", "programs", "PROGRAM_ID_HERE", "hide"] }
+          }
+        },
+        {
+          "name": "Admin - Unhide Program",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Authorization", "value": "Bearer {{admin_token}}" }],
+            "url": { "raw": "{{base_url}}/api/services/admin/programs/PROGRAM_ID_HERE/unhide", "host": ["{{base_url}}"], "path": ["api", "services", "admin", "programs", "PROGRAM_ID_HERE", "unhide"] }
+          }
+        },
+        {
+          "name": "Admin - Soft Delete Program",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{admin_token}}" }],
+            "url": { "raw": "{{base_url}}/api/services/admin/programs/PROGRAM_ID_HERE", "host": ["{{base_url}}"], "path": ["api", "services", "admin", "programs", "PROGRAM_ID_HERE"] }
+          }
+        },
+        {
+          "name": "Admin - Hard Delete Program",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{admin_token}}" }],
+            "url": { "raw": "{{base_url}}/api/services/admin/programs/PROGRAM_ID_HERE/hard", "host": ["{{base_url}}"], "path": ["api", "services", "admin", "programs", "PROGRAM_ID_HERE", "hard"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "15 - Blog",
+      "item": [
+        {
+          "name": "Get All Blogs (Public)",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{base_url}}/api/blogs/get-all-blog", "host": ["{{base_url}}"], "path": ["api", "blogs", "get-all-blog"] }
+          }
+        },
+        {
+          "name": "Get Blog by ID (Public)",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{base_url}}/api/blogs/get-blog/BLOG_ID_HERE", "host": ["{{base_url}}"], "path": ["api", "blogs", "get-blog", "BLOG_ID_HERE"] }
+          }
+        },
+        {
+          "name": "Create Blog (Admin)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{admin_token}}" }
+            ],
+            "url": { "raw": "{{base_url}}/api/blogs/create-blog", "host": ["{{base_url}}"], "path": ["api", "blogs", "create-blog"] },
+            "body": {
+              "mode": "raw",
+              "options": { "raw": { "language": "json" } },
+              "raw": "{\n  \"title\": \"How Your Donation Helped 500 Children Get Education\",\n  \"content\": \"<p>Thanks to the generous support of our donors, we were able to provide education kits, school uniforms, and tuition support to 500 underprivileged children this year...</p>\",\n  \"coverImage\": \"blogs/education-impact.jpg\",\n  \"tags\": [\"education\", \"impact\", \"children\", \"donation\"],\n  \"summary\": \"A heartwarming story of how donor contributions transformed the lives of 500 children.\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Update Blog (Admin)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{admin_token}}" }
+            ],
+            "url": { "raw": "{{base_url}}/api/blogs/update-blog/BLOG_ID_HERE", "host": ["{{base_url}}"], "path": ["api", "blogs", "update-blog", "BLOG_ID_HERE"] },
+            "body": {
+              "mode": "raw",
+              "options": { "raw": { "language": "json" } },
+              "raw": "{\n  \"title\": \"Updated Blog Title\",\n  \"summary\": \"Updated summary for the blog post.\",\n  \"tags\": [\"education\", \"impact\", \"update\"]\n}"
+            }
+          }
+        },
+        {
+          "name": "Delete Blog (Admin)",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{admin_token}}" }],
+            "url": { "raw": "{{base_url}}/api/blogs/delete-blog/BLOG_ID_HERE", "host": ["{{base_url}}"], "path": ["api", "blogs", "delete-blog", "BLOG_ID_HERE"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "16 - OTP",
+      "item": [
+        {
+          "name": "Send Phone OTP",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{base_url}}/api/otp/send-phone", "host": ["{{base_url}}"], "path": ["api", "otp", "send-phone"] },
+            "body": {
+              "mode": "raw",
+              "options": { "raw": { "language": "json" } },
+              "raw": "{\n  \"phone\": \"9876543210\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Verify Phone OTP",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{base_url}}/api/otp/verify-phone", "host": ["{{base_url}}"], "path": ["api", "otp", "verify-phone"] },
+            "body": {
+              "mode": "raw",
+              "options": { "raw": { "language": "json" } },
+              "raw": "{\n  \"phone\": \"9876543210\",\n  \"otp\": \"123456\"\n}"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "17 - Events",
+      "item": [
+        {
+          "name": "Get All Events (Public)",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/events?page=1&limit=10",
+              "host": ["{{base_url}}"],
+              "path": ["api", "events"],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "limit", "value": "10" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Event by ID (Public)",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{base_url}}/api/events/EVENT_ID_HERE", "host": ["{{base_url}}"], "path": ["api", "events", "EVENT_ID_HERE"] }
+          }
+        },
+        {
+          "name": "Get Event Photos (Public)",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{base_url}}/api/events/EVENT_ID_HERE/photos", "host": ["{{base_url}}"], "path": ["api", "events", "EVENT_ID_HERE", "photos"] }
+          }
+        },
+        {
+          "name": "Admin - Get All Events",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{admin_token}}" }],
+            "url": { "raw": "{{base_url}}/api/events/admin/all", "host": ["{{base_url}}"], "path": ["api", "events", "admin", "all"] }
+          }
+        },
+        {
+          "name": "Admin - Toggle Publish Event",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Authorization", "value": "Bearer {{admin_token}}" }],
+            "url": { "raw": "{{base_url}}/api/events/admin/EVENT_ID_HERE/publish", "host": ["{{base_url}}"], "path": ["api", "events", "admin", "EVENT_ID_HERE", "publish"] }
+          }
+        },
+        {
+          "name": "Get My Events (Auth User)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{user_token}}" }],
+            "url": { "raw": "{{base_url}}/api/events/my-events", "host": ["{{base_url}}"], "path": ["api", "events", "my-events"] }
+          }
+        },
+        {
+          "name": "Create Event (Auth User)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{user_token}}" }
+            ],
+            "url": { "raw": "{{base_url}}/api/events/create", "host": ["{{base_url}}"], "path": ["api", "events", "create"] },
+            "body": {
+              "mode": "raw",
+              "options": { "raw": { "language": "json" } },
+              "raw": "{\n  \"title\": \"Tree Plantation Drive 2025\",\n  \"description\": \"Join us for a community tree plantation drive in Aarey Colony. Together we will plant 500 native trees to combat deforestation.\",\n  \"date\": \"2025-07-15\",\n  \"time\": \"09:00 AM\",\n  \"location\": \"Aarey Colony, Mumbai, Maharashtra\",\n  \"coverImage\": \"events/tree-plantation.jpg\",\n  \"maxParticipants\": 100\n}"
+            }
+          }
+        },
+        {
+          "name": "Update Event (Auth User)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{user_token}}" }
+            ],
+            "url": { "raw": "{{base_url}}/api/events/EVENT_ID_HERE", "host": ["{{base_url}}"], "path": ["api", "events", "EVENT_ID_HERE"] },
+            "body": {
+              "mode": "raw",
+              "options": { "raw": { "language": "json" } },
+              "raw": "{\n  \"title\": \"Tree Plantation Drive 2025 - Updated\",\n  \"description\": \"Updated description with more details about the event.\",\n  \"maxParticipants\": 150\n}"
+            }
+          }
+        },
+        {
+          "name": "Delete Event (Auth User)",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{user_token}}" }],
+            "url": { "raw": "{{base_url}}/api/events/EVENT_ID_HERE", "host": ["{{base_url}}"], "path": ["api", "events", "EVENT_ID_HERE"] }
+          }
+        },
+        {
+          "name": "Add Event Photos",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{user_token}}" }
+            ],
+            "url": { "raw": "{{base_url}}/api/events/EVENT_ID_HERE/photos", "host": ["{{base_url}}"], "path": ["api", "events", "EVENT_ID_HERE", "photos"] },
+            "body": {
+              "mode": "raw",
+              "options": { "raw": { "language": "json" } },
+              "raw": "{\n  \"photos\": [\n    { \"key\": \"events/photos/photo1.jpg\", \"caption\": \"Opening ceremony with community leaders\" },\n    { \"key\": \"events/photos/photo2.jpg\", \"caption\": \"Volunteers planting trees\" },\n    { \"key\": \"events/photos/photo3.jpg\", \"caption\": \"Group photo at the end of the event\" }\n  ]\n}"
+            }
+          }
+        },
+        {
+          "name": "Delete Event Photo",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{user_token}}" }],
+            "url": { "raw": "{{base_url}}/api/events/EVENT_ID_HERE/photos/PHOTO_ID_HERE", "host": ["{{base_url}}"], "path": ["api", "events", "EVENT_ID_HERE", "photos", "PHOTO_ID_HERE"] }
+          }
+        },
+        {
+          "name": "NGO - Get My Events",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{ngo_token}}" }],
+            "url": { "raw": "{{base_url}}/api/events/ngo/my-events", "host": ["{{base_url}}"], "path": ["api", "events", "ngo", "my-events"] }
+          }
+        },
+        {
+          "name": "NGO - Create Event",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{ngo_token}}" }
+            ],
+            "url": { "raw": "{{base_url}}/api/events/ngo/create", "host": ["{{base_url}}"], "path": ["api", "events", "ngo", "create"] },
+            "body": {
+              "mode": "raw",
+              "options": { "raw": { "language": "json" } },
+              "raw": "{\n  \"title\": \"Health Awareness Camp\",\n  \"description\": \"Free health checkups, blood pressure monitoring, and health awareness sessions for the community.\",\n  \"date\": \"2025-08-20\",\n  \"time\": \"10:00 AM\",\n  \"location\": \"Community Hall, Sector 12, Noida\",\n  \"coverImage\": \"events/health-camp.jpg\",\n  \"maxParticipants\": 200\n}"
+            }
+          }
+        },
+        {
+          "name": "NGO - Update Event",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{ngo_token}}" }
+            ],
+            "url": { "raw": "{{base_url}}/api/events/ngo/EVENT_ID_HERE", "host": ["{{base_url}}"], "path": ["api", "events", "ngo", "EVENT_ID_HERE"] },
+            "body": {
+              "mode": "raw",
+              "options": { "raw": { "language": "json" } },
+              "raw": "{\n  \"title\": \"Health Awareness Camp - Updated\",\n  \"maxParticipants\": 250\n}"
+            }
+          }
+        },
+        {
+          "name": "NGO - Delete Event",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{ngo_token}}" }],
+            "url": { "raw": "{{base_url}}/api/events/ngo/EVENT_ID_HERE", "host": ["{{base_url}}"], "path": ["api", "events", "ngo", "EVENT_ID_HERE"] }
+          }
+        },
+        {
+          "name": "NGO - Add Event Photos",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{ngo_token}}" }
+            ],
+            "url": { "raw": "{{base_url}}/api/events/ngo/EVENT_ID_HERE/photos", "host": ["{{base_url}}"], "path": ["api", "events", "ngo", "EVENT_ID_HERE", "photos"] },
+            "body": {
+              "mode": "raw",
+              "options": { "raw": { "language": "json" } },
+              "raw": "{\n  \"photos\": [\n    { \"key\": \"events/ngo/photos/photo1.jpg\", \"caption\": \"Doctors examining patients\" },\n    { \"key\": \"events/ngo/photos/photo2.jpg\", \"caption\": \"Medicine distribution\" }\n  ]\n}"
+            }
+          }
+        },
+        {
+          "name": "NGO - Delete Event Photo",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{ngo_token}}" }],
+            "url": { "raw": "{{base_url}}/api/events/ngo/EVENT_ID_HERE/photos/PHOTO_ID_HERE", "host": ["{{base_url}}"], "path": ["api", "events", "ngo", "EVENT_ID_HERE", "photos", "PHOTO_ID_HERE"] }
+          }
+        }
+      ]
+    }
+  ]
+}

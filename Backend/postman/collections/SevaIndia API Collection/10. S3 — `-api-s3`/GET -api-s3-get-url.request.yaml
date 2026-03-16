@@ -1,0 +1,7 @@
+$kind: http-request
+name: GET /api/s3/get-url
+url: "{{baseUrl}}/api/s3/get-url"
+method: GET
+headers:
+  Content-Type: application/json
+order: 2000

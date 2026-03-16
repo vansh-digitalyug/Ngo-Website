@@ -1,0 +1,6 @@
+$kind: http-request
+url: "{{base_url}}/api/ngo-dashboard/volunteers"
+method: GET
+headers:
+  Authorization: Bearer {{ngo_token}}
+order: 9000

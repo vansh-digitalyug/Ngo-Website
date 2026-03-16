@@ -1,0 +1,13 @@
+$kind: http-request
+url: "{{base_url}}/api/kyc/aadhaar-otp"
+method: POST
+headers:
+  Content-Type: application/json
+  Authorization: Bearer {{user_token}}
+body:
+  type: json
+  content: |-
+    {
+      "aadhaarNumber": "123456789012"
+    }
+order: 1000

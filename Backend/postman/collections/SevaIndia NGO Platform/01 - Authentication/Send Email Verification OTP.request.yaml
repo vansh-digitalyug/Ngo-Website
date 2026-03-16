@@ -1,0 +1,6 @@
+$kind: http-request
+url: "{{base_url}}/api/email-verification/send-otp"
+method: POST
+headers:
+  Authorization: Bearer {{user_token}}
+order: 10000

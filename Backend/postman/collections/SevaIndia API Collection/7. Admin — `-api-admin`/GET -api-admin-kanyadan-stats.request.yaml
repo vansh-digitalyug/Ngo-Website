@@ -1,0 +1,7 @@
+$kind: http-request
+name: GET /api/admin/kanyadan/stats
+url: "{{baseUrl}}/api/admin/kanyadan/stats"
+method: GET
+headers:
+  Content-Type: application/json
+order: 18000

@@ -1,0 +1,7 @@
+$kind: http-request
+name: GET /api/ngo-dashboard/dashboard
+url: "{{baseUrl}}/api/ngo-dashboard/dashboard"
+method: GET
+headers:
+  Content-Type: application/json
+order: 2000

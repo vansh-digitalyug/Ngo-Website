@@ -1,0 +1,6 @@
+$kind: http-request
+url: "{{base_url}}/api/services/programs/by-href?href=/services/medical-camp"
+method: GET
+queryParams:
+  href: /services/medical-camp
+order: 6000

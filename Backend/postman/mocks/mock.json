@@ -1,0 +1,13 @@
+{
+  "id": "e49843bc-4623-4c50-a8ca-0b303dff6f28",
+  "version": 1,
+  "name": "NGO File Creator Script",
+  "protocol": "http",
+  "port": 4500,
+  "mockSrc": "./mock.js",
+  "autoRestartOnChange": true,
+  "logging": {
+    "level": "verbose",
+    "showBody": true
+  }
+}

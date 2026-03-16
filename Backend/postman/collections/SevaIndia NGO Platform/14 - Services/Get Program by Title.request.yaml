@@ -1,0 +1,4 @@
+$kind: http-request
+url: "{{base_url}}/api/services/programs/by-title/Free%20Medical%20Camp"
+method: GET
+order: 5000
