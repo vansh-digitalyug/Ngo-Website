@@ -43,6 +43,9 @@ import {
 import GalleryImages from "../pages/gallery/GalleryImages.jsx";
 import GalleryVideos from "../pages/gallery/GalleryVideos.jsx";
 import NgoPublicProfile from "../pages/NgoPublicProfile.jsx";
+import EventsPage from "../pages/events.jsx";
+import AdminEvents from "../pages/admin/AdminEvents.jsx";
+import NgoEvents from "../pages/ngo/NgoEvents.jsx";
 import PrivacyPolicy from "../pages/PrivacyPolicy.jsx";
 import TermsOfService from "../pages/TermsOfService.jsx";
 
@@ -150,6 +153,7 @@ function AppRoutes() {
         <Route path="/gallery/images" element={<GalleryImages />} />
         <Route path="/gallery/videos" element={<GalleryVideos />} />
 
+        <Route path="/events" element={<EventsPage />} />
         <Route path="/find-ngos" element={<FindNGOs />} />
         <Route path="/ngo-profile/:id" element={<NgoPublicProfile />} />
         <Route path="/donate" element={<Donate />} />
@@ -203,6 +207,7 @@ function AppRoutes() {
           <Route path="funds" element={<AdminFundRequests />} />
           <Route path="payments" element={<AdminPayments />} />
           <Route path="completed-tasks" element={<AdminCompletedTasks />} />
+          <Route path="events" element={<AdminEvents />} />
         </Route>
 
         {/* NGO Dashboard Routes */}
@@ -214,6 +219,7 @@ function AppRoutes() {
           <Route path="gallery" element={<NgoGallery />} />
           <Route path="volunteers" element={<NgoVolunteers />} />
           <Route path="funds" element={<NgoFundRequests />} />
+          <Route path="events" element={<NgoEvents />} />
         </Route>
 
       </Routes>

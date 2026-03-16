@@ -3,6 +3,28 @@ import EventPhoto from "../models/eventPhoto.model.js";
 import ApiError from "../utils/ApiError.js";
 import ApiResponse from "../utils/Apiresponse.js";
 import asyncHandler from "../utils/asyncHandler.js";
+import { GetObjectCommand } from "@aws-sdk/client-s3";
+import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
+import { s3 } from "../config/s3Client.config.js";
+
+// Build a presigned GET URL from a stored S3 key (works on private buckets)
+async function buildImageUrl(key) {
+    if (!key) return null;
+    if (key.startsWith("http://") || key.startsWith("https://")) return key;
+    if (!process.env.BUCKET_NAME) return null;
+    const command = new GetObjectCommand({ Bucket: process.env.BUCKET_NAME, Key: key });
+    return await getSignedUrl(s3, command, { expiresIn: 7 * 24 * 3600 }); // 7 days
+}
+
+async function serializeEvent(event) {
+    const obj = event.toObject ? event.toObject() : { ...event };
+    obj.imageUrl = await buildImageUrl(obj.S3Imagekey);
+    return obj;
+}
+
+async function serializeEvents(events) {
+    return Promise.all(events.map(serializeEvent));
+}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // PUBLIC
@@ -19,7 +41,8 @@ export const getAllEvents = asyncHandler(async (_req, res) => {
         .sort({ date: 1 })
         .populate("createdBy", "name email")
         .populate("ngoId", "ngoName");
-    res.status(200).json(new ApiResponse(200, "Upcoming events retrieved successfully", events));
+    const serialized = await serializeEvents(events);
+    res.status(200).json(new ApiResponse(200, "Upcoming events retrieved successfully", serialized));
 });
 
 // GET /api/events/:id — single event (public)
@@ -28,7 +51,8 @@ export const getEventById = asyncHandler(async (req, res) => {
         .populate("createdBy", "name email")
         .populate("ngoId", "ngoName");
     if (!event) throw new ApiError(404, "Event not found");
-    res.status(200).json(new ApiResponse(200, "Event retrieved successfully", event));
+    const serialized = await serializeEvent(event);
+    res.status(200).json(new ApiResponse(200, "Event retrieved successfully", serialized));
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -64,7 +88,8 @@ export const createEvent = asyncHandler(async (req, res) => {
         isPublished: role === "admin",
     });
 
-    res.status(201).json(new ApiResponse(201, "Event created successfully", event));
+    const serialized = await serializeEvent(event);
+    res.status(201).json(new ApiResponse(201, "Event created successfully", serialized));
 });
 
 // PUT /api/events/:id — update event (creator or admin)
@@ -90,7 +115,8 @@ export const updateEvent = asyncHandler(async (req, res) => {
     }
 
     const updated = await Event.findByIdAndUpdate(req.params.id, updates, { new: true });
-    res.status(200).json(new ApiResponse(200, "Event updated successfully", updated));
+    const serialized = await serializeEvent(updated);
+    res.status(200).json(new ApiResponse(200, "Event updated successfully", serialized));
 });
 
 // DELETE /api/events/:id — delete event (creator or admin)
@@ -116,7 +142,8 @@ export const getMyEvents = asyncHandler(async (req, res) => {
         : { createdBy: req.user._id };
 
     const events = await Event.find(filter).sort({ date: 1 });
-    res.status(200).json(new ApiResponse(200, "Your events retrieved successfully", events));
+    const serialized = await serializeEvents(events);
+    res.status(200).json(new ApiResponse(200, "Your events retrieved successfully", serialized));
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -129,7 +156,8 @@ export const adminGetAllEvents = asyncHandler(async (_req, res) => {
         .sort({ createdAt: -1 })
         .populate("createdBy", "name email role")
         .populate("ngoId", "ngoName");
-    res.status(200).json(new ApiResponse(200, "All events retrieved", events));
+    const serialized = await serializeEvents(events);
+    res.status(200).json(new ApiResponse(200, "All events retrieved", serialized));
 });
 
 // PATCH /api/events/admin/:id/publish — publish or unpublish
@@ -196,7 +224,12 @@ export const getEventPhotos = asyncHandler(async (req, res) => {
         .sort({ createdAt: -1 })
         .populate("uploadedBy", "name");
 
-    res.status(200).json(new ApiResponse(200, "Event photos retrieved successfully", photos));
+    const serialized = await Promise.all(photos.map(async (p) => {
+        const obj = p.toObject ? p.toObject() : { ...p };
+        obj.imageUrl = await buildImageUrl(obj.S3Imagekey);
+        return obj;
+    }));
+    res.status(200).json(new ApiResponse(200, "Event photos retrieved successfully", serialized));
 });
 
 // DELETE /api/events/:id/photos/:photoId — delete a single photo (creator or admin)
