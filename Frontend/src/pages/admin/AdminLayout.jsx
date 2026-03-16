@@ -1,12 +1,9 @@
 import React, { useState, useEffect } from "react";
 import { Link, useLocation, useNavigate, Outlet } from "react-router-dom";
-<<<<<<< HEAD
+
 import { LayoutDashboard, Building2, Users, Mail, Image, UserCircle, Heart, ClipboardList, Wallet, IndianRupee, CheckCircle2, Coins, BookOpenText, CalendarDays,Settings, Briefcase } from "lucide-react";
-=======
 
-import { LayoutDashboard, Building2, Users, Mail, Image, UserCircle, Heart, ClipboardList, Wallet, IndianRupee, CheckCircle2, Coins, Briefcase, Settings, BookOpenText } from "lucide-react";
 
->>>>>>> 2310749 (fix bugs)
 import "./admin.css";
 // Removed remove-admin-padding.css import
 
