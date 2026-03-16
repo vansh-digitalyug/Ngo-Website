@@ -13,6 +13,7 @@ const ALLOWED_LOCATIONS = new Set([
   "gallery",
   "team",
   "events",
+  "blogs",
   "misc",
 ]);
 
