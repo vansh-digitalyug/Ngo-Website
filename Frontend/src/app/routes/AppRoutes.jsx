@@ -28,6 +28,7 @@ import AdminDonations from "../pages/admin/AdminDonations.jsx";
 import AdminFundRequests from "../pages/admin/AdminFundRequests.jsx";
 import AdminPayments from "../pages/admin/AdminPayments.jsx";
 import AdminCompletedTasks from "../pages/admin/AdminCompletedTasks.jsx";
+import AddServices from "../pages/admin/AddServices.jsx";
 
 // NGO Dashboard imports
 import {
@@ -102,7 +103,7 @@ function ProfileOrAdmin() {
   try {
     const user = JSON.parse(localStorage.getItem("user"));
     if (user?.role === "admin") return <Navigate to="/admin" replace />;
-  } catch {}
+  } catch { }
   return <Profile />;
 }
 
@@ -208,6 +209,7 @@ function AppRoutes() {
           <Route path="payments" element={<AdminPayments />} />
           <Route path="completed-tasks" element={<AdminCompletedTasks />} />
           <Route path="events" element={<AdminEvents />} />
+          <Route path="services/add" element={<AddServices />} />
         </Route>
 
         {/* NGO Dashboard Routes */}

@@ -15,6 +15,7 @@ import { GiCow } from "react-icons/gi";
 import cowImg1 from "../../../assets/images/socialWelfare/Cow/image1.png";
 import cowImg2 from "../../../assets/images/socialWelfare/Cow/image2.png";
 import cowImg3 from "../../../assets/images/socialWelfare/Cow/image3.png";
+import { useServiceImage } from "../../../hooks/useServiceImage.js";
 import "./cowHelp.css";
 
 const SERVICES = [
@@ -85,6 +86,8 @@ const STORY = [
 ];
 
 function GauSevaPage() {
+    const { coverUrl, galleryUrls } = useServiceImage("Gau Seva", cowImg1);
+    const g = (i, fallback) => galleryUrls[i] || fallback;
     const [storyExpanded, setStoryExpanded] = useState(false);
     const [openFaq, setOpenFaq] = useState(null);
     const [shareLabel, setShareLabel] = useState("Share");

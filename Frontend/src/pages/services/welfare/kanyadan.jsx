@@ -20,6 +20,7 @@ import beginningImg from "../../../assets/images/socialWelfare/Kanyadan/Begginin
 import helpImg from "../../../assets/images/socialWelfare/Kanyadan/Help.png";
 import supportImg from "../../../assets/images/socialWelfare/Kanyadan/Support.png";
 import futureImg from "../../../assets/images/socialWelfare/Kanyadan/Future.png";
+import { useServiceImage } from "../../../hooks/useServiceImage.js";
 import "./kanyadan.css";
 
 const LIC_BENEFITS = [
@@ -115,6 +116,8 @@ const STORY = [
 ];
 
 function KanyadanYojnaPage() {
+    const { coverUrl, galleryUrls } = useServiceImage("Kanyadan Yojna", kanyadanImage);
+    const g = (i, fallback) => galleryUrls[i] || fallback;
     const [storyExpanded, setStoryExpanded] = useState(false);
     const [openFaq, setOpenFaq] = useState(null);
     const [shareLabel, setShareLabel] = useState("Share");

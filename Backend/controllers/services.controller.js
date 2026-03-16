@@ -13,7 +13,7 @@ import asyncHandler from "../utils/asyncHandler.js";
 // ─────────────────────────────────────────────────────────────────────────────
 
 export const createCategory = asyncHandler(async (req, res) => {
-    const { name, description, imageUrl } = req.body;
+    const { name, description, imageKey } = req.body;
 
     if (!name || name.trim() === "") throw new ApiError(400, "Category name is required");
     if (!description || description.trim() === "") throw new ApiError(400, "Category description is required");
@@ -24,7 +24,7 @@ export const createCategory = asyncHandler(async (req, res) => {
     const category = await Category.create({
         name: name.trim(),
         description: description.trim(),
-        imageUrl: imageUrl?.trim() || null,
+        imageUrl: imageKey?.trim() || null,
     });
 
     return res.status(201).json(new ApiResponse(201, "Category created successfully", category));
@@ -100,16 +100,16 @@ export const createProgram = asyncHandler(async (req, res) => {
     if (existing) throw new ApiError(409, "A program with this title already exists in this category");
 
     const program = await Program.create({
-        title:           title.trim(),
-        description:     description.trim(),
+        title: title.trim(),
+        description: description.trim(),
         fullDescription: fullDescription?.trim() || "",
         categoryId,
-        categoryName:    category.name,
-        imagekeys:       imagekeys?.trim() || null,
+        categoryName: category.name,
+        imagekeys: imagekeys?.trim() || null,
         galleryImageKeys: Array.isArray(galleryImageKeys) ? galleryImageKeys : [],
-        donationTitle:   donationTitle?.trim() || "",
-        cta:             cta?.trim() || "Help Now",
-        href:            href?.trim() || null,
+        donationTitle: donationTitle?.trim() || "",
+        cta: cta?.trim() || "Help Now",
+        href: href?.trim() || null,
     });
 
     return res.status(201).json(new ApiResponse(201, "Program created successfully", program));
@@ -155,6 +155,28 @@ export const getProgramByTitle = asyncHandler(async (req, res) => {
     return res.status(200).json(new ApiResponse(200, "Program fetched successfully", program));
 });
 
+export const getProgramByHref = asyncHandler(async (req, res) => {
+    const href = req.query.href;
+    if (!href) throw new ApiError(400, "href query param is required");
+
+    const program = await Program.findOne({ href, isActive: true }).populate("categoryId", "name");
+    if (!program) throw new ApiError(404, "Program not found for this URL");
+
+    // Reuse the same resolveImageUrl helper used by getServicesWithPrograms
+    const coverUrl = await resolveImageUrl(program.imagekeys).catch(() => null);
+
+    const galleryUrls = await Promise.all(
+        (program.galleryImageKeys || []).map(key => resolveImageUrl(key).catch(() => null))
+    ).then(urls => urls.filter(Boolean));
+
+    return res.status(200).json(new ApiResponse(200, "Program fetched successfully", {
+        ...program.toObject(),
+        coverUrl,
+        galleryUrls,
+    }));
+});
+
+
 export const updateProgram = asyncHandler(async (req, res) => {
     const { programId } = req.params;
     if (!mongoose.Types.ObjectId.isValid(programId)) throw new ApiError(400, "Invalid program ID");
@@ -168,19 +190,19 @@ export const updateProgram = asyncHandler(async (req, res) => {
         donationTitle, cta, href,
     } = req.body;
 
-    if (title?.trim())           program.title           = title.trim();
-    if (description?.trim())     program.description     = description.trim();
+    if (title?.trim()) program.title = title.trim();
+    if (description?.trim()) program.description = description.trim();
     if (fullDescription?.trim()) program.fullDescription = fullDescription.trim();
-    if (donationTitle?.trim())   program.donationTitle   = donationTitle.trim();
-    if (cta?.trim())             program.cta             = cta.trim();
-    if (href !== undefined)      program.href            = href?.trim() || null;
-    if (imagekeys !== undefined) program.imagekeys       = imagekeys?.trim() || null;
+    if (donationTitle?.trim()) program.donationTitle = donationTitle.trim();
+    if (cta?.trim()) program.cta = cta.trim();
+    if (href !== undefined) program.href = href?.trim() || null;
+    if (imagekeys !== undefined) program.imagekeys = imagekeys?.trim() || null;
     if (Array.isArray(galleryImageKeys)) program.galleryImageKeys = galleryImageKeys;
 
     if (categoryId && mongoose.Types.ObjectId.isValid(categoryId)) {
         const category = await Category.findById(categoryId);
         if (!category || !category.isActive) throw new ApiError(404, "Category not found");
-        program.categoryId   = categoryId;
+        program.categoryId = categoryId;
         program.categoryName = category.name;
     }
 
@@ -221,11 +243,11 @@ export const getServicesWithPrograms = asyncHandler(async (_req, res) => {
     // Use let/$expr form so this works on MongoDB 3.6+ (not just 5.0+)
     const result = await Category.aggregate([
         { $match: { isActive: true } },
-        { $sort:  { createdAt: 1 } },
+        { $sort: { createdAt: 1 } },
         {
             $lookup: {
                 from: "programs",
-                let:  { catId: "$_id" },
+                let: { catId: "$_id" },
                 pipeline: [
                     {
                         $match: {

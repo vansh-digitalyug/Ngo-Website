@@ -10,7 +10,8 @@ import {
 } from "react-icons/fa";
 
 // Replace with your actual image path
-import healthCampImg from "../../../assets/images/Medical/camp.jpg"; 
+import healthCampImg from "../../../assets/images/Medical/camp.jpg";
+import { useServiceImage } from "../../../hooks/useServiceImage.js";
 import "./camp.css";
 
 const DONATIONS = [
@@ -89,6 +90,8 @@ const STORY = [
 ];
 
 function FreeHealthCamp() {
+    const { coverUrl } = useServiceImage("Free Health Camp", healthCampImg);
+    const img = coverUrl || healthCampImg;
     const [storyExpanded, setStoryExpanded] = useState(false);
     const [openFaq, setOpenFaq] = useState(null);
     const [shareLabel, setShareLabel] = useState("Share");

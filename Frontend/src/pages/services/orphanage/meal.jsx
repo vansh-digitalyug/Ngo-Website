@@ -19,6 +19,7 @@ import mealImg2 from "../../../assets/images/orphanage/meal/image2.png";
 import mealImg3 from "../../../assets/images/orphanage/meal/image3.png";
 import mealImg4 from "../../../assets/images/orphanage/meal/image 4.png";
 import mealImg5 from "../../../assets/images/orphanage/meal/image5.png";
+import { useServiceImage } from "../../../hooks/useServiceImage.js";
 import "./meal.css";
 
 const MEAL_BENEFITS = [
@@ -110,6 +111,8 @@ const STORY = [
 ];
 
 function NutritiousMealPage() {
+    const { coverUrl, galleryUrls } = useServiceImage("Nutritious Meals for Orphans", orphanMeal);
+    const g = (i, fallback) => galleryUrls[i] || fallback;
     const [storyExpanded, setStoryExpanded] = useState(false);
     const [openFaq, setOpenFaq] = useState(null);
     const [shareLabel, setShareLabel] = useState("Share");

@@ -10,7 +10,8 @@ import {
 } from "react-icons/fa";
 
 // Replace with your actual image path
-import widowWomenImg from "../../../assets/images/women/widow.png"; 
+import widowWomenImg from "../../../assets/images/women/widow.png";
+import { useServiceImage } from "../../../hooks/useServiceImage.js";
 import "./widow-women.css";
 
 const DONATIONS = [
@@ -80,6 +81,8 @@ const STORY = [
 ];
 
 function WidowWomen() {
+    const { coverUrl } = useServiceImage("Hope for Widowed Women", widowWomenImg);
+    const img = coverUrl || widowWomenImg;
     const [storyExpanded, setStoryExpanded] = useState(false);
     const [openFaq, setOpenFaq] = useState(null);
     const [shareLabel, setShareLabel] = useState("Share");
@@ -149,7 +152,7 @@ function WidowWomen() {
                     <aside className="widow-side-stack">
                         <article className="campaign-card">
                             <div className="campaign-image-wrap">
-                                <img src={widowWomenImg} alt="Widow women receiving support and empowerment" />
+                                <img src={img} alt="Widow women receiving support and empowerment" />
                                 <span className="campaign-chip">Tax Benefits Available</span>
                             </div>
 
@@ -182,7 +185,7 @@ function WidowWomen() {
                                 </div>
 
                                 <div className="campaign-actions">
-                                    <Link to="/donate" state={{ serviceImage: widowWomenImg, serviceTitle: "Empower Widow Women with Financial and Social Support" }} className="campaign-btn campaign-btn-primary">
+                                    <Link to="/donate" state={{ serviceImage: img, serviceTitle: "Empower Widow Women with Financial and Social Support" }} className="campaign-btn campaign-btn-primary">
                                         Help Now
                                     </Link>
                                     <button
@@ -247,7 +250,7 @@ function WidowWomen() {
                             <h2>Support widow women empowerment</h2>
                             <p>Every donation provides financial assistance, skill training, and social support.</p>
                             <div className="support-actions">
-                                <Link to="/donate" state={{ serviceImage: widowWomenImg, serviceTitle: "Empower Widow Women with Financial and Social Support" }} className="campaign-btn campaign-btn-primary">
+                                <Link to="/donate" state={{ serviceImage: img, serviceTitle: "Empower Widow Women with Financial and Social Support" }} className="campaign-btn campaign-btn-primary">
                                     Help Now
                                 </Link>
                                 <button

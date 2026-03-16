@@ -10,6 +10,7 @@ import {
 
 // Ensure you replace this with an appropriate image for Last Rites
 import ritesImage from "../../../assets/images/socialWelfare/rites.png";
+import { useServiceImage } from "../../../hooks/useServiceImage.js";
 import "./rites.css";
 
 const DONATIONS = [
@@ -59,6 +60,8 @@ const STORY = [
 ];
 
 function LastRitesPage() {
+    const { coverUrl } = useServiceImage("Last Rites Assistance", ritesImage);
+    const img = coverUrl || ritesImage;
     const [storyExpanded, setStoryExpanded] = useState(false);
     const [openFaq, setOpenFaq] = useState(null);
     const [shareLabel, setShareLabel] = useState("Share");
