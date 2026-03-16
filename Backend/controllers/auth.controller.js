@@ -247,6 +247,7 @@ export const loginUser = asyncHandler(async (req, res) => {
         const { email, password, loginType } = req.body;
         const cleanEmail = normalizeEmail(email);
         const isNgoLogin = loginType === "ngo";
+        const isAdminLogin = loginType === "admin";
 
         if (!cleanEmail || !password) {
             return res.status(400).json({
@@ -275,6 +276,20 @@ export const loginUser = asyncHandler(async (req, res) => {
             return res.status(400).json({
                 success: false,
                 message: "Invalid email or password"
+            });
+        }
+
+        // Route-role enforcement
+        if (isAdminLogin && user.role !== "admin") {
+            return res.status(403).json({
+                success: false,
+                message: "You do not have admin access."
+            });
+        }
+        if (!isAdminLogin && !isNgoLogin && user.role === "admin") {
+            return res.status(403).json({
+                success: false,
+                message: "Admin accounts must use the admin login page."
             });
         }
 
@@ -392,7 +407,7 @@ export const googleLogin = asyncHandler(async (req, res) => {
                 authProvider: "google",
                 googleId,
                 avatar: avatar || null,
-                emailVerified: false
+                emailVerified: true
             });
         } else {
             if (user.googleId && user.googleId !== googleId) {

@@ -13,7 +13,11 @@ function Login() {
   const [showPassword, setShowPassword] = useState(false);
   
   // Derive loginType from URL path
-  const loginType = location.pathname === "/login/ngo" ? "ngo" : "user";
+  const loginType = location.pathname === "/login/ngo"
+    ? "ngo"
+    : location.pathname === "/login/admin"
+      ? "admin"
+      : "user";
 
   const getRedirectPath = () => {
     const candidate = location.state?.redirectTo;
@@ -195,7 +199,7 @@ function Login() {
     setResetError("");
     setResetSuccess("");
     setShowResetModal(true);
-  }, [location.search, isLogin]);
+  }, [location.search]);
 
   useEffect(() => {
     const forgotFlag = new URLSearchParams(location.search).get("forgot");
@@ -208,7 +212,7 @@ function Login() {
     setForgotError("");
     setForgotSuccess("");
     setShowForgotModal(true);
-  }, [location.search, isLogin]);
+  }, [location.search]);
 
   const closeResetModal = () => {
     if (resetLoading) return;
@@ -497,7 +501,7 @@ function Login() {
         <div style={styles.formSection}>
           <div style={styles.formContainer}>
             {/* LOGIN TYPE TABS */}
-            {isLogin && (
+            {isLogin && loginType !== "admin" && (
               <div style={styles.loginTypeTabs}>
                 <button
                   type="button"
@@ -520,17 +524,22 @@ function Login() {
 
             <div style={styles.header}>
               <h2 style={styles.title}>
-                {isLogin 
-                  ? (loginType === "ngo" ? "NGO Dashboard Access" : "Welcome Back")
+                {isLogin
+                  ? loginType === "admin"
+                    ? "Admin Access"
+                    : loginType === "ngo"
+                      ? "NGO Dashboard Access"
+                      : "Welcome Back"
                   : "Join the Movement"
                 }
               </h2>
               <p style={styles.subtitle}>
                 {isLogin
-                  ? (loginType === "ngo" 
+                  ? loginType === "admin"
+                    ? "Sign in with your admin credentials."
+                    : loginType === "ngo"
                       ? "Access your NGO dashboard."
                       : "Enter your details to access your account."
-                    )
                   : "Create an account to start volunteering today."}
               </p>
             </div>
@@ -684,14 +693,16 @@ function Login() {
                 {loading
                   ? "Processing..."
                   : isLogin
-                    ? (loginType === "ngo" ? "Login as NGO" : "Sign In")
-                    : otpSent
-                      ? "Create Account"
-                      : "Create Account"}
+                    ? loginType === "admin"
+                      ? "Sign In as Admin"
+                      : loginType === "ngo"
+                        ? "Login as NGO"
+                        : "Sign In"
+                    : "Create Account"}
               </button>
             </form>
 
-            {isLogin && (
+            {isLogin && loginType === "user" && (
               <>
                 <div style={styles.authDivider}>
                   <span style={styles.authDividerLine} />
@@ -728,32 +739,34 @@ function Login() {
               </>
             )}
 
-            <p style={styles.toggleText}>
-              {isLogin ? (
-                loginType === "ngo" ? (
-                  <>
-                    Don't have an NGO registered?{" "}
-                    <span onClick={() => navigate("/add-ngo")} style={styles.toggleLink}>
-                      Register NGO
-                    </span>
-                  </>
+            {loginType !== "admin" && (
+              <p style={styles.toggleText}>
+                {isLogin ? (
+                  loginType === "ngo" ? (
+                    <>
+                      Don't have an NGO registered?{" "}
+                      <span onClick={() => navigate("/add-ngo")} style={styles.toggleLink}>
+                        Register NGO
+                      </span>
+                    </>
+                  ) : (
+                    <>
+                      Don't have an account?{" "}
+                      <span onClick={toggleMode} style={styles.toggleLink}>
+                        Sign up
+                      </span>
+                    </>
+                  )
                 ) : (
                   <>
-                    Don't have an account?{" "}
+                    Already have an account?{" "}
                     <span onClick={toggleMode} style={styles.toggleLink}>
-                      Sign up
+                      Log in
                     </span>
                   </>
-                )
-              ) : (
-                <>
-                  Already have an account?{" "}
-                  <span onClick={toggleMode} style={styles.toggleLink}>
-                    Log in
-                  </span>
-                </>
-              )}
-            </p>
+                )}
+              </p>
+            )}
           </div>
         </div>
       </div>
@@ -1262,11 +1275,6 @@ const styles = {
     fontWeight: "700",
     cursor: "pointer",
     marginLeft: "5px",
-  },
-  loginTypeTabs: {
-    display: "flex",
-    gap: "10px",
-    marginBottom: "25px",
   },
   activeTab: {
     flex: 1,

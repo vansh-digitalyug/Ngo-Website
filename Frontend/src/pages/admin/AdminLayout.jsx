@@ -1,6 +1,12 @@
 import React, { useState, useEffect } from "react";
 import { Link, useLocation, useNavigate, Outlet } from "react-router-dom";
+<<<<<<< HEAD
 import { LayoutDashboard, Building2, Users, Mail, Image, UserCircle, Heart, ClipboardList, Wallet, IndianRupee, CheckCircle2, Coins, BookOpenText, CalendarDays,Settings, Briefcase } from "lucide-react";
+=======
+
+import { LayoutDashboard, Building2, Users, Mail, Image, UserCircle, Heart, ClipboardList, Wallet, IndianRupee, CheckCircle2, Coins, Briefcase, Settings, BookOpenText } from "lucide-react";
+
+>>>>>>> 2310749 (fix bugs)
 import "./admin.css";
 // Removed remove-admin-padding.css import
 
@@ -37,7 +43,11 @@ function AdminLayout() {
   })();
 
   useEffect(() => {
-    if (!user || user.role !== "admin") {
+    const currentUser = (() => {
+      try { return JSON.parse(localStorage.getItem("user")); } catch { return null; }
+    })();
+
+    if (!currentUser || currentUser.role !== "admin") {
       sessionStorage.setItem("flash_message", JSON.stringify({ type: "error", message: "Admin access required." }));
       navigate("/login/admin", { replace: true });
       return;
@@ -84,7 +94,7 @@ function AdminLayout() {
         }
       })
       .catch(() => { });
-  }, [location.pathname]);
+  }, [location.pathname, navigate]);
 
   const isActive = (item) => {
     if (item.exact) return location.pathname === item.path;
