@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Link, useLocation, useNavigate, Outlet } from "react-router-dom";
-import { LayoutDashboard, Building2, Users, Mail, Image, UserCircle, Heart, ClipboardList, Wallet, IndianRupee, CheckCircle2, Coins } from "lucide-react";
+import { LayoutDashboard, Building2, Users, Mail, Image, UserCircle, Heart, ClipboardList, Wallet, IndianRupee, CheckCircle2, Coins, Briefcase, Settings } from "lucide-react";
 import "./admin.css";
 // Removed remove-admin-padding.css import
 
@@ -19,6 +19,8 @@ const NAV_ITEMS = [
   { path: "/admin/funds", label: "Fund Requests", icon: Wallet },
   { path: "/admin/payments", label: "Payments", icon: IndianRupee },
   { path: "/admin/completed-tasks", label: "Completed Tasks", icon: CheckCircle2 },
+  { path: "/admin/services/add", label: "Add Services", icon: Briefcase },
+  { path: "/admin/services/manage", label: "Manage Services", icon: Settings },
 ];
 
 function AdminLayout() {
@@ -79,7 +81,7 @@ function AdminLayout() {
           setPendingCounts(prev => ({ ...prev, funds: d.data?.pagination?.total || 0 }));
         }
       })
-      .catch(() => {});
+      .catch(() => { });
   }, [location.pathname]);
 
   const isActive = (item) => {

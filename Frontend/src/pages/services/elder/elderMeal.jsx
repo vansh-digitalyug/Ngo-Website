@@ -10,6 +10,7 @@ import {
 
 // Make sure to add a relevant image to this path in your project
 import elderlyMealCare from "../../../assets/images/elderly/food.jpg";
+import { useServiceImage } from "../../../hooks/useServiceImage.js";
 import "./meal.css";
 
 const DONATIONS = [
@@ -70,6 +71,8 @@ const STORY = [
 ];
 
 function ElderlyMealCarePage() {
+  const { coverUrl } = useServiceImage("Nutritious Meal for Elderly", elderlyMealCare);
+  const img = coverUrl || elderlyMealCare;
   const [storyExpanded, setStoryExpanded] = useState(false);
   const [openFaq, setOpenFaq] = useState(null);
   const [shareLabel, setShareLabel] = useState("Share");

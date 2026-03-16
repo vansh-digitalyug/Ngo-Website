@@ -11,6 +11,7 @@ import {
 
 // Replace with your actual image path
 import kidneyCareImg from "../../../assets/images/Medical/kidney.jpg";
+import { useServiceImage } from "../../../hooks/useServiceImage.js";
 import "./kidney.css";
 
 const DONATIONS = [
@@ -89,6 +90,8 @@ const STORY = [
 ];
 
 function KidneySupport() {
+    const { coverUrl } = useServiceImage("Kidney Patient Support", kidneyCareImg);
+    const img = coverUrl || kidneyCareImg;
     const [storyExpanded, setStoryExpanded] = useState(false);
     const [openFaq, setOpenFaq] = useState(null);
     const [shareLabel, setShareLabel] = useState("Share");

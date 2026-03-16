@@ -12,6 +12,7 @@ import {
 
 // Replace with your actual image path
 import cancerCareImg from "../../../assets/images/Medical/cancer.png";
+import { useServiceImage } from "../../../hooks/useServiceImage.js";
 import "./cancer.css";
 
 const DONATIONS = [
@@ -90,6 +91,8 @@ const STORY = [
 ];
 
 function CancerSupport() {
+    const { coverUrl } = useServiceImage("Cancer Support & Care", cancerCareImg);
+    const img = coverUrl || cancerCareImg;
     const [storyExpanded, setStoryExpanded] = useState(false);
     const [openFaq, setOpenFaq] = useState(null);
     const [shareLabel, setShareLabel] = useState("Share");

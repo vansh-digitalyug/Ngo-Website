@@ -10,6 +10,7 @@ import {
 
 // Make sure to add a relevant image to this path in your project
 import medicalAssistanceImg from "../../../assets/images/elderly/medical.webp";
+import { useServiceImage } from "../../../hooks/useServiceImage.js";
 import "./medical.css";
 
 const DONATIONS = [
@@ -70,6 +71,8 @@ const STORY = [
 ];
 
 function MedicalAssistancePage() {
+  const { coverUrl } = useServiceImage("Medical Assistance for Elderly", medicalAssistanceImg);
+  const img = coverUrl || medicalAssistanceImg;
   const [storyExpanded, setStoryExpanded] = useState(false);
   const [openFaq, setOpenFaq] = useState(null);
   const [shareLabel, setShareLabel] = useState("Share");

@@ -20,6 +20,7 @@ import empowerImg2 from "../../../assets/images/women/empowerment/image2.png";
 import empowerImg3 from "../../../assets/images/women/empowerment/image3.png";
 import empowerImg4 from "../../../assets/images/women/empowerment/image4.png";
 import empowerImg5 from "../../../assets/images/women/empowerment/image5.png";
+import { useServiceImage } from "../../../hooks/useServiceImage.js";
 import "./empowerment.css";
 
 const CAROUSEL_SLIDES = [
@@ -113,24 +114,24 @@ const FAQS = [
     },
 ];
 
-const STORY = [
-    {
-        en: "Behind every jar of homemade pickle, every bundle of agarbatti, and every handcrafted candle sold at a local market, there is a woman who chose to build her own future. But that choice is not always free — it costs money to buy raw materials, it costs money to get the right tools, and for a woman from a low-income household, that money simply does not exist.",
-        hi: "हर घर में बनी अचार की बोतल के पीछे, हर अगरबत्ती के बंडल के पीछे और हर स्थानीय बाजार में बिकने वाली हाथ से बनी मोमबत्ती के पीछे एक महिला है जिसने अपना भविष्य बनाने का फैसला किया। लेकिन उस फैसले के लिए पैसे चाहिए — कच्चा माल, सही उपकरण — और कम आय वाले परिवार की महिला के पास यह पैसा नहीं होता।",
-    },
-    {
-        en: "Our Women Empowerment Program does one simple thing: we give women the money they need to get started. No training, no conditions, no repayment. Just the seed fund that turns an idea into a working production unit inside her own home. From agarbatti making in a village courtyard to herbal soap production in a small kitchen — we fund the beginning so she can own the rest.",
-        hi: "हमारा महिला सशक्तिकरण कार्यक्रम एक सरल काम करता है: हम महिलाओं को शुरुआत के लिए ज़रूरी पैसे देते हैं। कोई प्रशिक्षण नहीं, कोई शर्त नहीं, कोई वापसी नहीं। बस वह बीज निधि जो एक विचार को उसके अपने घर के भीतर एक कार्यशील उत्पादन इकाई में बदल देती है।",
-    },
-    {
-        en: "The women we support do not need someone to teach them. They already know how to make achar, how to roll agarbatti, how to prepare papad — these are skills passed down through generations. What they need is the capital to turn those skills into income. That is exactly what we provide.",
-        hi: "जिन महिलाओं का हम समर्थन करते हैं, उन्हें किसी से सीखने की ज़रूरत नहीं है। वे पहले से ही अचार बनाना, अगरबत्ती लपेटना, पापड़ बनाना जानती हैं — ये पीढ़ियों से चली आ रही कलाएं हैं। उन्हें जो चाहिए वह है पूंजी — अपने हुनर को आय में बदलने के लिए।",
-    },
-    {
-        en: "A unit that starts with ₹3,000 in raw materials can generate ₹8,000–₹12,000 per month within a few weeks. That income changes everything — it pays for a child's school fees, buys medicine, and gives a woman something no one can take away: the confidence that comes from earning your own money.",
-        hi: "₹3,000 के कच्चे माल से शुरू होने वाली एक इकाई कुछ ही हफ्तों में प्रति माह ₹8,000–₹12,000 कमा सकती है। यह आय सब कुछ बदल देती है — बच्चे की स्कूल फीस, दवाइयां, और एक महिला को वह देती है जो कोई नहीं छीन सकता: अपनी कमाई का आत्मविश्वास।",
-    },
-];
+// const STORY = [
+//     {
+//         en: "Behind every jar of homemade pickle, every bundle of agarbatti, and every handcrafted candle sold at a local market, there is a woman who chose to build her own future. But that choice is not always free — it costs money to buy raw materials, it costs money to get the right tools, and for a woman from a low-income household, that money simply does not exist.",
+//         hi: "हर घर में बनी अचार की बोतल के पीछे, हर अगरबत्ती के बंडल के पीछे और हर स्थानीय बाजार में बिकने वाली हाथ से बनी मोमबत्ती के पीछे एक महिला है जिसने अपना भविष्य बनाने का फैसला किया। लेकिन उस फैसले के लिए पैसे चाहिए — कच्चा माल, सही उपकरण — और कम आय वाले परिवार की महिला के पास यह पैसा नहीं होता।",
+//     },
+//     {
+//         en: "Our Women Empowerment Program does one simple thing: we give women the money they need to get started. No training, no conditions, no repayment. Just the seed fund that turns an idea into a working production unit inside her own home. From agarbatti making in a village courtyard to herbal soap production in a small kitchen — we fund the beginning so she can own the rest.",
+//         hi: "हमारा महिला सशक्तिकरण कार्यक्रम एक सरल काम करता है: हम महिलाओं को शुरुआत के लिए ज़रूरी पैसे देते हैं। कोई प्रशिक्षण नहीं, कोई शर्त नहीं, कोई वापसी नहीं। बस वह बीज निधि जो एक विचार को उसके अपने घर के भीतर एक कार्यशील उत्पादन इकाई में बदल देती है।",
+//     },
+//     {
+//         en: "The women we support do not need someone to teach them. They already know how to make achar, how to roll agarbatti, how to prepare papad — these are skills passed down through generations. What they need is the capital to turn those skills into income. That is exactly what we provide.",
+//         hi: "जिन महिलाओं का हम समर्थन करते हैं, उन्हें किसी से सीखने की ज़रूरत नहीं है। वे पहले से ही अचार बनाना, अगरबत्ती लपेटना, पापड़ बनाना जानती हैं — ये पीढ़ियों से चली आ रही कलाएं हैं। उन्हें जो चाहिए वह है पूंजी — अपने हुनर को आय में बदलने के लिए।",
+//     },
+//     {
+//         en: "A unit that starts with ₹3,000 in raw materials can generate ₹8,000–₹12,000 per month within a few weeks. That income changes everything — it pays for a child's school fees, buys medicine, and gives a woman something no one can take away: the confidence that comes from earning your own money.",
+//         hi: "₹3,000 के कच्चे माल से शुरू होने वाली एक इकाई कुछ ही हफ्तों में प्रति माह ₹8,000–₹12,000 कमा सकती है। यह आय सब कुछ बदल देती है — बच्चे की स्कूल फीस, दवाइयां, और एक महिला को वह देती है जो कोई नहीं छीन सकता: अपनी कमाई का आत्मविश्वास।",
+//     },
+// ];
 
 function PageCarousel() {
     const [idx, setIdx] = useState(0);
@@ -176,6 +177,8 @@ function PageCarousel() {
 }
 
 function WomenEmpowermentPage() {
+    const { coverUrl, galleryUrls } = useServiceImage("Women Skill Development", empowerImg1);
+    const g = (i, fallback) => galleryUrls[i] || fallback;
     const [storyExpanded, setStoryExpanded] = useState(false);
     const [openFaq, setOpenFaq] = useState(null);
     const [shareLabel, setShareLabel] = useState("Share");

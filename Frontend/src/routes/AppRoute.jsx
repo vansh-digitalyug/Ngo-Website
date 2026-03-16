@@ -28,6 +28,8 @@ import AdminDonations from "../pages/admin/AdminDonations.jsx";
 import AdminFundRequests from "../pages/admin/AdminFundRequests.jsx";
 import AdminPayments from "../pages/admin/AdminPayments.jsx";
 import AdminCompletedTasks from "../pages/admin/AdminCompletedTasks.jsx";
+import AddServices from "../pages/admin/AddServices.jsx";
+import ManageServices from "../pages/admin/ManageServices.jsx";
 
 // NGO Dashboard imports
 import {
@@ -62,6 +64,7 @@ import RoadConstruction from "../pages/services/infrastructure/road-construction
 import WidowWomen from "../pages/services/women/widow-women.jsx";
 import WomenEmpowerment from "../pages/services/women/empowerment.jsx";
 import GauSeva from "../pages/services/animal/cowHelp.jsx";
+import DynamicServicePage from "../pages/services/DynamicServicePage.jsx";
 
 function RequireVolunteerAuth({ children }) {
   const location = useLocation();
@@ -144,6 +147,9 @@ function AppRoutes() {
         <Route path="/services/women/empowerment" element={<WomenEmpowerment />} />
         <Route path="/services/animal/gau-seva" element={<GauSeva />} />
 
+        {/* Dynamic catch-all for admin-created service programs */}
+        <Route path="/services/:categorySlug/:programSlug" element={<DynamicServicePage />} />
+
         {/* Gallery Routes */}
         <Route path="/gallery/images" element={<GalleryImages />} />
         <Route path="/gallery/videos" element={<GalleryVideos />} />
@@ -201,6 +207,8 @@ function AppRoutes() {
           <Route path="funds" element={<AdminFundRequests />} />
           <Route path="payments" element={<AdminPayments />} />
           <Route path="completed-tasks" element={<AdminCompletedTasks />} />
+          <Route path="services/add" element={<AddServices />} />
+          <Route path="services/manage" element={<ManageServices />} />
         </Route>
 
         {/* NGO Dashboard Routes */}

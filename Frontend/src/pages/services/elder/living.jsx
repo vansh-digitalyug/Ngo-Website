@@ -10,6 +10,7 @@ import {
 
 // Make sure to add a relevant image to this path in your project
 import livingSupportImg from "../../../assets/images/elderly/living.jpg";
+import { useServiceImage } from "../../../hooks/useServiceImage.js";
 import "./living.css";
 
 const DONATIONS = [
@@ -80,6 +81,8 @@ const STORY = [
 ];
 
 function DignifiedLivingSupportPage() {
+  const { coverUrl } = useServiceImage("Dignified Living Support for Elderly", livingSupportImg);
+  const img = coverUrl || livingSupportImg;
   const [storyExpanded, setStoryExpanded] = useState(false);
   const [openFaq, setOpenFaq] = useState(null);
   const [shareLabel, setShareLabel] = useState("Share");

@@ -10,6 +10,7 @@ import {
 
 // Update this path to where your actual helmet drive image is located
 import helmetDriveImg from "../../../assets/images/communitySafety/helmet.png";
+import { useServiceImage } from "../../../hooks/useServiceImage.js";
 import "./helmet.css";
 
 const DONATIONS = [
@@ -80,6 +81,8 @@ const STORY = [
 ];
 
 function HelmetDrivePage() {
+  const { coverUrl } = useServiceImage("Helmet Safety Drive", helmetDriveImg);
+  const img = coverUrl || helmetDriveImg;
   const [storyExpanded, setStoryExpanded] = useState(false);
   const [openFaq, setOpenFaq] = useState(null);
   const [shareLabel, setShareLabel] = useState("Share");

@@ -20,13 +20,13 @@ import "./service.css";
 
 // Map backend category names → frontend id + icon
 const CATEGORY_META = {
-  "Women Empowerment":      { id: "women-empowerment",         icon: FaFemale },
-  "Orphan":                 { id: "orphan",                    icon: FaChildren },
-  "Elderly":                { id: "elder",                     icon: MdElderly },
-  "Community Safety":       { id: "community-safety",          icon: FaShieldAlt },
-  "Social Welfare":         { id: "social-welfare",            icon: FaHandHoldingHeart },
-  "Medical Support":        { id: "medical-support",           icon: FaHeartbeat },
-  "Infrastructure":         { id: "infrastructure-development", icon: FaBuilding },
+  "Women Empowerment": { id: "women-empowerment", icon: FaFemale },
+  "Orphan": { id: "orphan", icon: FaChildren },
+  "Elderly": { id: "elder", icon: MdElderly },
+  "Community Safety": { id: "community-safety", icon: FaShieldAlt },
+  "Social Welfare": { id: "social-welfare", icon: FaHandHoldingHeart },
+  "Medical Support": { id: "medical-support", icon: FaHeartbeat },
+  "Infrastructure": { id: "infrastructure-development", icon: FaBuilding },
 };
 
 function metaFor(name) {
@@ -301,9 +301,17 @@ function ServicePage() {
                   <div className="program-media">
                     {program.images ? (
                       <CardCarousel images={program.images} alt={program.title} />
-                    ) : (
+                    ) : program.image ? (
                       <img src={program.image} alt={program.title} loading="lazy" />
+                    ) : (
+                      <div style={{
+                        width: "100%", height: "100%", minHeight: "180px",
+                        background: "linear-gradient(135deg,#e8edf5 0%,#d0d9e8 100%)",
+                        display: "flex", alignItems: "center", justifyContent: "center",
+                        fontSize: "2.5rem", color: "#aab4c8"
+                      }}>🖼️</div>
                     )}
+
                     <div className="program-readmore" aria-hidden="true">
                       <span>Read More</span>
                       <span className="program-readmore-dots">...</span>

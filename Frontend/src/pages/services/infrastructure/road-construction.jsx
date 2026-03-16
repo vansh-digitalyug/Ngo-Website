@@ -10,7 +10,8 @@ import {
 } from "react-icons/fa";
 
 // Replace with your actual image path
-import roadConstructionImg from "../../../assets/images/infrastructure/road.jpg"; 
+import roadConstructionImg from "../../../assets/images/infrastructure/road.jpg";
+import { useServiceImage } from "../../../hooks/useServiceImage.js";
 import "./road-construction.css";
 
 const DONATIONS = [
@@ -89,6 +90,8 @@ const STORY = [
 ];
 
 function RoadConstruction() {
+    const { coverUrl } = useServiceImage("Road Construction & Repair", roadConstructionImg);
+    const img = coverUrl || roadConstructionImg;
     const [storyExpanded, setStoryExpanded] = useState(false);
     const [openFaq, setOpenFaq] = useState(null);
     const [shareLabel, setShareLabel] = useState("Share");

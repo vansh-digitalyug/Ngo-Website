@@ -19,6 +19,7 @@ import eduImg2 from "../../../assets/images/orphanage/education/image2.png";
 import eduImg3 from "../../../assets/images/orphanage/education/image3.png";
 import eduImg4 from "../../../assets/images/orphanage/education/image4.png";
 import eduImg5 from "../../../assets/images/orphanage/education/image5.png";
+import { useServiceImage } from "../../../hooks/useServiceImage.js";
 import "./education.css";
 
 const EDU_BENEFITS = [
@@ -110,6 +111,8 @@ const STORY = [
 ];
 
 function OrphanageEducationPage() {
+    const { coverUrl, galleryUrls } = useServiceImage("Education for Orphans", orphanEducation);
+    const g = (i, fallback) => galleryUrls[i] || fallback;
     const [storyExpanded, setStoryExpanded] = useState(false);
     const [openFaq, setOpenFaq] = useState(null);
     const [shareLabel, setShareLabel] = useState("Share");
@@ -150,7 +153,7 @@ function OrphanageEducationPage() {
                         {/* Hero Banner */}
                         <section className="education-hero-card">
                             <div className="education-hero-img-wrap">
-                                <img src={orphanEducation} alt="Orphanage Education Support Program" />
+                                <img src={coverUrl} alt="Orphanage Education Support Program" />
                                 <div className="education-hero-overlay">
                                     <span className="edu-badge">Orphanage Program</span>
                                     <h1>Education Support Program</h1>
@@ -165,7 +168,7 @@ function OrphanageEducationPage() {
                             <p className="edu-section-desc">From a child with no school access to a confident young adult ready for the world — this is the journey our Education Support Program makes possible, one step at a time.</p>
                             <div className="edu-journey-grid">
                                 <div className="edu-journey-item">
-                                    <img src={eduImg1} alt="Child enrolling in school" />
+                                    <img src={g(0, eduImg1)} alt="Child enrolling in school" />
                                     <div className="edu-journey-caption">
                                         <span className="edu-journey-step">Step 1</span>
                                         <strong>School Enrollment</strong>
@@ -173,7 +176,7 @@ function OrphanageEducationPage() {
                                     </div>
                                 </div>
                                 <div className="edu-journey-item">
-                                    <img src={eduImg2} alt="Child studying with tutor" />
+                                    <img src={g(1, eduImg2)} alt="Child studying with tutor" />
                                     <div className="edu-journey-caption">
                                         <span className="edu-journey-step">Step 2</span>
                                         <strong>Tutoring & Learning</strong>
@@ -181,7 +184,7 @@ function OrphanageEducationPage() {
                                     </div>
                                 </div>
                                 <div className="edu-journey-item">
-                                    <img src={eduImg3} alt="Child using computer" />
+                                    <img src={g(2, eduImg3)} alt="Child using computer" />
                                     <div className="edu-journey-caption">
                                         <span className="edu-journey-step">Step 3</span>
                                         <strong>Digital Skills</strong>
@@ -189,7 +192,7 @@ function OrphanageEducationPage() {
                                     </div>
                                 </div>
                                 <div className="edu-journey-item">
-                                    <img src={eduImg4} alt="Child graduating" />
+                                    <img src={g(3, eduImg4)} alt="Child graduating" />
                                     <div className="edu-journey-caption">
                                         <span className="edu-journey-step">Step 4</span>
                                         <strong>Future Ready</strong>
@@ -301,7 +304,7 @@ function OrphanageEducationPage() {
                             </div>
                             <Link
                                 to="/donate"
-                                state={{ serviceImage: orphanEducation, serviceTitle: "Education Support for Orphanage Children" }}
+                                state={{ serviceImage: coverUrl, serviceTitle: "Education Support for Orphanage Children" }}
                                 className="campaign-btn campaign-btn-primary edu-impact-cta-btn"
                             >
                                 Help a Child Learn
@@ -339,7 +342,7 @@ function OrphanageEducationPage() {
                     <aside className="education-side-stack">
                         <article className="campaign-card">
                             <div className="campaign-image-wrap">
-                                <img src={eduImg5} alt="Education Support for Children" />
+                                <img src={g(4, eduImg5)} alt="Education Support for Children" />
                                 <span className="campaign-chip">Orphanage Education</span>
                             </div>
 
@@ -384,7 +387,7 @@ function OrphanageEducationPage() {
                                 <div className="campaign-actions">
                                     <Link
                                         to="/donate"
-                                        state={{ serviceImage: orphanEducation, serviceTitle: "Education Support for Orphanage Children" }}
+                                        state={{ serviceImage: coverUrl, serviceTitle: "Education Support for Orphanage Children" }}
                                         className="campaign-btn campaign-btn-primary"
                                     >
                                         Help Now

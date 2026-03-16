@@ -14,6 +14,7 @@ import {
     getProgramsByCategory,
     getProgramById,
     getProgramByTitle,
+    getProgramByHref,
     updateProgram,
     deleteProgram,
     // public combined
@@ -36,6 +37,7 @@ router.get("/categories/:categoryId", getCategoryById);
 // Programs
 router.get("/programs", getAllPrograms);
 router.get("/programs/by-title/:title", getProgramByTitle);
+router.get("/programs/by-href", getProgramByHref);
 router.get("/programs/:programId", getProgramById);
 router.get("/categories/:categoryId/programs", getProgramsByCategory);
 

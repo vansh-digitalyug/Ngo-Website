@@ -19,6 +19,7 @@ import healthImg2 from "../../../assets/images/orphanage/medical/image2.png";
 import healthImg3 from "../../../assets/images/orphanage/medical/image3.png";
 import healthImg4 from "../../../assets/images/orphanage/medical/image4.png";
 import healthImg5 from "../../../assets/images/orphanage/medical/image5.png";
+import { useServiceImage } from "../../../hooks/useServiceImage.js";
 import "./health.css";
 
 const HEALTH_BENEFITS = [
@@ -111,6 +112,8 @@ const STORY = [
 ];
 
 function OrphanageHealthPage() {
+    const { coverUrl, galleryUrls } = useServiceImage("Healthcare for Orphans", orphanHealth);
+    const g = (i, fallback) => galleryUrls[i] || fallback;
     const [storyExpanded, setStoryExpanded] = useState(false);
     const [openFaq, setOpenFaq] = useState(null);
     const [shareLabel, setShareLabel] = useState("Share");

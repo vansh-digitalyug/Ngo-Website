@@ -22,10 +22,7 @@ export const generateUploadUrl = async (req, res) => {
   if (!fileType) throw new ApiError(400, "fileType is required");
   if (!fileName) throw new ApiError(400, "fileName is required");
 
-  const loc = location || "services/programs";
-  if (!ALLOWED_LOCATIONS.has(loc)) {
-    throw new ApiError(400, `Invalid location. Allowed: ${[...ALLOWED_LOCATIONS].join(", ")}`);
-  }
+  
 
   // Strip existing extension to avoid double extensions (e.g. photo.png.png)
   const baseName = fileName.replace(/\.[^/.]+$/, "");
@@ -33,7 +30,7 @@ export const generateUploadUrl = async (req, res) => {
   if (parts.length !== 2 || !parts[1]) throw new ApiError(400, "Invalid fileType format");
   const ext = parts[1];
 
-  const key = `Uploads/${loc}/${baseName}.${ext}`;
+  const key = `Uploads/${location}/${baseName}.${ext}`;
   const command = new PutObjectCommand({
     Bucket: process.env.BUCKET_NAME,
     Key: key,
@@ -60,14 +57,5 @@ export const getUrl = async (req, res) => {
   res.json(new ApiResponse(200, "Download URL generated", { Url }));
 };
 
-// Return a public URL for the object (assumes bucket/object is public-read)
-export const getFileUrl = (req, res) => {
-  const key = req.body?.key || req.query?.key || req.params?.key;
-  if (!key) throw new ApiError(400, "Key is required");
 
-  if (!process.env.BUCKET_NAME) throw new ApiError(500, "Bucket name not configured");
 
-  const region = process.env.AWS_REGION ? `${process.env.AWS_REGION}.` : "";
-  const url = `https://${process.env.BUCKET_NAME}.s3.${region}amazonaws.com/${key}`;
-  res.json(new ApiResponse(200, "File URL", { url }));
-};
