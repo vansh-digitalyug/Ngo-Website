@@ -71,6 +71,12 @@ import WomenEmpowerment from "../pages/services/women/empowerment.jsx";
 import GauSeva from "../pages/services/animal/cowHelp.jsx";
 import DynamicServicePage from "../pages/services/DynamicServicePage.jsx";
 
+import OurStory from "../pages/about/OurStory.jsx";
+import Strategy2045 from "../pages/about/Strategy2045.jsx";
+import OurBoard from "../pages/about/OurBoard.jsx";
+import Founders from "../pages/about/Founders.jsx";
+import WorkWithUs from "../pages/WorkWithUs.jsx";
+
 function RequireVolunteerAuth({ children }) {
   const location = useLocation();
   const isLoggedIn = Boolean(localStorage.getItem("user"));
@@ -182,6 +188,15 @@ function AppRoutes() {
         <Route path="/reset-password" element={<ResetPassword />} />
         <Route path="/reset-password/:token" element={<ResetPassword />} />
         <Route path="/contact" element={<Contact />} />
+
+        {/* About Us Routes */}
+        <Route path="/about/our-story" element={<OurStory />} />
+        <Route path="/about/strategy-2045" element={<Strategy2045 />} />
+        <Route path="/about/our-board" element={<OurBoard />} />
+        <Route path="/about/founders" element={<Founders />} />
+
+        {/* Get Involved Routes */}
+        <Route path="/work-with-us" element={<WorkWithUs />} />
         <Route path="/privacy-policy" element={<PrivacyPolicy />} />
         <Route path="/terms-of-service" element={<TermsOfService />} />
         <Route

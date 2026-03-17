@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
+import IndiaMap from "../components/IndiaMap.jsx";
 import {
   FaBuilding, FaHeart, FaMapMarkerAlt, FaHandshake, FaChartBar,
   FaCheckCircle, FaFileAlt, FaSatelliteDish, FaChild, FaUtensils,
@@ -580,7 +581,7 @@ export default function Home() {
                 </Link>
               ))}
               <div className="text-center pt-1.5">
-                <Link to="/find-ngos" className="text-[#1a2d5a] font-bold text-[0.85rem]">View all {ngoTotal}+ verified NGOs →</Link>
+                <Link to="/find-ngos" className="text-[#1a2d5a] font-bold text-[0.85rem]"><IndiaMap /></Link>
               </div>
             </div>
           </div>
@@ -719,6 +720,8 @@ export default function Home() {
           </div>
         </div>
       </section>
+
+      {/* ══════════════════════════════════════════
 
       {/* ══════════════════════════════════════════
           FAQ

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import axios from "axios";
 import elderCare from "../assets/images/elderly/elder.png"
 import { 
@@ -14,19 +14,29 @@ import {
 } from "react-icons/fa";
 
 const FindNGO = () => {
+  const [searchParams] = useSearchParams();
+
   // --- STATE MANAGEMENT ---
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("All");
-  const [selectedCity, setSelectedCity] = useState("All");
+
+  // Initialise city from ?city= query param (case-insensitive match)
+  const cities = ["All", "Delhi", "Mumbai", "Bangalore", "Chennai", "Kolkata", "Hyderabad", "Jaipur", "Ahmedabad", "Lucknow", "Kochi"];
+  const initCity = () => {
+    const param = searchParams.get("city");
+    if (!param) return "All";
+    const match = cities.find((c) => c.toLowerCase() === param.toLowerCase());
+    return match || "All";
+  };
+  const [selectedCity, setSelectedCity] = useState(initCity);
   const [ngoList, setNgoList] = useState([]);
   const [filteredNGOs, setFilteredNGOs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [page, setPage] = useState(1);
 
-  // Category and city options
+  // Category options
   const categories = ["All", "Medical", "Education", "Elderly Care", "Orphanage", "Environment", "Community Welfare", "Infrastructure"];
-  const cities = ["All", "Delhi", "Mumbai", "Bangalore", "Chennai", "Kolkata", "Hyderabad", "Jaipur", "Ahmedabad", "Lucknow", "Kochi"];
 
   // --- FETCH NGO DATA FROM BACKEND ---
   useEffect(() => {
