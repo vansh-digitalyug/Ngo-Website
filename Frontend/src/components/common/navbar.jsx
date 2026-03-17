@@ -120,7 +120,7 @@ function Navbar() {
 
   const donateCauses = [
     {
-      name: "Children", path: "/services/orphanage/education",
+      name: "Orphan", path: "/services/orphan",
       icon: (
         <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 text-[#ff5722]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
           <circle cx="12" cy="7" r="3" />
@@ -131,28 +131,28 @@ function Navbar() {
       ),
     },
     {
-      name: "Health", path: "/services/medical/camp",
+      name: "Health", path: "/services/medical-support",
       icon: (
         <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 text-[#ff5722]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
           <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 1 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
         </svg>
       ),
     },
+    // {
+    //   name: "Animals", path: "/services/animal",
+    //   icon: (
+    //     <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 text-[#ff5722]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    //       <circle cx="11" cy="4" r="2" />
+    //       <circle cx="18" cy="4" r="2" />
+    //       <circle cx="7" cy="9" r="2" />
+    //       <circle cx="17" cy="11" r="2" />
+    //       <path d="M13 20c0-3.5-2.5-6-5.5-6S2 16.5 2 20h11z" />
+    //       <path d="M20 20c0-2-1.3-4-3-4.5" />
+    //     </svg>
+    //   ),
+    // },
     {
-      name: "Animals", path: "/services/animal/gau-seva",
-      icon: (
-        <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 text-[#ff5722]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <circle cx="11" cy="4" r="2" />
-          <circle cx="18" cy="4" r="2" />
-          <circle cx="7" cy="9" r="2" />
-          <circle cx="17" cy="11" r="2" />
-          <path d="M13 20c0-3.5-2.5-6-5.5-6S2 16.5 2 20h11z" />
-          <path d="M20 20c0-2-1.3-4-3-4.5" />
-        </svg>
-      ),
-    },
-    {
-      name: "Elderly", path: "/services/elder/meal",
+      name: "Elderly", path: "/services/elder",
       icon: (
         <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 text-[#ff5722]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
           <circle cx="12" cy="5" r="3" />
@@ -163,7 +163,7 @@ function Navbar() {
       ),
     },
     {
-      name: "More", path: "/find-ngos",
+      name: "More", path: "/services",
       icon: (
         <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 text-[#ff5722]" viewBox="0 0 24 24" fill="currentColor">
           <circle cx="5" cy="12" r="2" />

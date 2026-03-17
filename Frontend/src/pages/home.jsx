@@ -581,7 +581,7 @@ export default function Home() {
                 </Link>
               ))}
               <div className="text-center pt-1.5">
-                <Link to="/find-ngos" className="text-[#1a2d5a] font-bold text-[0.85rem]"><IndiaMap /></Link>
+                <IndiaMap />
               </div>
             </div>
           </div>

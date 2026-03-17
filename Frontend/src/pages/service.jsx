@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import {
   FaBuilding,
   FaChevronUp,
@@ -68,6 +68,7 @@ function CardCarousel({ images, alt }) {
 
 function ServicePage() {
   const navigate = useNavigate();
+  const { category } = useParams();
   const [serviceData, setServiceData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [fetchError, setFetchError] = useState(null);
@@ -107,10 +108,11 @@ function ServicePage() {
           };
         });
         setServiceData(mapped);
-        if (mapped.length > 0) {
-          setActiveServiceId(mapped[0].id);
-          setMobileQuickCauseId(mapped[0].id);
-        }
+        // If URL has a :category param use it, otherwise fall back to first category
+        const fromUrl = category ? mapped.find((s) => s.id === category) : null;
+        const defaultId = fromUrl ? fromUrl.id : (mapped.length > 0 ? mapped[0].id : ALL_CAUSES_ID);
+        setActiveServiceId(defaultId);
+        setMobileQuickCauseId(defaultId !== ALL_CAUSES_ID ? defaultId : (mapped.length > 0 ? mapped[0].id : ALL_CAUSES_ID));
       })
       .catch((err) => {
         console.error("[ServicePage] Failed to load services:", err.message);
@@ -193,6 +195,7 @@ function ServicePage() {
     setActiveServiceId(serviceId);
     if (serviceId !== ALL_CAUSES_ID) setMobileQuickCauseId(serviceId);
     setMobileFilterOpen(false);
+    navigate(serviceId === ALL_CAUSES_ID ? "/services" : `/services/${serviceId}`);
   };
 
   const moveActiveService = (direction) => {
@@ -203,6 +206,7 @@ function ServicePage() {
     setActiveServiceId(nextId);
     if (nextId !== ALL_CAUSES_ID) setMobileQuickCauseId(nextId);
     setMobileFilterOpen(false);
+    navigate(nextId === ALL_CAUSES_ID ? "/services" : `/services/${nextId}`);
   };
 
   if (loading) {
@@ -295,7 +299,13 @@ function ServicePage() {
                 key={`${program.serviceId}-${program.title}`}
                 className="program-card"
                 style={{ cursor: "pointer" }}
-                onClick={() => program.href ? navigate(program.href) : setSelectedProgram(program)}
+                onClick={() => {
+                  const catId = activeServiceId === ALL_CAUSES_ID ? program.serviceId : activeServiceId;
+                  const programSlug = program.href
+                    ? program.href.split("/").filter(Boolean).pop()
+                    : program.title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+                  navigate(`/services/${catId}/${programSlug}`);
+                }}
               >
                 <div className="program-media-link" aria-label={`Read more about ${program.title}`}>
                   <div className="program-media">

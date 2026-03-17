@@ -138,9 +138,10 @@ function AppRoutes() {
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/services" element={<ServicePage />} />
+        <Route path="/services/:category" element={<ServicePage />} />
         <Route path="/_test" element={<ServiceDiagnostics />} />
 
-        {/* Service Routes */}
+        {/* Service Routes — old paths kept for backward compatibility */}
         <Route path="/services/orphanage/education" element={<OrphanageEducationPage />} />
         <Route path="/services/orphanage/meal" element={<Meal />} />
         <Route path="/services/orphanage/health" element={<Health />} />
@@ -157,6 +158,20 @@ function AppRoutes() {
         <Route path="/services/women/widow-women" element={<WidowWomen />} />
         <Route path="/services/women/empowerment" element={<WomenEmpowerment />} />
         <Route path="/services/animal/gau-seva" element={<GauSeva />} />
+
+        {/* Consistent routes: /services/{categoryId}/{programSlug} */}
+        <Route path="/services/orphan/education" element={<OrphanageEducationPage />} />
+        <Route path="/services/orphan/meal" element={<Meal />} />
+        <Route path="/services/orphan/health" element={<Health />} />
+        <Route path="/services/medical-support/camp" element={<FreeHealthCamp />} />
+        <Route path="/services/medical-support/cancer" element={<CancerSupport />} />
+        <Route path="/services/medical-support/kidney" element={<KidneySupport />} />
+        <Route path="/services/women-empowerment/widow-women" element={<WidowWomen />} />
+        <Route path="/services/women-empowerment/empowerment" element={<WomenEmpowerment />} />
+        <Route path="/services/social-welfare/kanyadan" element={<KanyadanYojna />} />
+        <Route path="/services/social-welfare/rites" element={<Rites />} />
+        <Route path="/services/community-safety/helmet" element={<HelmetDrive />} />
+        <Route path="/services/infrastructure-development/road-construction" element={<RoadConstruction />} />
 
         {/* Dynamic catch-all for admin-created service programs */}
         <Route path="/services/:categorySlug/:programSlug" element={<DynamicServicePage />} />

@@ -19,29 +19,39 @@ const FindNGO = () => {
   // --- STATE MANAGEMENT ---
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("All");
-
-  // Initialise city from ?city= query param (case-insensitive match)
-  const cities = ["All", "Delhi", "Mumbai", "Bangalore", "Chennai", "Kolkata", "Hyderabad", "Jaipur", "Ahmedabad", "Lucknow", "Kochi"];
-  const initCity = () => {
-    const param = searchParams.get("city");
-    if (!param) return "All";
-    const match = cities.find((c) => c.toLowerCase() === param.toLowerCase());
-    return match || "All";
-  };
-  const [selectedCity, setSelectedCity] = useState(initCity);
+  const [selectedCity, setSelectedCity] = useState("All");
+  const [selectedState, setSelectedState] = useState("All");
   const [ngoList, setNgoList] = useState([]);
   const [filteredNGOs, setFilteredNGOs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [page, setPage] = useState(1);
 
-  // Category options
+  // Category and city options
   const categories = ["All", "Medical", "Education", "Elderly Care", "Orphanage", "Environment", "Community Welfare", "Infrastructure"];
+  const cities = ["All", "Delhi", "Mumbai", "Bangalore", "Chennai", "Kolkata", "Hyderabad", "Jaipur", "Ahmedabad", "Lucknow", "Kochi"];
+  const states = [
+    "All", "Andhra Pradesh", "Assam", "Bihar", "Chhattisgarh", "Delhi",
+    "Gujarat", "Haryana", "Himachal Pradesh", "Jammu and Kashmir", "Jharkhand",
+    "Karnataka", "Kerala", "Madhya Pradesh", "Maharashtra", "Manipur",
+    "Meghalaya", "Mizoram", "Nagaland", "Orissa", "Punjab", "Rajasthan",
+    "Sikkim", "Tamil Nadu", "Telangana", "Tripura", "Uttar Pradesh",
+    "Uttaranchal", "West Bengal"
+  ];
+
+  // Sync city and state filters with URL params (?city= or ?state=)
+  useEffect(() => {
+    const cityParam  = searchParams.get("city");
+    const stateParam = searchParams.get("state");
+    setSelectedCity(cityParam  ? cities.find(c => c.toLowerCase() === cityParam.toLowerCase())  || "All" : "All");
+    setSelectedState(stateParam ? states.find(s => s.toLowerCase() === stateParam.toLowerCase()) || "All" : "All");
+    setPage(1);
+  }, [searchParams]);
 
   // --- FETCH NGO DATA FROM BACKEND ---
   useEffect(() => {
     fetchNGOs();
-  }, [page, selectedCategory, selectedCity]);
+  }, [page, selectedCategory, selectedCity, selectedState]);
 
   const fetchNGOs = async () => {
     try {
@@ -59,7 +69,11 @@ const FindNGO = () => {
       if (selectedCity !== 'All') {
         params.append('city', selectedCity);
       }
-      
+
+      if (selectedState !== 'All') {
+        params.append('state', selectedState);
+      }
+
       if (searchTerm) {
         params.append('search', searchTerm);
       }
@@ -114,6 +128,11 @@ const FindNGO = () => {
 
   const handleCityChange = (e) => {
     setSelectedCity(e.target.value);
+    setPage(1);
+  };
+
+  const handleStateChange = (e) => {
+    setSelectedState(e.target.value);
     setPage(1);
   };
 
@@ -396,14 +415,19 @@ const FindNGO = () => {
           </select>
         </div>
 
+        {/* State Dropdown */}
+        <div className="input-group">
+          <FaGlobeAsia className="search-icon" />
+          <select value={selectedState} onChange={handleStateChange}>
+            {states.map((s) => <option key={s} value={s}>{s === "All" ? "All States" : s}</option>)}
+          </select>
+        </div>
+
         {/* City Dropdown */}
         <div className="input-group">
           <FaMapMarkerAlt className="search-icon" />
-          <select 
-            value={selectedCity} 
-            onChange={handleCityChange}
-          >
-            {cities.map((city) => <option key={city} value={city}>{city}</option>)}
+          <select value={selectedCity} onChange={handleCityChange}>
+            {cities.map((city) => <option key={city} value={city}>{city === "All" ? "All Cities" : city}</option>)}
           </select>
         </div>
 
@@ -424,7 +448,7 @@ const FindNGO = () => {
             <h3>Error loading NGOs</h3>
             <p>{error}</p>
             <button 
-              onClick={() => {setSearchTerm(""); setSelectedCategory("All"); setSelectedCity("All"); setPage(1); fetchNGOs();}}
+              onClick={() => {setSearchTerm(""); setSelectedCategory("All"); setSelectedCity("All"); setSelectedState("All"); setPage(1); fetchNGOs();}}
               style={{ marginTop: '15px', padding: '10px 20px', border: '1px solid #ccc', background: 'white', cursor: 'pointer', borderRadius: '5px' }}
             >
               Try Again
@@ -432,6 +456,19 @@ const FindNGO = () => {
           </div>
         ) : (
           <>
+            {(selectedCity !== "All" || selectedState !== "All") && (
+              <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "16px", background: "#f0fdf4", border: "1px solid #86efac", borderRadius: "8px", padding: "10px 16px" }}>
+                <FaMapMarkerAlt color="#16a34a" />
+                <span style={{ fontWeight: 600, color: "#15803d" }}>
+                  Showing NGOs in{" "}
+                  <strong>{selectedCity !== "All" ? selectedCity : selectedState}</strong>
+                </span>
+                <button
+                  onClick={() => { setSelectedCity("All"); setSelectedState("All"); setPage(1); }}
+                  style={{ marginLeft: "auto", background: "none", border: "none", color: "#16a34a", fontWeight: 700, cursor: "pointer", fontSize: "0.85rem" }}
+                >✕ Clear</button>
+              </div>
+            )}
             <div className="results-header">
               <div className="results-count">Showing <span>{filteredNGOs.length}</span> trusted organizations</div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
@@ -486,7 +523,7 @@ const FindNGO = () => {
                   <h3>No NGOs found matching your criteria.</h3>
                   <p>Try adjusting your filters or search for a broader category.</p>
                   <button 
-                    onClick={() => {setSearchTerm(""); setSelectedCategory("All"); setSelectedCity("All"); setPage(1); fetchNGOs();}}
+                    onClick={() => {setSearchTerm(""); setSelectedCategory("All"); setSelectedCity("All"); setSelectedState("All"); setPage(1); fetchNGOs();}}
                     style={{ marginTop: '15px', padding: '10px 20px', border: '1px solid #ccc', background: 'white', cursor: 'pointer', borderRadius: '5px' }}
                   >
                     Clear All Filters

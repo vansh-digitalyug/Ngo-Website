@@ -42,22 +42,26 @@ const onlyDigits = (value) => String(value || "").replace(/\D/g, "");
 // GET all NGOs with optional filters
 export const getAllNgos = async (req, res) => {
   try {
-    const { category, city, search, page = 1, limit = 12 } = req.query;
-    
+    const { category, city, state, search, page = 1, limit = 12 } = req.query;
+
     // Build filter object
     const filter = {};
-    
+
     if (search) {
       filter.$or = [
         { ngoName: { $regex: search, $options: "i" } },
         { description: { $regex: search, $options: "i" } }
       ];
     }
-    
+
     if (city) {
-      filter.city = city;
+      filter.city = { $regex: new RegExp(`^${city}$`, "i") };
     }
-    
+
+    if (state) {
+      filter.state = { $regex: new RegExp(`^${state}$`, "i") };
+    }
+
     if (category) {
       filter.services = { $in: [category] };
     }
