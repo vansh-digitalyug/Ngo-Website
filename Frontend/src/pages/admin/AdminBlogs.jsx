@@ -1,10 +1,10 @@
-import React, { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   BookOpen, CalendarDays, FileText, ImagePlus,
-  Layers, Loader2, Pencil, PlusCircle, Trash2, UserRound, X,
+  Layers, Loader2, Pencil, PlusCircle, Sparkles, Trash2, UserRound, X,
 } from "lucide-react";
 import {
-  createBlog, deleteBlogById, fetchBlogs,
+  createBlog, deleteBlogById, fetchBlogs, generateBlogContent,
   updateBlogById, uploadBlogImageToS3,
 } from "../../utils/blogStore.js";
 
@@ -113,17 +113,154 @@ function ImageUpload({ preview, file, existing, onFile, onClear, fileRef }) {
   );
 }
 
+/* ─── AIGenerateModal ─── */
+function AIGenerateModal({ onClose, onGenerated }) {
+  const [prompt, setPrompt] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    const esc = (e) => { if (e.key === "Escape") onClose(); };
+    window.addEventListener("keydown", esc);
+    document.body.style.overflow = "hidden";
+    return () => { window.removeEventListener("keydown", esc); document.body.style.overflow = ""; };
+  }, [onClose]);
+
+  const onSubmit = async (e) => {
+    e.preventDefault();
+    if (!prompt.trim()) { setError("Please enter a topic."); return; }
+    setLoading(true); setError("");
+    try {
+      const data = await generateBlogContent(prompt.trim());
+      onGenerated(data);
+    } catch (err) {
+      setError(err.message || "Generation failed. Try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div
+      className="ab-modal-overlay"
+      onClick={onClose}
+      style={{
+        position: "fixed", inset: 0, zIndex: 9999,
+        background: "rgba(15,23,42,.55)", backdropFilter: "blur(5px)",
+        display: "flex", alignItems: "center", justifyContent: "center",
+        padding: "24px 16px",
+      }}
+    >
+      <div
+        className="ab-modal-box"
+        onClick={(e) => e.stopPropagation()}
+        style={{
+          background: "#fff", borderRadius: "18px",
+          width: "100%", maxWidth: "520px",
+          boxShadow: "0 32px 64px -12px rgba(0,0,0,.3)",
+        }}
+      >
+        {/* Header */}
+        <div style={{
+          padding: "20px 28px 18px",
+          borderBottom: "1px solid #f1f5f9",
+          display: "flex", alignItems: "center", justifyContent: "space-between",
+          borderRadius: "18px 18px 0 0",
+        }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+            <div style={{
+              width: "36px", height: "36px", borderRadius: "9px",
+              background: "#faf5ff",
+              display: "flex", alignItems: "center", justifyContent: "center",
+            }}>
+              <Sparkles size={17} color="#7c3aed" />
+            </div>
+            <div>
+              <h2 style={{ margin: 0, fontSize: "1rem", fontWeight: 800, color: "#0f172a" }}>Generate with AI</h2>
+              <p style={{ margin: 0, fontSize: "0.72rem", color: "#64748b" }}>Claude will write a full blog post</p>
+            </div>
+          </div>
+          <button onClick={onClose} style={{
+            background: "#f1f5f9", border: "none", borderRadius: "8px",
+            width: "34px", height: "34px", cursor: "pointer",
+            display: "flex", alignItems: "center", justifyContent: "center", color: "#64748b",
+          }}>
+            <X size={16} />
+          </button>
+        </div>
+
+        {/* Form */}
+        <form onSubmit={onSubmit} style={{ padding: "24px 28px 28px", display: "grid", gap: "16px" }}>
+          <div>
+            <label style={labelSt}>Blog Topic *</label>
+            <textarea
+              value={prompt}
+              onChange={(e) => setPrompt(e.target.value)}
+              placeholder="e.g. How volunteering in rural India changes lives"
+              rows={4}
+              className="ab-input"
+              style={{ ...inputSt, resize: "vertical" }}
+              autoFocus
+            />
+            <p style={{ margin: "5px 0 0", fontSize: "0.74rem", color: "#94a3b8" }}>
+              Describe the topic, angle, or keywords you want the blog to cover.
+            </p>
+          </div>
+
+          {error && (
+            <div style={{
+              padding: "10px 14px", borderRadius: "8px",
+              background: "#fef2f2", border: "1px solid #fecaca",
+              color: "#b91c1c", fontSize: "0.84rem", fontWeight: 500,
+            }}>
+              ✕ {error}
+            </div>
+          )}
+
+          <div style={{ display: "flex", gap: "10px", justifyContent: "flex-end" }}>
+            <button type="button" onClick={onClose} style={{
+              padding: "10px 20px", borderRadius: "8px",
+              border: "1px solid #e2e8f0", background: "#fff",
+              color: "#374151", fontWeight: 600, fontSize: "0.88rem", cursor: "pointer",
+            }}>
+              Cancel
+            </button>
+            <button type="submit" disabled={loading} style={{
+              padding: "10px 24px", borderRadius: "8px", border: "none",
+              background: loading ? "#94a3b8" : "linear-gradient(135deg,#6d28d9,#7c3aed)",
+              color: "#fff", fontWeight: 700, fontSize: "0.88rem",
+              cursor: loading ? "not-allowed" : "pointer",
+              display: "flex", alignItems: "center", gap: "7px",
+              boxShadow: loading ? "none" : "0 4px 14px rgba(109,40,217,.35)",
+            }}>
+              {loading
+                ? <><Loader2 size={15} style={{ animation: "spin 1s linear infinite" }} /> Generating…</>
+                : <><Sparkles size={15} /> Generate</>
+              }
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
+
 /* ─── BlogFormModal ─── */
-function BlogFormModal({ mode, blog, onClose, onSaved }) {
+function BlogFormModal({ mode, blog, prefill, onClose, onSaved }) {
   const isEdit = mode === "edit";
   const [form, setForm] = useState(isEdit ? {
     title: blog.title, category: blog.category,
     author: blog.author, excerpt: blog.excerpt,
+  } : prefill ? {
+    title: prefill.title || "", category: prefill.category || "Community Impact",
+    author: "Admin Team", excerpt: prefill.excerpt || "",
   } : emptyForm);
   const [sections, setSections] = useState(
     isEdit && Array.isArray(blog.sections) && blog.sections.length > 0
       ? blog.sections
-      : emptySections()
+      : prefill && Array.isArray(prefill.sections) && prefill.sections.length > 0
+        ? prefill.sections
+        : emptySections()
   );
   const [imageFile, setImageFile] = useState(null);
   const [imagePreview, setImagePreview] = useState(null);
@@ -513,7 +650,8 @@ export default function AdminBlogs() {
   const [blogs, setBlogs]               = useState([]);
   const [loadingBlogs, setLoadingBlogs] = useState(true);
   const [filterCat, setFilterCat]       = useState("All");
-  const [modal, setModal]               = useState(null); // null | { mode:"create" } | { mode:"edit", blog }
+  const [modal, setModal]               = useState(null); // null | { mode:"create", prefill? } | { mode:"edit", blog }
+  const [aiModal, setAiModal]           = useState(false);
   const [globalMsg, setGlobalMsg]       = useState({ text: "", ok: true });
 
   useEffect(() => {
@@ -557,19 +695,33 @@ export default function AdminBlogs() {
           <h1 className="admin-page-title" style={{ display: "flex", alignItems: "center", gap: "10px", margin: 0 }}>
             <BookOpen size={22} /> Blog Management
           </h1>
-          <button
-            onClick={() => { setGlobalMsg({ text: "", ok: true }); setModal({ mode: "create" }); }}
-            style={{
-              display: "flex", alignItems: "center", gap: "7px",
-              padding: "10px 20px", borderRadius: "9px", border: "none",
-              background: "linear-gradient(135deg,#15803d,#16a34a)",
-              color: "#fff", fontWeight: 700, fontSize: "0.88rem",
-              cursor: "pointer",
-              boxShadow: "0 4px 14px rgba(22,163,74,.3)",
-            }}
-          >
-            <PlusCircle size={16} /> New Blog Post
-          </button>
+          <div style={{ display: "flex", gap: "10px" }}>
+            <button
+              onClick={() => { setGlobalMsg({ text: "", ok: true }); setAiModal(true); }}
+              style={{
+                display: "flex", alignItems: "center", gap: "7px",
+                padding: "10px 18px", borderRadius: "9px", border: "1px solid #ddd6fe",
+                background: "#faf5ff",
+                color: "#6d28d9", fontWeight: 700, fontSize: "0.88rem",
+                cursor: "pointer",
+              }}
+            >
+              <Sparkles size={16} /> Generate with AI
+            </button>
+            <button
+              onClick={() => { setGlobalMsg({ text: "", ok: true }); setModal({ mode: "create" }); }}
+              style={{
+                display: "flex", alignItems: "center", gap: "7px",
+                padding: "10px 20px", borderRadius: "9px", border: "none",
+                background: "linear-gradient(135deg,#15803d,#16a34a)",
+                color: "#fff", fontWeight: 700, fontSize: "0.88rem",
+                cursor: "pointer",
+                boxShadow: "0 4px 14px rgba(22,163,74,.3)",
+              }}
+            >
+              <PlusCircle size={16} /> New Blog Post
+            </button>
+          </div>
         </div>
 
         {/* ── Stats ── */}
@@ -665,11 +817,23 @@ export default function AdminBlogs() {
           </div>
         </div>
 
+        {/* ── AI Generate Modal ── */}
+        {aiModal && (
+          <AIGenerateModal
+            onClose={() => setAiModal(false)}
+            onGenerated={(prefill) => {
+              setAiModal(false);
+              setModal({ mode: "create", prefill });
+            }}
+          />
+        )}
+
         {/* ── Create / Edit Modal ── */}
         {modal && (
           <BlogFormModal
             mode={modal.mode}
             blog={modal.blog}
+            prefill={modal.prefill}
             onClose={() => setModal(null)}
             onSaved={onSaved}
           />

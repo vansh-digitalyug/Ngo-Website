@@ -44,7 +44,7 @@ export const sendPhoneOtp = asyncHandler(async (req, res) => {
 
   await sendSms(phone, otp);
 
-  res.status(200).json(new ApiResponse(200, "OTP sent successfully"));
+  res.status(200).json(new ApiResponse(200, "OTP sent successfully",otp)); // For testing, include OTP in response. Remove in production!
 });
 
 // POST /api/otp/verify-phone   { phone, otp }
