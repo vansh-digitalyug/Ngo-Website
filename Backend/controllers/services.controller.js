@@ -5,7 +5,7 @@ import { s3 } from "../config/s3Client.config.js";
 import Category from "../models/Services.Category.models.js";
 import Program from "../models/Services.Program.models.js";
 import ApiError from "../utils/ApiError.js";
-import ApiResponse from "../utils/Apiresponse.js";
+import ApiResponse from "../utils/ApiResponse.js";
 import asyncHandler from "../utils/asyncHandler.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -51,8 +51,9 @@ export const updateCategory = asyncHandler(async (req, res) => {
     const { categoryId } = req.params;
     if (!mongoose.Types.ObjectId.isValid(categoryId)) throw new ApiError(400, "Invalid category ID");
 
+    // Admin can update both active and hidden categories
     const category = await Category.findById(categoryId);
-    if (!category || !category.isActive) throw new ApiError(404, "Category not found");
+    if (!category) throw new ApiError(404, "Category not found");
 
     const { name, description, imageUrl } = req.body;
     if (name && name.trim()) category.name = name.trim();
@@ -67,10 +68,17 @@ export const deleteCategory = asyncHandler(async (req, res) => {
     const { categoryId } = req.params;
     if (!mongoose.Types.ObjectId.isValid(categoryId)) throw new ApiError(400, "Invalid category ID");
 
-    const category = await Category.findByIdAndDelete(categoryId);
-    if (!category || !category.isActive) throw new ApiError(404, "Category not found");
+    // Check existence BEFORE deleting to avoid phantom deletes
+    const category = await Category.findById(categoryId);
+    if (!category) throw new ApiError(404, "Category not found");
 
-    return res.status(200).json(new ApiResponse(200, "Category deleted successfully", category));
+    // Cascade: permanently remove all programs under this category
+    await Promise.all([
+        Category.findByIdAndDelete(categoryId),
+        Program.deleteMany({ categoryId }),
+    ]);
+
+    return res.status(200).json(new ApiResponse(200, "Category deleted successfully", null));
 });
 
 export const unhideCategory = asyncHandler(async (req, res) => {
@@ -79,14 +87,14 @@ export const unhideCategory = asyncHandler(async (req, res) => {
     const category = await Category.findById(categoryId);
     if (!category) throw new ApiError(404, "Category not found");
     category.isActive = true;
-    await category.save();
+    // Always restore programs — the old `if (category.programs)` guard was wrong:
+    // 'programs' is not a field on Category schema, so programs were never actually unhidden.
+    await Promise.all([
+        category.save(),
+        Program.updateMany({ categoryId }, { isActive: true }),
+    ]);
     return res.status(200).json(new ApiResponse(200, "Category unhidden successfully", null));
 });
-
-const deleteCategoryAndPrograms = async (categoryId) => {
-    await Category.findByIdAndDelete(categoryId);
-    await Program.deleteMany({ categoryId });
-}
 
 export const hideCategory = asyncHandler(async(req, res) =>{
     const { categoryId } = req.params;
@@ -98,15 +106,6 @@ export const hideCategory = asyncHandler(async(req, res) =>{
     await Program.updateMany({ categoryId }, { isActive: false });
     return res.status(200).json(new ApiResponse(200, "Category hidden successfully", null));
 })
-
-
-
-
-
-
-
-
-
 // ─────────────────────────────────────────────────────────────────────────────
 // PROGRAM
 // ─────────────────────────────────────────────────────────────────────────────
@@ -213,8 +212,9 @@ export const updateProgram = asyncHandler(async (req, res) => {
     const { programId } = req.params;
     if (!mongoose.Types.ObjectId.isValid(programId)) throw new ApiError(400, "Invalid program ID");
 
+    // Admin can update both active and hidden programs
     const program = await Program.findById(programId);
-    if (!program || !program.isActive) throw new ApiError(404, "Program not found");
+    if (!program) throw new ApiError(404, "Program not found");
 
     const {
         title, description, fullDescription,

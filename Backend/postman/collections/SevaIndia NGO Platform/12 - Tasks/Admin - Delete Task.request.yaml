@@ -1,6 +1,0 @@
-$kind: http-request
-url: "{{base_url}}/api/tasks/admin/TASK_ID_HERE"
-method: DELETE
-headers:
-  Authorization: Bearer {{admin_token}}
-order: 5000

@@ -1,6 +1,0 @@
-$kind: http-request
-url: "{{base_url}}/api/events/EVENT_ID_HERE"
-method: DELETE
-headers:
-  Authorization: Bearer {{user_token}}
-order: 9000

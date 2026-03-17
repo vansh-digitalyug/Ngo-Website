@@ -20,6 +20,11 @@ import {
 } from "../controllers/auth.controller.js";
 import { verifyToken } from "../middlewares/auth.middleware.js";
 import profileUpload from "../middlewares/profileUpload.middleware.js";
+import {
+    authLimiter,
+    otpSendLimiter,
+    passwordResetLimiter,
+} from "../middlewares/rateLimiter.middleware.js";
 
 const handleProfileUpload = (req, res, next) => {
   profileUpload.single("avatar")(req, res, (err) => {
@@ -49,17 +54,17 @@ const handleProfileUpload = (req, res, next) => {
 };
 
 // Send OTP to email before registration (no auth required)
-router.post("/send-register-otp", sendRegisterOtp);
+router.post("/send-register-otp", otpSendLimiter, sendRegisterOtp);
 // Register a new user (requires OTP verified via /send-register-otp)
-router.post("/register", registerUser);
+router.post("/register", authLimiter, registerUser);
 // Login user
-router.post("/login", loginUser);
+router.post("/login", authLimiter, loginUser);
 // Google login
-router.post("/google-login", googleLogin);
+router.post("/google-login", authLimiter, googleLogin);
 // Forgot password
-router.post("/forgot-password", forgotPassword);
+router.post("/forgot-password", passwordResetLimiter, forgotPassword);
 // Reset password
-router.post("/reset-password/:token", resetPassword);
+router.post("/reset-password/:token", passwordResetLimiter, resetPassword);
 // Get current user profile (protected route)
 router.get("/profile", verifyToken, getProfile);
 // Update current user profile (protected route)

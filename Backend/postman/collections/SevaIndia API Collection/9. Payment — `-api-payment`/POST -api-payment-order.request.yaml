@@ -1,7 +1,0 @@
-$kind: http-request
-name: POST /api/payment/order
-url: "{{baseUrl}}/api/payment/order"
-method: POST
-headers:
-  Content-Type: application/json
-order: 1000

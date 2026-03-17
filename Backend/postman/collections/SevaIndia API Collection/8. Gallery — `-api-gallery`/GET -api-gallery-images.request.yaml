@@ -1,7 +1,0 @@
-$kind: http-request
-name: GET /api/gallery/images
-url: "{{baseUrl}}/api/gallery/images"
-method: GET
-headers:
-  Content-Type: application/json
-order: 1000

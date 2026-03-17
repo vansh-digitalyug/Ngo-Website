@@ -1,6 +1,0 @@
-$kind: http-request
-url: "{{base_url}}/api/gallery/admin/GALLERY_ITEM_ID/approve"
-method: PUT
-headers:
-  Authorization: Bearer {{admin_token}}
-order: 9000

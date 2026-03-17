@@ -1,9 +1,0 @@
-$kind: http-request
-name: POST /api/events/ngo/:id/photos
-url: "{{baseUrl}}/api/events/ngo/:id/photos"
-method: POST
-headers:
-  Content-Type: application/json
-pathVariables:
-  id: ""
-order: 16000

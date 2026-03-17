@@ -1,7 +1,7 @@
 import bcrypt from "bcryptjs";
 import { sendSms } from "../services/sms.service.js";
 import ApiError from "../utils/ApiError.js";
-import ApiResponse from "../utils/Apiresponse.js";
+import ApiResponse from "../utils/ApiResponse.js";
 import asyncHandler from "../utils/asyncHandler.js";
 
 // In-memory OTP store: phone → { otpHash, expiresAt, lastSentAt, attempts }

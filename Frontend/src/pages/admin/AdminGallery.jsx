@@ -14,6 +14,22 @@ const getImageUrl = (url) => {
   return `${API_BASE_URL}/uploads/gallery/${url}`;
 };
 
+// Detect if a video URL is a YouTube or Vimeo embed (not a direct file)
+const isExternalVideo = (url) =>
+  url && (url.includes("youtube.com") || url.includes("youtu.be") || url.includes("vimeo.com"));
+
+// Convert a YouTube/Vimeo watch URL to an embeddable iframe src
+const getEmbedUrl = (url) => {
+  if (!url) return null;
+  // YouTube
+  const ytMatch = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([^&\n?#]+)/);
+  if (ytMatch) return `https://www.youtube.com/embed/${ytMatch[1]}?autoplay=1`;
+  // Vimeo
+  const vimeoMatch = url.match(/vimeo\.com\/(?:video\/)?(\d+)/);
+  if (vimeoMatch) return `https://player.vimeo.com/video/${vimeoMatch[1]}?autoplay=1`;
+  return null;
+};
+
 const CATEGORIES = [
   "Food Distribution", "Medical Camps", "Education Programs",
   "Elder Care", "Women Empowerment", "Events", "Other"
@@ -314,12 +330,11 @@ const AdminGallery = () => {
               
               <div style={{ position: "relative", aspectRatio: "16/10", cursor: "pointer", overflow: "hidden" }} onClick={() => toggleSelectItem(item._id)}>
                 {item.type === "video" ? (
-                  <video
-                    src={getImageUrl(item.url)}
+                  <img
+                    src={item.thumbnail ? getImageUrl(item.thumbnail) : "https://via.placeholder.com/400x250?text=Video"}
+                    alt={item.title}
                     style={{ width: "100%", height: "100%", objectFit: "cover" }}
-                    preload="metadata"
-                    muted
-                    onError={e => { e.currentTarget.style.display = "none"; }}
+                    onError={e => { e.currentTarget.src = "https://via.placeholder.com/400x250?text=Video"; }}
                   />
                 ) : (
                   <img
@@ -438,12 +453,22 @@ const AdminGallery = () => {
           </button>
           <div onClick={e => e.stopPropagation()} style={{ maxWidth: "90vw", maxHeight: "90vh", display: "flex", flexDirection: "column", alignItems: "center", gap: "12px" }}>
             {previewItem.type === "video" ? (
-              <video
-                src={getImageUrl(previewItem.url)}
-                controls
-                autoPlay
-                style={{ maxWidth: "100%", maxHeight: "80vh", borderRadius: "8px", background: "#000", boxShadow: "0 20px 60px rgba(0,0,0,0.5)" }}
-              />
+              isExternalVideo(previewItem.url) ? (
+                <iframe
+                  src={getEmbedUrl(previewItem.url)}
+                  title={previewItem.title}
+                  allow="autoplay; fullscreen; picture-in-picture"
+                  allowFullScreen
+                  style={{ width: "min(800px, 90vw)", height: "min(450px, 50vh)", borderRadius: "8px", border: "none", boxShadow: "0 20px 60px rgba(0,0,0,0.5)" }}
+                />
+              ) : (
+                <video
+                  src={getImageUrl(previewItem.url)}
+                  controls
+                  autoPlay
+                  style={{ maxWidth: "100%", maxHeight: "80vh", borderRadius: "8px", background: "#000", boxShadow: "0 20px 60px rgba(0,0,0,0.5)" }}
+                />
+              )
             ) : (
               <img
                 src={getImageUrl(previewItem.url)}

@@ -1,6 +1,0 @@
-$kind: http-request
-url: "{{base_url}}/api/profile/volunteer"
-method: GET
-headers:
-  Authorization: Bearer {{user_token}}
-order: 15000

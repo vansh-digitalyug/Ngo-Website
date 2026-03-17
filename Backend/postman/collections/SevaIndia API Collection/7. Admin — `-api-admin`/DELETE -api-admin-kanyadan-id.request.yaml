@@ -1,9 +1,0 @@
-$kind: http-request
-name: DELETE /api/admin/kanyadan/:id
-url: "{{baseUrl}}/api/admin/kanyadan/:id"
-method: DELETE
-headers:
-  Content-Type: application/json
-pathVariables:
-  id: ""
-order: 20000

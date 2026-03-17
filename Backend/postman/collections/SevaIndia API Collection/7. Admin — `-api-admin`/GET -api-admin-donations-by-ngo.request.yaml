@@ -1,7 +1,0 @@
-$kind: http-request
-name: GET /api/admin/donations/by-ngo
-url: "{{baseUrl}}/api/admin/donations/by-ngo"
-method: GET
-headers:
-  Content-Type: application/json
-order: 16000

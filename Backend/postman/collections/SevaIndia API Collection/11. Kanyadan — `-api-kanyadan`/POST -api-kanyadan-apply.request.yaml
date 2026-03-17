@@ -1,7 +1,0 @@
-$kind: http-request
-name: POST /api/kanyadan/apply
-url: "{{baseUrl}}/api/kanyadan/apply"
-method: POST
-headers:
-  Content-Type: application/json
-order: 1000

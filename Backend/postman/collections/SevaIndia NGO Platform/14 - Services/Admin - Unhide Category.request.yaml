@@ -1,6 +1,0 @@
-$kind: http-request
-url: "{{base_url}}/api/services/admin/categories/CATEGORY_ID_HERE/unhide"
-method: PUT
-headers:
-  Authorization: Bearer {{admin_token}}
-order: 13000

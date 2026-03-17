@@ -1,8 +1,0 @@
-$kind: http-request
-url: "{{base_url}}/api/services/categories/CATEGORY_ID_HERE/programs"
-method: GET
-queryParams:
-  - key: includeHidden
-    value: "true"
-    disabled: true
-order: 8000

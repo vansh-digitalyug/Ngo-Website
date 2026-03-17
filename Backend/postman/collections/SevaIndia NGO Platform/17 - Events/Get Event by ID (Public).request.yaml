@@ -1,4 +1,0 @@
-$kind: http-request
-url: "{{base_url}}/api/events/EVENT_ID_HERE"
-method: GET
-order: 2000

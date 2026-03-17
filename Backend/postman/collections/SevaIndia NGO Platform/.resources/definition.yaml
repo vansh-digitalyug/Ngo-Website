@@ -1,7 +1,0 @@
-$kind: collection
-description: Complete API collection for SevaIndia NGO Platform
-variables:
-  base_url: http://localhost:5000
-  user_token: ""
-  admin_token: ""
-  ngo_token: ""

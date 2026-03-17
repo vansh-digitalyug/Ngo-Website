@@ -1,6 +1,0 @@
-$kind: http-request
-url: "{{base_url}}/api/gallery/admin/GALLERY_ITEM_ID/reject"
-method: PUT
-headers:
-  Authorization: Bearer {{admin_token}}
-order: 10000
