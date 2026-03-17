@@ -1,7 +1,0 @@
-$kind: http-request
-name: GET /api/events/ngo/my-events
-url: "{{baseUrl}}/api/events/ngo/my-events"
-method: GET
-headers:
-  Content-Type: application/json
-order: 12000

@@ -1,7 +1,0 @@
-$kind: http-request
-name: POST /api/services/admin/categories
-url: "{{baseUrl}}/api/services/admin/categories"
-method: POST
-headers:
-  Content-Type: application/json
-order: 10000

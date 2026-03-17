@@ -1,7 +1,0 @@
-$kind: http-request
-name: POST /api/otp/verify-phone
-url: "{{baseUrl}}/api/otp/verify-phone"
-method: POST
-headers:
-  Content-Type: application/json
-order: 2000

@@ -1,7 +1,0 @@
-$kind: http-request
-name: POST /api/kyc/aadhaar-otp
-url: "{{baseUrl}}/api/kyc/aadhaar-otp"
-method: POST
-headers:
-  Content-Type: application/json
-order: 1000

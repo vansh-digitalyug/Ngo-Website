@@ -1,7 +1,0 @@
-$kind: http-request
-name: POST /api/logout
-url: "{{baseUrl}}/api/logout"
-method: POST
-headers:
-  Content-Type: application/json
-order: 12000

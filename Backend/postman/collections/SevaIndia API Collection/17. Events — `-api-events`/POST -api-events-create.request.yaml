@@ -1,7 +1,0 @@
-$kind: http-request
-name: POST /api/events/create
-url: "{{baseUrl}}/api/events/create"
-method: POST
-headers:
-  Content-Type: application/json
-order: 7000

@@ -1,9 +1,0 @@
-$kind: http-request
-name: GET /api/tasks/volunteer/task/:id
-url: "{{baseUrl}}/api/tasks/volunteer/task/:id"
-method: GET
-headers:
-  Content-Type: application/json
-pathVariables:
-  id: ""
-order: 10000

@@ -1,9 +1,0 @@
-$kind: http-request
-name: PUT /api/admin/ngos/:id/status
-url: "{{baseUrl}}/api/admin/ngos/:id/status"
-method: PUT
-headers:
-  Content-Type: application/json
-pathVariables:
-  id: ""
-order: 4000
