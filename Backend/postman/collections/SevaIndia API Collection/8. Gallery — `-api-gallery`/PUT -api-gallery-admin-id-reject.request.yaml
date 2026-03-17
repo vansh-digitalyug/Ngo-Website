@@ -1,9 +1,0 @@
-$kind: http-request
-name: PUT /api/gallery/admin/:id/reject
-url: "{{baseUrl}}/api/gallery/admin/:id/reject"
-method: PUT
-headers:
-  Content-Type: application/json
-pathVariables:
-  id: ""
-order: 10000

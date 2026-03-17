@@ -1,5 +1,10 @@
 const API_BASE_URL = String(import.meta.env.VITE_API_BASE_URL || "http://localhost:5000").replace(/\/$/, "");
 
+const authHeaders = () => {
+  const token = localStorage.getItem("token");
+  return token ? { Authorization: `Bearer ${token}` } : {};
+};
+
 export async function fetchBlogs() {
   const res = await fetch(`${API_BASE_URL}/api/blogs/get-all-blog`);
   if (!res.ok) throw new Error("Failed to fetch blogs");
@@ -10,7 +15,7 @@ export async function fetchBlogs() {
 export async function createBlog({ title, content, sections, S3Imagekey, excerpt, category, author }) {
   const res = await fetch(`${API_BASE_URL}/api/blogs/create-blog`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: { "Content-Type": "application/json", ...authHeaders() },
     credentials: "include",
     body: JSON.stringify({ title, content, sections, S3Imagekey, excerpt, category, author }),
   });
@@ -22,7 +27,7 @@ export async function createBlog({ title, content, sections, S3Imagekey, excerpt
 export async function updateBlogById(id, updates) {
   const res = await fetch(`${API_BASE_URL}/api/blogs/update-blog/${encodeURIComponent(id)}`, {
     method: "PUT",
-    headers: { "Content-Type": "application/json" },
+    headers: { "Content-Type": "application/json", ...authHeaders() },
     credentials: "include",
     body: JSON.stringify(updates),
   });
@@ -34,6 +39,7 @@ export async function updateBlogById(id, updates) {
 export async function deleteBlogById(id) {
   const res = await fetch(`${API_BASE_URL}/api/blogs/delete-blog/${encodeURIComponent(id)}`, {
     method: "DELETE",
+    headers: { ...authHeaders() },
     credentials: "include",
   });
   const json = await res.json();
@@ -45,7 +51,7 @@ export async function uploadBlogImageToS3(file) {
   // Step 1: Get presigned upload URL from backend
   const urlRes = await fetch(`${API_BASE_URL}/api/s3/generate-upload-url`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: { "Content-Type": "application/json", ...authHeaders() },
     credentials: "include",
     body: JSON.stringify({ fileName: file.name, fileType: file.type, location: "blogs" }),
   });

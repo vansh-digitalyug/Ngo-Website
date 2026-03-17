@@ -1,7 +1,0 @@
-$kind: http-request
-name: POST /api/send-register-otp
-url: "{{baseUrl}}/api/send-register-otp"
-method: POST
-headers:
-  Content-Type: application/json
-order: 1000

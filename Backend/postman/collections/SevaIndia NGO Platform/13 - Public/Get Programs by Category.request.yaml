@@ -1,4 +1,0 @@
-$kind: http-request
-url: "{{base_url}}/api/public/categories/CATEGORY_ID_HERE/programs"
-method: GET
-order: 5000

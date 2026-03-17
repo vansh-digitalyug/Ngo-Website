@@ -1,7 +1,0 @@
-$kind: http-request
-name: GET /api/ngo-dashboard/volunteers
-url: "{{baseUrl}}/api/ngo-dashboard/volunteers"
-method: GET
-headers:
-  Content-Type: application/json
-order: 9000

@@ -1,9 +1,0 @@
-$kind: http-request
-name: PUT /api/ngo-dashboard/funds/:id/resolve
-url: "{{baseUrl}}/api/ngo-dashboard/funds/:id/resolve"
-method: PUT
-headers:
-  Content-Type: application/json
-pathVariables:
-  id: ""
-order: 14000

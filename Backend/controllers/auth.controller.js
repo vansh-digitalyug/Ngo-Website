@@ -16,9 +16,7 @@ import {
 import ApiError from "../utils/ApiError.js";
 import ApiResponse from "../utils/ApiResponse.js";
 
-// ── In-memory OTP store for pre-registration email verification ───────────────
-// Structure: email -> { otpHash, name, expiresAt, lastSentAt }
-const pendingRegisterOtps = new Map();
+import OtpStore from "../models/Otp.model.js";
 import "../config/loadEnv.js";
 import asyncHandler from "../utils/asyncHandler.js";
 
@@ -139,11 +137,11 @@ export const sendRegisterOtp = asyncHandler(async (req, res) => {
         throw new ApiError(400, "An account with this email already exists. Please log in.");
     }
 
-    // Cooldown: prevent spam
-    const existing = pendingRegisterOtps.get(cleanEmail);
+    // Cooldown: prevent spam — check existing DB record
+    const existing = await OtpStore.findOne({ email: cleanEmail }).lean();
     const cooldown = getOtpCooldownSeconds();
-    if (existing?.lastSentAt && Date.now() - existing.lastSentAt < cooldown * 1000) {
-        const retryAfter = Math.ceil((cooldown * 1000 - (Date.now() - existing.lastSentAt)) / 1000);
+    if (existing?.lastSentAt && Date.now() - new Date(existing.lastSentAt).getTime() < cooldown * 1000) {
+        const retryAfter = Math.ceil((cooldown * 1000 - (Date.now() - new Date(existing.lastSentAt).getTime())) / 1000);
         throw new ApiError(429, `Please wait ${retryAfter}s before requesting a new OTP`);
     }
 
@@ -152,13 +150,12 @@ export const sendRegisterOtp = asyncHandler(async (req, res) => {
     const expiryMinutes = getOtpExpiryMinutes();
     const expiresAt = new Date(Date.now() + expiryMinutes * 60 * 1000);
 
-    // Store in memory
-    pendingRegisterOtps.set(cleanEmail, {
-        otpHash,
-        name: cleanName,
-        expiresAt,
-        lastSentAt: Date.now()
-    });
+    // Upsert into MongoDB — replaces any previous OTP for this email
+    await OtpStore.findOneAndUpdate(
+        { email: cleanEmail },
+        { otpHash, name: cleanName, expiresAt, lastSentAt: new Date() },
+        { upsert: true, new: true }
+    );
 
     await sendEmailVerificationOtpEmail({ name: cleanName, email: cleanEmail, otp, expiryMinutes });
 
@@ -190,13 +187,13 @@ export const registerUser = asyncHandler(async (req, res) => {
             throw new ApiError(400, "Email OTP is required. Please verify your email first.");
         }
 
-        const pending = pendingRegisterOtps.get(cleanEmail);
+        const pending = await OtpStore.findOne({ email: cleanEmail }).lean();
         if (!pending) {
             throw new ApiError(400, "No OTP found for this email. Please click 'Send OTP' first.");
         }
 
         if (new Date(pending.expiresAt).getTime() <= Date.now()) {
-            pendingRegisterOtps.delete(cleanEmail);
+            await OtpStore.deleteOne({ email: cleanEmail });
             throw new ApiError(400, "OTP has expired. Please request a new one.");
         }
 
@@ -204,8 +201,8 @@ export const registerUser = asyncHandler(async (req, res) => {
             throw new ApiError(400, "Invalid OTP. Please check and try again.");
         }
 
-        // OTP is valid — remove from store
-        pendingRegisterOtps.delete(cleanEmail);
+        // OTP is valid — remove from DB
+        await OtpStore.deleteOne({ email: cleanEmail });
 
         // Check user doesn't already exist
         const existingUser = await User.findOne({ email: cleanEmail }).select("_id").lean();

@@ -1,7 +1,0 @@
-$kind: http-request
-name: POST /api/admin/programs
-url: "{{baseUrl}}/api/admin/programs"
-method: POST
-headers:
-  Content-Type: application/json
-order: 23000

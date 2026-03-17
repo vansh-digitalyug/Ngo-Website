@@ -1,9 +1,0 @@
-$kind: http-request
-name: GET /api/services/programs/by-title/:title
-url: "{{baseUrl}}/api/services/programs/by-title/:title"
-method: GET
-headers:
-  Content-Type: application/json
-pathVariables:
-  title: ""
-order: 5000

@@ -1,7 +1,0 @@
-$kind: http-request
-name: GET /api/public/programs
-url: "{{baseUrl}}/api/public/programs"
-method: GET
-headers:
-  Content-Type: application/json
-order: 3000

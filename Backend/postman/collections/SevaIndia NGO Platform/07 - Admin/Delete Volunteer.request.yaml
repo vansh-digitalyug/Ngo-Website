@@ -1,6 +1,0 @@
-$kind: http-request
-url: "{{base_url}}/api/admin/volunteers/VOLUNTEER_ID_HERE"
-method: DELETE
-headers:
-  Authorization: Bearer {{admin_token}}
-order: 8000

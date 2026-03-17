@@ -1,6 +1,0 @@
-$kind: http-request
-url: "{{base_url}}/api/admin/funds"
-method: GET
-headers:
-  Authorization: Bearer {{admin_token}}
-order: 13000

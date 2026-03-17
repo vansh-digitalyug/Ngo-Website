@@ -1,4 +1,0 @@
-$kind: http-request
-url: "{{base_url}}/api/ngo/NGO_ID_HERE/gallery"
-method: GET
-order: 4000
