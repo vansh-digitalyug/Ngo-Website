@@ -1,0 +1,7 @@
+$kind: http-request
+name: GET /api/gallery/videos
+url: "{{baseUrl}}/api/gallery/videos"
+method: GET
+headers:
+  Content-Type: application/json
+order: 2000

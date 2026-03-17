@@ -1,0 +1,7 @@
+$kind: http-request
+name: POST /api/blogs/create-blog
+url: "{{baseUrl}}/api/blogs/create-blog"
+method: POST
+headers:
+  Content-Type: application/json
+order: 3000

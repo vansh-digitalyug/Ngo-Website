@@ -1,0 +1,9 @@
+$kind: http-request
+name: GET /api/admin/programs/title/:title
+url: "{{baseUrl}}/api/admin/programs/title/:title"
+method: GET
+headers:
+  Content-Type: application/json
+pathVariables:
+  title: ""
+order: 27000

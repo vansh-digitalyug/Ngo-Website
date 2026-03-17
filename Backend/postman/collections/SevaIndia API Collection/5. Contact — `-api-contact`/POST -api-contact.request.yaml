@@ -1,0 +1,7 @@
+$kind: http-request
+name: POST /api/contact
+url: "{{baseUrl}}/api/contact"
+method: POST
+headers:
+  Content-Type: application/json
+order: 1000

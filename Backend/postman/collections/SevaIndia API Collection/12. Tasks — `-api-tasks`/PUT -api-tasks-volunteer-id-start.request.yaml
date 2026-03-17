@@ -1,0 +1,9 @@
+$kind: http-request
+name: PUT /api/tasks/volunteer/:id/start
+url: "{{baseUrl}}/api/tasks/volunteer/:id/start"
+method: PUT
+headers:
+  Content-Type: application/json
+pathVariables:
+  id: ""
+order: 8000

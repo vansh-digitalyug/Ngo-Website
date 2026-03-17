@@ -1,0 +1,7 @@
+$kind: http-request
+name: POST /api/kyc/verify-aadhaar
+url: "{{baseUrl}}/api/kyc/verify-aadhaar"
+method: POST
+headers:
+  Content-Type: application/json
+order: 2000

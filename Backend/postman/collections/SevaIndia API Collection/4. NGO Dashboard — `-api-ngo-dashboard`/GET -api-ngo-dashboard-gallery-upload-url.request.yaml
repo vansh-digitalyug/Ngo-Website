@@ -1,0 +1,7 @@
+$kind: http-request
+name: GET /api/ngo-dashboard/gallery/upload-url
+url: "{{baseUrl}}/api/ngo-dashboard/gallery/upload-url"
+method: GET
+headers:
+  Content-Type: application/json
+order: 6000

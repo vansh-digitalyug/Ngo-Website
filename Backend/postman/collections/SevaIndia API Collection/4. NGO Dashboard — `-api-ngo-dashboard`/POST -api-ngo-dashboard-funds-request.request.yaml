@@ -1,0 +1,7 @@
+$kind: http-request
+name: POST /api/ngo-dashboard/funds/request
+url: "{{baseUrl}}/api/ngo-dashboard/funds/request"
+method: POST
+headers:
+  Content-Type: application/json
+order: 12000

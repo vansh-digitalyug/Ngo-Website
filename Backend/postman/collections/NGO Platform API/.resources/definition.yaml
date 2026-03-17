@@ -1,0 +1,5 @@
+$kind: collection
+description: Auto generated API collection for NGO platform
+variables:
+  baseUrl: http://localhost:5000
+  token: ""

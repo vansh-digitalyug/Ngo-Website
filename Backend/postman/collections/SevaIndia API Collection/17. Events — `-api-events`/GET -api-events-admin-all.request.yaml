@@ -1,0 +1,7 @@
+$kind: http-request
+name: GET /api/events/admin/all
+url: "{{baseUrl}}/api/events/admin/all"
+method: GET
+headers:
+  Content-Type: application/json
+order: 4000

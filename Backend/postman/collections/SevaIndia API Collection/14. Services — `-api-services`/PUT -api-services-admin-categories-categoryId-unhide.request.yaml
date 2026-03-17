@@ -1,0 +1,9 @@
+$kind: http-request
+name: PUT /api/services/admin/categories/:categoryId/unhide
+url: "{{baseUrl}}/api/services/admin/categories/:categoryId/unhide"
+method: PUT
+headers:
+  Content-Type: application/json
+pathVariables:
+  categoryId: ""
+order: 13000

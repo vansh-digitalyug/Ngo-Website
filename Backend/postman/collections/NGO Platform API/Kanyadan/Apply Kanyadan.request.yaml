@@ -1,0 +1,27 @@
+$kind: http-request
+url: "{{baseUrl}}/api/kanyadan/apply"
+method: POST
+body:
+  type: json
+  content: |-
+    {
+      "applicantName": "Ramesh Kumar",
+      "phone": "9876543210",
+      "email": "ramesh@example.com",
+      "address": "123 Main Street, Delhi",
+      "state": "Delhi",
+      "city": "New Delhi",
+      "pincode": "110001",
+      "daughterName": "Priya Kumar",
+      "daughterAge": 22,
+      "marriageDate": "2025-06-15",
+      "income": 25000,
+      "aadharNumber": "123456789012",
+      "bankAccount": "1234567890",
+      "ifscCode": "SBIN0001234",
+      "documents": {
+        "aadharKey": "s3-key/aadhar.pdf",
+        "incomeProofKey": "s3-key/income.pdf"
+      }
+    }
+order: 1000

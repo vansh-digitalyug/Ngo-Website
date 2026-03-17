@@ -1,0 +1,9 @@
+$kind: http-request
+name: POST /api/contact/:id/reply
+url: "{{baseUrl}}/api/contact/:id/reply"
+method: POST
+headers:
+  Content-Type: application/json
+pathVariables:
+  id: ""
+order: 5000

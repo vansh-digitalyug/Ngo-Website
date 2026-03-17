@@ -1,0 +1,7 @@
+$kind: http-request
+name: POST /api/s3/generate-upload-url
+url: "{{baseUrl}}/api/s3/generate-upload-url"
+method: POST
+headers:
+  Content-Type: application/json
+order: 1000

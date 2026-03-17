@@ -1,0 +1,12 @@
+$kind: http-request
+name: Send Phone OTP
+url: ""
+method: POST
+body:
+  type: json
+  content: |-
+    {
+      "phone": "8006181716",
+      "otp":"404530"
+    }
+order: 1000

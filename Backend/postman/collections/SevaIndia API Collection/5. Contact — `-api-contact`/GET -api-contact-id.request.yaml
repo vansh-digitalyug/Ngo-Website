@@ -1,0 +1,9 @@
+$kind: http-request
+name: GET /api/contact/:id
+url: "{{baseUrl}}/api/contact/:id"
+method: GET
+headers:
+  Content-Type: application/json
+pathVariables:
+  id: ""
+order: 3000

@@ -1,0 +1,7 @@
+$kind: http-request
+name: POST /api/payment/webhook
+url: "{{baseUrl}}/api/payment/webhook"
+method: POST
+headers:
+  Content-Type: application/json
+order: 3000

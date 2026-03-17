@@ -1,0 +1,7 @@
+$kind: http-request
+name: POST /api/kyc/verify-pan
+url: "{{baseUrl}}/api/kyc/verify-pan"
+method: POST
+headers:
+  Content-Type: application/json
+order: 3000

@@ -1,0 +1,9 @@
+$kind: http-request
+name: GET /api/ngo/:id/gallery
+url: "{{baseUrl}}/api/ngo/:id/gallery"
+method: GET
+headers:
+  Content-Type: application/json
+pathVariables:
+  id: ""
+order: 4000

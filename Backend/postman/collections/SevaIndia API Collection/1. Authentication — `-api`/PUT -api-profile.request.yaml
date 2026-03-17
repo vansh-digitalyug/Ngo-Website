@@ -1,0 +1,7 @@
+$kind: http-request
+name: PUT /api/profile
+url: "{{baseUrl}}/api/profile"
+method: PUT
+headers:
+  Content-Type: application/json
+order: 8000

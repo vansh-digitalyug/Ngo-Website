@@ -1,0 +1,7 @@
+$kind: http-request
+name: GET /api/admin/ngos
+url: "{{baseUrl}}/api/admin/ngos"
+method: GET
+headers:
+  Content-Type: application/json
+order: 3000

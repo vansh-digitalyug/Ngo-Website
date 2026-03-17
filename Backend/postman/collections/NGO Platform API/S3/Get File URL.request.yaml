@@ -1,0 +1,6 @@
+$kind: http-request
+url: "{{baseUrl}}/api/s3/get-url?key=test.pdf"
+method: GET
+queryParams:
+  key: test.pdf
+order: 2000

@@ -1,0 +1,12 @@
+$kind: http-request
+url: "{{baseUrl}}/api/s3/generate-upload-url"
+method: POST
+body:
+  type: json
+  content: |-
+    {
+      "filename": "document.pdf",
+      "contentType": "application/pdf",
+      "folder": "ngo-documents"
+    }
+order: 1000

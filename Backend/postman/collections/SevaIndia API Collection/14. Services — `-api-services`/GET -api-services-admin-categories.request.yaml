@@ -1,0 +1,7 @@
+$kind: http-request
+name: GET /api/services/admin/categories
+url: "{{baseUrl}}/api/services/admin/categories"
+method: GET
+headers:
+  Content-Type: application/json
+order: 9000

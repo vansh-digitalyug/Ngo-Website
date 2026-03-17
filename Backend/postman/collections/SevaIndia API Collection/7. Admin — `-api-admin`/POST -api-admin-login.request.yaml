@@ -1,0 +1,7 @@
+$kind: http-request
+name: POST /api/admin/login
+url: "{{baseUrl}}/api/admin/login"
+method: POST
+headers:
+  Content-Type: application/json
+order: 1000
