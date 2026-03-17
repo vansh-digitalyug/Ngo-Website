@@ -5,6 +5,7 @@ import asyncHandler from "../utils/asyncHandler.js";
 import { GetObjectCommand } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { s3 } from "../config/s3Client.config.js";
+import { generateAIContent } from "./AI.generation.controller.js";
 
 // Build a presigned GET URL from a stored S3 key (works even on private buckets)
 async function buildImageUrl(key) {
@@ -89,4 +90,16 @@ export const deleteBlog = asyncHandler(async (req, res) => {
     const blog = await Blog.findByIdAndDelete(id);
     if (!blog) throw new ApiError(404, "Blog not found");
     res.status(200).json(new ApiResponse(200, "Blog deleted successfully", null));
+});
+
+
+export const generateBlogContent = asyncHandler(async (req, res) => {
+    const { prompt } = req.body;    
+    if (!prompt || !prompt.trim()) {
+        throw new ApiError(400, "Prompt is required");
+    }   
+    // Call the AI generation service (e.g. OpenAI) with the prompt
+    // For simplicity, we'll just return a dummy response here
+    const generatedContent = await generateAIContent(prompt);
+    res.status(200).json(new ApiResponse(200, "Content generated successfully", generatedContent));
 });

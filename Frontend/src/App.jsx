@@ -1,11 +1,9 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, startTransition } from "react";
 import { useLocation } from "react-router-dom";
 import Navbar from "./components/common/navbar.jsx";
 import Footer from "./components/common/footer.jsx";
 import AppRoutes from "./routes/AppRoute.jsx";
 import { FlashProvider } from "./components/common/FlashMessage.jsx";
-import GoogleTranslate from "./components/GoogleTranslate.jsx";
-
 function App() {
   const location = useLocation();
   const [flash, setFlash] = useState(null);
@@ -14,7 +12,8 @@ function App() {
   const hideNavFooter = (
     location.pathname.startsWith("/admin") ||
     location.pathname.startsWith("/ngo") ||
-    location.pathname === "/login/admin"
+    location.pathname === "/login/admin" ||
+    location.pathname === "/login/ngo"
   );
 
   // Add body padding-top only for non-dashboard pages
@@ -42,8 +41,9 @@ function App() {
 
 
   useEffect(() => {
-    consumeFlashMessage();
-
+    startTransition(() => {
+      consumeFlashMessage();
+    });
   }, [location.key]);
 
   useEffect(() => {

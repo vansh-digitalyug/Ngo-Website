@@ -47,6 +47,18 @@ export async function deleteBlogById(id) {
   return true;
 }
 
+export async function generateBlogContent(prompt) {
+  const res = await fetch(`${API_BASE_URL}/api/blogs/generate`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...authHeaders() },
+    credentials: "include",
+    body: JSON.stringify({ prompt }),
+  });
+  const json = await res.json();
+  if (!res.ok) throw new Error(json.message || "Failed to generate blog content");
+  return json.data;
+}
+
 export async function uploadBlogImageToS3(file) {
   // Step 1: Get presigned upload URL from backend
   const urlRes = await fetch(`${API_BASE_URL}/api/s3/generate-upload-url`, {
