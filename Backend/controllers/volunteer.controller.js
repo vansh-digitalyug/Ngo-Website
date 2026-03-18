@@ -53,6 +53,7 @@ export const applyVolunteer = asyncHandler(async (req, res) => {
       interests,
       mode,
       availability,
+      profession,
       occupation,
       education,
       skills,
@@ -102,6 +103,32 @@ export const applyVolunteer = asyncHandler(async (req, res) => {
       });
     }
 
+    const validProfessions = [
+      'Doctor',
+      'Nurse / Healthcare Worker',
+      'Teacher / Educator',
+      'Engineer',
+      'Lawyer / Legal Professional',
+      'Social Worker',
+      'Student',
+      'Business Owner / Entrepreneur',
+      'IT Professional',
+      'Accountant / CA',
+      'Farmer',
+      'Government Employee',
+      'NGO Worker',
+      'Retired',
+      'Homemaker',
+      'Other'
+    ];
+
+    if (!profession || !validProfessions.includes(profession)) {
+      return res.status(400).json({
+        success: false,
+        message: `Please select a valid profession. Valid options: ${validProfessions.join(', ')}`
+      });
+    }
+
     // Verify that the user has actually completed KYC verification
     const user = await User.findById(req.userId).select("aadhaarVerified panVerified").lean();
     if (!user) {
@@ -132,6 +159,7 @@ export const applyVolunteer = asyncHandler(async (req, res) => {
       interests: interestsArray,
       mode,
       availability,
+      profession,
       occupation,
       education,
       skills,
@@ -157,4 +185,73 @@ export const applyVolunteer = asyncHandler(async (req, res) => {
       new ApiResponse(201, "Volunteer application submitted successfully", volunteer)
     );
 
+});
+
+/**
+ * GET /api/volunteer/profession-stats   (public — for dashboard display)
+ * GET /api/admin/volunteers/profession-stats  (admin — includes full breakdown)
+ *
+ * Returns count of volunteers per profession.
+ * Admin version also includes status breakdown (Pending/Approved/Rejected) per profession.
+ */
+export const getProfessionStats = asyncHandler(async (req, res) => {
+  const isAdmin = req.query.detailed === "true";
+
+  // ── Total approved volunteers per profession ─────────────────────────────
+  const byProfession = await Volunteer.aggregate([
+    { $match: { profession: { $exists: true, $ne: null } } },
+    {
+      $group: {
+        _id: "$profession",
+        total:    { $sum: 1 },
+        approved: { $sum: { $cond: [{ $eq: ["$status", "Approved"] }, 1, 0] } },
+        pending:  { $sum: { $cond: [{ $eq: ["$status", "Pending"]  }, 1, 0] } },
+        rejected: { $sum: { $cond: [{ $eq: ["$status", "Rejected"] }, 1, 0] } },
+      },
+    },
+    { $sort: { approved: -1 } },
+  ]);
+
+  // ── Summary totals ────────────────────────────────────────────────────────
+  const totalVolunteers  = await Volunteer.countDocuments({});
+  const totalApproved    = await Volunteer.countDocuments({ status: "Approved" });
+  const withProfession   = await Volunteer.countDocuments({ profession: { $exists: true, $ne: null } });
+
+  // ── Spotlight: doctors and teachers (the two the user asked for) ──────────
+  const doctorCount  = byProfession.find(p => p._id === "Doctor")?.approved  ?? 0;
+  const teacherCount = byProfession.find(p => p._id === "Teacher / Educator")?.approved ?? 0;
+  const nurseCount   = byProfession.find(p => p._id === "Nurse / Healthcare Worker")?.approved ?? 0;
+  const engineerCount= byProfession.find(p => p._id === "Engineer")?.approved ?? 0;
+
+  // ── State-wise breakdown of approved professionals (admin only) ───────────
+  let stateBreakdown = [];
+  if (isAdmin) {
+    stateBreakdown = await Volunteer.aggregate([
+      { $match: { status: "Approved", profession: { $exists: true, $ne: null } } },
+      {
+        $group: {
+          _id: { state: "$state", profession: "$profession" },
+          count: { $sum: 1 },
+        },
+      },
+      { $sort: { count: -1 } },
+    ]);
+  }
+
+  return res.status(200).json(
+    new ApiResponse(200, "Volunteer profession stats fetched", {
+      summary: {
+        totalVolunteers,
+        totalApproved,
+        withProfession,
+        // Sidebar-ready spotlight numbers
+        doctors:   doctorCount,
+        teachers:  teacherCount,
+        nurses:    nurseCount,
+        engineers: engineerCount,
+      },
+      byProfession,       // full per-profession breakdown (total/approved/pending/rejected)
+      ...(isAdmin && { stateBreakdown }),
+    })
+  );
 });

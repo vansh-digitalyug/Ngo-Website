@@ -61,9 +61,32 @@ const volunteerSchema = new mongoose.Schema({
   },
 
   // --- 3. Skills & Experience ---
+  profession: {
+    type: String,
+    enum: [
+      'Doctor',
+      'Nurse / Healthcare Worker',
+      'Teacher / Educator',
+      'Engineer',
+      'Lawyer / Legal Professional',
+      'Social Worker',
+      'Student',
+      'Business Owner / Entrepreneur',
+      'IT Professional',
+      'Accountant / CA',
+      'Farmer',
+      'Government Employee',
+      'NGO Worker',
+      'Retired',
+      'Homemaker',
+      'Other'
+    ],
+    required: [true, 'Profession is required'],
+    trim: true
+  },
   occupation: {
     type: String,
-    trim: true
+    trim: true   // free-text job title / employer (e.g., "Senior Doctor at AIIMS")
   },
   education: {
     type: String,
@@ -153,5 +176,8 @@ volunteerSchema.index(
   { user: 1, ngoId: 1 },
   { unique: true, sparse: true, partialFilterExpression: { user: { $ne: null } } }
 );
+
+// Fast aggregation on profession (used by stats API)
+volunteerSchema.index({ profession: 1, status: 1 });
 
 export default mongoose.model("Volunteer", volunteerSchema);

@@ -27,6 +27,10 @@ import servicesRoutes from "./routes/services.routes.js";
 import blogRoutes from "./routes/blog.routes.js";
 import otpRoutes from "./routes/otp.routes.js";
 import eventRoutes from "./routes/event.routes.js";
+import communityRoutes from "./routes/community.routes.js";
+import communityLeaderRoutes from "./routes/communityLeader.routes.js";
+import feedbackRoutes from "./routes/feedback.routes.js";
+import reportRoutes from "./routes/report.routes.js";
 
 import connectDB from "./config/db.js";
 import seedAdmin from "./utils/seedAdmin.js";
@@ -95,6 +99,10 @@ app.use("/api/services", servicesRoutes);
 app.use("/api/blogs", blogRoutes);
 app.use("/api/otp", otpRoutes);
 app.use("/api/events", eventRoutes);
+app.use("/api/community", communityRoutes);
+app.use("/api/community-leader", communityLeaderRoutes);
+app.use("/api/feedback", feedbackRoutes);
+app.use("/api/report", reportRoutes);
 
 // ─── Health check ─────────────────────────────────────────────────────────────
 app.get("/health", (_req, res) => {

@@ -113,6 +113,18 @@ const userSchema = new mongoose.Schema({
         type: String,
         enum: ["owner", "manager", "coordinator", null],
         default: null
+    },
+
+    // --- Community Dashboard Access ---
+    communityId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Community",
+        default: null
+    },
+    communityRole: {
+        type: String,
+        enum: ["leader", "co-leader", "coordinator", null],
+        default: null
     }
 }, {
     timestamps: true
