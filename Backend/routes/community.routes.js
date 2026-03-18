@@ -10,6 +10,14 @@ import {
     takeResponsibility,
     getMyResponsibilities,
     submitCompletionReport,
+    // Activity CRUD
+    createCommunityActivity,
+    getActivityById,
+    getAllActivitiesForCommunity,
+    updateCommunityActivity,
+    completeCommunityActivity,
+    deleteCommunityActivity,
+    getMyActivities,
 } from "../controllers/community.controller.js";
 
 const router = express.Router();
@@ -40,10 +48,23 @@ router.get("/:id", getCommunityById);
 
 /**
  * GET /api/community/:id/activities
- * Get public verified activities of a community.
+ * Public feed: only completed + admin-verified activities.
  * Query: activityType, page, limit
  */
 router.get("/:id/activities", getCommunityActivities);
+
+/**
+ * GET /api/community/:id/activities/all
+ * All activities for a community (any status) — for leader/member view.
+ * Requires authentication.
+ */
+router.get("/:id/activities/all", authenticate, getAllActivitiesForCommunity);
+
+/**
+ * POST /api/community/:id/activities
+ * Create a new activity for a community (must have active responsibility).
+ */
+router.post("/:id/activities", authenticate, createCommunityActivity);
 
 /**
  * GET /api/community/:id/stats
@@ -60,6 +81,36 @@ router.get("/:id/stats", getCommunityStats);
  * Get the logged-in user's responsibility records across all communities.
  */
 router.get("/my/responsibilities", authenticate, getMyResponsibilities);
+
+/**
+ * GET /api/community/my/activities
+ * Get the logged-in user's own posted activities across all communities.
+ */
+router.get("/my/activities", authenticate, getMyActivities);
+
+/**
+ * GET /api/community/activities/:actId
+ * Get a single activity by ID.
+ */
+router.get("/activities/:actId", getActivityById);
+
+/**
+ * PUT /api/community/activities/:actId
+ * Update activity (conductor only).
+ */
+router.put("/activities/:actId", authenticate, updateCommunityActivity);
+
+/**
+ * PUT /api/community/activities/:actId/complete
+ * Mark activity as completed (conductor only).
+ */
+router.put("/activities/:actId/complete", authenticate, completeCommunityActivity);
+
+/**
+ * DELETE /api/community/activities/:actId
+ * Delete activity (conductor only, not if completed).
+ */
+router.delete("/activities/:actId", authenticate, deleteCommunityActivity);
 
 /**
  * POST /api/community

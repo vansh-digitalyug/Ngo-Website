@@ -15,6 +15,7 @@ const ALLOWED_LOCATIONS = new Set([
   "events",
   "blogs",
   "misc",
+  "community-covers",
 ]);
 
 export const generateUploadUrl = async (req, res) => {

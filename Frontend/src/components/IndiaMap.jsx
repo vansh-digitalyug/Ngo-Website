@@ -1,7 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { ComposableMap, Geographies, Geography, Marker } from "react-simple-maps";
 import { useNavigate } from "react-router-dom";
-import indiaGeo from "../assets/india-states.json";
 
 const ACTIVE_STATES = new Set([
   "Rajasthan", "Gujarat", "Maharashtra", "Karnataka", "Kerala",
@@ -47,7 +46,28 @@ function PinIcon({ hovered }) {
 export default function IndiaMap() {
   const [hoveredCity, setHoveredCity] = useState(null);
   const [hoveredState, setHoveredState] = useState(null);
+  const [geoData, setGeoData] = useState(null);
   const navigate = useNavigate();
+
+  // Fetch GeoJSON from public/ — never bundled, browser-cached after first load
+  useEffect(() => {
+    fetch("/india-states.json")
+      .then((r) => r.json())
+      .then(setGeoData);
+  }, []);
+
+  if (!geoData) {
+    return (
+      <section className="py-12 md:py-16 bg-[#faf9f7]">
+        <div className="max-w-3xl mx-auto px-4">
+          <div className="bg-white rounded-3xl shadow-lg border border-gray-100 flex items-center justify-center" style={{ minHeight: 400 }}>
+            <div style={{ width: 40, height: 40, border: "4px solid #e5e7eb", borderTopColor: "#10b981", borderRadius: "50%", animation: "spin 0.7s linear infinite" }} />
+            <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
+          </div>
+        </div>
+      </section>
+    );
+  }
 
   return (
     <section className="py-12 md:py-16 bg-[#faf9f7]">
@@ -84,7 +104,7 @@ export default function IndiaMap() {
               height={760}
               style={{ width: "100%", height: "auto" }}
             >
-              <Geographies geography={indiaGeo}>
+              <Geographies geography={geoData}>
                 {({ geographies }) =>
                   geographies.map((geo) => {
                     const stateName = geo.properties.NAME_1;

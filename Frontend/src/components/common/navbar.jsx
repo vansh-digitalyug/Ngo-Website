@@ -295,6 +295,11 @@ function Navbar() {
             </div>
           </li>
 
+          {/* Communities */}
+          <li className="flex items-center h-full">
+            <Link to="/community" className={navBtn}>Communities</Link>
+          </li>
+
           {/* Donate (mega dropdown) */}
           <li className="relative group flex items-center h-full">
             <button type="button" className={navBtn} aria-label="Donate menu">
@@ -471,6 +476,11 @@ function Navbar() {
                 ))}
               </ul>
             </div>
+          </li>
+
+          {/* Communities */}
+          <li>
+            <Link to="/community" onClick={closeMenu} className="block px-5 py-3 text-gray-800 font-semibold hover:text-green-700 hover:bg-green-50 transition-colors">Communities</Link>
           </li>
 
           {/* Donate Accordion */}

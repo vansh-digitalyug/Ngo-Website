@@ -294,6 +294,7 @@ export const createCommunity = asyncHandler(async (req, res) => {
         location,
         population,
         tags,
+        coverImageKey,
     } = req.body;
 
     // ── Validation ────────────────────────────────────────────────────────────
@@ -343,6 +344,7 @@ export const createCommunity = asyncHandler(async (req, res) => {
         tags:        Array.isArray(tags) ? tags.map((t) => t.trim().toLowerCase()) : [],
         createdBy:   req.userId,
         createdByNgoId: req.user?.ngoId || null,
+        ...(coverImageKey ? { coverImageKey } : {}),
     });
 
     res.status(201).json(
@@ -465,5 +467,242 @@ export const submitCompletionReport = asyncHandler(async (req, res) => {
 
     res.status(200).json(
         new ApiResponse(200, "Completion report submitted", { responsibility })
+    );
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// COMMUNITY ACTIVITIES — USER SIDE
+// ─────────────────────────────────────────────────────────────────────────────
+
+const VALID_ACTIVITY_TYPES = [
+    "cleanup", "medical_camp", "education", "food_distribution",
+    "infrastructure", "awareness", "tree_plantation", "skill_development",
+    "sanitation", "women_empowerment", "child_welfare", "other",
+];
+
+/**
+ * POST /api/community/:id/activities
+ * Create a new activity (must have an active/pending responsibility in the community OR be an admin).
+ */
+export const createCommunityActivity = asyncHandler(async (req, res) => {
+    const { id: communityId } = req.params;
+    const {
+        title, description, activityType, plannedDate,
+        specificLocation, beneficiariesCount, volunteersCount,
+    } = req.body;
+
+    if (!mongoose.Types.ObjectId.isValid(communityId)) {
+        throw new ApiError(400, "Invalid community ID", "INVALID_ID");
+    }
+    if (!title?.trim()) throw new ApiError(400, "title is required", "MISSING_FIELD");
+    if (!activityType || !VALID_ACTIVITY_TYPES.includes(activityType)) {
+        throw new ApiError(400, `activityType must be one of: ${VALID_ACTIVITY_TYPES.join(", ")}`, "INVALID_TYPE");
+    }
+    if (!plannedDate) throw new ApiError(400, "plannedDate is required", "MISSING_FIELD");
+
+    const community = await Community.findById(communityId);
+    if (!community) throw new ApiError(404, "Community not found", "NOT_FOUND");
+    if (community.status !== "active") throw new ApiError(403, "Community is not active", "COMMUNITY_INACTIVE");
+
+    // Check user has some responsibility in this community
+    const hasResponsibility = await CommunityResponsibility.findOne({
+        communityId,
+        takenBy: req.userId,
+        status: { $in: ["active", "pending"] },
+    });
+    if (!hasResponsibility) {
+        throw new ApiError(403, "You must have an active or pending responsibility in this community to post activities", "NO_RESPONSIBILITY");
+    }
+
+    const user = await User.findById(req.userId).select("name ngoId").lean();
+
+    const activity = await CommunityActivity.create({
+        communityId,
+        title:              title.trim(),
+        description:        description?.trim() || "",
+        activityType,
+        plannedDate:        new Date(plannedDate),
+        specificLocation:   specificLocation?.trim() || "",
+        beneficiariesCount: parseInt(beneficiariesCount) || 0,
+        volunteersCount:    parseInt(volunteersCount)    || 0,
+        conductedBy:        req.userId,
+        conductedByName:    user.name,
+        conductedByNgoId:   user.ngoId || null,
+        status:             "planned",
+    });
+
+    // Update community stats
+    await Community.findByIdAndUpdate(communityId, {
+        $inc: { "stats.totalActivities": 1 },
+    });
+
+    res.status(201).json(new ApiResponse(201, "Activity created successfully", { activity }));
+});
+
+/**
+ * GET /api/community/activities/:actId
+ * Get a single activity by ID.
+ */
+export const getActivityById = asyncHandler(async (req, res) => {
+    const { actId } = req.params;
+    if (!mongoose.Types.ObjectId.isValid(actId)) throw new ApiError(400, "Invalid activity ID", "INVALID_ID");
+
+    const activity = await CommunityActivity.findById(actId)
+        .populate("communityId", "name areaType city state verificationStatus status")
+        .populate("conductedBy", "name email")
+        .populate("verifiedBy", "name")
+        .lean();
+
+    if (!activity) throw new ApiError(404, "Activity not found", "NOT_FOUND");
+
+    res.status(200).json(new ApiResponse(200, "Activity fetched", { activity }));
+});
+
+/**
+ * GET /api/community/:id/activities/all
+ * Get ALL activities for a community (any status) — for the community leader view.
+ * Requires active responsibility in the community.
+ */
+export const getAllActivitiesForCommunity = asyncHandler(async (req, res) => {
+    const { id: communityId } = req.params;
+    if (!mongoose.Types.ObjectId.isValid(communityId)) throw new ApiError(400, "Invalid community ID", "INVALID_ID");
+
+    const page  = Math.max(1, parseInt(req.query.page)  || 1);
+    const limit = Math.min(50, parseInt(req.query.limit) || 20);
+    const skip  = (page - 1) * limit;
+
+    const filter = { communityId };
+    if (req.query.status) filter.status = req.query.status;
+    if (req.query.activityType) filter.activityType = req.query.activityType;
+
+    const [activities, total] = await Promise.all([
+        CommunityActivity.find(filter)
+            .sort({ createdAt: -1 })
+            .skip(skip)
+            .limit(limit)
+            .populate("conductedBy", "name email")
+            .lean(),
+        CommunityActivity.countDocuments(filter),
+    ]);
+
+    res.status(200).json(
+        new ApiResponse(200, "Activities fetched", {
+            activities,
+            pagination: { total, page, pages: Math.ceil(total / limit), limit },
+        })
+    );
+});
+
+/**
+ * PUT /api/community/activities/:actId
+ * Update activity details (conductor only, only if planned/ongoing).
+ */
+export const updateCommunityActivity = asyncHandler(async (req, res) => {
+    const { actId } = req.params;
+    if (!mongoose.Types.ObjectId.isValid(actId)) throw new ApiError(400, "Invalid activity ID", "INVALID_ID");
+
+    const activity = await CommunityActivity.findOne({ _id: actId, conductedBy: req.userId });
+    if (!activity) throw new ApiError(404, "Activity not found or you are not the conductor", "NOT_FOUND");
+    if (activity.status === "completed" || activity.status === "cancelled") {
+        throw new ApiError(403, "Cannot edit a completed or cancelled activity", "INVALID_STATE");
+    }
+
+    const { title, description, activityType, plannedDate, specificLocation, beneficiariesCount, volunteersCount, status } = req.body;
+
+    if (title)            activity.title           = title.trim();
+    if (description !== undefined) activity.description = description.trim();
+    if (activityType && VALID_ACTIVITY_TYPES.includes(activityType)) activity.activityType = activityType;
+    if (plannedDate)      activity.plannedDate      = new Date(plannedDate);
+    if (specificLocation !== undefined) activity.specificLocation = specificLocation.trim();
+    if (beneficiariesCount !== undefined) activity.beneficiariesCount = parseInt(beneficiariesCount) || 0;
+    if (volunteersCount   !== undefined) activity.volunteersCount    = parseInt(volunteersCount)    || 0;
+    if (status && ["planned", "ongoing", "cancelled"].includes(status)) activity.status = status;
+
+    await activity.save();
+    res.status(200).json(new ApiResponse(200, "Activity updated", { activity }));
+});
+
+/**
+ * PUT /api/community/activities/:actId/complete
+ * Mark activity as completed (conductor only).
+ * Body: { completionNote, beneficiariesCount, volunteersCount }
+ */
+export const completeCommunityActivity = asyncHandler(async (req, res) => {
+    const { actId } = req.params;
+    if (!mongoose.Types.ObjectId.isValid(actId)) throw new ApiError(400, "Invalid activity ID", "INVALID_ID");
+
+    const activity = await CommunityActivity.findOne({ _id: actId, conductedBy: req.userId });
+    if (!activity) throw new ApiError(404, "Activity not found or you are not the conductor", "NOT_FOUND");
+    if (activity.status === "completed") throw new ApiError(409, "Activity already completed", "ALREADY_COMPLETED");
+    if (activity.status === "cancelled") throw new ApiError(403, "Cannot complete a cancelled activity", "INVALID_STATE");
+
+    const { completionNote, beneficiariesCount, volunteersCount } = req.body;
+
+    activity.status        = "completed";
+    activity.completedDate = new Date();
+    if (completionNote)         activity.completionNote    = completionNote.trim();
+    if (beneficiariesCount !== undefined) activity.beneficiariesCount = parseInt(beneficiariesCount) || 0;
+    if (volunteersCount    !== undefined) activity.volunteersCount    = parseInt(volunteersCount)    || 0;
+
+    await activity.save();
+
+    // Update community stats
+    await Community.findByIdAndUpdate(activity.communityId, {
+        $inc: { "stats.completedActivities": 1 },
+    });
+
+    res.status(200).json(new ApiResponse(200, "Activity marked as completed. Awaiting admin verification.", { activity }));
+});
+
+/**
+ * DELETE /api/community/activities/:actId
+ * Delete activity (conductor only, only if not completed).
+ */
+export const deleteCommunityActivity = asyncHandler(async (req, res) => {
+    const { actId } = req.params;
+    if (!mongoose.Types.ObjectId.isValid(actId)) throw new ApiError(400, "Invalid activity ID", "INVALID_ID");
+
+    const activity = await CommunityActivity.findOne({ _id: actId, conductedBy: req.userId });
+    if (!activity) throw new ApiError(404, "Activity not found or you are not the conductor", "NOT_FOUND");
+    if (activity.status === "completed") {
+        throw new ApiError(403, "Cannot delete a completed activity", "INVALID_STATE");
+    }
+
+    await CommunityActivity.findByIdAndDelete(actId);
+
+    await Community.findByIdAndUpdate(activity.communityId, {
+        $inc: { "stats.totalActivities": -1 },
+    });
+
+    res.status(200).json(new ApiResponse(200, "Activity deleted", null));
+});
+
+/**
+ * GET /api/community/my/activities
+ * Get all activities posted by the logged-in user across all communities.
+ */
+export const getMyActivities = asyncHandler(async (req, res) => {
+    const page  = Math.max(1, parseInt(req.query.page)  || 1);
+    const limit = Math.min(50, parseInt(req.query.limit) || 20);
+    const skip  = (page - 1) * limit;
+
+    const filter = { conductedBy: req.userId };
+    if (req.query.status) filter.status = req.query.status;
+
+    const [activities, total] = await Promise.all([
+        CommunityActivity.find(filter)
+            .sort({ createdAt: -1 })
+            .skip(skip)
+            .limit(limit)
+            .populate("communityId", "name areaType city state verificationStatus")
+            .lean(),
+        CommunityActivity.countDocuments(filter),
+    ]);
+
+    res.status(200).json(
+        new ApiResponse(200, "Your activities fetched", {
+            activities,
+            pagination: { total, page, pages: Math.ceil(total / limit), limit },
+        })
     );
 });

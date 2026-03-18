@@ -20,8 +20,11 @@ export const generateUploadUrl = async (fileType, fileName, location) => {
 
 export const getDownloadUrl = async (key) => {
   try {
-    const response = await axios.get(`${API_BASE_URL}/s3/download-url/${key}`);
-    return response.data.data; // Assuming the API response has a 'data' field
+    const response = await axios.get(`${API_BASE_URL}/s3/get-url`, {
+      params: { key },
+    });
+    // Backend returns { data: { Url: "..." } }
+    return response.data.data?.Url || response.data.data;
   } catch (error) {
     console.error("Error generating download URL:", error);
     throw error;

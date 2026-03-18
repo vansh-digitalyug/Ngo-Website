@@ -68,10 +68,8 @@ function App() {
           </button>
         </div>
       )}
-      <main>
+      <main style={{ minHeight: "70vh" }}>
         <AppRoutes />
-       
-
       </main>
       {!hideNavFooter && <Footer />}
     </FlashProvider>

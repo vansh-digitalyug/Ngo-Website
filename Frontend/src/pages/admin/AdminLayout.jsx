@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Link, useLocation, useNavigate, Outlet } from "react-router-dom";
 
-import { LayoutDashboard, Building2, Users, Mail, Image, UserCircle, Heart, ClipboardList, Wallet, IndianRupee, CheckCircle2, Coins, BookOpenText, CalendarDays,Settings, Briefcase } from "lucide-react";
+import { LayoutDashboard, Building2, Users, Mail, Image, UserCircle, Heart, ClipboardList, Wallet, IndianRupee, CheckCircle2, Coins, BookOpenText, CalendarDays, Settings, Briefcase, Globe } from "lucide-react";
 
 
 import "./admin.css";
@@ -25,13 +25,14 @@ const NAV_ITEMS = [
   { path: "/admin/payments", label: "Payments", icon: IndianRupee },
   { path: "/admin/completed-tasks", label: "Completed Tasks", icon: CheckCircle2 },
   { path: "/admin/services/add", label: "Add Services", icon: Briefcase },
- { path: "/admin/services/manage", label: "Manage Services", icon: Settings },
+  { path: "/admin/services/manage", label: "Manage Services", icon: Settings },
+  { path: "/admin/communities", label: "Communities", icon: Globe },
 ];
 
 function AdminLayout() {
   const location = useLocation();
   const navigate = useNavigate();
-  const [pendingCounts, setPendingCounts] = useState({ ngos: 0, volunteers: 0, contacts: 0, kanyadan: 0, funds: 0 });
+  const [pendingCounts, setPendingCounts] = useState({ ngos: 0, volunteers: 0, contacts: 0, kanyadan: 0, funds: 0, communities: 0 });
 
   // Removed body class toggling for admin dashboard to restore default spacing
 
@@ -89,6 +90,17 @@ function AdminLayout() {
         if (d?.success) {
           setPendingCounts(prev => ({ ...prev, funds: d.data?.pagination?.total || 0 }));
         }
+        const token3 = localStorage.getItem("token");
+        return fetch(`${API_BASE_URL}/api/admin/communities/stats`, {
+          headers: { Authorization: `Bearer ${token3}` },
+          credentials: "include"
+        });
+      })
+      .then(r => r?.json?.())
+      .then(d => {
+        if (d?.success) {
+          setPendingCounts(prev => ({ ...prev, communities: d.data?.communities?.pending || 0 }));
+        }
       })
       .catch(() => { });
   }, [location.pathname, navigate]);
@@ -104,6 +116,7 @@ function AdminLayout() {
     if (label === "Contacts" && pendingCounts.contacts > 0) return pendingCounts.contacts;
     if (label === "Kanyadan" && pendingCounts.kanyadan > 0) return pendingCounts.kanyadan;
     if (label === "Fund Requests" && pendingCounts.funds > 0) return pendingCounts.funds;
+    if (label === "Communities" && pendingCounts.communities > 0) return pendingCounts.communities;
     return null;
   };
 
