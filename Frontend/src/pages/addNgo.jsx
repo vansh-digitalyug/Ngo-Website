@@ -16,6 +16,7 @@ import {
   Loader2,
   ShieldCheck,
 } from 'lucide-react';
+import AIDescribeButton from '../components/ui/AIDescribeButton.jsx';
 
 const API = String(import.meta.env.VITE_API_BASE_URL || "http://localhost:5000").replace(/\/$/, "");
 
@@ -600,7 +601,10 @@ const AddNGOPage = () => {
                 </div>
 
                 <div className="form-group">
-                  <label className="form-label">Short Description</label>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '4px' }}>
+                    <label className="form-label" style={{ margin: 0 }}>Short Description</label>
+                    <AIDescribeButton context="ngo" hint={formData.ngoName} onGenerated={v => handleInputChange({ target: { name: 'description', value: v } })} />
+                  </div>
                   <textarea
                     name="description"
                     className="form-input form-textarea"

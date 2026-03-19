@@ -3,6 +3,7 @@ import {
   BookOpen, CalendarDays, FileText, ImagePlus,
   Layers, Loader2, Pencil, PlusCircle, Sparkles, Trash2, UserRound, X,
 } from "lucide-react";
+import AIDescribeButton from "../../components/ui/AIDescribeButton.jsx";
 import {
   createBlog, deleteBlogById, fetchBlogs, generateBlogContent,
   updateBlogById, uploadBlogImageToS3,
@@ -177,7 +178,7 @@ function AIGenerateModal({ onClose, onGenerated }) {
             </div>
             <div>
               <h2 style={{ margin: 0, fontSize: "1rem", fontWeight: 800, color: "#0f172a" }}>Generate with AI</h2>
-              <p style={{ margin: 0, fontSize: "0.72rem", color: "#64748b" }}>Claude will write a full blog post</p>
+              <p style={{ margin: 0, fontSize: "0.72rem", color: "#64748b" }}>AI will write a full blog post</p>
             </div>
           </div>
           <button onClick={onClose} style={{
@@ -434,9 +435,12 @@ function BlogFormModal({ mode, blog, prefill, onClose, onSaved }) {
 
           {/* Excerpt */}
           <div>
-            <label style={labelSt}>
-              Excerpt * <span style={{ fontWeight: 400, color: "#94a3b8" }}>(shown on blog cards)</span>
-            </label>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "5px" }}>
+              <label style={{ ...labelSt, margin: 0 }}>
+                Excerpt * <span style={{ fontWeight: 400, color: "#94a3b8" }}>(shown on blog cards)</span>
+              </label>
+              <AIDescribeButton context="blog-excerpt" hint={form.title} onGenerated={v => setForm(p => ({ ...p, excerpt: v }))} />
+            </div>
             <textarea name="excerpt" value={form.excerpt} onChange={onFieldChange}
               placeholder="1–2 sentences that hook the reader" rows={2}
               className="ab-input" style={{ ...inputSt, resize: "vertical" }} />

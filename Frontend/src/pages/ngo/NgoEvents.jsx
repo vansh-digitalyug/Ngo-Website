@@ -5,6 +5,7 @@ import {
   Loader2, X, Clock, MapPin, Users, Tag, CheckCircle,
   XCircle, AlertCircle, Eye, EyeOff, Camera, Calendar
 } from "lucide-react";
+import AIDescribeButton from "../../components/ui/AIDescribeButton.jsx";
 import {
   fetchMyEvents,
   createEvent,
@@ -163,7 +164,10 @@ function EventFormModal({ mode, event, onClose, onSaved }) {
             <input name="title" value={form.title} onChange={onChange} placeholder="Event title" className={inputCls} />
           </div>
           <div>
-            <label className={labelCls}>Description *</label>
+            <div className="flex items-center justify-between mb-1.5">
+              <label className={labelCls} style={{ margin: 0 }}>Description *</label>
+              <AIDescribeButton context="event" hint={form.title} onGenerated={v => setForm(p => ({ ...p, description: v }))} />
+            </div>
             <textarea name="description" value={form.description} onChange={onChange} rows={3} placeholder="Describe the event…" className={`${inputCls} resize-y`} />
           </div>
           <div className="grid grid-cols-3 gap-3">

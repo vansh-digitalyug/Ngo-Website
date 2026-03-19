@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { IndianRupee, User, UserCheck, Plus, X, Search, RefreshCw, MapPin, Tag, CheckCircle, ClipboardList, FileText, MessageSquare, ChevronRight, ChevronLeft, Trash2 } from "lucide-react";
+import AIDescribeButton from "../../components/ui/AIDescribeButton.jsx";
 import { API_BASE_URL } from "./AdminLayout.jsx";
 
 const token = () => localStorage.getItem("token");
@@ -254,9 +255,12 @@ function AssignModal({ donation, volunteers, onClose, onSuccess }) {
 
                 {/* Description */}
                 <div style={{ marginBottom: "16px" }}>
-                  <label style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: "7px", fontWeight: "600", fontSize: "13px", color: "#374151" }}>
-                    <FileText size={14} color="#6366f1" /> Description
-                  </label>
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "7px" }}>
+                    <label style={{ display: "flex", alignItems: "center", gap: "6px", fontWeight: "600", fontSize: "13px", color: "#374151", margin: 0 }}>
+                      <FileText size={14} color="#6366f1" /> Description
+                    </label>
+                    <AIDescribeButton context="task" hint={form.title} onGenerated={v => set("description", v)} />
+                  </div>
                   <textarea
                     rows={3}
                     style={{ ...inp, resize: "vertical" }}

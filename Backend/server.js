@@ -31,6 +31,9 @@ import communityRoutes from "./routes/community.routes.js";
 import communityLeaderRoutes from "./routes/communityLeader.routes.js";
 import feedbackRoutes from "./routes/feedback.routes.js";
 import reportRoutes from "./routes/report.routes.js";
+import aiRoutes from "./routes/ai.routes.js";
+import villageRoutes from "./routes/village.routes.js";
+import fundLedgerRoutes from "./routes/fundLedger.routes.js";
 
 import connectDB from "./config/db.js";
 import seedAdmin from "./utils/seedAdmin.js";
@@ -103,6 +106,9 @@ app.use("/api/community", communityRoutes);
 app.use("/api/community-leader", communityLeaderRoutes);
 app.use("/api/feedback", feedbackRoutes);
 app.use("/api/report", reportRoutes);
+app.use("/api/ai", aiRoutes);
+app.use("/api/villages", villageRoutes);
+app.use("/api/fund-ledger", fundLedgerRoutes);
 
 // ─── Health check ─────────────────────────────────────────────────────────────
 app.get("/health", (_req, res) => {
