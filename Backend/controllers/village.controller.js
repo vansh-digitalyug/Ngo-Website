@@ -319,6 +319,37 @@ export const deleteVillage = async (req, res) => {
     }
 };
 
+// GET /api/villages/admin/problems — admin: all problems across all villages
+export const adminGetAllProblems = async (req, res) => {
+    try {
+        const { status, category, priority, page = 1, limit = 25 } = req.query;
+        const filter = {};
+        if (status && status !== "all") filter.status = status;
+        if (category && category !== "all") filter.category = category;
+        if (priority && priority !== "all") filter.priority = priority;
+
+        const skip = (Number(page) - 1) * Number(limit);
+        const [problems, total] = await Promise.all([
+            LocalProblem.find(filter)
+                .populate("villageId", "villageName district state")
+                .populate("ngoId", "ngoName")
+                .populate("submittedBy", "name")
+                .sort({ priority: -1, createdAt: -1 })
+                .skip(skip)
+                .limit(Number(limit))
+                .lean(),
+            LocalProblem.countDocuments(filter),
+        ]);
+
+        ok(res, {
+            problems,
+            pagination: { total, page: Number(page), pages: Math.ceil(total / Number(limit)) },
+        });
+    } catch (e) {
+        err(res, e.message);
+    }
+};
+
 // GET /api/villages/admin/all — admin: all villages across all NGOs
 export const adminListVillages = async (req, res) => {
     try {

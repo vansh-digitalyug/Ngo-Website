@@ -34,6 +34,10 @@ import reportRoutes from "./routes/report.routes.js";
 import aiRoutes from "./routes/ai.routes.js";
 import villageRoutes from "./routes/village.routes.js";
 import fundLedgerRoutes from "./routes/fundLedger.routes.js";
+import employmentRoutes from "./routes/employment.routes.js";
+import staffRoutes from "./routes/staff.routes.js";
+import surveyRoutes from "./routes/survey.routes.js";
+import impactReportRoutes from "./routes/impactReport.routes.js";
 
 import connectDB from "./config/db.js";
 import seedAdmin from "./utils/seedAdmin.js";
@@ -109,6 +113,10 @@ app.use("/api/report", reportRoutes);
 app.use("/api/ai", aiRoutes);
 app.use("/api/villages", villageRoutes);
 app.use("/api/fund-ledger", fundLedgerRoutes);
+app.use("/api/employment", employmentRoutes);
+app.use("/api/staff", staffRoutes);
+app.use("/api/surveys", surveyRoutes);
+app.use("/api/impact-reports", impactReportRoutes);
 
 // ─── Health check ─────────────────────────────────────────────────────────────
 app.get("/health", (_req, res) => {

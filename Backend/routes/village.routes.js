@@ -16,13 +16,15 @@ import {
     updateProblemStatus,
     deleteVillage,
     adminListVillages,
+    adminGetAllProblems,
 } from "../controllers/village.controller.js";
 
 const router = express.Router();
 
 // ── Public ────────────────────────────────────────────────────────────────────
 router.get("/",              listVillages);
-router.get("/admin/all",     authenticate, verifyAdmin, adminListVillages);
+router.get("/admin/all",      authenticate, verifyAdmin, adminListVillages);
+router.get("/admin/problems", authenticate, verifyAdmin, adminGetAllProblems);
 router.get("/my",            requireNgoAuth, getMyVillages);
 router.get("/:id",           getVillage);
 router.get("/:id/problems",  getVillageProblems);
