@@ -80,7 +80,7 @@ function VillageFormModal({ village, ngos, onClose, onSaved }) {
     try {
       const url = isEdit
         ? `${API_BASE_URL}/api/villages/${village._id}`
-        : `${API_BASE_URL}/api/villages`;
+        : `${API_BASE_URL}/api/villages/admin/create`;
       const method = isEdit ? "PUT" : "POST";
       const res = await fetch(url, {
         method,

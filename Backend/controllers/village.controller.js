@@ -170,16 +170,18 @@ export const getMyVillages = async (req, res) => {
     }
 };
 
-// POST /api/villages — create village adoption (NGO)
+// POST /api/villages — create village adoption (NGO or admin)
 export const createVillage = async (req, res) => {
     try {
-        const ngoId = req.ngo._id;
+        // NGO portal: ngoId comes from verified token; Admin portal: ngoId supplied in body
+        const ngoId = req.ngo?._id || req.body.ngoId;
         const {
             villageName, district, state, pincode,
             totalFamilies, description, status,
             lat, lng,
         } = req.body;
 
+        if (!ngoId) return err(res, "NGO ID is required", 400);
         if (!villageName?.trim()) return err(res, "Village name is required", 400);
         if (!district?.trim() || !state?.trim()) return err(res, "District and state are required", 400);
 
@@ -314,6 +316,68 @@ export const deleteVillage = async (req, res) => {
         // Also clean up problems
         await LocalProblem.deleteMany({ villageId: req.params.id });
         ok(res, null, "Village deleted");
+    } catch (e) {
+        err(res, e.message);
+    }
+};
+
+// GET /api/villages/ngo/problems — NGO: all problems for the NGO's villages
+export const ngoGetMyProblems = async (req, res) => {
+    try {
+        const ngoId = req.ngo._id;
+        const { status, category, priority, page = 1, limit = 25 } = req.query;
+        const filter = { ngoId };
+        if (status && status !== "all") filter.status = status;
+        if (category && category !== "all") filter.category = category;
+        if (priority && priority !== "all") filter.priority = priority;
+
+        const skip = (Number(page) - 1) * Number(limit);
+        const [problems, total] = await Promise.all([
+            LocalProblem.find(filter)
+                .populate("villageId", "villageName district state")
+                .populate("submittedBy", "name")
+                .sort({ createdAt: -1 })
+                .skip(skip)
+                .limit(Number(limit))
+                .lean(),
+            LocalProblem.countDocuments(filter),
+        ]);
+
+        ok(res, {
+            problems,
+            pagination: { total, page: Number(page), pages: Math.ceil(total / Number(limit)) },
+        });
+    } catch (e) {
+        err(res, e.message);
+    }
+};
+
+// GET /api/villages/admin/problems — admin: all problems across all villages
+export const adminGetAllProblems = async (req, res) => {
+    try {
+        const { status, category, priority, page = 1, limit = 25 } = req.query;
+        const filter = {};
+        if (status && status !== "all") filter.status = status;
+        if (category && category !== "all") filter.category = category;
+        if (priority && priority !== "all") filter.priority = priority;
+
+        const skip = (Number(page) - 1) * Number(limit);
+        const [problems, total] = await Promise.all([
+            LocalProblem.find(filter)
+                .populate("villageId", "villageName district state")
+                .populate("ngoId", "ngoName")
+                .populate("submittedBy", "name")
+                .sort({ priority: -1, createdAt: -1 })
+                .skip(skip)
+                .limit(Number(limit))
+                .lean(),
+            LocalProblem.countDocuments(filter),
+        ]);
+
+        ok(res, {
+            problems,
+            pagination: { total, page: Number(page), pages: Math.ceil(total / Number(limit)) },
+        });
     } catch (e) {
         err(res, e.message);
     }

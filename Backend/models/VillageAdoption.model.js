@@ -49,16 +49,14 @@ const villageAdoptionSchema = new mongoose.Schema(
             },
         },
 
-        // ─── GPS (optional) ────────────────────────────────────────────────────
+        // ─── GPS (optional) — only stored when coordinates are actually provided ──
         location: {
             type: {
                 type: String,
                 enum: ["Point"],
-                default: "Point",
             },
             coordinates: {
                 type: [Number], // [longitude, latitude]
-                default: undefined,
             },
         },
 

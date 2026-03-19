@@ -42,13 +42,6 @@ const TermsOfService          = lazy(() => import("../pages/TermsOfService.jsx")
 // import AdminCompletedTasks from "../pages/admin/AdminCompletedTasks.jsx";
 // import AddServices from "../pages/admin/AddServices.jsx";
 // import ManageServices from "../pages/admin/ManageServices.jsx";
-import AdminVillages from "../pages/admin/AdminVillages.jsx";
-import AdminFundLedger from "../pages/admin/AdminFundLedger.jsx";
-
-import VillageList from "../pages/villages/VillageList.jsx";
-import VillageDetail from "../pages/villages/VillageDetail.jsx";
-import Transparency from "../pages/Transparency.jsx";
-import Disclaimer from "../pages/Disclaimer.jsx";
 
 
 // Admin (heavy — all lazy)
@@ -71,7 +64,23 @@ const AdminCompletedTasks     = lazy(() => import("../pages/admin/AdminCompleted
 const AddServices             = lazy(() => import("../pages/admin/AddServices.jsx"));
 const ManageServices          = lazy(() => import("../pages/admin/ManageServices.jsx"));
 const AdminCommunities        = lazy(() => import("../pages/admin/AdminCommunities.jsx"));
+<<<<<<< HEAD
 const AdminFeedback           = lazy(() => import("../pages/admin/AdminFeedback.jsx"));
+=======
+const AdminVillages           = lazy(() => import("../pages/admin/AdminVillages.jsx"));
+const AdminFundLedger         = lazy(() => import("../pages/admin/AdminFundLedger.jsx"));
+const AdminProblems           = lazy(() => import("../pages/admin/AdminProblems.jsx"));
+const AdminEmployment         = lazy(() => import("../pages/admin/AdminEmployment.jsx"));
+const AdminStaff              = lazy(() => import("../pages/admin/AdminStaff.jsx"));
+const AdminSurveys            = lazy(() => import("../pages/admin/AdminSurveys.jsx"));
+const AdminImpactReports      = lazy(() => import("../pages/admin/AdminImpactReports.jsx"));
+
+// Public pages (lazy)
+const VillageList             = lazy(() => import("../pages/villages/VillageList.jsx"));
+const VillageDetail           = lazy(() => import("../pages/villages/VillageDetail.jsx"));
+const Transparency            = lazy(() => import("../pages/Transparency.jsx"));
+const Disclaimer              = lazy(() => import("../pages/Disclaimer.jsx"));
+>>>>>>> d212c49c712141ae9defeeeab24ab63482364351
 
 // NGO Dashboard
 const NgoLayout               = lazy(() => import("../pages/ngo/NgoLayout.jsx"));
@@ -82,6 +91,16 @@ const NgoVolunteers           = lazy(() => import("../pages/ngo/NgoVolunteers.js
 const NgoPending              = lazy(() => import("../pages/ngo/NgoPending.jsx"));
 const NgoFundRequests         = lazy(() => import("../pages/ngo/NgoFundRequests.jsx"));
 const NgoEvents               = lazy(() => import("../pages/ngo/NgoEvents.jsx"));
+const NgoVillages             = lazy(() => import("../pages/ngo/NgoVillages.jsx"));
+const NgoFundLedger           = lazy(() => import("../pages/ngo/NgoFundLedger.jsx"));
+const NgoEmployment           = lazy(() => import("../pages/ngo/NgoEmployment.jsx"));
+const NgoStaff                = lazy(() => import("../pages/ngo/NgoStaff.jsx"));
+const NgoSurveys              = lazy(() => import("../pages/ngo/NgoSurveys.jsx"));
+const NgoImpactReports        = lazy(() => import("../pages/ngo/NgoImpactReports.jsx"));
+const NgoProblems             = lazy(() => import("../pages/ngo/NgoProblems.jsx"));
+
+// Public survey responder
+const SurveyRespond           = lazy(() => import("../pages/SurveyRespond.jsx"));
 
 // Gallery
 const GalleryImages           = lazy(() => import("../pages/gallery/GalleryImages.jsx"));
@@ -257,6 +276,7 @@ function AppRoutes() {
           <Route path="/about/founders"       element={<Founders />} />
           <Route path="/work-with-us"         element={<WorkWithUs />} />
 
+<<<<<<< HEAD
         {/* Get Involved Routes */}
         <Route path="/work-with-us" element={<WorkWithUs />} />
         <Route path="/privacy-policy" element={<PrivacyPolicy />} />
@@ -305,12 +325,51 @@ function AppRoutes() {
           <Route path="communities"     element={<AdminCommunities />} />
           <Route path="feedback"        element={<AdminFeedback />} />
         </Route>
+=======
+          {/* Public — new pages */}
+          <Route path="/survey/:token" element={<SurveyRespond />} />
+          <Route path="/disclaimer"   element={<Disclaimer />} />
+          <Route path="/transparency" element={<Transparency />} />
+          <Route path="/villages"     element={<VillageList />} />
+          <Route path="/villages/:id" element={<VillageDetail />} />
+>>>>>>> d212c49c712141ae9defeeeab24ab63482364351
 
           {/* Protected */}
-          <Route path="/volunteer" element={<RequireVolunteerAuth><Volunteer /></RequireVolunteerAuth>} />
-          <Route path="/profile"   element={<RequireVolunteerAuth><ProfileOrAdmin /></RequireVolunteerAuth>} />
+          <Route path="/volunteer"           element={<RequireVolunteerAuth><Volunteer /></RequireVolunteerAuth>} />
+          <Route path="/profile"             element={<RequireVolunteerAuth><ProfileOrAdmin /></RequireVolunteerAuth>} />
           <Route path="/volunteer-dashboard" element={<RequireVolunteerAuth><VolunteerDashboard /></RequireVolunteerAuth>} />
 
+<<<<<<< HEAD
+=======
+          {/* Admin */}
+          <Route path="/admin" element={<AdminLayout />}>
+            <Route index                  element={<AdminDashboard />} />
+            <Route path="ngos"            element={<AdminNgos />} />
+            <Route path="volunteers"      element={<AdminVolunteers />} />
+            <Route path="contacts"        element={<AdminContacts />} />
+            <Route path="gallery"         element={<AdminGallery />} />
+            <Route path="blogs"           element={<AdminBlogs />} />
+            <Route path="users"           element={<AdminUsers />} />
+            <Route path="kanyadan"        element={<AdminKanyadan />} />
+            <Route path="donations"       element={<AdminDonations />} />
+            <Route path="tasks"           element={<AdminTasks />} />
+            <Route path="funds"           element={<AdminFundRequests />} />
+            <Route path="payments"        element={<AdminPayments />} />
+            <Route path="completed-tasks" element={<AdminCompletedTasks />} />
+            <Route path="events"          element={<AdminEvents />} />
+            <Route path="services/add"    element={<AddServices />} />
+            <Route path="services/manage" element={<ManageServices />} />
+            <Route path="communities"     element={<AdminCommunities />} />
+            <Route path="villages"        element={<AdminVillages />} />
+            <Route path="fund-ledger"     element={<AdminFundLedger />} />
+            <Route path="problems"        element={<AdminProblems />} />
+            <Route path="employment"      element={<AdminEmployment />} />
+            <Route path="staff"           element={<AdminStaff />} />
+            <Route path="surveys"         element={<AdminSurveys />} />
+            <Route path="impact-reports"  element={<AdminImpactReports />} />
+          </Route>
+
+>>>>>>> d212c49c712141ae9defeeeab24ab63482364351
           {/* NGO Dashboard */}
           <Route path="/ngo/pending" element={<NgoPending />} />
           <Route path="/ngo" element={<NgoLayout />}>
@@ -321,6 +380,13 @@ function AppRoutes() {
             <Route path="volunteers"  element={<NgoVolunteers />} />
             <Route path="funds"       element={<NgoFundRequests />} />
             <Route path="events"      element={<NgoEvents />} />
+            <Route path="villages"    element={<NgoVillages />} />
+            <Route path="fund-ledger" element={<NgoFundLedger />} />
+            <Route path="employment"  element={<NgoEmployment />} />
+            <Route path="staff"       element={<NgoStaff />} />
+            <Route path="surveys"         element={<NgoSurveys />} />
+            <Route path="impact-reports"  element={<NgoImpactReports />} />
+            <Route path="problems"        element={<NgoProblems />} />
           </Route>
         </Routes>
       </Suspense>
