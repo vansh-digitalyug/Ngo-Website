@@ -9,6 +9,7 @@ import Community from "../models/community.model.js";
  * Checks:
  *  1. User is authenticated (req.userId set by `authenticate` middleware)
  *  2. User has been assigned a communityId and communityRole on their profile
+ *     OR User created a verified community (legacy support)
  *  3. The community is active and verified
  *
  * Sets on request:
@@ -34,15 +35,40 @@ export const requireCommunityLeader = async (req, res, next) => {
             return res.status(401).json({ success: false, message: "User not found." });
         }
 
-        if (!user.communityId) {
-            return res.status(403).json({
-                success: false,
-                message: "Access denied. No community leadership has been assigned to your account.",
-            });
+        let communityId = user.communityId;
+        let communityRole = user.communityRole;
+
+        // ── Legacy Support: If no communityId, check if user created a verified community
+        if (!communityId) {
+            const createdCommunity = await Community.findOne({
+                createdBy: req.userId,
+                verificationStatus: "verified",
+                status: "active"
+            }).select("_id");
+
+            if (createdCommunity) {
+                communityId = createdCommunity._id;
+                communityRole = "leader";
+
+                // Update user profile automatically (one-time fix)
+                await User.findByIdAndUpdate(req.userId, {
+                    $set: {
+                        communityId: communityId,
+                        communityRole: "leader"
+                    }
+                });
+
+                console.log(`[Middleware Legacy Fix] User ${req.userId} assigned to community ${communityId}`);
+            } else {
+                return res.status(403).json({
+                    success: false,
+                    message: "Access denied. No community leadership has been assigned to your account.",
+                });
+            }
         }
 
         const validRoles = ["leader", "co-leader", "coordinator"];
-        if (!validRoles.includes(user.communityRole)) {
+        if (!validRoles.includes(communityRole)) {
             return res.status(403).json({
                 success: false,
                 message: "Access denied. Community leader role required.",
@@ -50,7 +76,7 @@ export const requireCommunityLeader = async (req, res, next) => {
         }
 
         // Verify the community still exists and is active
-        const community = await Community.findById(user.communityId);
+        const community = await Community.findById(communityId);
 
         if (!community) {
             return res.status(404).json({
@@ -68,8 +94,8 @@ export const requireCommunityLeader = async (req, res, next) => {
 
         // Attach to request for downstream controllers
         req.community   = community;
-        req.communityId = user.communityId;
-        req.communityRole = user.communityRole;
+        req.communityId = communityId;
+        req.communityRole = communityRole;
 
         next();
     } catch (error) {

@@ -2,6 +2,7 @@ import mongoose from "mongoose";
 import Community from "../models/community.model.js";
 import CommunityResponsibility from "../models/communityResponsibility.model.js";
 import CommunityActivity from "../models/communityActivity.model.js";
+import User from "../models/user.model.js";
 import ApiResponse from "../utils/ApiResponse.js";
 import ApiError from "../utils/ApiError.js";
 import asyncHandler from "../utils/asyncHandler.js";
@@ -70,12 +71,55 @@ export const getLeaderDashboard = asyncHandler(async (req, res) => {
 /**
  * GET /api/community-leader/community
  * Full details of the leader's community.
+ * 
+ * UPDATED: Also handles legacy case where user created verified community
+ * but communityId wasn't set on profile (from before auto-assignment was added).
  */
 export const getMyCommunity = asyncHandler(async (req, res) => {
-    const community = await Community.findById(req.communityId)
+    let communityId = req.communityId;
+
+    // ── Legacy Support: If no communityId set, find verified communities created by this user
+    if (!communityId) {
+        const createdCommunities = await Community.find({
+            createdBy: req.userId,
+            verificationStatus: "verified",
+            status: "active"
+        });
+
+        if (createdCommunities.length > 0) {
+            // Found a verified community that user created
+            const community = createdCommunities[0];
+            communityId = community._id;
+
+            // Update user profile to set communityId and role
+            await User.findByIdAndUpdate(req.userId, {
+                $set: {
+                    communityId: community._id,
+                    communityRole: "leader"
+                }
+            });
+
+            console.log(`[Legacy Fix] User ${req.userId} auto-assigned to community ${community._id}`);
+        } else {
+            // No verified community found
+            return res.status(403).json({
+                success: false,
+                message: "Access denied. No community leadership has been assigned to your account, and no verified community created by you was found.",
+            });
+        }
+    }
+
+    const community = await Community.findById(communityId)
         .populate("createdBy", "name email")
         .populate("currentLeaderId", "name email phone")
         .lean();
+
+    if (!community) {
+        return res.status(404).json({
+            success: false,
+            message: "Community not found.",
+        });
+    }
 
     res.status(200).json(new ApiResponse(200, "Community details fetched", { community }));
 });

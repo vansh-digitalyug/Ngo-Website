@@ -1,9 +1,12 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState, lazy, Suspense } from 'react';
+import { Link } from 'react-router-dom';
 import { useCommunity } from '../../hooks/useCommunity';
 import CommunityCard from '../../components/community/CommunityCard';
 import CommunitySearch from '../../components/community/CommunitySearch';
 import { LoadingSpinner, ErrorMessage, EmptyState } from '../../components/community/CommunityUI';
-import { MapPin } from 'lucide-react';
+import { MapPin, LayoutGrid, Plus } from 'lucide-react';
+
+const CommunityMap = lazy(() => import('../../components/community/CommunityMap'));
 
 /**
  * Community List Page
@@ -61,11 +64,19 @@ const CommunityList = () => {
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
       <div className="bg-gradient-to-r from-blue-500 to-blue-600 text-white py-12">
-        <div className="container mx-auto px-4">
-          <h1 className="text-4xl font-bold mb-4">Discover Communities</h1>
-          <p className="text-blue-100 text-lg">
-            Join local communities and make a difference in your neighborhood
-          </p>
+        <div className="container mx-auto px-4 flex flex-wrap items-center justify-between gap-4">
+          <div>
+            <h1 className="text-4xl font-bold mb-2">Discover Communities</h1>
+            <p className="text-blue-100 text-lg">
+              Join local communities and make a difference in your neighborhood
+            </p>
+          </div>
+          <Link
+            to="/community/register"
+            className="flex items-center gap-2 bg-white text-blue-600 hover:bg-blue-50 font-semibold px-5 py-2.5 rounded-xl shadow transition-colors text-sm"
+          >
+            <Plus size={18} /> Register Community
+          </Link>
         </div>
       </div>
 
@@ -82,27 +93,26 @@ const CommunityList = () => {
           <h2 className="text-2xl font-bold text-gray-800">
             Communities ({communities.length})
           </h2>
-          <div className="flex gap-2">
+          <div className="flex gap-2 bg-gray-100 p-1 rounded-xl">
             <button
               onClick={() => setViewMode('grid')}
-              className={`px-4 py-2 rounded-lg font-semibold transition-colors duration-200 ${
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg font-semibold text-sm transition-all duration-200 ${
                 viewMode === 'grid'
-                  ? 'bg-blue-500 text-white'
-                  : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                  ? 'bg-white text-blue-600 shadow-sm'
+                  : 'text-gray-600 hover:text-gray-800'
               }`}
             >
-              Grid
+              <LayoutGrid size={16} /> Grid
             </button>
             <button
               onClick={() => setViewMode('map')}
-              className={`px-4 py-2 rounded-lg font-semibold transition-colors duration-200 flex items-center gap-2 ${
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg font-semibold text-sm transition-all duration-200 ${
                 viewMode === 'map'
-                  ? 'bg-blue-500 text-white'
-                  : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                  ? 'bg-white text-blue-600 shadow-sm'
+                  : 'text-gray-600 hover:text-gray-800'
               }`}
             >
-              <MapPin size={18} />
-              Map
+              <MapPin size={16} /> Map
             </button>
           </div>
         </div>
@@ -174,18 +184,16 @@ const CommunityList = () => {
             )}
           </>
         ) : (
-          <>
-            {/* Map View Placeholder */}
-            <div className="bg-white rounded-lg shadow-md p-8 text-center">
-              <MapPin size={48} className="mx-auto text-gray-300 mb-4" />
-              <p className="text-gray-600">
-                Map view will be available soon with interactive map showing community locations
-              </p>
-              <p className="text-sm text-gray-500 mt-2">
-                Using Leaflet or Google Maps integration
-              </p>
+          <Suspense fallback={
+            <div className="flex items-center justify-center h-96 bg-white rounded-2xl shadow-lg">
+              <div className="text-center text-gray-500">
+                <MapPin size={40} className="mx-auto mb-3 text-blue-400 animate-bounce" />
+                <p className="font-medium">Loading map…</p>
+              </div>
             </div>
-          </>
+          }>
+            <CommunityMap communities={communities} />
+          </Suspense>
         )}
       </div>
     </div>

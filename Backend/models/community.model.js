@@ -12,8 +12,12 @@ const locationSchema = new mongoose.Schema(
             type: [Number], // [longitude, latitude]
             required: [true, "GPS coordinates are required"],
             validate: {
-                validator: (v) => v.length === 2 && v[0] >= -180 && v[0] <= 180 && v[1] >= -90 && v[1] <= 90,
-                message: "Coordinates must be [longitude, latitude] with valid ranges",
+                validator: (v) => {
+                    if (!Array.isArray(v) || v.length !== 2) return false;
+                    if (isNaN(v[0]) || isNaN(v[1])) return false;
+                    return v[0] >= -180 && v[0] <= 180 && v[1] >= -90 && v[1] <= 90;
+                },
+                message: "Coordinates must be [longitude, latitude] with valid ranges and must be numbers",
             },
         },
     },
@@ -63,7 +67,18 @@ const communitySchema = new mongoose.Schema(
         },
 
         // ─── Optional metadata ─────────────────────────────────────────────────
-        population: { type: Number, min: 0, default: null },
+        population: {
+            type: Number,
+            min: [0, "Population must be a positive number"],
+            default: null,
+            validate: {
+                validator: function(v) {
+                    if (v === null || v === undefined) return true;
+                    return !isNaN(v) && v >= 0;
+                },
+                message: "Population must be a valid non-negative number",
+            },
+        },
         coverImageKey: { type: String, default: null }, // S3 object key
         tags: [{ type: String, trim: true, lowercase: true }],
 

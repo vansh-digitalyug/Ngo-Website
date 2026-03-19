@@ -99,8 +99,13 @@ const CommunityRegister = () => {
     if (!formData.pincode.trim()) errors.pincode = 'Pincode is required';
     if (!formData.address.trim()) errors.address = 'Address is required';
 
+    // Validate coordinates
     if (latitude === null || longitude === null) {
-      errors.location = 'Location is required. Please enable geolocation.';
+      errors.location = 'Location is required. Please click "Capture My Location" to get your GPS coordinates.';
+    } else if (typeof latitude !== 'number' || typeof longitude !== 'number') {
+      errors.location = 'Invalid location data. Please click "Capture My Location" again.';
+    } else if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) {
+      errors.location = 'Coordinates are not valid numbers. Please try capturing your location again.';
     }
 
     setValidationErrors(errors);

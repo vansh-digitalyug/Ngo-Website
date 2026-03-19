@@ -21,7 +21,8 @@ function Navbar() {
   const [user, setUser] = useState(readUser());
   const [hasNgo, setHasNgo] = useState(false);
   const [ngoStatus, setNgoStatus] = useState(null);
-  
+  const [isCommunityLeader, setIsCommunityLeader] = useState(false);
+
   const userInitial = user?.name ? user.name.charAt(0).toUpperCase() : "U";
   const isAdmin = user?.role === "admin";
 
@@ -29,33 +30,96 @@ function Navbar() {
   useEffect(() => {
     const checkNgoStatus = async () => {
       const token = localStorage.getItem("token");
-      if (!token || isAdmin) {
-        setHasNgo(false);
-        return;
-      }
-
+      if (!token || isAdmin) { setHasNgo(false); return; }
       try {
         const res = await fetch(`${API_BASE_URL}/api/ngo-dashboard/status`, {
           headers: { Authorization: `Bearer ${token}` }
         });
-
         if (res.ok) {
           const data = await res.json();
-          if (data.status !== 'none') {
-            setHasNgo(true);
-            setNgoStatus(data.status);
-          } else {
-            setHasNgo(false);
-          }
+          if (data.status !== 'none') { setHasNgo(true); setNgoStatus(data.status); }
+          else setHasNgo(false);
         }
       } catch (err) {
         console.error('Failed to check NGO status:', err);
       }
     };
 
+    if (isLoggedIn && !isAdmin) checkNgoStatus();
+  }, [isLoggedIn, isAdmin]);
+
+  // Check if user is a community leader/coordinator
+  useEffect(() => {
+    const checkCommunityLeader = async () => {
+      const token = localStorage.getItem("token");
+      if (!token || isAdmin) {
+        setIsCommunityLeader(false);
+        return;
+      }
+      try {
+        // Call the community check endpoint
+        const response = await fetch(`${API_BASE_URL}/api/community-leader/community`, {
+          headers: { 
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json"
+          }
+        });
+
+        console.log('[Navbar] Community check response status:', response.status);
+
+        if (response.ok) {
+          const data = await response.json();
+          console.log('[Navbar] Community data received:', data);
+          
+          // Check if we got valid community data
+          const community = data?.data?.community || data?.community;
+          if (community && community._id) {
+            console.log('[Navbar] Community found:', community.name);
+            setIsCommunityLeader(true);
+          } else {
+            console.log('[Navbar] No valid community data');
+            setIsCommunityLeader(false);
+          }
+        } else {
+          const errorData = await response.json().catch(() => ({}));
+          console.log('[Navbar] Community check failed:', response.status, errorData?.message);
+          setIsCommunityLeader(false);
+        }
+      } catch (error) {
+        console.log('[Navbar] Community check error:', error);
+        setIsCommunityLeader(false);
+      }
+    };
+
     if (isLoggedIn && !isAdmin) {
-      checkNgoStatus();
+      checkCommunityLeader();
+    } else {
+      setIsCommunityLeader(false);
     }
+  }, [isLoggedIn, isAdmin]);
+
+  // Listen for community-related updates from other tabs/windows
+  useEffect(() => {
+    const handleCommunityUpdate = () => {
+      // Trigger community leader check when notified
+      const token = localStorage.getItem("token");
+      if (token && isLoggedIn && !isAdmin) {
+        const checkCommunityLeader = async () => {
+          try {
+            const res = await fetch(`${API_BASE_URL}/api/community-leader/community`, {
+              headers: { Authorization: `Bearer ${token}` }
+            });
+            setIsCommunityLeader(res.ok);
+          } catch {
+            setIsCommunityLeader(false);
+          }
+        };
+        checkCommunityLeader();
+      }
+    };
+
+    window.addEventListener("communityUpdated", handleCommunityUpdate);
+    return () => window.removeEventListener("communityUpdated", handleCommunityUpdate);
   }, [isLoggedIn, isAdmin]);
 
   // Sync Auth State
@@ -191,9 +255,23 @@ function Navbar() {
                     </li>
                   )}
                   
+                  {isCommunityLeader && (
+                    <li>
+                      <Link to="/community/dashboard" className="block px-4 py-2.5 text-emerald-700 font-semibold hover:bg-emerald-50 hover:pl-6 transition-all duration-200">
+                        🏘 Community Dashboard
+                      </Link>
+                    </li>
+                  )}
+
+                  <li>
+                    <Link to="/community" className="block px-4 py-2.5 text-gray-700 font-medium hover:bg-gray-50 hover:text-green-700 hover:pl-6 transition-all duration-200">
+                      Communities
+                    </Link>
+                  </li>
+
                   <li className="border-t border-gray-100 mt-1 pt-1">
-                    <button 
-                      onClick={handleLogout} 
+                    <button
+                      onClick={handleLogout}
                       className="w-full text-left px-4 py-2.5 text-red-600 font-medium hover:bg-red-50 hover:pl-6 transition-all duration-200"
                     >
                       Logout
@@ -295,8 +373,26 @@ function Navbar() {
                     My Profile
                   </Link>
                 )}
-                <button 
-                  onClick={handleLogout} 
+                {isCommunityLeader && (
+                  <Link
+                    to="/community/dashboard"
+                    onClick={closeMenu}
+                    className="flex items-center gap-2 text-emerald-700 font-semibold mb-3 hover:text-emerald-800"
+                  >
+                    🏘 Community Dashboard
+                  </Link>
+                )}
+
+                <Link
+                  to="/community"
+                  onClick={closeMenu}
+                  className="flex items-center gap-2 text-gray-700 font-medium mb-3 hover:text-green-700"
+                >
+                  Communities
+                </Link>
+
+                <button
+                  onClick={handleLogout}
                   className="w-full bg-red-600 text-white py-2 rounded-md font-semibold hover:bg-red-700 transition-colors"
                 >
                   Logout

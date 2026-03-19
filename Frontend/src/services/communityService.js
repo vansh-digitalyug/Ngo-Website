@@ -108,7 +108,19 @@ const communityService = {
    */
   registerCommunity: async (communityData) => {
     try {
-      const { coverImage, latitude, longitude, ...fields } = communityData;
+      const { coverImage, location, ...fields } = communityData;
+
+      // Validate location data
+      if (!location || !location.coordinates || location.coordinates.length !== 2) {
+        throw new Error('Invalid location data. Please capture your location before submitting.');
+      }
+
+      const [longitude, latitude] = location.coordinates;
+
+      // Validate coordinates are numbers
+      if (typeof longitude !== 'number' || typeof latitude !== 'number') {
+        throw new Error('Coordinates must be valid numbers. Please capture your location again.');
+      }
 
       // If a cover image file is provided, upload to S3 first
       let coverImageKey = null;
@@ -122,15 +134,12 @@ const communityService = {
         coverImageKey = key;
       }
 
-      // Transform latitude/longitude to backend location format [lng, lat]
-      const location = {
-        type: 'Point',
-        coordinates: [parseFloat(longitude), parseFloat(latitude)]
-      };
-
       const response = await apiClient.post('/community', {
         ...fields,
-        location,
+        location: {
+          type: 'Point',
+          coordinates: [longitude, latitude]
+        },
         ...(coverImageKey ? { coverImageKey } : {}),
       });
       return response.data;

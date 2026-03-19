@@ -306,9 +306,35 @@ export const createCommunity = asyncHandler(async (req, res) => {
         throw new ApiError(400, "GPS location with [longitude, latitude] coordinates is required", "MISSING_LOCATION");
     }
 
-    const [lng, lat] = location.coordinates;
-    if (lng < -180 || lng > 180 || lat < -90 || lat > 90) {
-        throw new ApiError(400, "Invalid GPS coordinates. Longitude: -180–180, Latitude: -90–90", "INVALID_COORDINATES");
+    // Parse and validate coordinates strictly - handle both string and number inputs
+    let lng = location.coordinates[0];
+    let lat = location.coordinates[1];
+
+    // Log the received values for debugging
+    console.log(`[Community Register] Received coordinates - lng: ${lng} (${typeof lng}), lat: ${lat} (${typeof lat})`);
+
+    // Convert to numbers if they're strings
+    if (typeof lng === 'string') {
+        lng = parseFloat(lng);
+    }
+    if (typeof lat === 'string') {
+        lat = parseFloat(lat);
+    }
+
+    // Validate that coordinates are valid numbers
+    if (!Number.isFinite(lng)) {
+        throw new ApiError(400, `Longitude must be a valid number. Received: ${location.coordinates[0]}`, "INVALID_COORDINATES");
+    }
+    if (!Number.isFinite(lat)) {
+        throw new ApiError(400, `Latitude must be a valid number. Received: ${location.coordinates[1]}`, "INVALID_COORDINATES");
+    }
+
+    // Validate ranges
+    if (lng < -180 || lng > 180) {
+        throw new ApiError(400, `Invalid longitude: ${lng}. Must be between -180 and 180`, "INVALID_COORDINATES");
+    }
+    if (lat < -90 || lat > 90) {
+        throw new ApiError(400, `Invalid latitude: ${lat}. Must be between -90 and 90`, "INVALID_COORDINATES");
     }
 
     // ── Check for duplicate nearby community (within 500m) ────────────────────
@@ -316,7 +342,7 @@ export const createCommunity = asyncHandler(async (req, res) => {
         status: "active",
         location: {
             $near: {
-                $geometry: { type: "Point", coordinates: [parseFloat(lng), parseFloat(lat)] },
+                $geometry: { type: "Point", coordinates: [lng, lat] },
                 $maxDistance: 500,
             },
         },
@@ -325,6 +351,13 @@ export const createCommunity = asyncHandler(async (req, res) => {
 
     if (nearby) {
         throw new ApiError(409, "A community with this name already exists within 500 metres of this location", "DUPLICATE_COMMUNITY");
+    }
+
+    // Convert population to number safely
+    let populationNum = null;
+    if (population) {
+        const parsed = parseInt(population, 10);
+        populationNum = !isNaN(parsed) && parsed >= 0 ? parsed : null;
     }
 
     const community = await Community.create({
@@ -338,9 +371,9 @@ export const createCommunity = asyncHandler(async (req, res) => {
         state:       state.trim(),
         location: {
             type: "Point",
-            coordinates: [parseFloat(lng), parseFloat(lat)],
+            coordinates: [lng, lat],
         },
-        population: population || null,
+        population: populationNum,
         tags:        Array.isArray(tags) ? tags.map((t) => t.trim().toLowerCase()) : [],
         createdBy:   req.userId,
         createdByNgoId: req.user?.ngoId || null,

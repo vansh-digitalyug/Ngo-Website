@@ -170,6 +170,9 @@ export const adminGetCommunityById = asyncHandler(async (req, res) => {
  * PUT /api/admin/communities/:id/status
  * Verify, reject, or activate/deactivate a community.
  * Body: { verificationStatus?, status?, adminNote? }
+ * 
+ * SPECIAL BEHAVIOR: When verifying a community (verified=true), automatically 
+ * assigns the creator as the community leader and updates their user profile.
  */
 export const adminUpdateCommunityStatus = asyncHandler(async (req, res) => {
     const { id } = req.params;
@@ -183,6 +186,10 @@ export const adminUpdateCommunityStatus = asyncHandler(async (req, res) => {
         throw new ApiError(400, "Provide verificationStatus or status to update", "MISSING_FIELDS");
     }
 
+    // Fetch community first to get createdBy user
+    const community = await Community.findById(id);
+    if (!community) throw new ApiError(404, "Community not found", "NOT_FOUND");
+
     const updates = {};
     if (verificationStatus) {
         const valid = ["pending", "verified", "rejected"];
@@ -191,6 +198,22 @@ export const adminUpdateCommunityStatus = asyncHandler(async (req, res) => {
         }
         updates.verificationStatus = verificationStatus;
         if (verificationStatus === "rejected") updates.rejectedAt = new Date();
+
+        // ── AUTO-ASSIGN CREATOR AS COMMUNITY LEADER (when verified) ──────────
+        if (verificationStatus === "verified" && community.createdBy) {
+            // Update user profile to assign community leadership
+            await User.findByIdAndUpdate(community.createdBy, {
+                $set: {
+                    communityId:   id,
+                    communityRole: "leader",
+                },
+            });
+
+            // Update community to set currentLeader
+            const creator = await User.findById(community.createdBy).select("name").lean();
+            updates.currentLeaderId  = community.createdBy;
+            updates.currentLeaderName = creator?.name || "Unknown";
+        }
     }
 
     if (status) {
@@ -203,10 +226,13 @@ export const adminUpdateCommunityStatus = asyncHandler(async (req, res) => {
 
     if (adminNote !== undefined) updates.adminNote = adminNote;
 
-    const community = await Community.findByIdAndUpdate(id, { $set: updates }, { new: true });
-    if (!community) throw new ApiError(404, "Community not found", "NOT_FOUND");
+    const updatedCommunity = await Community.findByIdAndUpdate(id, { $set: updates }, { new: true });
 
-    res.status(200).json(new ApiResponse(200, "Community status updated", { community }));
+    res.status(200).json(
+        new ApiResponse(200, "Community status updated successfully. Creator assigned as community leader.", { 
+            community: updatedCommunity 
+        })
+    );
 });
 
 /**
