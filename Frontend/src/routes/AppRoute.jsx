@@ -93,6 +93,7 @@ const NgoEmployment           = lazy(() => import("../pages/ngo/NgoEmployment.js
 const NgoStaff                = lazy(() => import("../pages/ngo/NgoStaff.jsx"));
 const NgoSurveys              = lazy(() => import("../pages/ngo/NgoSurveys.jsx"));
 const NgoImpactReports        = lazy(() => import("../pages/ngo/NgoImpactReports.jsx"));
+const NgoProblems             = lazy(() => import("../pages/ngo/NgoProblems.jsx"));
 
 // Public survey responder
 const SurveyRespond           = lazy(() => import("../pages/SurveyRespond.jsx"));
@@ -323,6 +324,7 @@ function AppRoutes() {
             <Route path="staff"       element={<NgoStaff />} />
             <Route path="surveys"         element={<NgoSurveys />} />
             <Route path="impact-reports"  element={<NgoImpactReports />} />
+            <Route path="problems"        element={<NgoProblems />} />
           </Route>
         </Routes>
       </Suspense>

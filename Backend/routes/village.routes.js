@@ -17,6 +17,7 @@ import {
     deleteVillage,
     adminListVillages,
     adminGetAllProblems,
+    ngoGetMyProblems,
 } from "../controllers/village.controller.js";
 
 const router = express.Router();
@@ -25,7 +26,8 @@ const router = express.Router();
 router.get("/",              listVillages);
 router.get("/admin/all",      authenticate, verifyAdmin, adminListVillages);
 router.get("/admin/problems", authenticate, verifyAdmin, adminGetAllProblems);
-router.get("/my",            requireNgoAuth, getMyVillages);
+router.get("/my",               requireNgoAuth, getMyVillages);
+router.get("/ngo/problems",     requireNgoAuth, ngoGetMyProblems);
 router.get("/:id",           getVillage);
 router.get("/:id/problems",  getVillageProblems);
 
@@ -35,7 +37,8 @@ router.put("/problems/:problemId/upvote",     authenticate, upvoteProblem);
 router.put("/problems/:problemId/status",     authenticate, updateProblemStatus);
 
 // ── NGO management ────────────────────────────────────────────────────────────
-router.post("/",             requireNgoAuth, createVillage);
+router.post("/admin/create", authenticate, verifyAdmin, createVillage); // admin creates for any NGO
+router.post("/",             requireNgoAuth, createVillage);             // NGO creates for itself
 router.put("/:id",           requireNgoAuth, updateVillage);
 router.post("/:id/milestone",           requireNgoAuth, addMilestone);
 router.delete("/:id/milestone/:milestoneId", requireNgoAuth, removeMilestone);

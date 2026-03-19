@@ -19,7 +19,8 @@ import {
   Briefcase,
   Users,
   ClipboardList,
-  BarChart2
+  BarChart2,
+  AlertTriangle,
 } from "lucide-react";
 import "./ngo.css";
 // Removed remove-ngo-padding.css import
@@ -34,6 +35,7 @@ const NAV_ITEMS = [
   { path: "/ngo/events", label: "Events", icon: CalendarDays },
   { path: "/ngo/funds", label: "Fund Requests", icon: IndianRupee },
   { path: "/ngo/villages", label: "Village Adoptions", icon: MapPin },
+  { path: "/ngo/problems", label: "Village Problems", icon: AlertTriangle },
   { path: "/ngo/fund-ledger", label: "Fund Ledger", icon: BookMarked },
   { path: "/ngo/employment", label: "Employment & Rojgar", icon: Briefcase },
   { path: "/ngo/staff", label: "Staff & Professionals", icon: Users },

@@ -179,7 +179,7 @@ export default function ComplaintForm() {
 
   const clearError = (field) => setErrors((prev) => { const next = { ...prev }; delete next[field]; return next; });
 
-  // ── Submit ────────────────────────────────────────────────────────────────
+  // ── Submit ──────────────────────────────────────────────────────────────
   const handleSubmit = async (e) => {
     e.preventDefault();
     const errs = validate();
