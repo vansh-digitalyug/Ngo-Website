@@ -6,7 +6,7 @@ import {
   FaCheckCircle, FaFileAlt, FaSatelliteDish, FaChild, FaUtensils,
   FaHospitalAlt, FaFemale, FaRing, FaRoad, FaSearch, FaCreditCard,
   FaChartLine, FaMobileAlt, FaHandHoldingHeart,
-  FaArrowUp, FaShieldAlt, FaUsers, FaQuoteLeft, FaCheck, FaChevronDown,
+  FaShieldAlt, FaUsers, FaQuoteLeft, FaCheck, FaChevronDown,
   FaRupeeSign, FaStar, FaHandHoldingUsd, FaRegClock, FaFireAlt,
 } from "react-icons/fa";
 
@@ -63,7 +63,6 @@ const API = import.meta.env.PROD
 export default function Home() {
   const [slide, setSlide]     = useState(0);
   const [openFaq, setOpenFaq] = useState(null);
-  const [showStt, setShowStt] = useState(false);
 
   /* ── live NGO data from backend ── */
   const [liveNgos, setLiveNgos]   = useState([]);
@@ -74,6 +73,10 @@ export default function Home() {
   const [liveStats, setLiveStats] = useState(null);
   const [liveRecentDonations, setLiveRecentDonations] = useState([]);
   const [liveCauses, setLiveCauses] = useState([]);
+
+  /* ── programmes carousel ── */
+  const [progSlide, setProgSlide] = useState(0);
+  const [progVisible, setProgVisible] = useState(3);
 
   /* ── slides ── */
   const slides = [
@@ -117,10 +120,28 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
-    const onScroll = () => setShowStt(window.scrollY > 420);
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
+    const update = () => {
+      const vis = window.innerWidth < 640 ? 1 : window.innerWidth < 1024 ? 2 : 3;
+      setProgVisible(vis);
+      setProgSlide(s => Math.min(s, Math.max(0, 6 - vis)));
+    };
+    update();
+    window.addEventListener("resize", update);
+    return () => window.removeEventListener("resize", update);
   }, []);
+
+  /* ── programmes carousel auto-play ── */
+  const [progPaused, setProgPaused] = useState(false);
+  useEffect(() => {
+    if (progPaused) return;
+    const id = setInterval(() => {
+      setProgSlide(s => {
+        const max = Math.max(0, 6 - progVisible);
+        return s >= max ? 0 : s + 1;
+      });
+    }, 3000);
+    return () => clearInterval(id);
+  }, [progPaused, progVisible]);
 
   useEffect(() => {
     fetch(`${API}/api/ngo?limit=4&page=1`)
@@ -210,12 +231,12 @@ export default function Home() {
   ];
 
   const programs = [
-    { img: orphanFood,   Icon: FaChild,       title: "Child Nutrition",      desc: "Daily meals and nutrition for orphaned children in partner shelters across India.",               link: "/services/orphanage" },
-    { img: elderFood,    Icon: FaUtensils,    title: "Meals for Seniors",    desc: "Freshly cooked meals delivered to elderly citizens who live alone and can no longer cook.",       link: "/services/elderly"  },
-    { img: orphanHealth, Icon: FaHospitalAlt, title: "Health Camps",         desc: "Free medical camps offering check-ups, medicines, and specialist consultations in rural areas.",  link: "/services"          },
-    { img: widow,        Icon: FaFemale,      title: "Women Empowerment",    desc: "Livelihood training, financial aid, and emotional support for widowed and underprivileged women.", link: "/services"          },
-    { img: kanyaHero,    Icon: FaRing,        title: "Kanya Daan Yojana",    desc: "Financial and logistical support for families who cannot afford their daughters' marriages.",     link: "/services"          },
-    { img: road,         Icon: FaRoad,        title: "Rural Infrastructure", desc: "Community-driven road, water, and sanitation projects in villages with no basic amenities.",      link: "/services"          },
+    { img: orphanFood,   Icon: FaChild,       title: "Child Nutrition",      desc: "Daily meals and nutrition for orphaned children in partner shelters across India.",               link: "/services/orphanage", wide: true  },
+    { img: elderFood,    Icon: FaUtensils,    title: "Meals for Seniors",    desc: "Freshly cooked meals delivered to elderly citizens who live alone and can no longer cook.",       link: "/services/elderly",   wide: false },
+    { img: orphanHealth, Icon: FaHospitalAlt, title: "Health Camps",         desc: "Free medical camps offering check-ups, medicines, and specialist consultations in rural areas.",  link: "/services",           wide: false },
+    { img: widow,        Icon: FaFemale,      title: "Women Empowerment",    desc: "Livelihood training, financial aid, and emotional support for widowed and underprivileged women.", link: "/services",           wide: true  },
+    { img: kanyaHero,    Icon: FaRing,        title: "Kanya Daan Yojana",    desc: "Financial and logistical support for families who cannot afford their daughters' marriages.",     link: "/services",           wide: false },
+    { img: road,         Icon: FaRoad,        title: "Rural Infrastructure", desc: "Community-driven road, water, and sanitation projects in villages with no basic amenities.",      link: "/services",           wide: true  },
   ];
 
   const whyUs = [
@@ -452,23 +473,121 @@ export default function Home() {
             <p className="text-base text-gray-600 leading-relaxed max-w-[560px] mx-auto">Targeted programmes addressing the root causes of poverty and neglect in India's most vulnerable communities.</p>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {programs.map((p, i) => (
-              <div key={i} className={`sr d${(i % 3) + 1} bg-white border border-gray-200 rounded-[14px] overflow-hidden group hover:-translate-y-1.5 hover:shadow-[0_12px_40px_rgba(0,0,0,0.13)] hover:border-[#c7d2fe] transition-all duration-300`}>
-                <div className="relative overflow-hidden">
-                  <img src={p.img} alt={p.title} loading="lazy" className="w-full h-[196px] object-cover transition-transform duration-500 group-hover:scale-105" />
-                  <div className="absolute -bottom-4 left-5 w-11 h-11 rounded-lg bg-[#1a2d5a] text-white flex items-center justify-center text-[1.1rem] shadow-[0_4px_14px_rgba(26,45,90,0.35)] border-2 border-white group-hover:bg-amber-600 transition-colors">
-                    <p.Icon />
+          {/* ── Programmes Carousel ── */}
+          {(() => {
+            const maxSlide = Math.max(0, programs.length - progVisible);
+            const bump = (fn) => { setProgPaused(true); fn(); setTimeout(() => setProgPaused(false), 5000); };
+            const prev = () => bump(() => setProgSlide(s => Math.max(0, s - 1)));
+            const next = () => bump(() => setProgSlide(s => Math.min(maxSlide, s + 1)));
+            const goTo = (i) => bump(() => setProgSlide(Math.min(i, maxSlide)));
+            const cardPct = 100 / programs.length; // % of track per card
+            return (
+              <div
+                className="relative"
+                onMouseEnter={() => setProgPaused(true)}
+                onMouseLeave={() => setProgPaused(false)}
+              >
+                {/* ── Prev arrow ── */}
+                <button
+                  onClick={prev}
+                  disabled={progSlide === 0}
+                  aria-label="Previous"
+                  className="absolute left-0 top-[45%] -translate-y-1/2 -translate-x-5 z-10 w-11 h-11 rounded-full bg-white shadow-lg border border-gray-200 flex items-center justify-center text-gray-500 text-xl font-bold hover:bg-amber-50 hover:border-amber-400 hover:text-amber-600 transition-all disabled:opacity-25 disabled:cursor-not-allowed"
+                >
+                  ‹
+                </button>
+
+                {/* ── Track wrapper (clips horizontal overflow only, lets scale breathe) ── */}
+                <div style={{ overflowX: "clip", overflowY: "visible" }} className="py-4">
+                  <div
+                    className="flex"
+                    style={{
+                      width: `${(programs.length / progVisible) * 100}%`,
+                      transform: `translateX(-${progSlide * cardPct}%)`,
+                      transition: "transform 0.55s cubic-bezier(0.4,0,0.2,1)",
+                    }}
+                  >
+                    {programs.map(({ img, Icon, title, desc, link }, i) => (
+                      <div
+                        key={i}
+                        style={{ width: `${cardPct}%` }}
+                        className="flex-shrink-0 px-3"
+                      >
+                        <Link to={link} className="group block rounded-2xl overflow-hidden shadow-md hover:shadow-[0_8px_30px_rgba(217,119,6,0.25)] transition-all duration-500 hover:scale-[1.03]" style={{ transformOrigin: "center bottom" }}>
+                          {/* Image */}
+                          <div className="relative h-56 sm:h-64 md:h-72 overflow-hidden">
+                            <img
+                              src={img}
+                              alt={title}
+                              loading="lazy"
+                              className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                            />
+                            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/25 to-transparent transition-opacity duration-500" />
+                            {/* Amber color wash on hover */}
+                            <div className="absolute inset-0 bg-amber-600/0 group-hover:bg-amber-600/15 transition-all duration-500" />
+
+                            {/* Icon badge top-left */}
+                            <div className="absolute top-4 left-4 w-9 h-9 rounded-xl bg-white/20 backdrop-blur-sm border border-white/30 flex items-center justify-center text-white text-sm shadow-md group-hover:bg-amber-500 group-hover:border-amber-400 transition-all duration-300">
+                              <Icon />
+                            </div>
+
+                            {/* "Programme" tag top-right */}
+                            <div className="absolute top-4 right-4 text-[9px] font-bold uppercase tracking-[1.5px] text-white/70 border border-white/25 px-2 py-0.5 rounded-full backdrop-blur-sm">
+                              Programme
+                            </div>
+
+                            {/* Title overlay at bottom of image */}
+                            <div className="absolute bottom-0 left-0 right-0 px-5 pb-4 pt-2">
+                              <h3 className="text-[0.97rem] font-extrabold text-white leading-snug drop-shadow-sm">
+                                {title}
+                              </h3>
+                            </div>
+                          </div>
+
+                          {/* Content */}
+                          <div className="bg-white px-5 py-4 group-hover:bg-amber-50 transition-colors duration-500">
+                            <p className="text-[0.73rem] text-gray-500 leading-relaxed line-clamp-2 mb-3">
+                              {desc}
+                            </p>
+                            <span className="inline-flex items-center gap-1 text-[0.7rem] font-bold text-amber-600 uppercase tracking-[1.5px] group-hover:gap-2.5 transition-all duration-300">
+                              Explore <span className="text-base leading-none">→</span>
+                            </span>
+                          </div>
+                        </Link>
+                      </div>
+                    ))}
                   </div>
                 </div>
-                <div className="p-7 pt-8 pb-5">
-                  <h3 className="text-[1rem] font-bold text-gray-900 mb-2">{p.title}</h3>
-                  <p className="text-[0.87rem] text-gray-600 leading-[1.65] mb-3.5">{p.desc}</p>
-                  <Link to={p.link} className="inline-flex items-center gap-1 text-[0.84rem] font-bold text-[#1a2d5a] group-hover:gap-2 group-hover:text-amber-700 transition-all">Learn more →</Link>
+
+                {/* ── Next arrow ── */}
+                <button
+                  onClick={next}
+                  disabled={progSlide === maxSlide}
+                  aria-label="Next"
+                  className="absolute right-0 top-[45%] -translate-y-1/2 translate-x-5 z-10 w-11 h-11 rounded-full bg-white shadow-lg border border-gray-200 flex items-center justify-center text-gray-500 text-xl font-bold hover:bg-amber-50 hover:border-amber-400 hover:text-amber-600 transition-all disabled:opacity-25 disabled:cursor-not-allowed"
+                >
+                  ›
+                </button>
+
+                {/* ── Dot indicators ── */}
+                <div className="flex justify-center gap-2 mt-10">
+                  {Array.from({ length: maxSlide + 1 }).map((_, i) => (
+                    <button
+                      key={i}
+                      onClick={() => goTo(i)}
+                      aria-label={`Slide ${i + 1}`}
+                      className={`h-2 rounded-full transition-all duration-300 ${
+                        i === progSlide
+                          ? "bg-amber-600 w-6"
+                          : "bg-gray-200 w-2 hover:bg-gray-400"
+                      }`}
+                    />
+                  ))}
                 </div>
               </div>
-            ))}
-          </div>
+            );
+          })()}
+
           <div className="sr text-center mt-10">
             <Link to="/services" className={btnNavy}>View All Programmes</Link>
           </div>
@@ -555,9 +674,32 @@ export default function Home() {
           FIND NGOs
       ══════════════════════════════════════════ */}
       <section id="find-ngos" className="py-20 px-5 md:px-10 bg-[#faf9f7]">
-        <div className="max-w-[1160px] mx-auto grid grid-cols-1 lg:grid-cols-2 gap-11 lg:gap-[72px] items-center">
+        <div className="max-w-[1280px] mx-auto grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-14 items-center">
+
+          {/* LEFT — Map */}
           <div className="sl">
-            <div className="flex flex-col gap-3">
+            <IndiaMap />
+          </div>
+
+          {/* RIGHT — Text + NGO cards */}
+          <div className="sfr d2 flex flex-col gap-6">
+            <div>
+              <h2 className="text-[clamp(1.8rem,3vw,2.6rem)] font-extrabold leading-tight text-gray-900 mb-4">Find a Verified NGO<br /><span className="text-grad">Near Your City</span></h2>
+              <div className="w-11 h-[3px] rounded bg-amber-600 my-4" />
+              <p className="text-base text-gray-600 leading-relaxed mb-4">
+                Every NGO on SevaIndia is personally verified. We visit offices, check legal filings, audit past expenditures, and speak with beneficiaries before approving a listing.
+              </p>
+              <p className="text-base text-gray-600 leading-relaxed mb-6">
+                Filter by cause, state, or rating to find organisations working on issues closest to your heart.
+              </p>
+              <div className="flex gap-3 flex-wrap">
+                <Link to="/find-ngos" className={btnNavy}>Browse NGOs</Link>
+                <Link to="/add-ngo" className={btnNavyOutline}>Register Your NGO</Link>
+              </div>
+            </div>
+
+            {/* NGO list */}
+            <div className="flex flex-col gap-3 mt-2">
               {ngoLoading && [0,1,2,3].map(i => (
                 <div key={i} className="flex items-center gap-3.5 p-3.5 bg-white border border-gray-200 rounded-[14px] opacity-50 shadow-sm">
                   <div className="w-11 h-11 rounded-lg bg-indigo-200 shrink-0" />
@@ -580,26 +722,9 @@ export default function Home() {
                   <span className="ml-auto shrink-0 text-[0.68rem] font-bold text-green-700 bg-green-100 border border-green-200 px-2.5 py-1 rounded-full">★ {n.rating} Verified</span>
                 </Link>
               ))}
-              <div className="text-center pt-1.5">
-                <IndiaMap />
-              </div>
             </div>
           </div>
 
-          <div className="sfr d2">
-            <h2 className="text-[clamp(1.8rem,3vw,2.6rem)] font-extrabold leading-tight text-gray-900 mb-4">Find a Verified NGO<br /><span className="text-amber-600">Near Your City</span></h2>
-            <div className="w-11 h-[3px] rounded bg-amber-600 my-4" />
-            <p className="text-base text-gray-600 leading-relaxed max-w-[560px] mb-4">
-              Every NGO on SevaIndia is personally verified. We visit offices, check legal filings, audit past expenditures, and speak with beneficiaries before approving a listing.
-            </p>
-            <p className="text-base text-gray-600 leading-relaxed max-w-[560px] mb-7">
-              Filter by cause, state, or rating to find organisations working on issues closest to your heart.
-            </p>
-            <div className="flex gap-3 flex-wrap">
-              <Link to="/find-ngos" className={btnNavy}>Browse NGOs</Link>
-              <Link to="/add-ngo" className={btnNavyOutline}>Register Your NGO</Link>
-            </div>
-          </div>
         </div>
       </section>
 
@@ -752,16 +877,6 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ══════════════════════════════════════════
-          SCROLL TO TOP
-      ══════════════════════════════════════════ */}
-      <button
-        className={`fixed bottom-7 right-7 w-11 h-11 rounded-full bg-[#1a2d5a] text-white flex items-center justify-center shadow-[0_4px_16px_rgba(0,0,0,0.22)] z-[999] transition-all duration-300 hover:bg-amber-600 hover:-translate-y-1 ${showStt ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"}`}
-        onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
-        aria-label="Back to top"
-      >
-        <FaArrowUp />
-      </button>
 
     </div>
   );

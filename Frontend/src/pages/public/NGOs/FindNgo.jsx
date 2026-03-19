@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import axios from "axios";
 import elderCare from "../assets/images/elderly/elder.png"
 import { 
@@ -14,10 +14,13 @@ import {
 } from "react-icons/fa";
 
 const FindNGO = () => {
+  const [searchParams] = useSearchParams();
+
   // --- STATE MANAGEMENT ---
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("All");
-  const [selectedCity, setSelectedCity] = useState("All");
+  const [selectedCity, setSelectedCity] = useState(searchParams.get("city") || "All");
+  const [selectedState, setSelectedState] = useState(searchParams.get("state") || "");
   const [ngoList, setNgoList] = useState([]);
   const [filteredNGOs, setFilteredNGOs] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -31,25 +34,29 @@ const FindNGO = () => {
   // --- FETCH NGO DATA FROM BACKEND ---
   useEffect(() => {
     fetchNGOs();
-  }, [page, selectedCategory, selectedCity]);
+  }, [page, selectedCategory, selectedCity, selectedState]);
 
   const fetchNGOs = async () => {
     try {
       setLoading(true);
       setError(null);
-      
+
       const params = new URLSearchParams();
       params.append('page', page);
       params.append('limit', 12);
-      
+
       if (selectedCategory !== 'All') {
         params.append('category', selectedCategory);
       }
-      
+
       if (selectedCity !== 'All') {
         params.append('city', selectedCity);
       }
-      
+
+      if (selectedState) {
+        params.append('state', selectedState);
+      }
+
       if (searchTerm) {
         params.append('search', searchTerm);
       }
@@ -399,6 +406,23 @@ const FindNGO = () => {
 
         <button className="search-btn" onClick={handleSearch}>Find</button>
       </div>
+
+      {/* --- ACTIVE STATE FILTER BADGE --- */}
+      {selectedState && (
+        <div style={{ maxWidth: 900, margin: "-20px auto 20px auto", padding: "0 20px" }}>
+          <div style={{ display: "inline-flex", alignItems: "center", gap: 8, background: "#FFF3E0", border: "1px solid #FFB74D", borderRadius: 8, padding: "8px 14px", fontSize: "0.9rem", color: "#E65100", fontWeight: 600 }}>
+            <FaMapMarkerAlt size={13} />
+            Showing NGOs in: <strong>{selectedState}</strong>
+            <button
+              onClick={() => { setSelectedState(""); setPage(1); }}
+              style={{ marginLeft: 8, background: "none", border: "none", cursor: "pointer", color: "#E65100", fontSize: "1rem", lineHeight: 1, padding: 0 }}
+              title="Clear state filter"
+            >
+              ✕
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* --- RESULTS GRID --- */}
       <div className="content-container">

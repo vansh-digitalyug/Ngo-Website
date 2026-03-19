@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import axios from "axios";
 import elderCare from "../assets/images/elderly/elder.png"
@@ -13,38 +13,51 @@ import {
   FaGlobeAsia
 } from "react-icons/fa";
 
+// Options defined outside component so they can be used in lazy initializers
+const CATEGORIES = ["All", "Medical", "Education", "Elderly Care", "Orphanage", "Environment", "Community Welfare", "Infrastructure"];
+const CITIES     = ["All", "Delhi", "Mumbai", "Bangalore", "Chennai", "Kolkata", "Hyderabad", "Jaipur", "Ahmedabad", "Lucknow", "Kochi"];
+const STATES     = [
+  "All", "Andhra Pradesh", "Assam", "Bihar", "Chhattisgarh", "Delhi",
+  "Gujarat", "Haryana", "Himachal Pradesh", "Jammu and Kashmir", "Jharkhand",
+  "Karnataka", "Kerala", "Madhya Pradesh", "Maharashtra", "Manipur",
+  "Meghalaya", "Mizoram", "Nagaland", "Orissa", "Punjab", "Rajasthan",
+  "Sikkim", "Tamil Nadu", "Telangana", "Tripura", "Uttar Pradesh",
+  "Uttaranchal", "West Bengal"
+];
+
 const FindNGO = () => {
   const [searchParams] = useSearchParams();
+  const didMount = useRef(false);
 
   // --- STATE MANAGEMENT ---
+  // Lazy initialisers read URL params ONCE at mount — no double-fetch race condition
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("All");
-  const [selectedCity, setSelectedCity] = useState("All");
-  const [selectedState, setSelectedState] = useState("All");
-  const [ngoList, setNgoList] = useState([]);
+  const [selectedCity, setSelectedCity] = useState(() => {
+    const p = searchParams.get("city");
+    return p ? (CITIES.find(c => c.toLowerCase() === p.toLowerCase()) || "All") : "All";
+  });
+  const [selectedState, setSelectedState] = useState(() => {
+    const p = searchParams.get("state");
+    return p ? (STATES.find(s => s.toLowerCase() === p.toLowerCase()) || "All") : "All";
+  });
   const [filteredNGOs, setFilteredNGOs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [page, setPage] = useState(1);
 
-  // Category and city options
-  const categories = ["All", "Medical", "Education", "Elderly Care", "Orphanage", "Environment", "Community Welfare", "Infrastructure"];
-  const cities = ["All", "Delhi", "Mumbai", "Bangalore", "Chennai", "Kolkata", "Hyderabad", "Jaipur", "Ahmedabad", "Lucknow", "Kochi"];
-  const states = [
-    "All", "Andhra Pradesh", "Assam", "Bihar", "Chhattisgarh", "Delhi",
-    "Gujarat", "Haryana", "Himachal Pradesh", "Jammu and Kashmir", "Jharkhand",
-    "Karnataka", "Kerala", "Madhya Pradesh", "Maharashtra", "Manipur",
-    "Meghalaya", "Mizoram", "Nagaland", "Orissa", "Punjab", "Rajasthan",
-    "Sikkim", "Tamil Nadu", "Telangana", "Tripura", "Uttar Pradesh",
-    "Uttaranchal", "West Bengal"
-  ];
+  const categories = CATEGORIES;
+  const cities     = CITIES;
+  const states     = STATES;
 
-  // Sync city and state filters with URL params (?city= or ?state=)
+  // Sync filters when user navigates to a different state/city via the map
+  // (searchParams changes after mount — skip the first run to avoid double-fetch)
   useEffect(() => {
+    if (!didMount.current) { didMount.current = true; return; }
     const cityParam  = searchParams.get("city");
     const stateParam = searchParams.get("state");
-    setSelectedCity(cityParam  ? cities.find(c => c.toLowerCase() === cityParam.toLowerCase())  || "All" : "All");
-    setSelectedState(stateParam ? states.find(s => s.toLowerCase() === stateParam.toLowerCase()) || "All" : "All");
+    setSelectedCity(cityParam  ? (CITIES.find(c => c.toLowerCase() === cityParam.toLowerCase())  || "All") : "All");
+    setSelectedState(stateParam ? (STATES.find(s => s.toLowerCase() === stateParam.toLowerCase()) || "All") : "All");
     setPage(1);
   }, [searchParams]);
 
@@ -96,7 +109,6 @@ const FindNGO = () => {
           state: ngo.state
         }));
 
-        setNgoList(ngoData);
         setFilteredNGOs(ngoData);
       } else {
         setError('Failed to load NGO data');
@@ -104,7 +116,6 @@ const FindNGO = () => {
     } catch (err) {
       console.error('Error fetching NGOs:', err);
       setError(err.response?.data?.message || 'Failed to fetch NGO data');
-      setNgoList([]);
       setFilteredNGOs([]);
     } finally {
       setLoading(false);
@@ -173,15 +184,15 @@ const FindNGO = () => {
         /* SEARCH BAR FLOATING */
         .search-container {
           background: white;
-          max-width: 900px;
+          max-width: 1100px;
           margin: -40px auto 40px auto;
           border-radius: 12px;
           padding: 15px;
           box-shadow: 0 15px 40px rgba(0,0,0,0.1);
           display: flex;
-          gap: 15px;
+          gap: 12px;
           align-items: center;
-          flex-wrap: wrap;
+          flex-wrap: nowrap;
           position: relative;
           z-index: 10;
         }
@@ -192,8 +203,8 @@ const FindNGO = () => {
           align-items: center;
           background: #F1F3F5;
           border-radius: 8px;
-          padding: 0 15px;
-          min-width: 200px;
+          padding: 0 12px;
+          min-width: 0;
         }
         .input-group input, .input-group select {
           width: 100%;
@@ -211,11 +222,13 @@ const FindNGO = () => {
           background: var(--primary);
           color: white;
           border: none;
-          padding: 14px 30px;
+          padding: 14px 24px;
           border-radius: 8px;
           font-weight: 600;
           cursor: pointer;
           transition: 0.3s;
+          flex-shrink: 0;
+          white-space: nowrap;
         }
         .search-btn:hover { background: var(--primary-dark); }
 
@@ -377,8 +390,8 @@ const FindNGO = () => {
 
         @media (max-width: 768px) {
           .hero-title { font-size: 2rem; }
-          .search-container { flex-direction: column; gap: 10px; margin-top: -20px; padding: 20px; }
-          .input-group { width: 100%; }
+          .search-container { flex-wrap: wrap; flex-direction: column; gap: 10px; margin-top: -20px; padding: 20px; }
+          .input-group { width: 100%; min-width: unset; }
           .search-btn { width: 100%; }
         }
       `}</style>
@@ -400,7 +413,7 @@ const FindNGO = () => {
             placeholder="Search by NGO name..." 
             value={searchTerm}
             onChange={handleSearchChange}
-            onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
+            onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
           />
         </div>
 

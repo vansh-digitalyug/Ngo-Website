@@ -3,7 +3,7 @@ import { Link, useLocation, useNavigate, Outlet } from "react-router-dom";
 
 
 // import { LayoutDashboard, Building2, Users, Mail, Image, UserCircle, Heart, ClipboardList, Wallet, IndianRupee, CheckCircle2, Coins, BookOpenText, CalendarDays, Settings, Briefcase, Globe } from "lucide-react";
-import { LayoutDashboard, Building2, Users, Mail, Image, UserCircle, Heart, ClipboardList, Wallet, IndianRupee, CheckCircle2, Coins, BookOpenText, CalendarDays, Settings, Briefcase, MapPin, BookMarked,Globe } from "lucide-react";
+import { LayoutDashboard, Building2, Users, Mail, Image, UserCircle, Heart, ClipboardList, Wallet, IndianRupee, CheckCircle2, Coins, BookOpenText, CalendarDays, Settings, Briefcase, MapPin, BookMarked, Globe, MessageSquare } from "lucide-react";
 
 
 
@@ -34,13 +34,14 @@ const NAV_ITEMS = [
 
   { path: "/admin/villages", label: "Villages", icon: MapPin },
   { path: "/admin/fund-ledger", label: "Fund Ledger", icon: BookMarked },
+  { path: "/admin/feedback", label: "Feedback", icon: MessageSquare },
 
 ];
 
 function AdminLayout() {
   const location = useLocation();
   const navigate = useNavigate();
-  const [pendingCounts, setPendingCounts] = useState({ ngos: 0, volunteers: 0, contacts: 0, kanyadan: 0, funds: 0, communities: 0 });
+  const [pendingCounts, setPendingCounts] = useState({ ngos: 0, volunteers: 0, contacts: 0, kanyadan: 0, funds: 0, communities: 0, feedback: 0 });
 
   // Removed body class toggling for admin dashboard to restore default spacing
 
@@ -109,6 +110,17 @@ function AdminLayout() {
         if (d?.success) {
           setPendingCounts(prev => ({ ...prev, communities: d.data?.communities?.pending || 0 }));
         }
+        const token4 = localStorage.getItem("token");
+        return fetch(`${API_BASE_URL}/api/admin/feedback/stats`, {
+          headers: { Authorization: `Bearer ${token4}` },
+          credentials: "include"
+        });
+      })
+      .then(r => r?.json?.())
+      .then(d => {
+        if (d?.success) {
+          setPendingCounts(prev => ({ ...prev, feedback: d.data?.unread || 0 }));
+        }
       })
       .catch(() => { });
   }, [location.pathname, navigate]);
@@ -125,6 +137,7 @@ function AdminLayout() {
     if (label === "Kanyadan" && pendingCounts.kanyadan > 0) return pendingCounts.kanyadan;
     if (label === "Fund Requests" && pendingCounts.funds > 0) return pendingCounts.funds;
     if (label === "Communities" && pendingCounts.communities > 0) return pendingCounts.communities;
+    if (label === "Feedback" && pendingCounts.feedback > 0) return pendingCounts.feedback;
     return null;
   };
 

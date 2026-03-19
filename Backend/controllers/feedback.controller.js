@@ -4,6 +4,7 @@ import User from "../models/user.model.js";
 import asyncHandler from "../utils/asyncHandler.js";
 import ApiResponse from "../utils/ApiResponse.js";
 import ApiError from "../utils/ApiError.js";
+import { getTransporter, getSenderAddress, emailLayout, escapeHtml } from "../config/nodemailer.config.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // PUBLIC / USER ROUTES
@@ -313,6 +314,43 @@ export const adminReplyToFeedback = asyncHandler(async (req, res) => {
     if (adminNote) feedback.adminNote = adminNote;
 
     await feedback.save();
+
+    // ── Send email notification to user ──────────────────────────────────────
+    try {
+        const transporter = getTransporter();
+        const typeLabel   = feedback.feedbackType.charAt(0).toUpperCase() + feedback.feedbackType.slice(1);
+        const bodyHtml    = `
+            <h2 style="color:#1e293b;font-size:20px;margin:0 0 8px;">We've replied to your feedback</h2>
+            <p style="color:#64748b;font-size:14px;margin:0 0 24px;">Hi <strong>${escapeHtml(feedback.name)}</strong>, thank you for sharing your feedback with us. Here is our response:</p>
+
+            <div style="background:#f8fafc;border-left:4px solid #6366f1;border-radius:8px;padding:16px 20px;margin-bottom:20px;">
+                <p style="font-size:11px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:1px;margin:0 0 6px;">Your Feedback</p>
+                <p style="font-size:14px;font-weight:700;color:#1e293b;margin:0 0 4px;">${escapeHtml(feedback.subject)}</p>
+                <p style="font-size:13px;color:#475569;margin:0;">${escapeHtml(feedback.message)}</p>
+            </div>
+
+            <div style="background:#f0fdf4;border-left:4px solid #16a34a;border-radius:8px;padding:16px 20px;margin-bottom:24px;">
+                <p style="font-size:11px;font-weight:700;color:#16a34a;text-transform:uppercase;letter-spacing:1px;margin:0 0 6px;">Our Reply</p>
+                <p style="font-size:14px;color:#14532d;margin:0;line-height:1.7;">${escapeHtml(String(adminReply).trim())}</p>
+            </div>
+
+            <div style="background:#f1f5f9;border-radius:8px;padding:12px 16px;margin-bottom:20px;display:flex;gap:12px;">
+                <span style="font-size:12px;color:#64748b;">Type: <strong style="color:#374151;">${escapeHtml(typeLabel)}</strong></span>
+                ${feedback.rating ? `<span style="font-size:12px;color:#64748b;">Rating given: <strong style="color:#f59e0b;">${"★".repeat(feedback.rating)}</strong></span>` : ""}
+            </div>
+
+            <p style="font-size:13px;color:#94a3b8;margin:0;">If you have further questions, feel free to <a href="mailto:support@sevaindia.org" style="color:#6366f1;text-decoration:none;">contact us</a> anytime.</p>
+        `;
+        await transporter.sendMail({
+            from:    getSenderAddress(),
+            to:      feedback.email,
+            subject: `Re: ${feedback.subject} — SevaIndia`,
+            html:    emailLayout({ title: "Feedback Reply — SevaIndia", bodyHtml }),
+        });
+    } catch (emailErr) {
+        console.error("[Feedback] Email notification failed:", emailErr.message);
+        // Don't fail the request if email fails
+    }
 
     res.status(200).json(new ApiResponse(200, "Reply saved and feedback marked resolved", { feedback }));
 });

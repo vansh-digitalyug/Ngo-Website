@@ -71,6 +71,7 @@ const AdminCompletedTasks     = lazy(() => import("../pages/admin/AdminCompleted
 const AddServices             = lazy(() => import("../pages/admin/AddServices.jsx"));
 const ManageServices          = lazy(() => import("../pages/admin/ManageServices.jsx"));
 const AdminCommunities        = lazy(() => import("../pages/admin/AdminCommunities.jsx"));
+const AdminFeedback           = lazy(() => import("../pages/admin/AdminFeedback.jsx"));
 
 // NGO Dashboard
 const NgoLayout               = lazy(() => import("../pages/ngo/NgoLayout.jsx"));
@@ -117,6 +118,9 @@ const CommunityRoutes         = lazy(() => import("./CommunityRoutes.jsx"));
 
 // Complaints
 const ComplaintForm           = lazy(() => import("../pages/complaints/ComplaintForm.jsx"));
+
+// Feedback
+const FeedbackForm            = lazy(() => import("../pages/feedback/FeedbackForm.jsx"));
 
 // ── Page loader fallback ────────────────────────────────────────────
 function PageLoader() {
@@ -232,6 +236,7 @@ function AppRoutes() {
           <Route path="/add-ngo"          element={<AddNGO />} />
           <Route path="/contact"          element={<Contact />} />
           <Route path="/report-problem"   element={<ComplaintForm />} />
+          <Route path="/feedback"         element={<FeedbackForm />} />
           <Route path="/privacy-policy"   element={<PrivacyPolicy />} />
           <Route path="/terms-of-service" element={<TermsOfService />} />
 
@@ -280,51 +285,31 @@ function AppRoutes() {
         {/* Admin Routes */}
         <Route path="/admin" element={<AdminLayout />}>
           <Route index element={<AdminDashboard />} />
-          <Route path="ngos" element={<AdminNgos />} />
-          <Route path="volunteers" element={<AdminVolunteers />} />
-          <Route path="contacts" element={<AdminContacts />} />
-          <Route path="gallery" element={<AdminGallery />} />
-          <Route path="blogs" element={<AdminBlogs />} />
-          <Route path="users" element={<AdminUsers />} />
-          <Route path="kanyadan" element={<AdminKanyadan />} />
-          <Route path="donations" element={<AdminDonations />} />
-          <Route path="tasks" element={<AdminTasks />} />
-          <Route path="funds" element={<AdminFundRequests />} />
-          <Route path="payments" element={<AdminPayments />} />
+          <Route path="ngos"            element={<AdminNgos />} />
+          <Route path="volunteers"      element={<AdminVolunteers />} />
+          <Route path="contacts"        element={<AdminContacts />} />
+          <Route path="gallery"         element={<AdminGallery />} />
+          <Route path="blogs"           element={<AdminBlogs />} />
+          <Route path="users"           element={<AdminUsers />} />
+          <Route path="kanyadan"        element={<AdminKanyadan />} />
+          <Route path="donations"       element={<AdminDonations />} />
+          <Route path="tasks"           element={<AdminTasks />} />
+          <Route path="funds"           element={<AdminFundRequests />} />
+          <Route path="payments"        element={<AdminPayments />} />
           <Route path="completed-tasks" element={<AdminCompletedTasks />} />
-          <Route path="events" element={<AdminEvents />} />
-          <Route path="services/add" element={<AddServices />} />
+          <Route path="events"          element={<AdminEvents />} />
+          <Route path="services/add"    element={<AddServices />} />
           <Route path="services/manage" element={<ManageServices />} />
-          <Route path="villages" element={<AdminVillages />} />
-          <Route path="fund-ledger" element={<AdminFundLedger />} />
+          <Route path="villages"        element={<AdminVillages />} />
+          <Route path="fund-ledger"     element={<AdminFundLedger />} />
+          <Route path="communities"     element={<AdminCommunities />} />
+          <Route path="feedback"        element={<AdminFeedback />} />
         </Route>
-
 
           {/* Protected */}
           <Route path="/volunteer" element={<RequireVolunteerAuth><Volunteer /></RequireVolunteerAuth>} />
           <Route path="/profile"   element={<RequireVolunteerAuth><ProfileOrAdmin /></RequireVolunteerAuth>} />
           <Route path="/volunteer-dashboard" element={<RequireVolunteerAuth><VolunteerDashboard /></RequireVolunteerAuth>} />
-
-          {/* Admin */}
-          <Route path="/admin" element={<AdminLayout />}>
-            <Route index             element={<AdminDashboard />} />
-            <Route path="ngos"           element={<AdminNgos />} />
-            <Route path="volunteers"     element={<AdminVolunteers />} />
-            <Route path="contacts"       element={<AdminContacts />} />
-            <Route path="gallery"        element={<AdminGallery />} />
-            <Route path="blogs"          element={<AdminBlogs />} />
-            <Route path="users"          element={<AdminUsers />} />
-            <Route path="kanyadan"       element={<AdminKanyadan />} />
-            <Route path="donations"      element={<AdminDonations />} />
-            <Route path="tasks"          element={<AdminTasks />} />
-            <Route path="funds"          element={<AdminFundRequests />} />
-            <Route path="payments"       element={<AdminPayments />} />
-            <Route path="completed-tasks" element={<AdminCompletedTasks />} />
-            <Route path="events"         element={<AdminEvents />} />
-            <Route path="services/add"   element={<AddServices />} />
-            <Route path="services/manage" element={<ManageServices />} />
-            <Route path="communities"    element={<AdminCommunities />} />
-          </Route>
 
           {/* NGO Dashboard */}
           <Route path="/ngo/pending" element={<NgoPending />} />

@@ -31,6 +31,8 @@ function Footer() {
               <li><Link to="/find-ngos">Find NGOs</Link></li>
               <li><Link to="/volunteer">Volunteer</Link></li>
               <li><Link to="/donate">Help Now</Link></li>
+              <li><Link to="/feedback">💬 Give Feedback</Link></li>
+              <li><Link to="/report-problem">⚠ Report Problem</Link></li>
             </ul>
           </div>
 

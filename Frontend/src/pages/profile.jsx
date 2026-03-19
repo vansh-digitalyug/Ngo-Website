@@ -167,6 +167,8 @@ const Profile = () => {
   const [donorTasksLoading, setDonorTasksLoading] = useState(false);
   const [volunteerTasks, setVolunteerTasks] = useState([]);
   const [volunteerTasksLoading, setVolunteerTasksLoading] = useState(false);
+  const [myFeedbacks, setMyFeedbacks] = useState([]);
+  const [feedbacksLoading, setFeedbacksLoading] = useState(false);
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -294,12 +296,29 @@ const Profile = () => {
     }
   }, []);
 
+  const fetchMyFeedbacks = useCallback(async () => {
+    const token = localStorage.getItem('token');
+    if (!token) return;
+    setFeedbacksLoading(true);
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/feedback/my`, {
+        headers: { Authorization: `Bearer ${token}` },
+        credentials: 'include',
+      });
+      const data = await res.json().catch(() => ({}));
+      if (data?.success) setMyFeedbacks(data.data?.feedbacks || data.data || []);
+    } catch { /* silent */ } finally {
+      setFeedbacksLoading(false);
+    }
+  }, []);
+
   useEffect(() => {
     if (activeTab === 'donations') fetchDonations();
     if (activeTab === 'kanyadan') fetchKanyadan();
     if (activeTab === 'tasks') fetchDonorTasks();
     if (activeTab === 'volunteer') fetchVolunteerTasks();
-  }, [activeTab, fetchDonations, fetchKanyadan, fetchDonorTasks, fetchVolunteerTasks]);
+    if (activeTab === 'feedback') fetchMyFeedbacks();
+  }, [activeTab, fetchDonations, fetchKanyadan, fetchDonorTasks, fetchVolunteerTasks, fetchMyFeedbacks]);
 
   const handleProfileInputChange = (field, value) => {
     setProfileForm((prev) => ({ ...prev, [field]: value }));
@@ -503,6 +522,9 @@ const Profile = () => {
         <button className={`nav-item ${activeTab === 'tasks' ? 'active' : ''}`} onClick={() => setActiveTab('tasks')}>
           <FaClipboardList className="nav-icon" /> My Donated Tasks
           {donorTasks.length > 0 && <span style={{ background: "#16a34a", color: "#fff", fontSize: "11px", borderRadius: "10px", padding: "1px 7px", marginLeft: "6px" }}>{donorTasks.length}</span>}
+        </button>
+        <button className={`nav-item ${activeTab === 'feedback' ? 'active' : ''}`} onClick={() => setActiveTab('feedback')}>
+          <FaStar className="nav-icon" /> My Feedback
         </button>
         {isVolunteer && (
           <button className={`nav-item ${activeTab === 'volunteer' ? 'active' : ''}`} onClick={() => setActiveTab('volunteer')}>
@@ -941,6 +963,93 @@ const Profile = () => {
     );
   };
 
+  const TYPE_COLORS = { platform: "#6366f1", ngo: "#0ea5e9", volunteer: "#10b981", event: "#f59e0b", community: "#8b5cf6", service: "#ef4444", other: "#6b7280" };
+  const STATUS_COLORS = { new: "#dc2626", read: "#2563eb", acknowledged: "#d97706", resolved: "#16a34a" };
+  const fmtDate = (d) => d ? new Date(d).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" }) : "—";
+
+  const renderMyFeedbacks = () => (
+    <div className="tab-content fade-in">
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "20px" }}>
+        <h2 style={{ margin: 0, fontSize: "20px", fontWeight: 800, color: "#1e293b" }}>My Feedback</h2>
+        <button onClick={fetchMyFeedbacks} style={{ display: "flex", alignItems: "center", gap: "6px", background: "#f1f5f9", border: "none", borderRadius: "8px", padding: "8px 14px", fontSize: "13px", fontWeight: 600, color: "#64748b", cursor: "pointer" }}>
+          <FaSync style={{ fontSize: "12px" }} /> Refresh
+        </button>
+      </div>
+
+      {feedbacksLoading ? (
+        <div style={{ textAlign: "center", padding: "48px 0", color: "#94a3b8" }}>
+          <FaSpinner style={{ fontSize: "28px", animation: "spin 1s linear infinite", marginBottom: "12px" }} />
+          <p style={{ margin: 0 }}>Loading your feedback…</p>
+        </div>
+      ) : myFeedbacks.length === 0 ? (
+        <div style={{ textAlign: "center", padding: "60px 24px", background: "#f8fafc", borderRadius: "16px", border: "1.5px dashed #e2e8f0" }}>
+          <div style={{ fontSize: "40px", marginBottom: "12px" }}>💬</div>
+          <p style={{ margin: 0, fontWeight: 700, color: "#1e293b", fontSize: "16px" }}>No feedback submitted yet</p>
+          <p style={{ margin: "6px 0 0", color: "#94a3b8", fontSize: "13px" }}>Share your experience to help us improve.</p>
+        </div>
+      ) : (
+        <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+          {myFeedbacks.map((fb) => {
+            const typeColor  = TYPE_COLORS[fb.feedbackType]  || "#6b7280";
+            const statColor  = STATUS_COLORS[fb.status] || "#6b7280";
+            const hasReply   = !!fb.adminReply;
+            return (
+              <div key={fb._id} style={{ background: "#fff", border: `1.5px solid ${hasReply ? "#86efac" : "#e2e8f0"}`, borderRadius: "16px", overflow: "hidden", boxShadow: hasReply ? "0 2px 12px rgba(22,163,74,0.08)" : "0 1px 4px rgba(0,0,0,0.04)" }}>
+                {/* Top bar */}
+                <div style={{ height: "4px", background: hasReply ? "linear-gradient(90deg,#16a34a,#22c55e)" : `linear-gradient(90deg,${typeColor},${typeColor}88)` }} />
+                <div style={{ padding: "16px 20px" }}>
+                  {/* Header row */}
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: "8px", marginBottom: "10px" }}>
+                    <h4 style={{ margin: 0, fontSize: "15px", fontWeight: 700, color: "#1e293b", flex: 1 }}>{fb.subject}</h4>
+                    <div style={{ display: "flex", gap: "6px", flexWrap: "wrap" }}>
+                      <span style={{ background: `${typeColor}18`, color: typeColor, padding: "3px 10px", borderRadius: "20px", fontSize: "11px", fontWeight: 700 }}>
+                        {fb.feedbackType.charAt(0).toUpperCase() + fb.feedbackType.slice(1)}
+                      </span>
+                      <span style={{ background: `${statColor}18`, color: statColor, padding: "3px 10px", borderRadius: "20px", fontSize: "11px", fontWeight: 700 }}>
+                        {fb.status.charAt(0).toUpperCase() + fb.status.slice(1)}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Rating */}
+                  {fb.rating && (
+                    <div style={{ display: "flex", gap: "2px", marginBottom: "10px" }}>
+                      {[1,2,3,4,5].map(s => (
+                        <FaStar key={s} style={{ fontSize: "13px", color: s <= fb.rating ? "#f59e0b" : "#e5e7eb" }} />
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Message */}
+                  <p style={{ fontSize: "13px", color: "#475569", margin: "0 0 10px", lineHeight: "1.6" }}>{fb.message}</p>
+
+                  <p style={{ fontSize: "11px", color: "#94a3b8", margin: 0 }}>Submitted: {fmtDate(fb.createdAt)}</p>
+
+                  {/* Admin Reply */}
+                  {hasReply && (
+                    <div style={{ marginTop: "14px", background: "#f0fdf4", border: "1px solid #86efac", borderRadius: "12px", padding: "14px 16px" }}>
+                      <p style={{ fontSize: "11px", fontWeight: 700, color: "#16a34a", textTransform: "uppercase", letterSpacing: "0.8px", margin: "0 0 6px" }}>
+                        ✓ Reply from SevaIndia · {fmtDate(fb.repliedAt)}
+                      </p>
+                      <p style={{ fontSize: "13px", color: "#14532d", margin: 0, lineHeight: "1.7" }}>{fb.adminReply}</p>
+                    </div>
+                  )}
+
+                  {!hasReply && (
+                    <div style={{ marginTop: "12px", display: "flex", alignItems: "center", gap: "6px" }}>
+                      <FaClock style={{ fontSize: "11px", color: "#94a3b8" }} />
+                      <p style={{ fontSize: "12px", color: "#94a3b8", margin: 0 }}>Awaiting reply from our team…</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+
   return (
     <div className="profile-layout">
       {saveNotice.message && (
@@ -979,6 +1088,7 @@ const Profile = () => {
           {activeTab === 'kanyadan' && renderKanyadan()}
           {activeTab === 'tasks' && renderDonorTasks()}
           {activeTab === 'volunteer' && renderVolunteerDashboard()}
+          {activeTab === 'feedback' && renderMyFeedbacks()}
         </main>
       </div>
     </div>
