@@ -4,6 +4,7 @@ import { useEffect, useLayoutEffect, lazy, Suspense } from "react";
 // Only Home is eagerly loaded — it's the first thing the user sees
 import Home from "../pages/home.jsx";
 
+
 // ── Lazy-loaded pages ───────────────────────────────────────────────
 const ServicePage             = lazy(() => import("../pages/service.jsx"));
 const ServiceDiagnostics      = lazy(() => import("../pages/ServiceDiagnostics.jsx"));
@@ -21,6 +22,34 @@ const VolunteerDashboard      = lazy(() => import("../pages/volunteer/VolunteerD
 const NgoPublicProfile        = lazy(() => import("../pages/NgoPublicProfile.jsx"));
 const PrivacyPolicy           = lazy(() => import("../pages/PrivacyPolicy.jsx"));
 const TermsOfService          = lazy(() => import("../pages/TermsOfService.jsx"));
+
+// import AdminLayout from "../pages/admin/AdminLayout.jsx";
+// import AdminLogin from "../pages/admin/AdminLogin.jsx";
+// import AdminDashboard from "../pages/admin/AdminDashboard.jsx";
+// import AdminNgos from "../pages/admin/AdminNgos.jsx";
+// import AdminVolunteers from "../pages/admin/AdminVolunteers.jsx";
+// import AdminContacts from "../pages/admin/AdminContacts.jsx";
+// import AdminUsers from "../pages/admin/AdminUsers.jsx";
+// import AdminGallery from "../pages/admin/AdminGallery.jsx";
+// import AdminBlogs from "../pages/admin/AdminBlogs.jsx";
+// import AdminEvents from "../pages/admin/AdminEvents.jsx";
+// import NgoEvents from "../pages/ngo/NgoEvents.jsx";
+// import AdminKanyadan from "../pages/admin/AdminKanyadan.jsx";
+// import AdminTasks from "../pages/admin/AdminTasks.jsx";
+// import AdminDonations from "../pages/admin/AdminDonations.jsx";
+// import AdminFundRequests from "../pages/admin/AdminFundRequests.jsx";
+// import AdminPayments from "../pages/admin/AdminPayments.jsx";
+// import AdminCompletedTasks from "../pages/admin/AdminCompletedTasks.jsx";
+// import AddServices from "../pages/admin/AddServices.jsx";
+// import ManageServices from "../pages/admin/ManageServices.jsx";
+import AdminVillages from "../pages/admin/AdminVillages.jsx";
+import AdminFundLedger from "../pages/admin/AdminFundLedger.jsx";
+
+import VillageList from "../pages/villages/VillageList.jsx";
+import VillageDetail from "../pages/villages/VillageDetail.jsx";
+import Transparency from "../pages/Transparency.jsx";
+import Disclaimer from "../pages/Disclaimer.jsx";
+
 
 // Admin (heavy — all lazy)
 const AdminLayout             = lazy(() => import("../pages/admin/AdminLayout.jsx"));
@@ -202,6 +231,7 @@ function AppRoutes() {
           <Route path="/privacy-policy"   element={<PrivacyPolicy />} />
           <Route path="/terms-of-service" element={<TermsOfService />} />
 
+
           {/* Auth */}
           <Route path="/login"                    element={<LoginRedirect />} />
           <Route path="/login/user"               element={<Login />} />
@@ -217,6 +247,54 @@ function AppRoutes() {
           <Route path="/about/our-board"      element={<OurBoard />} />
           <Route path="/about/founders"       element={<Founders />} />
           <Route path="/work-with-us"         element={<WorkWithUs />} />
+
+        {/* Get Involved Routes */}
+        <Route path="/work-with-us" element={<WorkWithUs />} />
+        <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+        <Route path="/terms-of-service" element={<TermsOfService />} />
+        <Route path="/disclaimer" element={<Disclaimer />} />
+        <Route path="/transparency" element={<Transparency />} />
+        <Route path="/villages" element={<VillageList />} />
+        <Route path="/villages/:id" element={<VillageDetail />} />
+        <Route
+          path="/profile"
+          element={
+            <RequireVolunteerAuth>
+              <ProfileOrAdmin />
+            </RequireVolunteerAuth>
+          }
+        />
+        <Route
+          path="/volunteer-dashboard"
+          element={
+            <RequireVolunteerAuth>
+              <VolunteerDashboard />
+            </RequireVolunteerAuth>
+          }
+        />
+
+        {/* Admin Routes */}
+        <Route path="/admin" element={<AdminLayout />}>
+          <Route index element={<AdminDashboard />} />
+          <Route path="ngos" element={<AdminNgos />} />
+          <Route path="volunteers" element={<AdminVolunteers />} />
+          <Route path="contacts" element={<AdminContacts />} />
+          <Route path="gallery" element={<AdminGallery />} />
+          <Route path="blogs" element={<AdminBlogs />} />
+          <Route path="users" element={<AdminUsers />} />
+          <Route path="kanyadan" element={<AdminKanyadan />} />
+          <Route path="donations" element={<AdminDonations />} />
+          <Route path="tasks" element={<AdminTasks />} />
+          <Route path="funds" element={<AdminFundRequests />} />
+          <Route path="payments" element={<AdminPayments />} />
+          <Route path="completed-tasks" element={<AdminCompletedTasks />} />
+          <Route path="events" element={<AdminEvents />} />
+          <Route path="services/add" element={<AddServices />} />
+          <Route path="services/manage" element={<ManageServices />} />
+          <Route path="villages" element={<AdminVillages />} />
+          <Route path="fund-ledger" element={<AdminFundLedger />} />
+        </Route>
+
 
           {/* Protected */}
           <Route path="/volunteer" element={<RequireVolunteerAuth><Volunteer /></RequireVolunteerAuth>} />

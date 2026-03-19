@@ -4,6 +4,7 @@ import {
   Save, X, Plus, Upload, Image as ImageIcon, Loader2, CheckCircle,
   AlertCircle, Eye, RefreshCw, EyeOff
 } from "lucide-react";
+import AIDescribeButton from "../../components/ui/AIDescribeButton.jsx";
 import {
   fetchCategoriesAdmin, fetchProgramsByCategoryAdmin,
   updateCategory, hideCategory, unhideCategory,
@@ -97,7 +98,10 @@ function EditCategoryModal({ category, onClose, onSaved }) {
             <input value={name} onChange={e => setName(e.target.value)} className={inputCls} />
           </div>
           <div>
-            <label className={labelCls}>Description *</label>
+            <div className="flex items-center justify-between mb-1">
+              <label className={labelCls} style={{ margin: 0 }}>Description *</label>
+              <AIDescribeButton context="service-category" hint={name} onGenerated={setDescription} />
+            </div>
             <textarea rows={3} value={description} onChange={e => setDescription(e.target.value)} className={`${inputCls} resize-none`} />
           </div>
           <div>
@@ -227,11 +231,17 @@ function EditProgramModal({ program, onClose, onSaved }) {
               <input value={form.title} onChange={e => setForm(f => ({ ...f, title: e.target.value }))} className={inputCls} />
             </div>
             <div className="col-span-2">
-              <label className={labelCls}>Short Description *</label>
+              <div className="flex items-center justify-between mb-1">
+                <label className={labelCls} style={{ margin: 0 }}>Short Description *</label>
+                <AIDescribeButton context="service-program" hint={form.title} onGenerated={v => setForm(f => ({ ...f, description: v }))} />
+              </div>
               <textarea rows={2} value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} className={`${inputCls} resize-none`} />
             </div>
             <div className="col-span-2">
-              <label className={labelCls}>Full Description</label>
+              <div className="flex items-center justify-between mb-1">
+                <label className={labelCls} style={{ margin: 0 }}>Full Description</label>
+                <AIDescribeButton context="service-program-full" hint={form.title} onGenerated={v => setForm(f => ({ ...f, fullDescription: v }))} />
+              </div>
               <textarea rows={4} value={form.fullDescription} onChange={e => setForm(f => ({ ...f, fullDescription: e.target.value }))} className={`${inputCls} resize-none`} />
             </div>
             <div>

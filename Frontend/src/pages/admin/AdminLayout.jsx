@@ -1,7 +1,10 @@
 import React, { useState, useEffect } from "react";
 import { Link, useLocation, useNavigate, Outlet } from "react-router-dom";
 
-import { LayoutDashboard, Building2, Users, Mail, Image, UserCircle, Heart, ClipboardList, Wallet, IndianRupee, CheckCircle2, Coins, BookOpenText, CalendarDays, Settings, Briefcase, Globe } from "lucide-react";
+
+// import { LayoutDashboard, Building2, Users, Mail, Image, UserCircle, Heart, ClipboardList, Wallet, IndianRupee, CheckCircle2, Coins, BookOpenText, CalendarDays, Settings, Briefcase, Globe } from "lucide-react";
+import { LayoutDashboard, Building2, Users, Mail, Image, UserCircle, Heart, ClipboardList, Wallet, IndianRupee, CheckCircle2, Coins, BookOpenText, CalendarDays, Settings, Briefcase, MapPin, BookMarked,Globe } from "lucide-react";
+
 
 
 import "./admin.css";
@@ -26,7 +29,12 @@ const NAV_ITEMS = [
   { path: "/admin/completed-tasks", label: "Completed Tasks", icon: CheckCircle2 },
   { path: "/admin/services/add", label: "Add Services", icon: Briefcase },
   { path: "/admin/services/manage", label: "Manage Services", icon: Settings },
+
   { path: "/admin/communities", label: "Communities", icon: Globe },
+
+  { path: "/admin/villages", label: "Villages", icon: MapPin },
+  { path: "/admin/fund-ledger", label: "Fund Ledger", icon: BookMarked },
+
 ];
 
 function AdminLayout() {

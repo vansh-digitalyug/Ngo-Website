@@ -3,6 +3,7 @@ import {
   FolderPlus, Layers, Upload, X, Image as ImageIcon, Plus,
   CheckCircle, AlertCircle, Loader2, Trash2, Eye
 } from "lucide-react";
+import AIDescribeButton from "../../components/ui/AIDescribeButton.jsx";
 import {
   createCategory, updateCategory,
   createProgram, updateProgram,
@@ -409,7 +410,10 @@ export default function AddServices() {
                   </div>
 
                   <div>
-                    <label className={labelCls}>Description *</label>
+                    <div className="flex items-center justify-between mb-1">
+                      <label className={labelCls} style={{ margin: 0 }}>Description *</label>
+                      <AIDescribeButton context="service-category" hint={catForm.name} onGenerated={v => setCatForm(f => ({ ...f, description: v }))} />
+                    </div>
                     <textarea required rows={3} value={catForm.description}
                       onChange={e => setCatForm(f => ({ ...f, description: e.target.value }))}
                       placeholder="Short description of this category..."
@@ -466,7 +470,10 @@ export default function AddServices() {
 
                   {/* Short description */}
                   <div>
-                    <label className={labelCls}>Short Description *</label>
+                    <div className="flex items-center justify-between mb-1">
+                      <label className={labelCls} style={{ margin: 0 }}>Short Description *</label>
+                      <AIDescribeButton context="service-program" hint={progForm.title} onGenerated={v => setProgForm(f => ({ ...f, description: v }))} />
+                    </div>
                     <textarea required rows={2} value={progForm.description}
                       onChange={e => setProgForm(f => ({ ...f, description: e.target.value }))}
                       placeholder="Brief summary shown on the services listing..."
@@ -475,7 +482,10 @@ export default function AddServices() {
 
                   {/* Full description */}
                   <div>
-                    <label className={labelCls}>Full Description</label>
+                    <div className="flex items-center justify-between mb-1">
+                      <label className={labelCls} style={{ margin: 0 }}>Full Description</label>
+                      <AIDescribeButton context="service-program-full" hint={progForm.title} onGenerated={v => setProgForm(f => ({ ...f, fullDescription: v }))} />
+                    </div>
                     <textarea rows={5} value={progForm.fullDescription}
                       onChange={e => setProgForm(f => ({ ...f, fullDescription: e.target.value }))}
                       placeholder="Detailed description shown on the program page..."

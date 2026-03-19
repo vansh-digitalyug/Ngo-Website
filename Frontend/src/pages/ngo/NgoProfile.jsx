@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useOutletContext } from 'react-router-dom';
 import { Edit, Save, FileText, CreditCard, Home, FolderOpen, X, Building, Mail, Phone, MapPin, Globe, Facebook, Instagram, CheckCircle, AlertCircle, ExternalLink } from 'lucide-react';
+import AIDescribeButton from '../../components/ui/AIDescribeButton.jsx';
 import { API_BASE_URL } from './NgoLayout';
 import './ngo.css';
 
@@ -229,7 +230,10 @@ export default function NgoProfile() {
                   </div>
 
                   <div className="ngo-form-group full-width">
-                    <label>Description</label>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '4px' }}>
+                      <label style={{ margin: 0 }}>Description</label>
+                      <AIDescribeButton context="ngo" hint={formData.ngoName} onGenerated={v => setFormData(p => ({ ...p, description: v }))} />
+                    </div>
                     <textarea
                       name="description"
                       className="ngo-form-input ngo-form-textarea"
