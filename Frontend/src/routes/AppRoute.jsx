@@ -115,6 +115,9 @@ const WorkWithUs              = lazy(() => import("../pages/WorkWithUs.jsx"));
 // Community
 const CommunityRoutes         = lazy(() => import("./CommunityRoutes.jsx"));
 
+// Complaints
+const ComplaintForm           = lazy(() => import("../pages/complaints/ComplaintForm.jsx"));
+
 // ── Page loader fallback ────────────────────────────────────────────
 function PageLoader() {
   return (
@@ -228,6 +231,7 @@ function AppRoutes() {
           <Route path="/donate"           element={<Donate />} />
           <Route path="/add-ngo"          element={<AddNGO />} />
           <Route path="/contact"          element={<Contact />} />
+          <Route path="/report-problem"   element={<ComplaintForm />} />
           <Route path="/privacy-policy"   element={<PrivacyPolicy />} />
           <Route path="/terms-of-service" element={<TermsOfService />} />
 

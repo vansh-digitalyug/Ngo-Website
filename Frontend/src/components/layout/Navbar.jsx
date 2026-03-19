@@ -181,6 +181,7 @@ function Navbar() {
     { name: "Contact", path: "/contact" },
   ];
 
+
   return (
     <>
       {/* --- DESKTOP NAVBAR --- */}
@@ -214,6 +215,14 @@ function Navbar() {
         {/* Desktop Auth & Translate */}
         <div className="hidden lg:flex items-center gap-4">
           <GoogleTranslate />
+
+          {/* Report Problem Button */}
+          <Link
+            to="/report-problem"
+            className="flex items-center gap-1.5 bg-orange-500 text-white px-4 py-2 rounded-md font-medium hover:bg-orange-600 hover:shadow-md transition-all duration-300 text-sm"
+          >
+            <span className="text-base leading-none">⚠</span> Report Problem
+          </Link>
           
           {isLoggedIn ? (
             <div className="relative group cursor-pointer">
@@ -334,6 +343,17 @@ function Navbar() {
               </Link>
             </li>
           ))}
+
+          {/* Report Problem */}
+          <li className="border-b border-gray-50">
+            <Link
+              to="/report-problem"
+              onClick={closeMenu}
+              className="flex items-center gap-2 px-6 py-3 text-orange-600 font-semibold hover:bg-orange-50 transition-colors"
+            >
+              <span>⚠</span> Report Problem
+            </Link>
+          </li>
 
           {/* Additional Mobile-specific Links (from your original code) */}
           <li className="border-b border-gray-50">

@@ -357,6 +357,10 @@ function Navbar() {
             </select>
           </div>
 
+          <Link to="/report-problem" className="flex items-center gap-1.5 bg-orange-500 text-white px-4 py-2 rounded-md text-sm font-semibold hover:bg-orange-600 shadow-sm hover:shadow-md transition-all duration-300">
+            ⚠ Report Problem
+          </Link>
+
           <Link to="/donate" className="bg-[#ff5722] text-white px-5 py-2 rounded-md text-sm font-semibold hover:bg-[#e64a19] shadow-sm hover:shadow-md transition-all duration-300 transform hover:-translate-y-0.5">
             Donate Now
           </Link>
@@ -513,6 +517,10 @@ function Navbar() {
 
         {/* Mobile Bottom Section */}
         <div className="border-t border-gray-100 p-4 space-y-3 bg-white">
+          <Link to="/report-problem" onClick={closeMenu} className="flex justify-center items-center gap-2 bg-orange-500 text-white py-2.5 rounded-lg text-sm font-bold hover:bg-orange-600 shadow-md transition-colors">
+            ⚠ Report Problem
+          </Link>
+
           <Link to="/donate" onClick={closeMenu} className="flex justify-center bg-[#ff5722] text-white py-2.5 rounded-lg text-sm font-bold hover:bg-[#e64a19] shadow-md transition-colors">
             Donate Now
           </Link>
