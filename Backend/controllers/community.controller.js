@@ -538,12 +538,15 @@ export const createCommunityActivity = asyncHandler(async (req, res) => {
     if (community.status !== "active") throw new ApiError(403, "Community is not active", "COMMUNITY_INACTIVE");
 
     // Check user has some responsibility in this community
+    // OR is the assigned community leader (auto-assigned when admin verified the community,
+    // which sets user.communityId but does not create a CommunityResponsibility record)
     const hasResponsibility = await CommunityResponsibility.findOne({
         communityId,
         takenBy: req.userId,
         status: { $in: ["active", "pending"] },
     });
-    if (!hasResponsibility) {
+    const isAssignedLeader = community.currentLeaderId?.toString() === req.userId?.toString();
+    if (!hasResponsibility && !isAssignedLeader) {
         throw new ApiError(403, "You must have an active or pending responsibility in this community to post activities", "NO_RESPONSIBILITY");
     }
 

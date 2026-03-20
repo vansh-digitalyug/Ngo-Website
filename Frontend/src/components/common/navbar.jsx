@@ -226,6 +226,8 @@ function Navbar() {
   const navBtn = "flex items-center gap-1 text-gray-700 font-medium px-3 py-2 rounded-md hover:text-green-800 hover:bg-green-50 transition-colors duration-300 text-sm whitespace-nowrap";
   // The animation magic for desktop dropdowns
   const dropdownAnimation = "absolute left-0 top-full pt-2 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 ease-in-out translate-y-2 group-hover:translate-y-0 scale-95 group-hover:scale-100 origin-top z-50";
+  // Right-anchored variant — for the user avatar dropdown (avoids left-0 clipping)
+  const dropdownAnimationRight = "absolute right-0 top-full pt-2 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 ease-in-out translate-y-2 group-hover:translate-y-0 scale-95 group-hover:scale-100 origin-top-right z-50";
 
   return (
     <>
@@ -368,7 +370,7 @@ function Navbar() {
               <div className="w-9 h-9 bg-green-600 text-white rounded-full flex items-center justify-center font-bold text-sm shadow-sm transition-all group-hover:bg-green-700 group-hover:scale-105" title={user?.name || "User"}>
                 {userInitial}
               </div>
-              <div className={`w-48 right-0 ${dropdownAnimation}`}>
+              <div className={`w-52 ${dropdownAnimationRight}`}>
                 <ul className="bg-white border border-gray-100 rounded-xl shadow-xl py-2 text-sm overflow-hidden">
                   {isAdmin ? (
                     <li><Link to="/admin" className={dropLink}>Admin Panel</Link></li>
