@@ -3,11 +3,7 @@ import { Link, useLocation, useNavigate, Outlet } from "react-router-dom";
 
 
 // import { LayoutDashboard, Building2, Users, Mail, Image, UserCircle, Heart, ClipboardList, Wallet, IndianRupee, CheckCircle2, Coins, BookOpenText, CalendarDays, Settings, Briefcase, Globe } from "lucide-react";
-<<<<<<< HEAD
-import { LayoutDashboard, Building2, Users, Mail, Image, UserCircle, Heart, ClipboardList, Wallet, IndianRupee, CheckCircle2, Coins, BookOpenText, CalendarDays, Settings, Briefcase, MapPin, BookMarked, Globe, MessageSquare } from "lucide-react";
-=======
-import { LayoutDashboard, Building2, Users, Mail, Image, UserCircle, Heart, ClipboardList, Wallet, IndianRupee, CheckCircle2, Coins, BookOpenText, CalendarDays, Settings, Briefcase, MapPin, BookMarked, Globe, UserCog, AlertCircle, BarChart2 } from "lucide-react";
->>>>>>> d212c49c712141ae9defeeeab24ab63482364351
+import { LayoutDashboard, Building2, Users, Mail, Image, UserCircle, Heart, ClipboardList, Wallet, IndianRupee, CheckCircle2, Coins, BookOpenText, CalendarDays, Settings, Briefcase, MapPin, BookMarked, Globe, MessageSquare, UserCog, AlertCircle, BarChart2 } from "lucide-react";
 
 
 
@@ -38,16 +34,12 @@ const NAV_ITEMS = [
 
   { path: "/admin/villages", label: "Villages", icon: MapPin },
   { path: "/admin/fund-ledger", label: "Fund Ledger", icon: BookMarked },
-<<<<<<< HEAD
-  { path: "/admin/feedback", label: "Feedback", icon: MessageSquare },
-
-=======
-  { path: "/admin/problems", label: "Problems", icon: AlertCircle },
-  { path: "/admin/employment", label: "Employment", icon: UserCog },
-  { path: "/admin/staff", label: "Staff", icon: Users },
-  { path: "/admin/surveys", label: "Surveys", icon: ClipboardList },
+  { path: "/admin/feedback",       label: "Feedback",       icon: MessageSquare },
+  { path: "/admin/problems",       label: "Problems",       icon: AlertCircle },
+  { path: "/admin/employment",     label: "Employment",     icon: UserCog },
+  { path: "/admin/staff",          label: "Staff",          icon: Users },
+  { path: "/admin/surveys",        label: "Surveys",        icon: ClipboardList },
   { path: "/admin/impact-reports", label: "Impact Reports", icon: BarChart2 },
->>>>>>> d212c49c712141ae9defeeeab24ab63482364351
 ];
 
 function AdminLayout() {
