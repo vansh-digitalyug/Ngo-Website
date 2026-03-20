@@ -7,6 +7,7 @@ import {
     getVillage,
     getVillageProblems,
     submitProblem,
+    submitProblemPublic,
     upvoteProblem,
     getMyVillages,
     createVillage,
@@ -32,7 +33,8 @@ router.get("/:id",           getVillage);
 router.get("/:id/problems",  getVillageProblems);
 
 // ── Submit & vote problem (public / optionalAuth) ─────────────────────────────
-router.post("/:id/problems",                  optionalAuth, submitProblem);
+router.post("/problems/public",               optionalAuth, submitProblemPublic); // free-text village
+router.post("/:id/problems",                  optionalAuth, submitProblem);       // adopted village
 router.put("/problems/:problemId/upvote",     authenticate, upvoteProblem);
 router.put("/problems/:problemId/status",     authenticate, updateProblemStatus);
 
