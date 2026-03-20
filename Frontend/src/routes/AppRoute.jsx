@@ -64,7 +64,13 @@ const AdminCompletedTasks     = lazy(() => import("../pages/admin/AdminCompleted
 const AddServices             = lazy(() => import("../pages/admin/AddServices.jsx"));
 const ManageServices          = lazy(() => import("../pages/admin/ManageServices.jsx"));
 const AdminCommunities        = lazy(() => import("../pages/admin/AdminCommunities.jsx"));
+<<<<<<< HEAD
 const AdminFeedback           = lazy(() => import("../pages/admin/AdminFeedback.jsx"));
+=======
+
+const AdminFeedback           = lazy(() => import("../pages/admin/AdminFeedback.jsx"));
+
+>>>>>>> f62c6a5d51c3e087aaa5918cec09853fe3092ca9
 const AdminVillages           = lazy(() => import("../pages/admin/AdminVillages.jsx"));
 const AdminFundLedger         = lazy(() => import("../pages/admin/AdminFundLedger.jsx"));
 const AdminProblems           = lazy(() => import("../pages/admin/AdminProblems.jsx"));
@@ -78,6 +84,10 @@ const VillageList             = lazy(() => import("../pages/villages/VillageList
 const VillageDetail           = lazy(() => import("../pages/villages/VillageDetail.jsx"));
 const Transparency            = lazy(() => import("../pages/Transparency.jsx"));
 const Disclaimer              = lazy(() => import("../pages/Disclaimer.jsx"));
+<<<<<<< HEAD
+=======
+
+>>>>>>> f62c6a5d51c3e087aaa5918cec09853fe3092ca9
 
 // NGO Dashboard
 const NgoLayout               = lazy(() => import("../pages/ngo/NgoLayout.jsx"));
@@ -273,6 +283,7 @@ function AppRoutes() {
           <Route path="/about/founders"       element={<Founders />} />
           <Route path="/work-with-us"         element={<WorkWithUs />} />
 
+<<<<<<< HEAD
           {/* Public routes */}
           <Route path="/work-with-us"         element={<WorkWithUs />} />
           <Route path="/privacy-policy"       element={<PrivacyPolicy />} />
@@ -300,6 +311,73 @@ function AppRoutes() {
           />
 
           {/* Admin Routes */}
+=======
+
+        {/* Get Involved Routes */}
+        <Route path="/work-with-us" element={<WorkWithUs />} />
+        <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+        <Route path="/terms-of-service" element={<TermsOfService />} />
+        <Route path="/disclaimer" element={<Disclaimer />} />
+        <Route path="/transparency" element={<Transparency />} />
+        <Route path="/villages" element={<VillageList />} />
+        <Route path="/villages/:id" element={<VillageDetail />} />
+        <Route
+          path="/profile"
+          element={
+            <RequireVolunteerAuth>
+              <ProfileOrAdmin />
+            </RequireVolunteerAuth>
+          }
+        />
+        <Route
+          path="/volunteer-dashboard"
+          element={
+            <RequireVolunteerAuth>
+              <VolunteerDashboard />
+            </RequireVolunteerAuth>
+          }
+        />
+
+        {/* Admin Routes */}
+        <Route path="/admin" element={<AdminLayout />}>
+          <Route index element={<AdminDashboard />} />
+          <Route path="ngos"            element={<AdminNgos />} />
+          <Route path="volunteers"      element={<AdminVolunteers />} />
+          <Route path="contacts"        element={<AdminContacts />} />
+          <Route path="gallery"         element={<AdminGallery />} />
+          <Route path="blogs"           element={<AdminBlogs />} />
+          <Route path="users"           element={<AdminUsers />} />
+          <Route path="kanyadan"        element={<AdminKanyadan />} />
+          <Route path="donations"       element={<AdminDonations />} />
+          <Route path="tasks"           element={<AdminTasks />} />
+          <Route path="funds"           element={<AdminFundRequests />} />
+          <Route path="payments"        element={<AdminPayments />} />
+          <Route path="completed-tasks" element={<AdminCompletedTasks />} />
+          <Route path="events"          element={<AdminEvents />} />
+          <Route path="services/add"    element={<AddServices />} />
+          <Route path="services/manage" element={<ManageServices />} />
+          <Route path="villages"        element={<AdminVillages />} />
+          <Route path="fund-ledger"     element={<AdminFundLedger />} />
+          <Route path="communities"     element={<AdminCommunities />} />
+          <Route path="feedback"        element={<AdminFeedback />} />
+        </Route>
+
+          {/* Public — new pages */}
+          <Route path="/survey/:token" element={<SurveyRespond />} />
+          <Route path="/disclaimer"   element={<Disclaimer />} />
+          <Route path="/transparency" element={<Transparency />} />
+          <Route path="/villages"     element={<VillageList />} />
+          <Route path="/villages/:id" element={<VillageDetail />} />
+
+
+          {/* Protected */}
+          <Route path="/volunteer"           element={<RequireVolunteerAuth><Volunteer /></RequireVolunteerAuth>} />
+          <Route path="/profile"             element={<RequireVolunteerAuth><ProfileOrAdmin /></RequireVolunteerAuth>} />
+          <Route path="/volunteer-dashboard" element={<RequireVolunteerAuth><VolunteerDashboard /></RequireVolunteerAuth>} />
+
+
+          {/* Admin */}
+>>>>>>> f62c6a5d51c3e087aaa5918cec09853fe3092ca9
           <Route path="/admin" element={<AdminLayout />}>
             <Route index                  element={<AdminDashboard />} />
             <Route path="ngos"            element={<AdminNgos />} />
@@ -327,12 +405,15 @@ function AppRoutes() {
             <Route path="surveys"         element={<AdminSurveys />} />
             <Route path="impact-reports"  element={<AdminImpactReports />} />
           </Route>
+<<<<<<< HEAD
 
           {/* Protected */}
           <Route path="/volunteer"           element={<RequireVolunteerAuth><Volunteer /></RequireVolunteerAuth>} />
           <Route path="/profile"             element={<RequireVolunteerAuth><ProfileOrAdmin /></RequireVolunteerAuth>} />
           <Route path="/volunteer-dashboard" element={<RequireVolunteerAuth><VolunteerDashboard /></RequireVolunteerAuth>} />
 
+=======
+>>>>>>> f62c6a5d51c3e087aaa5918cec09853fe3092ca9
           {/* NGO Dashboard */}
           <Route path="/ngo/pending" element={<NgoPending />} />
           <Route path="/ngo" element={<NgoLayout />}>

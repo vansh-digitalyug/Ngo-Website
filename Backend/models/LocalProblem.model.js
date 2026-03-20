@@ -5,13 +5,19 @@ const localProblemSchema = new mongoose.Schema(
         villageId: {
             type: mongoose.Schema.Types.ObjectId,
             ref: "VillageAdoption",
-            required: [true, "Village ID is required"],
+            default: null, // null = village not yet in system
         },
         ngoId: {
             type: mongoose.Schema.Types.ObjectId,
             ref: "Ngo",
-            required: [true, "NGO ID is required"],
+            default: null, // null = not yet assigned to an NGO
         },
+        // Free-text location for villages not yet adopted
+        villageName: { type: String, trim: true, default: "" },
+        district:    { type: String, trim: true, default: "" },
+        state:       { type: String, trim: true, default: "" },
+        pincode:     { type: String, trim: true, default: "" },
+
         submittedBy: {
             type: mongoose.Schema.Types.ObjectId,
             ref: "User",

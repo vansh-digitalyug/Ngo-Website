@@ -104,25 +104,60 @@ export const getVillageProblems = async (req, res) => {
     }
 };
 
-// POST /api/villages/:id/problems — submit a problem (optionalAuth)
+// POST /api/villages/:id/problems — submit for a known adopted village (optionalAuth)
 export const submitProblem = async (req, res) => {
     try {
         const village = await VillageAdoption.findById(req.params.id).lean();
         if (!village) return err(res, "Village not found", 404);
 
-        const { title, description, category, priority } = req.body;
+        const { title, description, category, priority, submittedByName } = req.body;
         if (!title?.trim()) return err(res, "Problem title is required", 400);
-        if (!category) return err(res, "Category is required", 400);
+        if (!category)      return err(res, "Category is required", 400);
 
         const problem = await LocalProblem.create({
-            villageId: req.params.id,
-            ngoId: village.ngoId,
-            submittedBy: req.user?._id || null,
-            submittedByName: req.user?.name || "Anonymous",
-            title: title.trim(),
-            description: description?.trim() || "",
+            villageId:       req.params.id,
+            ngoId:           village.ngoId,
+            villageName:     village.villageName || "",
+            district:        village.district    || "",
+            state:           village.state       || "",
+            pincode:         village.pincode     || "",
+            submittedBy:     req.user?._id || null,
+            submittedByName: req.user?.name || submittedByName?.trim() || "Anonymous",
+            title:           title.trim(),
+            description:     description?.trim() || "",
             category,
-            priority: priority || "medium",
+            priority:        priority || "medium",
+        });
+
+        ok(res, { problem }, "Problem submitted successfully", 201);
+    } catch (e) {
+        err(res, e.message);
+    }
+};
+
+// POST /api/villages/problems/public — submit for any village (not yet adopted)
+export const submitProblemPublic = async (req, res) => {
+    try {
+        const { title, description, category, priority, submittedByName,
+                villageName, district, state, pincode } = req.body;
+
+        if (!title?.trim())       return err(res, "Problem title is required", 400);
+        if (!category)            return err(res, "Category is required", 400);
+        if (!villageName?.trim()) return err(res, "Village name is required", 400);
+
+        const problem = await LocalProblem.create({
+            villageId:       null,
+            ngoId:           null,
+            villageName:     villageName.trim(),
+            district:        district?.trim()  || "",
+            state:           state?.trim()     || "",
+            pincode:         pincode?.trim()   || "",
+            submittedBy:     req.user?._id || null,
+            submittedByName: req.user?.name || submittedByName?.trim() || "Anonymous",
+            title:           title.trim(),
+            description:     description?.trim() || "",
+            category,
+            priority:        priority || "medium",
         });
 
         ok(res, { problem }, "Problem submitted successfully", 201);
