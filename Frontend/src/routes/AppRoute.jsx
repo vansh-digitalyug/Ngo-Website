@@ -23,27 +23,6 @@ const NgoPublicProfile        = lazy(() => import("../pages/NgoPublicProfile.jsx
 const PrivacyPolicy           = lazy(() => import("../pages/PrivacyPolicy.jsx"));
 const TermsOfService          = lazy(() => import("../pages/TermsOfService.jsx"));
 
-// import AdminLayout from "../pages/admin/AdminLayout.jsx";
-// import AdminLogin from "../pages/admin/AdminLogin.jsx";
-// import AdminDashboard from "../pages/admin/AdminDashboard.jsx";
-// import AdminNgos from "../pages/admin/AdminNgos.jsx";
-// import AdminVolunteers from "../pages/admin/AdminVolunteers.jsx";
-// import AdminContacts from "../pages/admin/AdminContacts.jsx";
-// import AdminUsers from "../pages/admin/AdminUsers.jsx";
-// import AdminGallery from "../pages/admin/AdminGallery.jsx";
-// import AdminBlogs from "../pages/admin/AdminBlogs.jsx";
-// import AdminEvents from "../pages/admin/AdminEvents.jsx";
-// import NgoEvents from "../pages/ngo/NgoEvents.jsx";
-// import AdminKanyadan from "../pages/admin/AdminKanyadan.jsx";
-// import AdminTasks from "../pages/admin/AdminTasks.jsx";
-// import AdminDonations from "../pages/admin/AdminDonations.jsx";
-// import AdminFundRequests from "../pages/admin/AdminFundRequests.jsx";
-// import AdminPayments from "../pages/admin/AdminPayments.jsx";
-// import AdminCompletedTasks from "../pages/admin/AdminCompletedTasks.jsx";
-// import AddServices from "../pages/admin/AddServices.jsx";
-// import ManageServices from "../pages/admin/ManageServices.jsx";
-
-
 // Admin (heavy — all lazy)
 const AdminLayout             = lazy(() => import("../pages/admin/AdminLayout.jsx"));
 const AdminLogin              = lazy(() => import("../pages/admin/AdminLogin.jsx"));
@@ -64,13 +43,7 @@ const AdminCompletedTasks     = lazy(() => import("../pages/admin/AdminCompleted
 const AddServices             = lazy(() => import("../pages/admin/AddServices.jsx"));
 const ManageServices          = lazy(() => import("../pages/admin/ManageServices.jsx"));
 const AdminCommunities        = lazy(() => import("../pages/admin/AdminCommunities.jsx"));
-<<<<<<< HEAD
 const AdminFeedback           = lazy(() => import("../pages/admin/AdminFeedback.jsx"));
-=======
-
-const AdminFeedback           = lazy(() => import("../pages/admin/AdminFeedback.jsx"));
-
->>>>>>> f62c6a5d51c3e087aaa5918cec09853fe3092ca9
 const AdminVillages           = lazy(() => import("../pages/admin/AdminVillages.jsx"));
 const AdminFundLedger         = lazy(() => import("../pages/admin/AdminFundLedger.jsx"));
 const AdminProblems           = lazy(() => import("../pages/admin/AdminProblems.jsx"));
@@ -84,10 +57,6 @@ const VillageList             = lazy(() => import("../pages/villages/VillageList
 const VillageDetail           = lazy(() => import("../pages/villages/VillageDetail.jsx"));
 const Transparency            = lazy(() => import("../pages/Transparency.jsx"));
 const Disclaimer              = lazy(() => import("../pages/Disclaimer.jsx"));
-<<<<<<< HEAD
-=======
-
->>>>>>> f62c6a5d51c3e087aaa5918cec09853fe3092ca9
 
 // NGO Dashboard
 const NgoLayout               = lazy(() => import("../pages/ngo/NgoLayout.jsx"));
@@ -231,17 +200,17 @@ function AppRoutes() {
           <Route path="/services/animal/gau-seva"                   element={<GauSeva />} />
 
           {/* Service sub-pages — consistent /services/{categoryId}/{slug} */}
-          <Route path="/services/orphan/education"                          element={<OrphanageEducationPage />} />
-          <Route path="/services/orphan/meal"                               element={<Meal />} />
-          <Route path="/services/orphan/health"                             element={<Health />} />
-          <Route path="/services/medical-support/camp"                      element={<FreeHealthCamp />} />
-          <Route path="/services/medical-support/cancer"                    element={<CancerSupport />} />
-          <Route path="/services/medical-support/kidney"                    element={<KidneySupport />} />
-          <Route path="/services/women-empowerment/widow-women"             element={<WidowWomen />} />
-          <Route path="/services/women-empowerment/empowerment"             element={<WomenEmpowerment />} />
-          <Route path="/services/social-welfare/kanyadan"                   element={<KanyadanYojna />} />
-          <Route path="/services/social-welfare/rites"                      element={<Rites />} />
-          <Route path="/services/community-safety/helmet"                   element={<HelmetDrive />} />
+          <Route path="/services/orphan/education"                             element={<OrphanageEducationPage />} />
+          <Route path="/services/orphan/meal"                                  element={<Meal />} />
+          <Route path="/services/orphan/health"                                element={<Health />} />
+          <Route path="/services/medical-support/camp"                         element={<FreeHealthCamp />} />
+          <Route path="/services/medical-support/cancer"                       element={<CancerSupport />} />
+          <Route path="/services/medical-support/kidney"                       element={<KidneySupport />} />
+          <Route path="/services/women-empowerment/widow-women"                element={<WidowWomen />} />
+          <Route path="/services/women-empowerment/empowerment"                element={<WomenEmpowerment />} />
+          <Route path="/services/social-welfare/kanyadan"                      element={<KanyadanYojna />} />
+          <Route path="/services/social-welfare/rites"                         element={<Rites />} />
+          <Route path="/services/community-safety/helmet"                      element={<HelmetDrive />} />
           <Route path="/services/infrastructure-development/road-construction" element={<RoadConstruction />} />
 
           {/* Dynamic catch-all for admin-created programs */}
@@ -266,118 +235,35 @@ function AppRoutes() {
           <Route path="/privacy-policy"   element={<PrivacyPolicy />} />
           <Route path="/terms-of-service" element={<TermsOfService />} />
 
-
           {/* Auth */}
-          <Route path="/login"                    element={<LoginRedirect />} />
-          <Route path="/login/user"               element={<Login />} />
-          <Route path="/login/ngo"                element={<Login />} />
-          <Route path="/login/admin"              element={<AdminLogin />} />
-          <Route path="/forgot-password"          element={<Navigate to="/login/user?forgot=1" replace />} />
-          <Route path="/reset-password"           element={<ResetPassword />} />
-          <Route path="/reset-password/:token"    element={<ResetPassword />} />
+          <Route path="/login"                 element={<LoginRedirect />} />
+          <Route path="/login/user"            element={<Login />} />
+          <Route path="/login/ngo"             element={<Login />} />
+          <Route path="/login/admin"           element={<AdminLogin />} />
+          <Route path="/forgot-password"       element={<Navigate to="/login/user?forgot=1" replace />} />
+          <Route path="/reset-password"        element={<ResetPassword />} />
+          <Route path="/reset-password/:token" element={<ResetPassword />} />
 
           {/* About */}
-          <Route path="/about/our-story"      element={<OurStory />} />
-          <Route path="/about/strategy-2045"  element={<Strategy2045 />} />
-          <Route path="/about/our-board"      element={<OurBoard />} />
-          <Route path="/about/founders"       element={<Founders />} />
-          <Route path="/work-with-us"         element={<WorkWithUs />} />
+          <Route path="/about/our-story"     element={<OurStory />} />
+          <Route path="/about/strategy-2045" element={<Strategy2045 />} />
+          <Route path="/about/our-board"     element={<OurBoard />} />
+          <Route path="/about/founders"      element={<Founders />} />
+          <Route path="/work-with-us"        element={<WorkWithUs />} />
 
-<<<<<<< HEAD
-          {/* Public routes */}
-          <Route path="/work-with-us"         element={<WorkWithUs />} />
-          <Route path="/privacy-policy"       element={<PrivacyPolicy />} />
-          <Route path="/terms-of-service"     element={<TermsOfService />} />
-          <Route path="/disclaimer"           element={<Disclaimer />} />
-          <Route path="/transparency"         element={<Transparency />} />
-          <Route path="/villages"             element={<VillageList />} />
-          <Route path="/villages/:id"         element={<VillageDetail />} />
-          <Route path="/survey/:token"        element={<SurveyRespond />} />
-          <Route
-            path="/profile"
-            element={
-              <RequireVolunteerAuth>
-                <ProfileOrAdmin />
-              </RequireVolunteerAuth>
-            }
-          />
-          <Route
-            path="/volunteer-dashboard"
-            element={
-              <RequireVolunteerAuth>
-                <VolunteerDashboard />
-              </RequireVolunteerAuth>
-            }
-          />
-
-          {/* Admin Routes */}
-=======
-
-        {/* Get Involved Routes */}
-        <Route path="/work-with-us" element={<WorkWithUs />} />
-        <Route path="/privacy-policy" element={<PrivacyPolicy />} />
-        <Route path="/terms-of-service" element={<TermsOfService />} />
-        <Route path="/disclaimer" element={<Disclaimer />} />
-        <Route path="/transparency" element={<Transparency />} />
-        <Route path="/villages" element={<VillageList />} />
-        <Route path="/villages/:id" element={<VillageDetail />} />
-        <Route
-          path="/profile"
-          element={
-            <RequireVolunteerAuth>
-              <ProfileOrAdmin />
-            </RequireVolunteerAuth>
-          }
-        />
-        <Route
-          path="/volunteer-dashboard"
-          element={
-            <RequireVolunteerAuth>
-              <VolunteerDashboard />
-            </RequireVolunteerAuth>
-          }
-        />
-
-        {/* Admin Routes */}
-        <Route path="/admin" element={<AdminLayout />}>
-          <Route index element={<AdminDashboard />} />
-          <Route path="ngos"            element={<AdminNgos />} />
-          <Route path="volunteers"      element={<AdminVolunteers />} />
-          <Route path="contacts"        element={<AdminContacts />} />
-          <Route path="gallery"         element={<AdminGallery />} />
-          <Route path="blogs"           element={<AdminBlogs />} />
-          <Route path="users"           element={<AdminUsers />} />
-          <Route path="kanyadan"        element={<AdminKanyadan />} />
-          <Route path="donations"       element={<AdminDonations />} />
-          <Route path="tasks"           element={<AdminTasks />} />
-          <Route path="funds"           element={<AdminFundRequests />} />
-          <Route path="payments"        element={<AdminPayments />} />
-          <Route path="completed-tasks" element={<AdminCompletedTasks />} />
-          <Route path="events"          element={<AdminEvents />} />
-          <Route path="services/add"    element={<AddServices />} />
-          <Route path="services/manage" element={<ManageServices />} />
-          <Route path="villages"        element={<AdminVillages />} />
-          <Route path="fund-ledger"     element={<AdminFundLedger />} />
-          <Route path="communities"     element={<AdminCommunities />} />
-          <Route path="feedback"        element={<AdminFeedback />} />
-        </Route>
-
-          {/* Public — new pages */}
+          {/* Public */}
+          <Route path="/disclaimer"    element={<Disclaimer />} />
+          <Route path="/transparency"  element={<Transparency />} />
+          <Route path="/villages"      element={<VillageList />} />
+          <Route path="/villages/:id"  element={<VillageDetail />} />
           <Route path="/survey/:token" element={<SurveyRespond />} />
-          <Route path="/disclaimer"   element={<Disclaimer />} />
-          <Route path="/transparency" element={<Transparency />} />
-          <Route path="/villages"     element={<VillageList />} />
-          <Route path="/villages/:id" element={<VillageDetail />} />
-
 
           {/* Protected */}
           <Route path="/volunteer"           element={<RequireVolunteerAuth><Volunteer /></RequireVolunteerAuth>} />
           <Route path="/profile"             element={<RequireVolunteerAuth><ProfileOrAdmin /></RequireVolunteerAuth>} />
           <Route path="/volunteer-dashboard" element={<RequireVolunteerAuth><VolunteerDashboard /></RequireVolunteerAuth>} />
 
-
           {/* Admin */}
->>>>>>> f62c6a5d51c3e087aaa5918cec09853fe3092ca9
           <Route path="/admin" element={<AdminLayout />}>
             <Route index                  element={<AdminDashboard />} />
             <Route path="ngos"            element={<AdminNgos />} />
@@ -405,15 +291,7 @@ function AppRoutes() {
             <Route path="surveys"         element={<AdminSurveys />} />
             <Route path="impact-reports"  element={<AdminImpactReports />} />
           </Route>
-<<<<<<< HEAD
 
-          {/* Protected */}
-          <Route path="/volunteer"           element={<RequireVolunteerAuth><Volunteer /></RequireVolunteerAuth>} />
-          <Route path="/profile"             element={<RequireVolunteerAuth><ProfileOrAdmin /></RequireVolunteerAuth>} />
-          <Route path="/volunteer-dashboard" element={<RequireVolunteerAuth><VolunteerDashboard /></RequireVolunteerAuth>} />
-
-=======
->>>>>>> f62c6a5d51c3e087aaa5918cec09853fe3092ca9
           {/* NGO Dashboard */}
           <Route path="/ngo/pending" element={<NgoPending />} />
           <Route path="/ngo" element={<NgoLayout />}>
