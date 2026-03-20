@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, createElement } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   AlertTriangle, CheckCircle, Search,
@@ -413,7 +413,7 @@ export default function ComplaintForm() {
                         : "border-gray-200 bg-white text-gray-600 hover:border-gray-300 hover:bg-gray-50"
                     }`}
                   >
-                    {CatIcon({ size: 20, style: { color: form.category === value ? "#f97316" : color } })}
+                    {createElement(CatIcon, { size: 20, style: { color: form.category === value ? "#f97316" : color } })}
                     {label}
                   </button>
                 ))}
