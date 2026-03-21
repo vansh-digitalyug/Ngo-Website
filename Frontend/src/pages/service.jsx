@@ -3,8 +3,6 @@ import { useNavigate, useParams } from "react-router-dom";
 import {
   FaBuilding,
   FaChevronUp,
-  FaChevronLeft,
-  FaChevronRight,
   FaFemale,
   FaHandHoldingHeart,
   FaHeartbeat,
@@ -17,6 +15,7 @@ import { FaChildren } from "react-icons/fa6";
 import { MdElderly } from "react-icons/md";
 import { API } from "../utils/S3.js";
 import "./service.css";
+import heroImg from "../assets/images/service/hero.png";
 
 // Map backend category names → frontend id + icon
 const CATEGORY_META = {
@@ -35,6 +34,7 @@ function metaFor(name) {
 }
 
 const ALL_CAUSES_ID = "all-causes";
+
 
 function CardCarousel({ images, alt }) {
   const [idx, setIdx] = useState(0);
@@ -198,18 +198,7 @@ function ServicePage() {
     navigate(serviceId === ALL_CAUSES_ID ? "/services" : `/services/${serviceId}`);
   };
 
-  const moveActiveService = (direction) => {
-    const currentIndex = categoryOptions.findIndex((s) => s.id === activeServiceId);
-    if (currentIndex < 0) return;
-    const nextIndex = Math.max(0, Math.min(currentIndex + direction, categoryOptions.length - 1));
-    const nextId = categoryOptions[nextIndex].id;
-    setActiveServiceId(nextId);
-    if (nextId !== ALL_CAUSES_ID) setMobileQuickCauseId(nextId);
-    setMobileFilterOpen(false);
-    navigate(nextId === ALL_CAUSES_ID ? "/services" : `/services/${nextId}`);
-  };
-
-  if (loading) {
+if (loading) {
     return (
       <section className="service-page">
         <div className="service-layout">
@@ -233,31 +222,128 @@ function ServicePage() {
   }
 
   return (
+    <>
+    {/* ══ HERO — full image + text overlapping ══════════════════════════ */}
+    <div style={{
+      position: "relative",
+      width: "100%",
+      overflow: "hidden",
+    }}>
+      {/* full image — not cropped */}
+      <img
+        src={heroImg}
+        alt="Community — hands raised together"
+        style={{
+          display: "block",
+          width: "100%",
+          height: "auto",
+        }}
+      />
+
+      {/* left-side gradient so text stays readable */}
+      <div style={{
+        position: "absolute", inset: 0,
+        background: "linear-gradient(to right, rgba(255,255,255,0.88) 0%, rgba(255,255,255,0.72) 45%, rgba(255,255,255,0.10) 75%, transparent 100%)",
+        pointerEvents: "none",
+      }} />
+
+      {/* bottom fade into page bg */}
+      <div style={{
+        position: "absolute", bottom: 0, left: 0, right: 0, height: 80,
+        background: "linear-gradient(to bottom, transparent, #f4f4f4)",
+        pointerEvents: "none",
+      }} />
+
+      {/* text content — overlaid on image, anchored bottom-left */}
+      <div style={{
+        position: "absolute", zIndex: 2,
+        bottom: 0, left: 0,
+        maxWidth: 680,
+        padding: "clamp(32px,5vw,60px) clamp(20px,5vw,60px) clamp(48px,6vw,80px)",
+      }}>
+
+        {/* CENTRAL HUB badge */}
+        <span style={{
+          display: "inline-flex", alignItems: "center", gap: 7,
+          border: "1.5px solid #93c5fd", borderRadius: 999,
+          padding: "5px 16px", fontSize: 12, fontWeight: 700,
+          color: "#1e3a5f", letterSpacing: "0.08em", marginBottom: 24,
+          background: "rgba(219,234,254,0.55)",
+          backdropFilter: "blur(4px)",
+        }}>
+          <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
+            <path d="M8 1l1.5 4.5H14l-3.7 2.7 1.4 4.3L8 10l-3.7 2.5 1.4-4.3L2 5.5h4.5Z" fill="#3b82f6"/>
+          </svg>
+          CENTRAL HUB
+        </span>
+
+        {/* heading */}
+        <h1 style={{
+          margin: "0 0 20px",
+          fontSize: "clamp(3rem, 7vw, 5.5rem)",
+          fontWeight: 900,
+          color: "#0f172a",
+          lineHeight: 1.0,
+          letterSpacing: "-0.02em",
+        }}>
+          Services
+        </h1>
+
+        {/* description */}
+        <p style={{
+          margin: "0 0 36px",
+          fontSize: "clamp(1rem, 1.5vw, 1.2rem)",
+          color: "#1f2937",
+          lineHeight: 1.75,
+          maxWidth: 520,
+        }}>
+          Weaving together essential services through a digital tapestry of support.
+          Access healthcare, education, and community resources through our integrated ecosystem.
+        </p>
+
+        {/* search + explore */}
+        <div style={{ display: "flex", gap: 12, alignItems: "center", flexWrap: "wrap" }}>
+          <div style={{
+            display: "flex", alignItems: "center", gap: 10,
+            background: "rgba(255,255,255,0.92)", border: "1.5px solid #e5e7eb",
+            borderRadius: 14, padding: "14px 20px",
+            boxShadow: "0 4px 20px rgba(0,0,0,0.10)",
+            flex: "1 1 260px", maxWidth: 460,
+            backdropFilter: "blur(6px)",
+          }}>
+            <FaSearch style={{ color: "#0f766e", fontSize: 16, flexShrink: 0 }} />
+            <input
+              type="text"
+              placeholder="Search specific causes (e.g. Health, Education)"
+              value={query}
+              onChange={e => setQuery(e.target.value)}
+              style={{
+                border: "none", outline: "none", background: "transparent",
+                fontSize: 15, color: "#374151", width: "100%",
+              }}
+            />
+          </div>
+          <button
+            style={{
+              background: "#0f766e", color: "#fff",
+              border: "none", borderRadius: 14,
+              padding: "14px 36px", fontSize: 15, fontWeight: 700,
+              cursor: "pointer", whiteSpace: "nowrap",
+              boxShadow: "0 4px 14px rgba(15,118,110,0.35)",
+              transition: "background 0.2s, transform 0.15s",
+            }}
+            onMouseEnter={e => { e.currentTarget.style.background = "#0d9488"; e.currentTarget.style.transform = "translateY(-1px)"; }}
+            onMouseLeave={e => { e.currentTarget.style.background = "#0f766e"; e.currentTarget.style.transform = "none"; }}
+          >
+            Explore
+          </button>
+        </div>
+      </div>
+    </div>
+
     <section className="service-page">
       <div className="service-layout">
-        <div className="service-topbar">
-          <div className="title-block">
-            <h1>Explore Causes</h1>
-            <span className="title-rule" />
-          </div>
-          <div className="topbar-controls">
-            <label className="search-control" htmlFor="service-search">
-              <FaSearch aria-hidden="true" />
-              <input
-                id="service-search"
-                type="text"
-                placeholder="Search for a cause"
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-              />
-            </label>
-          </div>
-        </div>
-
-        <div className="category-strip desktop-category-strip">
-          <button type="button" className="scroll-btn" aria-label="Scroll left" onClick={() => moveActiveService(-1)}>
-            <FaChevronLeft />
-          </button>
+<div className="category-strip desktop-category-strip">
           <div className="category-list" ref={categoryScrollerRef}>
             {categoryOptions.map((svc) => {
               const SvcIcon = svc.icon;
@@ -271,15 +357,14 @@ function ServicePage() {
                   onClick={() => handleServiceChange(svc.id)}
                   aria-pressed={isActive}
                 >
-                  <SvcIcon className="category-icon" aria-hidden="true" />
-                  <span>{getCatLabel(svc.id)}</span>
+                  <span className="cat-icon-box">
+                    <SvcIcon className="category-icon" aria-hidden="true" />
+                  </span>
+                  <span className="cat-label">{getCatLabel(svc.id)}</span>
                 </button>
               );
             })}
           </div>
-          <button type="button" className="scroll-btn" aria-label="Scroll right" onClick={() => moveActiveService(1)}>
-            <FaChevronRight />
-          </button>
         </div>
 
         <div className="programs-head">
@@ -321,7 +406,6 @@ function ServicePage() {
                         fontSize: "2.5rem", color: "#aab4c8"
                       }}>🖼️</div>
                     )}
-
                     <div className="program-readmore" aria-hidden="true">
                       <span>Read More</span>
                       <span className="program-readmore-dots">...</span>
@@ -486,6 +570,7 @@ function ServicePage() {
         </div>
       </div>
     </section>
+    </>
   );
 }
 
