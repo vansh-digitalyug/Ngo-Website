@@ -367,7 +367,15 @@ function Navbar() {
           {/* Login / Avatar */}
           {isLoggedIn ? (
             <div className="relative group cursor-pointer h-full flex items-center">
-              <div className="w-9 h-9 bg-green-600 text-white rounded-full flex items-center justify-center font-bold text-sm shadow-sm transition-all group-hover:bg-green-700 group-hover:scale-105" title={user?.name || "User"}>
+              <div
+                className="w-9 h-9 bg-green-600 text-white rounded-full flex items-center justify-center font-bold text-sm shadow-sm transition-all group-hover:bg-green-700 group-hover:scale-105"
+                title={user?.name || "User"}
+                onClick={() => {
+                  if (isAdmin) navigate("/admin");
+                  else if (hasNgo) navigate(ngoStatus === "approved" ? "/ngo/dashboard" : "/ngo/pending");
+                  else navigate("/profile");
+                }}
+              >
                 {userInitial}
               </div>
               <div className={`w-52 ${dropdownAnimationRight}`}>
