@@ -19,19 +19,6 @@ import {
     adminDeleteReport,
 } from "../controllers/report.controller.js";
 import {
-    getCommunityPlatformStats,
-    adminGetAllCommunities,
-    adminGetCommunityById,
-    adminUpdateCommunityStatus,
-    adminAssignLeader,
-    adminDeleteCommunity,
-    adminGetAllResponsibilities,
-    adminUpdateResponsibilityStatus,
-    adminGetAllActivities,
-    adminVerifyActivity,
-    adminDeleteActivity,
-} from "../controllers/admin.community.controller.js";
-import {
     getDashboardStats,
     getAllNgos,
     updateNgoStatus,
@@ -144,22 +131,6 @@ router.put("/reports/:id/status", adminUpdateReportStatus);
 router.put("/reports/:id/severity", adminUpdateReportSeverity);
 router.delete("/reports/:id", adminDeleteReport);
 
-// ─── Community management ─────────────────────────────────────────────────────
-router.get("/communities/stats", getCommunityPlatformStats);
-router.get("/communities", adminGetAllCommunities);
-router.get("/communities/:id", adminGetCommunityById);
-router.put("/communities/:id/status", adminUpdateCommunityStatus);
-router.put("/communities/:id/assign-leader", adminAssignLeader);
-router.delete("/communities/:id", adminDeleteCommunity);
-
-// ─── Community responsibility management ─────────────────────────────────────
-router.get("/community-responsibilities", adminGetAllResponsibilities);
-router.put("/community-responsibilities/:id/status", adminUpdateResponsibilityStatus);
-
-// ─── Community activity management ───────────────────────────────────────────
-router.get("/community-activities", adminGetAllActivities);
-router.put("/community-activities/:id/verify", adminVerifyActivity);
-router.delete("/community-activities/:id", adminDeleteActivity);
 
 
 
