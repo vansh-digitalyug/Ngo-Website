@@ -33,10 +33,12 @@ export const getAllPosts = asyncHandler(async (req, res) => {
     const page  = Math.max(1, parseInt(req.query.page)  || 1);
     const limit = Math.min(50, parseInt(req.query.limit) || 10);
     const skip  = (page - 1) * limit;
-    const tag   = req.query.tag;
+    const tag    = req.query.tag;
+    const author = req.query.author;
 
     const filter = { isDeleted: false };
-    if (tag) filter.tags = tag;
+    if (tag)    filter.tags   = tag;
+    if (author) filter.author = author;
 
     const [posts, total] = await Promise.all([
         CommunityPost.find(filter)
@@ -270,3 +272,4 @@ export const deleteComment = asyncHandler(async (req, res) => {
 
     res.status(200).json(new ApiResponse(200, "Comment deleted", null));
 });
+

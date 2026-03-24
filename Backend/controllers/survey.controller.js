@@ -29,7 +29,7 @@ export const createSurvey = async (req, res) => {
             title: title.trim(),
             description: description?.trim() || "",
             questions: questions || [],
-            status: status || "draft",
+            status: status || "active",
             targetAudience: targetAudience?.trim() || "",
             startDate: startDate ? new Date(startDate) : null,
             endDate: endDate ? new Date(endDate) : null,
@@ -164,6 +164,43 @@ export const submitResponse = async (req, res) => {
 
         await Survey.findByIdAndUpdate(survey._id, { $inc: { responseCount: 1 } });
         ok(res, { response }, "Response submitted", 201);
+    } catch (e) { err(res, e.message); }
+};
+
+// ── Public listing (all active + public surveys) ──────────────────────────
+
+export const getPublicSurveys = async (req, res) => {
+    try {
+        const { page = 1, limit = 12, search = "" } = req.query;
+        const skip = (Number(page) - 1) * Number(limit);
+
+        const filter = { isPublic: true, status: { $ne: "closed" } };
+        if (search.trim()) {
+            filter.$or = [
+                { title:       { $regex: search.trim(), $options: "i" } },
+                { description: { $regex: search.trim(), $options: "i" } },
+            ];
+        }
+
+        const [surveys, total] = await Promise.all([
+            Survey.find(filter)
+                .populate("ngoId",    "ngoName city state")
+                .populate("villageId","villageName district state")
+                .sort({ createdAt: -1 })
+                .skip(skip)
+                .limit(Number(limit))
+                .lean(),
+            Survey.countDocuments(filter),
+        ]);
+
+        ok(res, {
+            surveys,
+            pagination: {
+                total,
+                page:  Number(page),
+                pages: Math.ceil(total / Number(limit)),
+            },
+        });
     } catch (e) { err(res, e.message); }
 };
 

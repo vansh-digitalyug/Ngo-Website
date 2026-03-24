@@ -4,7 +4,7 @@ import { verifyAdmin } from "../middlewares/admin.middleware.js";
 import { requireNgoAuth } from "../middlewares/ngoAuth.middleware.js";
 import {
     getMySurveys, createSurvey, updateSurvey, deleteSurvey, getSurveyResults,
-    getSurveyByToken, submitResponse, adminGetAll,
+    getSurveyByToken, submitResponse, adminGetAll, getPublicSurveys,
 } from "../controllers/survey.controller.js";
 
 const router = express.Router();
@@ -18,6 +18,9 @@ router.post("/",                  requireNgoAuth, createSurvey);
 router.put("/:id",                requireNgoAuth, updateSurvey);
 router.delete("/:id",             requireNgoAuth, deleteSurvey);
 router.get("/:id/results",        requireNgoAuth, getSurveyResults);
+
+// Public listing
+router.get("/public",             getPublicSurveys);
 
 // Public (share link)
 router.get("/respond/:token",     getSurveyByToken);

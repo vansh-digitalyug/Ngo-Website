@@ -42,7 +42,7 @@ const AdminPayments           = lazy(() => import("../pages/admin/AdminPayments.
 const AdminCompletedTasks     = lazy(() => import("../pages/admin/AdminCompletedTasks.jsx"));
 const AddServices             = lazy(() => import("../pages/admin/AddServices.jsx"));
 const ManageServices          = lazy(() => import("../pages/admin/ManageServices.jsx"));
-const AdminCommunities        = lazy(() => import("../pages/admin/AdminCommunities.jsx"));
+const AdminCommunityPosts     = lazy(() => import("../pages/admin/AdminCommunityPosts.jsx"));
 const AdminFeedback           = lazy(() => import("../pages/admin/AdminFeedback.jsx"));
 const AdminVillages           = lazy(() => import("../pages/admin/AdminVillages.jsx"));
 const AdminFundLedger         = lazy(() => import("../pages/admin/AdminFundLedger.jsx"));
@@ -75,8 +75,9 @@ const NgoSurveys              = lazy(() => import("../pages/ngo/NgoSurveys.jsx")
 const NgoImpactReports        = lazy(() => import("../pages/ngo/NgoImpactReports.jsx"));
 const NgoProblems             = lazy(() => import("../pages/ngo/NgoProblems.jsx"));
 
-// Public survey responder
+// Public survey responder & listing
 const SurveyRespond           = lazy(() => import("../pages/SurveyRespond.jsx"));
+const PublicSurveys           = lazy(() => import("../pages/PublicSurveys.jsx"));
 
 // Gallery
 const GalleryImages           = lazy(() => import("../pages/gallery/GalleryImages.jsx"));
@@ -256,6 +257,7 @@ function AppRoutes() {
           <Route path="/transparency"  element={<Transparency />} />
           <Route path="/villages"      element={<VillageList />} />
           <Route path="/villages/:id"  element={<VillageDetail />} />
+          <Route path="/surveys"        element={<PublicSurveys />} />
           <Route path="/survey/:token" element={<SurveyRespond />} />
 
           {/* Protected */}
@@ -283,7 +285,7 @@ function AppRoutes() {
             <Route path="services/manage" element={<ManageServices />} />
             <Route path="villages"        element={<AdminVillages />} />
             <Route path="fund-ledger"     element={<AdminFundLedger />} />
-            <Route path="communities"     element={<AdminCommunities />} />
+            <Route path="communities"     element={<AdminCommunityPosts />} />
             <Route path="feedback"        element={<AdminFeedback />} />
             <Route path="problems"        element={<AdminProblems />} />
             <Route path="employment"      element={<AdminEmployment />} />

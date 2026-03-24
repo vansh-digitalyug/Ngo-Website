@@ -21,8 +21,6 @@ function Navbar() {
   const [user, setUser] = useState(readUser());
   const [hasNgo, setHasNgo] = useState(false);
   const [ngoStatus, setNgoStatus] = useState(null);
-  const [isCommunityLeader, setIsCommunityLeader] = useState(false);
-
   const userInitial = user?.name ? user.name.charAt(0).toUpperCase() : "U";
   const isAdmin = user?.role === "admin";
 
@@ -46,80 +44,6 @@ function Navbar() {
     };
 
     if (isLoggedIn && !isAdmin) checkNgoStatus();
-  }, [isLoggedIn, isAdmin]);
-
-  // Check if user is a community leader/coordinator
-  useEffect(() => {
-    const checkCommunityLeader = async () => {
-      const token = localStorage.getItem("token");
-      if (!token || isAdmin) {
-        setIsCommunityLeader(false);
-        return;
-      }
-      try {
-        // Call the community check endpoint
-        const response = await fetch(`${API_BASE_URL}/api/community-leader/community`, {
-          headers: { 
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json"
-          }
-        });
-
-        console.log('[Navbar] Community check response status:', response.status);
-
-        if (response.ok) {
-          const data = await response.json();
-          console.log('[Navbar] Community data received:', data);
-          
-          // Check if we got valid community data
-          const community = data?.data?.community || data?.community;
-          if (community && community._id) {
-            console.log('[Navbar] Community found:', community.name);
-            setIsCommunityLeader(true);
-          } else {
-            console.log('[Navbar] No valid community data');
-            setIsCommunityLeader(false);
-          }
-        } else {
-          const errorData = await response.json().catch(() => ({}));
-          console.log('[Navbar] Community check failed:', response.status, errorData?.message);
-          setIsCommunityLeader(false);
-        }
-      } catch (error) {
-        console.log('[Navbar] Community check error:', error);
-        setIsCommunityLeader(false);
-      }
-    };
-
-    if (isLoggedIn && !isAdmin) {
-      checkCommunityLeader();
-    } else {
-      setIsCommunityLeader(false);
-    }
-  }, [isLoggedIn, isAdmin]);
-
-  // Listen for community-related updates from other tabs/windows
-  useEffect(() => {
-    const handleCommunityUpdate = () => {
-      // Trigger community leader check when notified
-      const token = localStorage.getItem("token");
-      if (token && isLoggedIn && !isAdmin) {
-        const checkCommunityLeader = async () => {
-          try {
-            const res = await fetch(`${API_BASE_URL}/api/community-leader/community`, {
-              headers: { Authorization: `Bearer ${token}` }
-            });
-            setIsCommunityLeader(res.ok);
-          } catch {
-            setIsCommunityLeader(false);
-          }
-        };
-        checkCommunityLeader();
-      }
-    };
-
-    window.addEventListener("communityUpdated", handleCommunityUpdate);
-    return () => window.removeEventListener("communityUpdated", handleCommunityUpdate);
   }, [isLoggedIn, isAdmin]);
 
   // Sync Auth State
@@ -177,6 +101,7 @@ function Navbar() {
     { name: "Find NGOs", path: "/find-ngos" },
     { name: "Donate", path: "/donate" },
     { name: "Volunteer", path: "/volunteer" },
+    { name: "Surveys", path: "/surveys" },
     { name: "Add Your NGO", path: "/add-ngo" },
     { name: "Contact", path: "/contact" },
   ];
@@ -199,12 +124,12 @@ function Navbar() {
         </div>
 
         {/* Desktop Links */}
-        <ul className="hidden lg:flex items-center gap-6 m-0 p-0 list-none">
+        <ul className="hidden lg:flex items-center gap-3 xl:gap-5 m-0 p-0 list-none">
           {navLinks.map((link) => (
             <li key={link.name}>
-              <Link 
-                to={link.path} 
-                className="text-gray-800 font-medium hover:text-green-700 relative after:content-[''] after:absolute after:-bottom-1 after:left-0 after:w-0 after:h-0.5 after:bg-green-700 after:transition-all after:duration-300 hover:after:w-full transition-colors duration-300"
+              <Link
+                to={link.path}
+                className="text-gray-800 text-sm font-medium hover:text-green-700 relative after:content-[''] after:absolute after:-bottom-1 after:left-0 after:w-0 after:h-0.5 after:bg-green-700 after:transition-all after:duration-300 hover:after:w-full transition-colors duration-300 whitespace-nowrap"
               >
                 {link.name}
               </Link>
@@ -213,15 +138,15 @@ function Navbar() {
         </ul>
 
         {/* Desktop Auth & Translate */}
-        <div className="hidden lg:flex items-center gap-4">
+        <div className="hidden lg:flex items-center gap-3">
           <GoogleTranslate />
 
           {/* Report Problem Button */}
           <Link
             to="/report-problem"
-            className="flex items-center gap-1.5 bg-orange-500 text-white px-4 py-2 rounded-md font-medium hover:bg-orange-600 hover:shadow-md transition-all duration-300 text-sm"
+            className="flex items-center gap-1.5 bg-orange-500 text-white px-3 py-2 rounded-md font-medium hover:bg-orange-600 hover:shadow-md transition-all duration-300 text-sm whitespace-nowrap"
           >
-            <span className="text-base leading-none">⚠</span> Report Problem
+            <span className="text-base leading-none">⚠</span> Report
           </Link>
           
           {isLoggedIn ? (
@@ -264,17 +189,9 @@ function Navbar() {
                     </li>
                   )}
                   
-                  {isCommunityLeader && (
-                    <li>
-                      <Link to="/community/dashboard" className="block px-4 py-2.5 text-emerald-700 font-semibold hover:bg-emerald-50 hover:pl-6 transition-all duration-200">
-                        🏘 Community Dashboard
-                      </Link>
-                    </li>
-                  )}
-
                   <li>
                     <Link to="/community" className="block px-4 py-2.5 text-gray-700 font-medium hover:bg-gray-50 hover:text-green-700 hover:pl-6 transition-all duration-200">
-                      Communities
+                      Community
                     </Link>
                   </li>
 
@@ -344,6 +261,17 @@ function Navbar() {
             </li>
           ))}
 
+          {/* Surveys */}
+          <li className="border-b border-gray-50 bg-purple-50">
+            <Link
+              to="/ngo/surveys"
+              onClick={closeMenu}
+              className="flex items-center gap-2 px-6 py-3 text-purple-700 font-semibold hover:bg-purple-100 transition-colors"
+            >
+              <span>📋</span> Surveys
+            </Link>
+          </li>
+
           {/* Report Problem */}
           <li className="border-b border-gray-50">
             <Link
@@ -393,22 +321,19 @@ function Navbar() {
                     My Profile
                   </Link>
                 )}
-                {isCommunityLeader && (
-                  <Link
-                    to="/community/dashboard"
-                    onClick={closeMenu}
-                    className="flex items-center gap-2 text-emerald-700 font-semibold mb-3 hover:text-emerald-800"
-                  >
-                    🏘 Community Dashboard
-                  </Link>
-                )}
-
                 <Link
                   to="/community"
                   onClick={closeMenu}
                   className="flex items-center gap-2 text-gray-700 font-medium mb-3 hover:text-green-700"
                 >
-                  Communities
+                  💬 Community
+                </Link>
+                <Link
+                  to="/ngo/surveys"
+                  onClick={closeMenu}
+                  className="flex items-center gap-2 bg-purple-100 text-purple-700 px-3 py-2 rounded-md font-semibold mb-3 hover:bg-purple-200 transition-all"
+                >
+                  <span>📋</span> Surveys
                 </Link>
 
                 <button

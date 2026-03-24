@@ -40,15 +40,6 @@ const NAV_ITEMS = [
   { path: "/admin/surveys",        label: "Surveys",        icon: ClipboardList },
   { path: "/admin/impact-reports", label: "Impact Reports", icon: BarChart2 },
 
-  { path: "/admin/feedback", label: "Feedback", icon: MessageSquare },
-
-
-  { path: "/admin/problems", label: "Problems", icon: AlertCircle },
-  { path: "/admin/employment", label: "Employment", icon: UserCog },
-  { path: "/admin/staff", label: "Staff", icon: Users },
-  { path: "/admin/surveys", label: "Surveys", icon: ClipboardList },
-  { path: "/admin/impact-reports", label: "Impact Reports", icon: BarChart2 },
-
 ];
 
 function AdminLayout() {
