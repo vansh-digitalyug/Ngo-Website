@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { TrendingUp, TrendingDown, Minus, Plus, Edit2, Trash2, Loader2, X, ChevronDown, BarChart2, Eye, EyeOff, FileText, CheckCircle } from "lucide-react";
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from "recharts";
 import { API_BASE_URL } from "./NgoLayout.jsx";
 
 const CAT_COLORS = { beneficiaries:"#16a34a", health:"#dc2626", education:"#2563eb", employment:"#d97706", infrastructure:"#7c3aed", environment:"#0891b2", other:"#64748b" };
@@ -260,6 +261,39 @@ function ReportModal({ report, villages, onClose, onSaved }) {
   );
 }
 
+// ── Recharts metric bar chart ─────────────────────────────────────────────
+
+const RCHART_COLORS = { beneficiaries:"#16a34a", health:"#dc2626", education:"#2563eb", employment:"#d97706", infrastructure:"#7c3aed", environment:"#0891b2", other:"#64748b" };
+
+function MetricsBarChart({ metrics }) {
+  if (!metrics || metrics.length === 0) return null;
+  const data = metrics.filter(m => m.value > 0).map(m => ({
+    name: m.label.length > 18 ? m.label.slice(0, 16) + "…" : m.label,
+    value: m.value,
+    category: m.category,
+    unit: m.unit,
+  }));
+  if (data.length === 0) return null;
+  return (
+    <div style={{ marginTop: 14 }}>
+      <p style={{ margin: "0 0 8px", fontSize: "12px", fontWeight: "700", color: "#64748b", textTransform: "uppercase" }}>Metrics Chart</p>
+      <ResponsiveContainer width="100%" height={180}>
+        <BarChart data={data} margin={{ top: 4, right: 8, left: 0, bottom: 40 }}>
+          <XAxis dataKey="name" tick={{ fontSize: 10, fill: "#94a3b8" }} angle={-30} textAnchor="end" interval={0} />
+          <YAxis tick={{ fontSize: 10, fill: "#94a3b8" }} width={40} />
+          <Tooltip
+            formatter={(val, name, props) => [`${val} ${props.payload.unit || ""}`, props.payload.name]}
+            contentStyle={{ fontSize: 12, borderRadius: 8, border: "1px solid #e2e8f0" }}
+          />
+          <Bar dataKey="value" radius={[4, 4, 0, 0]}>
+            {data.map((d, i) => <Cell key={i} fill={RCHART_COLORS[d.category] || "#64748b"} />)}
+          </Bar>
+        </BarChart>
+      </ResponsiveContainer>
+    </div>
+  );
+}
+
 // ── Report Card ───────────────────────────────────────────────────────────
 
 function ReportCard({ report, onEdit, onDelete }) {
@@ -300,8 +334,8 @@ function ReportCard({ report, onEdit, onDelete }) {
             {report.summary && <p style={{ fontSize: "14px", color: "#374151", lineHeight: 1.6, marginBottom: "16px" }}>{report.summary}</p>}
             {report.metrics?.length > 0 && (
               <div style={{ marginBottom: "16px" }}>
-                <p style={{ margin: "0 0 10px", fontSize: "12px", fontWeight: "700", color: "#64748b", textTransform: "uppercase" }}>Metrics</p>
                 <MetricChart metrics={report.metrics} />
+                <MetricsBarChart metrics={report.metrics} />
               </div>
             )}
             {report.highlights?.filter(Boolean).length > 0 && (
@@ -338,10 +372,10 @@ function ReportCard({ report, onEdit, onDelete }) {
 // ── Main page ─────────────────────────────────────────────────────────────
 
 export default function NgoImpactReports() {
-  const [reports, setReports] = useState([]);
-  const [villages, setVillages] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [modal, setModal] = useState(null);
+  const [reports, setReports]     = useState([]);
+  const [villages, setVillages]   = useState([]);
+  const [loading, setLoading]     = useState(true);
+  const [modal, setModal]         = useState(null);
   const [statusFilter, setStatusFilter] = useState("all");
   const token = localStorage.getItem("token");
 
@@ -377,8 +411,8 @@ export default function NgoImpactReports() {
           <p style={{ margin: 0, color: "#64748b", fontSize: "14px" }}>Document and share your NGO's impact with metrics and charts</p>
         </div>
         <button onClick={() => setModal("create")}
-          style={{ display: "flex", alignItems: "center", gap: "7px", padding: "10px 20px", borderRadius: "10px", border: "none", background: "#2563eb", color: "#fff", fontWeight: "700", fontSize: "14px", cursor: "pointer" }}>
-          <Plus size={16} /> New Report
+          style={{ display: "flex", alignItems: "center", gap: "7px", padding: "10px 18px", borderRadius: "10px", border: "none", background: "#2563eb", color: "#fff", fontWeight: "700", fontSize: "14px", cursor: "pointer" }}>
+          <Plus size={15} /> New Report
         </button>
       </div>
 

@@ -1,154 +1,130 @@
 import { useState, useEffect, useCallback } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import {
-  FaHeart, FaRegHeart, FaComment, FaTimes,
-  FaUsers, FaFire, FaArrowRight, FaPen, FaEllipsisH,
+  FaHeart, FaRegHeart, FaComment, FaShare,
+  FaTh, FaUsers, FaCalendarAlt, FaTrophy,
+  FaChartLine, FaLeaf, FaPaperPlane,
+  FaEdit, FaTrash,
 } from "react-icons/fa";
 import { API } from "../../utils/S3.js";
 
-/* ─────────────────────────────────────────
-   Global keyframes injected once
-───────────────────────────────────────── */
+/* ── design tokens ── */
+const C = {
+  bg:     "#0f0f0f",
+  side:   "#141414",
+  card:   "#1a1a1a",
+  input:  "#242424",
+  bubble: "#222222",
+  green:  "#22c55e",
+  border: "#282828",
+  text:   "#f1f5f9",
+  sub:    "#94a3b8",
+  muted:  "#6b7280",
+};
+
+/* ── keyframes injected once ── */
 const STYLES = `
   @keyframes cfFadeUp {
-    from { opacity:0; transform:translateY(24px); }
+    from { opacity:0; transform:translateY(18px); }
     to   { opacity:1; transform:translateY(0); }
   }
-  @keyframes cfSlideIn {
-    from { opacity:0; transform:translateX(-32px); }
-    to   { opacity:1; transform:translateX(0); }
-  }
-  @keyframes cfShimmer {
-    0%   { background-position:-900px 0; }
-    100% { background-position: 900px 0; }
-  }
-  @keyframes cfFloat {
-    0%,100% { transform:translateY(0); }
-    50%     { transform:translateY(-12px); }
-  }
   @keyframes cfPop {
-    0%   { transform:scale(1); }
-    40%  { transform:scale(1.28); }
-    100% { transform:scale(1); }
+    0%  { transform:scale(1); }
+    40% { transform:scale(1.35); }
+    100%{ transform:scale(1); }
   }
-  .cf-fade  { animation:cfFadeUp  0.55s ease-out both; }
-  .cf-slide { animation:cfSlideIn 0.55s ease-out both; }
-  .cf-float { animation:cfFloat 5s ease-in-out infinite; }
-  .cf-skel  {
-    background:linear-gradient(90deg,#e8e8e8 0%,#f0f0f0 50%,#e8e8e8 100%);
-    background-size:900px 100%;
-    animation:cfShimmer 1.8s infinite;
-    border-radius:8px;
-  }
+  .cf-card { animation: cfFadeUp 0.38s ease-out both; }
 `;
 
-/* ─────────────────────────────────────────
-   Tag catalogue  (color · light bg · dark shade)
-───────────────────────────────────────── */
-const TAGS = {
-  "":          { emoji:"🌐", label:"All",         color:"#059669", light:"#dcfce7", dark:"#bbf7d0" },
-  health:      { emoji:"🏥", label:"Health",      color:"#059669", light:"#dcfce7", dark:"#bbf7d0" },
-  education:   { emoji:"📚", label:"Education",   color:"#059669", light:"#dcfce7", dark:"#bbf7d0" },
-  women:       { emoji:"💜", label:"Women",       color:"#059669", light:"#dcfce7", dark:"#bbf7d0" },
-  children:    { emoji:"🌟", label:"Children",    color:"#059669", light:"#dcfce7", dark:"#bbf7d0" },
-  elderly:     { emoji:"🤍", label:"Elderly",     color:"#059669", light:"#dcfce7", dark:"#bbf7d0" },
-  environment: { emoji:"🌿", label:"Environment", color:"#059669", light:"#dcfce7", dark:"#bbf7d0" },
-  general:     { emoji:"💬", label:"General",     color:"#059669", light:"#dcfce7", dark:"#bbf7d0" },
-  events:      { emoji:"🎉", label:"Events",      color:"#059669", light:"#dcfce7", dark:"#bbf7d0" },
-};
-const TAG_ORDER = Object.keys(TAGS);
-
-/* ─────────────────────────────────────────
-   Helpers
-───────────────────────────────────────── */
+/* ── timeAgo ── */
 function timeAgo(d) {
   const m = Math.floor((Date.now() - new Date(d)) / 60000);
-  if (m < 1) return "just now";
+  if (m < 1)  return "Just now";
   if (m < 60) return `${m}m ago`;
   const h = Math.floor(m / 60);
   if (h < 24) return `${h}h ago`;
   const dy = Math.floor(h / 24);
-  return dy < 30 ? `${dy}d ago` : new Date(d).toLocaleDateString("en-IN", { day:"numeric", month:"short" });
+  return dy < 30
+    ? `${dy}d ago`
+    : new Date(d).toLocaleDateString("en-IN", { day: "numeric", month: "short" });
 }
 
-function readTime(text = "") {
-  const w = text.trim().split(/\s+/).length;
-  const mins = Math.ceil(w / 200);
-  return mins <= 1 ? "1 min read" : `${mins} min read`;
-}
-
-/* ─────────────────────────────────────────
-   Avatar
-───────────────────────────────────────── */
-function Avatar({ name = "?", size = 44 }) {
-  const initials = name.split(" ").map(w => w[0]).join("").slice(0, 2).toUpperCase();
-  const stops = [
-    ["#6b7280","#9ca3af"], ["#d97706","#f59e0b"], ["#0891b2","#06b6d4"],
-    ["#7c3aed","#a78bfa"], ["#059669","#10b981"], ["#dc2626","#ef4444"],
-    ["#2563eb","#3b82f6"],
+/* ── Avatar ── */
+function Avatar({ name = "?", size = 40 }) {
+  const letters = (name || "?").split(" ").map(w => w[0]).join("").slice(0, 2).toUpperCase();
+  const pals = [
+    ["#6366f1","#8b5cf6"],["#f59e0b","#f97316"],["#06b6d4","#0284c7"],
+    ["#22c55e","#16a34a"],["#ec4899","#db2777"],["#ef4444","#dc2626"],
+    ["#14b8a6","#0d9488"],
   ];
-  const [a, b] = stops[name.charCodeAt(0) % stops.length];
+  const [a, b] = pals[(name.charCodeAt(0) || 0) % pals.length];
   return (
     <div style={{
       width: size, height: size, borderRadius: "50%", flexShrink: 0,
       background: `linear-gradient(135deg,${a},${b})`,
       display: "flex", alignItems: "center", justifyContent: "center",
-      color: "#fff", fontWeight: 800, fontSize: size * 0.38,
-      boxShadow: `0 4px 16px ${a}44`, border: "2px solid rgba(255,255,255,0.5)",
+      color: "#fff", fontWeight: 800, fontSize: size * 0.36,
       userSelect: "none", letterSpacing: "-0.5px",
+      border: "2px solid rgba(255,255,255,0.12)",
     }}>
-      {initials}
+      {letters}
     </div>
   );
 }
 
-/* ─────────────────────────────────────────
-   Post Card  ← Light theme + inline comments
-───────────────────────────────────────── */
-function PostCard({ post, onLike, onCommentCountChange, delay = 0 }) {
-  const [hov, setHov] = useState(false);
-  const [likeAnim, setLikeAnim] = useState(false);
-  const [showComments, setShowComments] = useState(false);
-  const [comments, setComments] = useState([]);
-  const [loadingComments, setLoadingComments] = useState(false);
-  const [newComment, setNewComment] = useState("");
-  const [submitting, setSubmitting] = useState(false);
-  const token = localStorage.getItem("token");
-  const navigate = useNavigate();
+/* ══════════════════════════════════════════
+   PostCard
+══════════════════════════════════════════ */
+function PostCard({ post, onLike, onPostDelete, onPostUpdate, onCommentCountChange, delay = 0 }) {
+  const navigate   = useNavigate();
+  const token      = localStorage.getItem("token");
+  const me = (() => { try { return JSON.parse(localStorage.getItem("user")); } catch { return null; } })();
+  const myId       = (me?.id || me?._id || "").toString();
+  const isOwnPost  = myId && myId === (post.author?._id || "").toString();
 
-  const handleLike = (e) => {
-    e.stopPropagation();
-    onLike(e, post._id);
-    setLikeAnim(true);
-    setTimeout(() => setLikeAnim(false), 600);
-  };
+  const [likeAnim,       setLikeAnim]       = useState(false);
+  const [showComments,   setShowComments]   = useState(false);
+  const [comments,       setComments]       = useState([]);
+  const [loadingCmts,    setLoadingCmts]    = useState(false);
+  const [newComment,     setNewComment]     = useState("");
+  const [submitting,     setSubmitting]     = useState(false);
+  const [replyTo,        setReplyTo]        = useState(null); // { _id, authorName }
+  const [replyText,      setReplyText]      = useState("");
+  const [showEdit,       setShowEdit]       = useState(false);
+  const [editText,       setEditText]       = useState(post.text || "");
+  const [editSubmitting, setEditSubmitting] = useState(false);
 
+  /* load comments */
   const loadComments = async () => {
-    setLoadingComments(true);
+    setLoadingCmts(true);
     try {
-      const res = await fetch(`${API}/api/posts/${post._id}/comments`, {
+      const res  = await fetch(`${API}/api/posts/${post._id}/comments?limit=50`, {
         headers: token ? { Authorization: `Bearer ${token}` } : {},
       });
       const data = await res.json();
       setComments(Array.isArray(data.data?.comments) ? data.data.comments : []);
-    } catch (e) {
-      console.error(e);
-      setComments([]);
-    } finally {
-      setLoadingComments(false);
-    }
+    } catch (e) { console.error(e); setComments([]); }
+    finally { setLoadingCmts(false); }
   };
 
-  const fetchComments = async () => {
+  const toggleComments = async () => {
     if (!showComments) {
       setShowComments(true);
-      if (comments.length > 0) return;
-      await loadComments();
+      if (comments.length === 0) await loadComments();
     } else {
       setShowComments(false);
     }
   };
 
+  /* like post */
+  const handleLike = (e) => {
+    e.stopPropagation();
+    onLike(e, post._id);
+    setLikeAnim(true);
+    setTimeout(() => setLikeAnim(false), 500);
+  };
+
+  /* add top-level comment */
   const handleAddComment = async () => {
     if (!token) { navigate("/login"); return; }
     if (!newComment.trim() || submitting) return;
@@ -164,14 +140,12 @@ function PostCard({ post, onLike, onCommentCountChange, delay = 0 }) {
         await loadComments();
         if (onCommentCountChange) onCommentCountChange(post._id, 1);
       }
-    } catch (e) {
-      console.error(e);
-    } finally {
-      setSubmitting(false);
-    }
+    } catch (e) { console.error(e); }
+    finally { setSubmitting(false); }
   };
 
-  const handleReply = async (parentCommentId) => {
+  /* reply to a comment */
+  const handleReply = async (parentId) => {
     if (!token) { navigate("/login"); return; }
     if (!replyText.trim() || submitting) return;
     setSubmitting(true);
@@ -179,11 +153,10 @@ function PostCard({ post, onLike, onCommentCountChange, delay = 0 }) {
       const res = await fetch(`${API}/api/posts/${post._id}/comments`, {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ text: replyText.trim(), parentComment: parentCommentId }),
+        body: JSON.stringify({ text: replyText.trim(), parentComment: parentId }),
       });
       if (res.ok) {
-        setReplyText("");
-        setReplyTo(null);
+        setReplyText(""); setReplyTo(null);
         await loadComments();
         if (onCommentCountChange) onCommentCountChange(post._id, 1);
       }
@@ -191,394 +164,424 @@ function PostCard({ post, onLike, onCommentCountChange, delay = 0 }) {
     finally { setSubmitting(false); }
   };
 
-  const handleCommentLike = async (e, commentId, isReply, parentId) => {
-    e.stopPropagation();
-    if (!token) { navigate("/login"); return; }
+  /* delete post */
+  const handleDeletePost = async () => {
+    if (!window.confirm("Delete this post?")) return;
     try {
-      const res = await fetch(`${API}/api/posts/comments/${commentId}/like`, {
-        method: "POST", headers: { Authorization: `Bearer ${token}` },
+      const res = await fetch(`${API}/api/posts/${post._id}`, {
+        method: "DELETE", headers: { Authorization: `Bearer ${token}` },
       });
-      const data = await res.json();
-      const { liked, likeCount } = data.data || {};
-      setComments(prev => prev.map(c => {
-        if (!isReply && c._id === commentId) return { ...c, isLiked: liked, likeCount };
-        if (isReply && c._id === parentId) {
-          return {
-            ...c,
-            replies: (c.replies || []).map(r =>
-              r._id === commentId ? { ...r, isLiked: liked, likeCount } : r
-            ),
-          };
-        }
-        return c;
-      }));
+      if (res.ok && onPostDelete) onPostDelete(post._id);
     } catch (e) { console.error(e); }
   };
 
+  /* edit post */
+  const handleEditPost = async () => {
+    if (!editText.trim()) return;
+    setEditSubmitting(true);
+    try {
+      const res = await fetch(`${API}/api/posts/${post._id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ text: editText.trim(), tags: post.tags || [] }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (onPostUpdate) onPostUpdate(data.data?.post || { ...post, text: editText.trim() });
+        setShowEdit(false);
+      }
+    } catch (e) { console.error(e); }
+    finally { setEditSubmitting(false); }
+  };
+
   return (
-    <article
-      onMouseEnter={() => setHov(true)}
-      onMouseLeave={() => setHov(false)}
-      className="cf-fade"
+    <div
+      className="cf-card"
       style={{
-        borderRadius: 12,
-        overflow: "hidden",
-        background: "#ffffff",
-        border: "1px solid #e5e7eb",
-        boxShadow: hov
-          ? "0 10px 25px rgba(0, 0, 0, 0.08)"
-          : "0 4px 12px rgba(0, 0, 0, 0.04)",
-        transition: "all 0.28s ease-out",
+        background: C.card, borderRadius: 16,
+        border: `1px solid ${C.border}`,
+        marginBottom: 16, overflow: "hidden",
         animationDelay: `${delay}s`,
       }}
     >
-      {/* ── Card body ── */}
-      <Link
-        to={`/community/${post._id}`}
-        style={{ padding: "20px 24px", display: "block", textDecoration: "none", color: "inherit", cursor: "pointer" }}
-      >
-
-        {/* Author row */}
-        <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 16 }}>
-          <Avatar name={post.author?.name} size={48} />
-
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{
-              fontWeight: 700, color: "#1f2937", fontSize: 15,
-              display: "flex", alignItems: "center", gap: 8,
-            }}>
-              {post.author?.name || "Anonymous"}
-              {(() => {
-                const u = (() => { try { return JSON.parse(localStorage.getItem("user")); } catch { return null; } })();
-                const uid = (u?.id || u?._id || "").toString();
-                const authorId = (post.author?._id || post.author || "").toString();
-                return uid && uid === authorId;
-              })() && (
+      {/* ── Header ── */}
+      <div style={{ padding: "20px 24px 0", display: "flex", alignItems: "flex-start", justifyContent: "space-between" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+          <Avatar name={post.author?.name || "?"} size={44} />
+          <div>
+            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <span style={{ fontWeight: 700, color: C.text, fontSize: 15 }}>
+                {post.author?.name || "Anonymous"}
+              </span>
+              {isOwnPost && (
                 <span style={{
-                  background: "#dcfce7", color: "#047857", fontSize: 10, fontWeight: 800,
-                  padding: "2px 8px", borderRadius: 4, letterSpacing: "0.05em",
+                  background: `${C.green}22`, color: C.green,
+                  fontSize: 10, fontWeight: 800, padding: "2px 8px",
+                  borderRadius: 4, letterSpacing: "0.06em",
                 }}>YOU</span>
               )}
             </div>
-            <div style={{ fontSize: 13, color: "#6b7280", marginTop: 4 }}>
-              {timeAgo(post.createdAt || new Date())}
+            <div style={{ fontSize: 12, color: C.muted, marginTop: 2 }}>
+              {timeAgo(post.createdAt)}
             </div>
           </div>
-
-          {/* Menu button */}
-          <button
-            onClick={e => e.stopPropagation()}
-            style={{
-              background: "transparent", border: "none", color: "#9ca3af",
-              fontSize: 18, cursor: "pointer", padding: "4px 8px",
-              transition: "color 0.2s",
-            }}
-            onMouseEnter={e => e.currentTarget.style.color = "#4b5563"}
-            onMouseLeave={e => e.currentTarget.style.color = "#9ca3af"}
-          >
-            <FaEllipsisH />
-          </button>
         </div>
 
-        {/* Post text */}
-        <p style={{
-          margin: "0 0 16px",
-          color: "#374151",
-          fontSize: 14,
-          lineHeight: 1.6,
-          fontWeight: 400,
-        }}>
-          {post.text}
-        </p>
-      </Link>
+        {/* Edit / Delete for own posts */}
+        {isOwnPost && !showEdit && (
+          <div style={{ display: "flex", gap: 4 }}>
+            <button
+              onClick={() => { setShowEdit(true); setEditText(post.text); }}
+              style={{
+                background: "none", border: "none", cursor: "pointer", color: C.muted,
+                display: "flex", alignItems: "center", gap: 5, padding: "5px 10px",
+                borderRadius: 8, fontSize: 13, fontWeight: 600, transition: "all 0.2s",
+              }}
+              onMouseEnter={e => { e.currentTarget.style.color = "#60a5fa"; e.currentTarget.style.background = "#1d3461"; }}
+              onMouseLeave={e => { e.currentTarget.style.color = C.muted; e.currentTarget.style.background = "none"; }}
+            >
+              <FaEdit size={11} /> Edit
+            </button>
+            <button
+              onClick={handleDeletePost}
+              style={{
+                background: "none", border: "none", cursor: "pointer", color: C.muted,
+                display: "flex", alignItems: "center", gap: 5, padding: "5px 10px",
+                borderRadius: 8, fontSize: 13, fontWeight: 600, transition: "all 0.2s",
+              }}
+              onMouseEnter={e => { e.currentTarget.style.color = "#f87171"; e.currentTarget.style.background = "#3f1515"; }}
+              onMouseLeave={e => { e.currentTarget.style.color = C.muted; e.currentTarget.style.background = "none"; }}
+            >
+              <FaTrash size={11} /> Delete
+            </button>
+          </div>
+        )}
+      </div>
 
-      {/* Engagement footer */}
+      {/* ── Body ── */}
+      <div style={{ padding: "14px 24px 16px" }}>
+        {showEdit ? (
+          <div>
+            <textarea
+              value={editText}
+              onChange={e => setEditText(e.target.value)}
+              maxLength={2000}
+              style={{
+                width: "100%", minHeight: 100, background: C.input,
+                border: `1.5px solid ${C.green}`, borderRadius: 10,
+                padding: "12px 14px", fontSize: 14, color: C.text,
+                resize: "none", outline: "none", fontFamily: "inherit", lineHeight: 1.6,
+              }}
+            />
+            <div style={{ display: "flex", gap: 8, justifyContent: "flex-end", marginTop: 10 }}>
+              <button
+                onClick={() => setShowEdit(false)}
+                style={{
+                  padding: "7px 16px", borderRadius: 8, border: `1px solid ${C.border}`,
+                  background: "none", color: C.sub, cursor: "pointer", fontSize: 13, fontWeight: 600,
+                }}
+              >Cancel</button>
+              <button
+                onClick={handleEditPost}
+                disabled={!editText.trim() || editSubmitting}
+                style={{
+                  padding: "7px 20px", borderRadius: 8, border: "none",
+                  background: editText.trim() ? C.green : "#2d2d2d",
+                  color: editText.trim() ? "#000" : C.muted,
+                  cursor: editText.trim() ? "pointer" : "not-allowed",
+                  fontSize: 13, fontWeight: 700,
+                }}
+              >{editSubmitting ? "Saving…" : "Save"}</button>
+            </div>
+          </div>
+        ) : (
+          <>
+            <p style={{
+              margin: 0, color: C.sub, fontSize: 15, lineHeight: 1.75,
+              whiteSpace: "pre-wrap", wordBreak: "break-word",
+            }}>
+              {post.text}
+            </p>
+            {post.tags?.length > 0 && (
+              <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginTop: 12 }}>
+                {post.tags.map(tag => (
+                  <span key={tag} style={{
+                    background: `${C.green}18`, color: C.green,
+                    borderRadius: 999, padding: "3px 12px", fontSize: 12, fontWeight: 600,
+                  }}>#{tag}</span>
+                ))}
+              </div>
+            )}
+          </>
+        )}
+      </div>
+
+      {/* ── Engagement row ── */}
       <div style={{
-        display: "flex", alignItems: "center", gap: 16,
-        padding: "12px 24px",
-        background: "transparent",
-        borderTop: "1px solid #f3f4f6",
-        transition: "background 0.2s",
+        display: "flex", alignItems: "center", gap: 24,
+        padding: "10px 24px 14px",
+        borderTop: `1px solid ${C.border}`,
       }}>
         {/* Like */}
         <button
           onClick={handleLike}
           style={{
-            display: "flex", alignItems: "center", gap: 6,
-            background: "transparent",
-            border: "none",
-            color: post.isLiked ? "#dc2626" : "#6b7280",
-            fontWeight: 600, fontSize: 13,
-            cursor: "pointer", transition: "all 0.2s",
+            background: "none", border: "none", cursor: "pointer", padding: 0,
+            display: "flex", alignItems: "center", gap: 7,
+            color: post.isLiked ? "#f87171" : C.muted,
+            fontSize: 14, fontWeight: 600, transition: "color 0.2s",
           }}
-          onMouseEnter={e => { if (!post.isLiked) e.currentTarget.style.color = "#1f2937"; }}
-          onMouseLeave={e => { if (!post.isLiked) e.currentTarget.style.color = "#6b7280"; }}
+          onMouseEnter={e => { if (!post.isLiked) e.currentTarget.style.color = "#f87171"; }}
+          onMouseLeave={e => { if (!post.isLiked) e.currentTarget.style.color = C.muted; }}
         >
           {post.isLiked
-            ? <FaHeart style={{ fontSize: 14, animation: likeAnim ? "cfPop 0.55s ease-out" : "none" }} />
-            : <FaRegHeart style={{ fontSize: 14 }} />}
+            ? <FaHeart style={{ animation: likeAnim ? "cfPop 0.5s ease-out" : "none" }} />
+            : <FaRegHeart />}
           <span>{post.likeCount || 0}</span>
         </button>
 
-        {/* Comments - Click to expand */}
+        {/* Comments */}
         <button
-          onClick={e => { e.stopPropagation(); fetchComments(); }}
+          onClick={toggleComments}
           style={{
-            display: "flex", alignItems: "center", gap: 6,
-            background: "transparent",
-            border: "none",
-            color: showComments ? "#059669" : "#6b7280", 
-            fontWeight: 600, fontSize: 13,
-            cursor: "pointer", transition: "color 0.2s",
+            background: "none", border: "none", cursor: "pointer", padding: 0,
+            display: "flex", alignItems: "center", gap: 7,
+            color: showComments ? C.green : C.muted,
+            fontSize: 14, fontWeight: 600, transition: "color 0.2s",
           }}
-          onMouseEnter={e => { if (!showComments) e.currentTarget.style.color = "#1f2937"; }}
-          onMouseLeave={e => { if (!showComments) e.currentTarget.style.color = "#6b7280"; }}
+          onMouseEnter={e => { if (!showComments) e.currentTarget.style.color = C.sub; }}
+          onMouseLeave={e => { if (!showComments) e.currentTarget.style.color = C.muted; }}
         >
-          <FaComment style={{ fontSize: 13, color: "#3b82f6" }} />
-          <span>{post.commentCount || 0}</span>
+          <FaComment />
+          <span>{post.commentCount || 0} Comments</span>
         </button>
 
-        {/* Spacer and Share */}
-        <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 6, color: "#059669", fontWeight: 600, fontSize: 13 }}>
-          Share <FaArrowRight style={{ fontSize: 11, transition: "transform 0.2s", transform: hov ? "translateX(3px)" : "translateX(0)" }} />
-        </div>
+        {/* Share */}
+        <button
+          style={{
+            background: "none", border: "none", cursor: "pointer", padding: 0,
+            display: "flex", alignItems: "center", gap: 7,
+            color: C.muted, fontSize: 14, fontWeight: 600,
+            marginLeft: "auto", transition: "color 0.2s",
+          }}
+          onMouseEnter={e => e.currentTarget.style.color = C.sub}
+          onMouseLeave={e => e.currentTarget.style.color = C.muted}
+        >
+          <FaShare /> Share
+        </button>
       </div>
 
-      {/* ── COMMENTS DROPDOWN ── */}
+      {/* ══ Comments Dropdown ══ */}
       {showComments && (
-        <div style={{
-          borderTop: "1px solid #f3f4f6",
-          background: "#f9fafb",
-          padding: "16px 24px",
-          animation: "cfFadeUp 0.2s ease-out",
-        }}>
-          {/* Comment input */}
-          {token ? (
-            <div style={{ display: "flex", gap: 10, marginBottom: 16 }}>
-              <div style={{ flex: 1, display: "flex", gap: 8 }}>
-                <input
-                  type="text"
-                  value={newComment}
-                  onChange={e => setNewComment(e.target.value)}
-                  onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleAddComment(); } }}
-                  placeholder="Write a comment…"
-                  maxLength={500}
-                  style={{
-                    flex: 1,
-                    border: "1.5px solid #e5e7eb",
-                    borderRadius: 8,
-                    padding: "9px 14px",
-                    fontSize: 13,
-                    outline: "none",
-                    fontFamily: "inherit",
-                    color: "#1f2937",
-                    background: "#fff",
-                    transition: "border-color 0.2s",
-                  }}
-                  onFocus={e => e.target.style.borderColor = "#059669"}
-                  onBlur={e => e.target.style.borderColor = "#e5e7eb"}
-                />
-                <button
-                  onClick={handleAddComment}
-                  disabled={!newComment.trim() || submitting}
-                  style={{
-                    padding: "9px 18px",
-                    borderRadius: 8,
-                    border: "none",
-                    background: newComment.trim() && !submitting ? "#059669" : "#d1d5db",
-                    color: "#fff",
-                    fontWeight: 700,
-                    fontSize: 13,
-                    cursor: newComment.trim() && !submitting ? "pointer" : "not-allowed",
-                    whiteSpace: "nowrap",
-                    transition: "background 0.2s",
-                  }}
-                >
-                  {submitting ? "…" : "Post"}
-                </button>
-              </div>
-            </div>
-          ) : (
-            <div
-              onClick={() => navigate("/login")}
-              style={{
-                marginBottom: 16, padding: "10px 14px", borderRadius: 8,
-                background: "#fff", border: "1.5px dashed #d1d5db",
-                color: "#6b7280", fontSize: 13, cursor: "pointer",
-                textAlign: "center",
-              }}
-            >
-              Login to comment
-            </div>
-          )}
-
-          {loadingComments ? (
-            <div style={{ textAlign: "center", padding: "16px", color: "#9ca3af", fontSize: 14 }}>
+        <div style={{ borderTop: `1px solid ${C.border}`, background: "#161616", padding: "20px 24px 24px" }}>
+          {loadingCmts ? (
+            <div style={{ textAlign: "center", padding: "20px 0", color: C.muted, fontSize: 14 }}>
               Loading comments…
             </div>
-          ) : comments.length === 0 ? (
-            <div style={{ textAlign: "center", padding: "16px", color: "#9ca3af", fontSize: 14 }}>
-              No comments yet. Be the first to comment!
-            </div>
           ) : (
-            <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-              {comments.map((comment, idx) => (
-                <div key={comment._id || idx} style={{
-                  background: "#ffffff", borderRadius: 8,
-                  padding: "12px", border: "1px solid #e5e7eb",
-                }}>
-                  {/* Comment row */}
-                  <div style={{ display: "flex", alignItems: "flex-start", gap: 8 }}>
-                    <Avatar name={comment.author?.name || "User"} size={32} />
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                        <span style={{ fontWeight: 700, color: "#1f2937", fontSize: 13 }}>
-                          {comment.author?.name || "Anonymous"}
-                        </span>
-                        <span style={{ fontSize: 12, color: "#9ca3af" }}>
-                          {timeAgo(comment.createdAt)}
-                        </span>
-                      </div>
-                      <p style={{ margin: "6px 0 4px", color: "#374151", fontSize: 13, lineHeight: 1.5, wordBreak: "break-word" }}>
-                        {comment.text}
-                      </p>
-                      {/* Like + Reply actions */}
-                      <div style={{ display: "flex", gap: 12, marginTop: 4 }}>
-                        <button
-                          onClick={e => handleCommentLike(e, comment._id, false, null)}
-                          style={{
-                            background: "none", border: "none", cursor: "pointer", padding: 0,
-                            display: "flex", alignItems: "center", gap: 4,
-                            color: comment.isLiked ? "#dc2626" : "#9ca3af", fontSize: 12, fontWeight: 700,
-                            transition: "color 0.2s",
-                          }}
-                        >
-                          {comment.isLiked ? <FaHeart /> : <FaRegHeart />}
-                          {comment.likeCount > 0 && <span>{comment.likeCount}</span>}
-                        </button>
-                        {token && (
-                          <button
-                            onClick={e => { e.stopPropagation(); setReplyTo(replyTo?.commentId === comment._id ? null : { commentId: comment._id, authorName: comment.author?.name }); setReplyText(""); }}
-                            style={{
-                              background: "none", border: "none", cursor: "pointer", padding: 0,
-                              display: "flex", alignItems: "center", gap: 4,
-                              color: replyTo?.commentId === comment._id ? "#059669" : "#9ca3af",
-                              fontSize: 12, fontWeight: 700, transition: "color 0.2s",
-                            }}
-                          >
-                            ↩ Reply
-                          </button>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Replies */}
-                  {comment.replies?.length > 0 && (
-                    <div style={{ marginTop: 10, paddingLeft: 40, display: "flex", flexDirection: "column", gap: 8 }}>
-                      {comment.replies.map(reply => (
-                        <div key={reply._id} style={{ display: "flex", alignItems: "flex-start", gap: 8 }}>
-                          <Avatar name={reply.author?.name || "User"} size={24} />
-                          <div style={{ flex: 1, minWidth: 0 }}>
-                            <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                              <span style={{ fontWeight: 700, color: "#1f2937", fontSize: 12 }}>{reply.author?.name || "Anonymous"}</span>
-                              <span style={{ fontSize: 11, color: "#9ca3af" }}>{timeAgo(reply.createdAt)}</span>
+            <>
+              {/* Comment list */}
+              {comments.length === 0 ? (
+                <p style={{ color: C.muted, fontSize: 14, textAlign: "center", padding: "12px 0 16px", margin: 0 }}>
+                  No comments yet — be the first!
+                </p>
+              ) : (
+                <div style={{ display: "flex", flexDirection: "column", gap: 20, marginBottom: 20 }}>
+                  {comments.map(comment => (
+                    <div key={comment._id}>
+                      {/* ── Top-level comment ── */}
+                      <div style={{ display: "flex", gap: 12 }}>
+                        <Avatar name={comment.author?.name || "?"} size={38} />
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          {/* Bubble */}
+                          <div style={{
+                            background: C.bubble, borderRadius: "4px 14px 14px 14px",
+                            padding: "12px 16px",
+                          }}>
+                            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 5 }}>
+                              <span style={{ fontWeight: 700, color: C.text, fontSize: 14 }}>
+                                {comment.author?.name || "Anonymous"}
+                              </span>
+                              <span style={{ color: "#3f3f3f", fontSize: 12 }}>•</span>
+                              <span style={{ color: C.muted, fontSize: 12 }}>
+                                {timeAgo(comment.createdAt)}
+                              </span>
                             </div>
-                            <p style={{ margin: "3px 0 3px", color: "#374151", fontSize: 12, lineHeight: 1.5, wordBreak: "break-word" }}>
-                              {reply.text}
+                            <p style={{ margin: 0, color: "#cbd5e1", fontSize: 14, lineHeight: 1.65 }}>
+                              {comment.text}
                             </p>
+                          </div>
+
+                          {/* Reply button */}
+                          {token && (
                             <button
-                              onClick={e => handleCommentLike(e, reply._id, true, comment._id)}
+                              onClick={() => {
+                                setReplyTo(prev => prev?._id === comment._id
+                                  ? null
+                                  : { _id: comment._id, authorName: comment.author?.name }
+                                );
+                                setReplyText("");
+                              }}
                               style={{
-                                background: "none", border: "none", cursor: "pointer", padding: 0,
-                                display: "flex", alignItems: "center", gap: 4,
-                                color: reply.isLiked ? "#dc2626" : "#9ca3af", fontSize: 11, fontWeight: 700,
+                                background: "none", border: "none", cursor: "pointer",
+                                color: replyTo?._id === comment._id ? C.green : C.muted,
+                                fontSize: 13, fontWeight: 600, padding: "6px 4px",
                                 transition: "color 0.2s",
                               }}
                             >
-                              {reply.isLiked ? <FaHeart /> : <FaRegHeart />}
-                              {reply.likeCount > 0 && <span>{reply.likeCount}</span>}
+                              Reply
                             </button>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
+                          )}
 
-                  {/* Reply input */}
-                  {replyTo?.commentId === comment._id && (
-                    <div style={{ marginTop: 10, paddingLeft: 40, display: "flex", gap: 8 }}>
-                      <input
-                        type="text"
-                        value={replyText}
-                        onChange={e => setReplyText(e.target.value)}
-                        onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleReply(comment._id); } }}
-                        placeholder={`Reply to ${replyTo.authorName}…`}
-                        maxLength={500}
-                        autoFocus
-                        style={{
-                          flex: 1, border: "1.5px solid #059669", borderRadius: 6,
-                          padding: "7px 12px", fontSize: 12, outline: "none",
-                          fontFamily: "inherit", color: "#1f2937", background: "#fff",
-                        }}
-                      />
-                      <button
-                        onClick={() => handleReply(comment._id)}
-                        disabled={!replyText.trim() || submitting}
-                        style={{
-                          padding: "7px 14px", borderRadius: 6, border: "none",
-                          background: replyText.trim() && !submitting ? "#059669" : "#d1d5db",
-                          color: "#fff", fontWeight: 700, fontSize: 12,
-                          cursor: replyText.trim() && !submitting ? "pointer" : "not-allowed",
-                        }}
-                      >
-                        {submitting ? "…" : "Reply"}
-                      </button>
-                      <button
-                        onClick={() => { setReplyTo(null); setReplyText(""); }}
-                        style={{ padding: "7px 10px", borderRadius: 6, border: "1px solid #e5e7eb", background: "#f9fafb", cursor: "pointer", fontSize: 12 }}
-                      >
-                        ✕
-                      </button>
+                          {/* Inline reply input */}
+                          {replyTo?._id === comment._id && (
+                            <div style={{ display: "flex", gap: 10, marginTop: 6, alignItems: "center" }}>
+                              <Avatar name={me?.name || "?"} size={28} />
+                              <input
+                                value={replyText}
+                                onChange={e => setReplyText(e.target.value)}
+                                onKeyDown={e => { if (e.key === "Enter") handleReply(comment._id); }}
+                                placeholder={`Reply to ${replyTo.authorName}…`}
+                                maxLength={500}
+                                autoFocus
+                                style={{
+                                  flex: 1, background: C.input,
+                                  border: `1.5px solid ${C.green}55`,
+                                  borderRadius: 20, padding: "8px 16px",
+                                  fontSize: 13, color: C.text, outline: "none",
+                                  fontFamily: "inherit", transition: "border-color 0.2s",
+                                }}
+                                onFocus={e => e.target.style.borderColor = C.green}
+                                onBlur={e => e.target.style.borderColor = `${C.green}55`}
+                              />
+                              <button
+                                onClick={() => handleReply(comment._id)}
+                                disabled={!replyText.trim() || submitting}
+                                style={{
+                                  background: replyText.trim() ? C.green : "#2d2d2d",
+                                  border: "none", borderRadius: 20,
+                                  padding: "8px 16px", cursor: replyText.trim() ? "pointer" : "not-allowed",
+                                  color: replyText.trim() ? "#000" : C.muted,
+                                  fontWeight: 700, fontSize: 13, transition: "all 0.2s",
+                                }}
+                              >
+                                {submitting ? "…" : "Reply"}
+                              </button>
+                              <button
+                                onClick={() => { setReplyTo(null); setReplyText(""); }}
+                                style={{
+                                  background: "none", border: `1px solid ${C.border}`,
+                                  borderRadius: 20, padding: "8px 12px",
+                                  color: C.muted, cursor: "pointer", fontSize: 12,
+                                }}
+                              >✕</button>
+                            </div>
+                          )}
+
+                          {/* ── Nested replies ── */}
+                          {comment.replies?.length > 0 && (
+                            <div style={{ marginTop: 12, paddingLeft: 14, display: "flex", flexDirection: "column", gap: 10 }}>
+                              {comment.replies.map(reply => (
+                                <div key={reply._id} style={{ display: "flex", gap: 10 }}>
+                                  <Avatar name={reply.author?.name || "?"} size={30} />
+                                  <div style={{
+                                    background: "#1c1c1c", borderRadius: "4px 12px 12px 12px",
+                                    padding: "10px 14px", flex: 1,
+                                    border: `1px solid ${C.border}`,
+                                  }}>
+                                    <span style={{ fontWeight: 700, color: C.text, fontSize: 13 }}>
+                                      {reply.author?.name || "Anonymous"}
+                                    </span>
+                                    <p style={{ margin: "4px 0 0", color: "#cbd5e1", fontSize: 13, lineHeight: 1.55 }}>
+                                      {reply.text}
+                                    </p>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      </div>
                     </div>
-                  )}
+                  ))}
                 </div>
-              ))}
-            </div>
+              )}
+
+              {/* ── Add comment input ── */}
+              <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
+                <Avatar name={me?.name || "?"} size={36} />
+                {token ? (
+                  <>
+                    <input
+                      value={newComment}
+                      onChange={e => setNewComment(e.target.value)}
+                      onKeyDown={e => { if (e.key === "Enter") handleAddComment(); }}
+                      placeholder="Write a comment…"
+                      maxLength={500}
+                      style={{
+                        flex: 1, background: C.input, border: `1.5px solid ${C.border}`,
+                        borderRadius: 24, padding: "10px 18px",
+                        fontSize: 14, color: C.text, outline: "none",
+                        fontFamily: "inherit", transition: "border-color 0.2s",
+                      }}
+                      onFocus={e => e.target.style.borderColor = C.green}
+                      onBlur={e => e.target.style.borderColor = C.border}
+                    />
+                    <button
+                      onClick={handleAddComment}
+                      disabled={!newComment.trim() || submitting}
+                      style={{
+                        width: 40, height: 40, borderRadius: "50%", border: "none",
+                        background: newComment.trim() ? C.green : C.input,
+                        color: newComment.trim() ? "#000" : C.muted,
+                        display: "flex", alignItems: "center", justifyContent: "center",
+                        cursor: newComment.trim() ? "pointer" : "not-allowed",
+                        flexShrink: 0, transition: "all 0.2s",
+                      }}
+                    >
+                      <FaPaperPlane size={13} />
+                    </button>
+                  </>
+                ) : (
+                  <button
+                    onClick={() => navigate("/login")}
+                    style={{
+                      flex: 1, background: C.input, border: `1.5px dashed ${C.border}`,
+                      borderRadius: 24, padding: "10px 18px", fontSize: 14,
+                      color: C.muted, cursor: "pointer", textAlign: "left",
+                      fontFamily: "inherit",
+                    }}
+                  >
+                    Login to join the conversation…
+                  </button>
+                )}
+              </div>
+            </>
           )}
         </div>
       )}
-    </article>
+    </div>
   );
 }
 
-/* ─────────────────────────────────────────
-   Hero decoration SVG
-───────────────────────────────────────── */
-function HeroArt() {
-  return null;
-}
-
-/* ─────────────────────────────────────────
-   Main page
-───────────────────────────────────────── */
+/* ══════════════════════════════════════════
+   Main Page
+══════════════════════════════════════════ */
 export default function CommunityFeed() {
   const navigate = useNavigate();
-  const token = localStorage.getItem("token");
-  const user = (() => { try { return JSON.parse(localStorage.getItem("user")); } catch { return null; } })();
+  const token    = localStorage.getItem("token");
+  const user     = (() => { try { return JSON.parse(localStorage.getItem("user")); } catch { return null; } })();
 
   const [posts,      setPosts]      = useState([]);
   const [loading,    setLoading]    = useState(true);
   const [page,       setPage]       = useState(1);
   const [hasMore,    setHasMore]    = useState(false);
-  const [activeTag,  setActiveTag]  = useState("");
   const [myPosts,    setMyPosts]    = useState(false);
-  const [showCreate, setShowCreate] = useState(false);
   const [newText,    setNewText]    = useState("");
-  const [newTags,    setNewTags]    = useState([]);
   const [submitting, setSubmitting] = useState(false);
-  const [error,      setError]      = useState("");
   const [totalPosts, setTotalPosts] = useState(0);
+
+  const userId = (user?.id || user?._id || "").toString();
 
   useEffect(() => {
     const el = document.createElement("style");
@@ -587,11 +590,10 @@ export default function CommunityFeed() {
     return () => el.remove();
   }, []);
 
-  const fetchPosts = useCallback(async (p = 1, tag = "", authorId = "") => {
+  const fetchPosts = useCallback(async (p = 1, authorId = "") => {
     setLoading(true);
     try {
       const q = new URLSearchParams({ page: p, limit: 9 });
-      if (tag)      q.set("tag",    tag);
       if (authorId) q.set("author", authorId);
       const res  = await fetch(`${API}/api/posts?${q}`, {
         headers: token ? { Authorization: `Bearer ${token}` } : {},
@@ -606,12 +608,10 @@ export default function CommunityFeed() {
     finally { setLoading(false); }
   }, [token]);
 
-  const userId = (user?.id || user?._id || "").toString();
-
   useEffect(() => {
     setPage(1);
-    fetchPosts(1, activeTag, myPosts ? userId : "");
-  }, [activeTag, myPosts, fetchPosts]);
+    fetchPosts(1, myPosts ? userId : "");
+  }, [myPosts, fetchPosts]);
 
   const handleLike = async (e, id) => {
     e.stopPropagation();
@@ -627,375 +627,279 @@ export default function CommunityFeed() {
     } catch (e) { console.error(e); }
   };
 
-  const toggleTag = t => setNewTags(prev => prev.includes(t) ? prev.filter(x => x !== t) : [...prev, t]);
-
   const handleCreate = async () => {
-    if (!newText.trim()) return;
-    setSubmitting(true); setError("");
+    if (!newText.trim() || submitting) return;
+    setSubmitting(true);
     try {
       const res = await fetch(`${API}/api/posts`, {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ text: newText.trim(), tags: newTags }),
+        body: JSON.stringify({ text: newText.trim(), tags: [] }),
       });
-      if (res.ok) {
-        setShowCreate(false); setNewText(""); setNewTags([]);
-        fetchPosts(1, activeTag);
-      } else {
-        const d = await res.json(); setError(d.message || "Failed to post.");
-      }
-    } catch { setError("Network error."); }
+      if (res.ok) { setNewText(""); fetchPosts(1, myPosts ? userId : ""); }
+    } catch (e) { console.error(e); }
     finally { setSubmitting(false); }
   };
 
-  /* ── render ── */
+  const handlePostDelete = (id) => {
+    setPosts(prev => prev.filter(p => p._id !== id));
+    setTotalPosts(prev => Math.max(0, prev - 1));
+  };
+
+  const handlePostUpdate = (updated) => {
+    setPosts(prev => prev.map(p => p._id === updated._id ? { ...p, ...updated } : p));
+  };
+
+  /* sidebar nav */
+  const navItems = [
+    { icon: <FaTh size={14}/>,          label: "Global Feed",    active: !myPosts, onClick: () => setMyPosts(false) },
+    { icon: <FaCalendarAlt size={14}/>, label: "NGO Events",     active: false,     onClick: () => {} },
+    { icon: <FaTrophy size={14}/>,      label: "Impact Stories", active: false,     onClick: () => {} },
+  ];
+
   return (
-    <div style={{ minHeight: "100vh", background: "#f9fafb", paddingBottom: 80 }}>
+    <div style={{
+      position: "sticky", top: 60,
+      display: "flex", height: "calc(100vh - 60px)",
+      overflow: "hidden", background: C.bg, color: C.text,
+    }}>
 
-      {/* ══════════════ HERO ══════════════ */}
-      <section style={{
-        background: "linear-gradient(135deg, rgba(5, 150, 105, 0.75) 0%, rgba(5, 150, 105, 0.7) 100%), url('https://images.unsplash.com/photo-1559347253-d1e1b0e3a9de?w=1400&h=500&fit=crop')",
-        backgroundSize: "cover", backgroundPosition: "center",
-        backgroundAttachment: "fixed",
-        position: "relative", overflow: "hidden",
-        paddingTop: 60, minHeight: 420,
-        display: "flex", alignItems: "center", justifyContent: "center",
+      {/* ═══ LEFT SIDEBAR ═══ */}
+      <aside style={{
+        width: 260, flexShrink: 0,
+        height: "100%",
+        background: C.side,
+        borderRight: `1px solid ${C.border}`,
+        padding: "20px 14px",
+        overflowY: "hidden",
       }}>
-        <div style={{
-          maxWidth: 900, margin: "0 auto", padding: "60px 24px",
-          textAlign: "left", position: "relative", zIndex: 2,
-        }}>
-          {/* Main heading */}
-          <h1 className="cf-fade" style={{
-            color: "#fff", fontSize: "clamp(2.2rem, 5vw, 3rem)",
-            fontWeight: 800, margin: "0 0 16px", lineHeight: 1.15, letterSpacing: "-0.02em",
+        {/* Explore header */}
+        <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "0 8px", marginBottom: 14 }}>
+          <div style={{
+            width: 30, height: 30, borderRadius: "50%",
+            background: `${C.green}20`,
+            display: "flex", alignItems: "center", justifyContent: "center",
+            color: C.green,
           }}>
-            Share Your Voice,<br/>Build Our Community
-          </h1>
+            <FaLeaf size={12} />
+          </div>
+          <span style={{ fontWeight: 800, fontSize: 15, color: C.green }}>Explore</span>
+        </div>
 
-          {/* Description */}
-          <p className="cf-fade" style={{
-            color: "#f0fdf4", fontSize: "1rem",
-            lineHeight: 1.7, maxWidth: 560, margin: "0", fontWeight: 400,
+        {/* Nav */}
+        <nav style={{ display: "flex", flexDirection: "column", gap: 2, marginBottom: 18 }}>
+          {navItems.map((item, i) => (
+            <button
+              key={i}
+              onClick={item.onClick}
+              style={{
+                display: "flex", alignItems: "center", gap: 12,
+                padding: "9px 14px", borderRadius: 10, border: "none",
+                background: item.active ? `${C.green}20` : "none",
+                color: item.active ? C.green : C.muted,
+                cursor: "pointer", fontSize: 14,
+                fontWeight: item.active ? 700 : 500,
+                textAlign: "left", width: "100%", transition: "all 0.18s",
+              }}
+              onMouseEnter={e => { if (!item.active) { e.currentTarget.style.background = "#1e1e1e"; e.currentTarget.style.color = C.sub; } }}
+              onMouseLeave={e => { if (!item.active) { e.currentTarget.style.background = "none"; e.currentTarget.style.color = C.muted; } }}
+            >
+              {item.icon} {item.label}
+            </button>
+          ))}
+
+          {token && (
+            <button
+              onClick={() => setMyPosts(true)}
+              style={{
+                display: "flex", alignItems: "center", gap: 12,
+                padding: "9px 14px", borderRadius: 10, border: "none",
+                background: myPosts ? `${C.green}20` : "none",
+                color: myPosts ? C.green : C.muted,
+                cursor: "pointer", fontSize: 14,
+                fontWeight: myPosts ? 700 : 500,
+                textAlign: "left", width: "100%", transition: "all 0.18s",
+              }}
+              onMouseEnter={e => { if (!myPosts) { e.currentTarget.style.background = "#1e1e1e"; e.currentTarget.style.color = C.sub; } }}
+              onMouseLeave={e => { if (!myPosts) { e.currentTarget.style.background = "none"; e.currentTarget.style.color = C.muted; } }}
+            >
+              <FaUsers size={14} /> My Posts
+            </button>
+          )}
+        </nav>
+
+        {/* Community Stats */}
+        <div style={{
+          background: C.card, borderRadius: 14, padding: "14px 14px",
+          border: `1px solid ${C.border}`,
+        }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
+            <FaChartLine size={13} color={C.green} />
+            <span style={{ fontWeight: 700, fontSize: 13, color: C.green }}>Community Stats</span>
+          </div>
+          {[
+            { label: "Active Members", value: "1.2k" },
+            { label: "Posts Shared",   value: totalPosts > 0 ? String(totalPosts) : "—" },
+            { label: "Topics Covered", value: "8" },
+          ].map((s, i) => (
+            <div key={i} style={{
+              display: "flex", justifyContent: "space-between", alignItems: "center",
+              padding: "7px 0",
+              borderTop: i > 0 ? `1px solid ${C.border}` : "none",
+            }}>
+              <span style={{ fontSize: 13, color: C.muted }}>{s.label}</span>
+              <span style={{ fontSize: 13, fontWeight: 700, color: C.text }}>{s.value}</span>
+            </div>
+          ))}
+        </div>
+      </aside>
+
+      {/* ═══ MAIN CONTENT ═══ */}
+      <main style={{ flex: 1, minWidth: 0, height: "100%", overflowY: "auto" }}>
+      <div style={{ maxWidth: 780, margin: "0 auto", padding: "36px 28px 80px" }}>
+
+        {/* Header */}
+        <div style={{ marginBottom: 28 }}>
+          <h1 style={{
+            margin: "0 0 10px", fontWeight: 800, color: C.text,
+            fontSize: "clamp(1.8rem, 4vw, 2.6rem)", lineHeight: 1.1,
           }}>
-            A space for members to share stories, spark conversations, and inspire meaningful change together.
+            Connect &amp; Collab
+          </h1>
+          <p style={{ margin: 0, color: C.sub, fontSize: 15, lineHeight: 1.65 }}>
+            Share your thoughts, experiences, and ideas for a better world.
           </p>
         </div>
-      </section>
 
-      {/* ══════════════ MAIN LAYOUT ══════════════ */}
-      <div style={{ maxWidth: 1200, margin: "0 auto", padding: "40px 24px", display: "grid", gridTemplateColumns: "240px 1fr", gap: 32 }}>
-
-        {/* ── LEFT SIDEBAR ── */}
-        <aside style={{
-          background: "#ffffff", borderRadius: 12, padding: "24px",
-          border: "1px solid #e5e7eb", height: "fit-content", position: "sticky", top: 24,
-          boxShadow: "0 1px 3px rgba(0,0,0,0.05)",
-        }}>
-          <h3 style={{ margin: "0 0 20px", color: "#1f2937", fontSize: 13, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em" }}>
-            MENU
-          </h3>
-          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-            <button
-              onClick={() => setMyPosts(false)}
-              style={{
-                background: !myPosts ? "#ecfdf5" : "transparent",
-                color: !myPosts ? "#047857" : "#6b7280",
-                border: "none", borderRadius: 8, padding: "12px 16px",
-                textAlign: "left", cursor: "pointer", fontWeight: !myPosts ? 600 : 500,
-                fontSize: 14, transition: "all 0.2s",
-                borderLeft: !myPosts ? "3px solid #059669" : "3px solid transparent",
-              }}
-              onMouseEnter={e => { if (myPosts) e.currentTarget.style.background = "#f3f4f6"; }}
-              onMouseLeave={e => { if (myPosts) e.currentTarget.style.background = "transparent"; }}
-            >
-              🌱 Community Feed
-            </button>
-            <button
-              onClick={() => { if (!token) { navigate("/login"); return; } setMyPosts(true); }}
-              style={{
-                background: myPosts ? "#ecfdf5" : "transparent",
-                color: myPosts ? "#047857" : "#6b7280",
-                border: "none", borderRadius: 8, padding: "12px 16px",
-                textAlign: "left", cursor: "pointer", fontWeight: myPosts ? 600 : 500,
-                fontSize: 14, transition: "all 0.2s",
-                borderLeft: myPosts ? "3px solid #059669" : "3px solid transparent",
-              }}
-              onMouseEnter={e => { if (!myPosts) e.currentTarget.style.background = "#f3f4f6"; }}
-              onMouseLeave={e => { if (!myPosts) e.currentTarget.style.background = "transparent"; }}
-            >
-              📝 My Posts
-            </button>
-          </div>
-        </aside>
-
-        {/* ── CENTER CONTENT ── */}
-        <div>
-          {/* Create post box */}
-          {token ? (
-            <div className="cf-fade" style={{
-              background: "#ffffff", borderRadius: 12,
-              padding: "24px", border: "1px solid #e5e7eb",
-              marginBottom: 32, boxShadow: "0 1px 3px rgba(0,0,0,0.05)",
-            }}>
-              <h2 style={{ margin: "0 0 20px", color: "#1f2937", fontSize: 16, fontWeight: 700 }}>Community Feed</h2>
-              <textarea
-                value={newText}
-                onChange={e => setNewText(e.target.value)}
-                placeholder="What's on your mind?"
-                maxLength={2000}
-                style={{
-                  width: "100%", minHeight: 80,
-                  background: "#f9fafb", border: "1px solid #d1d5db",
-                  borderRadius: 10, padding: "14px 16px", fontSize: 14,
-                  color: "#1f2937", resize: "none", outline: "none",
-                  fontFamily: "inherit", boxSizing: "border-box",
-                  lineHeight: 1.6, transition: "all 0.2s",
-                }}
-                onFocus={e => {
-                  e.target.style.borderColor = "#059669";
-                  e.target.style.background = "#fff";
-                  e.target.style.boxShadow = "0 0 0 3px rgba(5, 150, 105, 0.1)";
-                }}
-                onBlur={e => {
-                  e.target.style.borderColor = "#d1d5db";
-                  e.target.style.background = "#f9fafb";
-                  e.target.style.boxShadow = "none";
-                }}
-              />
-              <div style={{
-                display: "flex", justifyContent: "space-between", alignItems: "center",
-                marginTop: 14,
-              }}>
-                <div style={{ fontSize: 12, color: "#9ca3af" }}>
-                  {newText.length} / 2000
-                </div>
-                <button
-                  onClick={handleCreate}
-                  disabled={!newText.trim() || submitting}
-                  style={{
-                    padding: "10px 28px", borderRadius: 8, border: "none",
-                    background: newText.trim() ? "#059669" : "#d1d5db",
-                    color: "#fff", fontWeight: 700, fontSize: 14,
-                    cursor: newText.trim() ? "pointer" : "not-allowed",
-                    transition: "all 0.2s",
-                  }}
-                  onMouseEnter={e => { if (newText.trim()) e.currentTarget.style.background = "#047857"; }}
-                  onMouseLeave={e => { if (newText.trim()) e.currentTarget.style.background = "#059669"; }}
-                >
-                  {submitting ? "Posting…" : "+ New Post"}
-                </button>
-              </div>
-            </div>
-          ) : (
-            <div style={{ textAlign: "center", marginBottom: 40 }}>
-              <button onClick={() => navigate("/login")} style={{
-                background: "#059669", color: "#fff", border: "none",
-                borderRadius: 10, padding: "12px 32px", fontWeight: 700,
-                fontSize: 15, cursor: "pointer", transition: "all 0.2s",
-              }}
-                onMouseEnter={e => e.currentTarget.style.background = "#047857"}
-                onMouseLeave={e => e.currentTarget.style.background = "#059669"}
-              >
-                Login to Share
-              </button>
-            </div>
-          )}
-
-          {/* ── Posts ── */}
-          {loading && page === 1 ? (
-            <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
-              {[1,2,3].map(i => (
-                <div key={i} style={{ background: "#ffffff", borderRadius: 12, overflow: "hidden", border: "1px solid #e5e7eb", boxShadow: "0 1px 3px rgba(0,0,0,0.05)" }}>
-                  <div style={{ padding: "20px 24px" }}>
-                    <div style={{ display: "flex", gap: 12, marginBottom: 16 }}>
-                      <div className="cf-skel" style={{ width: 48, height: 48, borderRadius: "50%", flexShrink: 0 }}/>
-                      <div style={{ flex: 1 }}>
-                        <div className="cf-skel" style={{ width: "35%", height: 16, marginBottom: 9 }}/>
-                        <div className="cf-skel" style={{ width: "20%", height: 12 }}/>
-                      </div>
-                    </div>
-                    <div className="cf-skel" style={{ width: "100%", height: 12, marginBottom: 8 }}/>
-                    <div className="cf-skel" style={{ width: "85%", height: 12, marginBottom: 8 }}/>
-                    <div className="cf-skel" style={{ width: "60%", height: 12 }}/>
-                  </div>
-                  <div style={{ height: 1, background: "#f3f4f6" }}/>
-                  <div style={{ padding: "12px 24px", display: "flex", gap: 16 }}>
-                    <div className="cf-skel" style={{ width: 60, height: 12 }}/>
-                    <div className="cf-skel" style={{ width: 60, height: 12 }}/>
-                  </div>
-                </div>
-              ))}
-            </div>
-          ) : posts.length === 0 ? (
-            <div style={{
-              background: "#ffffff", borderRadius: 12, textAlign: "center",
-              padding: "60px 24px", boxShadow: "0 1px 3px rgba(0,0,0,0.05)",
-              border: "1px solid #e5e7eb",
-            }}>
-              <div style={{ fontSize: 60, marginBottom: 20 }}>{myPosts ? "📝" : "🌱"}</div>
-              <p style={{ fontSize: "1rem", fontWeight: 700, color: "#1f2937", margin: "0 0 8px" }}>
-                {myPosts ? "You haven't posted anything yet" : "No posts yet"}
-              </p>
-              <p style={{ color: "#6b7280", fontSize: 14, margin: "0 0 24px" }}>
-                {myPosts ? "Share your thoughts with the community!" : "Be the first to share your story with the community!"}
-              </p>
-              {token && (
-                <button onClick={() => setShowCreate(true)} style={{
-                  background: "#059669", color: "#fff", border: "none",
-                  borderRadius: 8, padding: "10px 24px", fontWeight: 700,
-                  fontSize: 14, cursor: "pointer",
-                }}>
-                  Create First Post
-                </button>
-              )}
-            </div>
-          ) : (
-            <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
-              {posts.map((post, i) => (
-                <PostCard
-                  key={post._id}
-                  post={post}
-                  onLike={handleLike}
-                  onCommentCountChange={(id, delta) =>
-                    setPosts(prev => prev.map(p => p._id === id ? { ...p, commentCount: (p.commentCount || 0) + delta } : p))
-                  }
-                  delay={Math.min(i, 5) * 0.09}
-                />
-              ))}
-            </div>
-          )}
-
-          {hasMore && !loading && (
-            <div style={{ textAlign: "center", marginTop: 40 }}>
-              <button
-                onClick={() => { const n = page+1; setPage(n); fetchPosts(n, activeTag); }}
-                style={{
-                  background: "#059669",
-                  color: "#fff", border: "none", borderRadius: 10,
-                  padding: "12px 40px", fontWeight: 700, fontSize: 14,
-                  cursor: "pointer", boxShadow: "0 2px 8px rgba(5, 150, 105, 0.2)",
-                  transition: "all 0.2s",
-                }}
-                onMouseEnter={e => { e.currentTarget.style.background = "#047857"; e.currentTarget.style.transform = "translateY(-2px)"; e.currentTarget.style.boxShadow = "0 4px 12px rgba(5, 150, 105, 0.3)"; }}
-                onMouseLeave={e => { e.currentTarget.style.background = "#059669"; e.currentTarget.style.transform = ""; e.currentTarget.style.boxShadow = "0 2px 8px rgba(5, 150, 105, 0.2)"; }}
-              >
-                Load More Posts
-              </button>
-            </div>
-          )}
-          {loading && page > 1 && (
-            <div style={{ textAlign: "center", padding: 24, color: "#9ca3af", fontWeight: 600, fontSize: 14 }}>
-              Loading…
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* ══════════════ CREATE POST MODAL ══════════════ */}
-      {showCreate && (
-        <div style={{
-          position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)",
-          display: "flex", alignItems: "center", justifyContent: "center",
-          zIndex: 2000, padding: 16, backdropFilter: "blur(4px)",
-          animation: "cfFadeUp 0.25s ease-out",
-        }}>
+        {/* Create post */}
+        {token ? (
           <div style={{
-            background: "#ffffff", borderRadius: 16, width: "100%", maxWidth: 600,
-            boxShadow: "0 20px 60px rgba(0,0,0,0.15)",
-            animation: "cfFadeUp 0.35s cubic-bezier(0.4,0,0.2,1)",
-            maxHeight: "92vh", overflow: "hidden", display: "flex", flexDirection: "column",
-            border: "1px solid #e5e7eb",
+            background: C.card, borderRadius: 16, padding: "20px 24px",
+            border: `1px solid ${C.border}`, marginBottom: 28,
           }}>
-            {/* Modal header */}
-            <div style={{
-              padding: "24px 28px",
-              borderBottom: "1px solid #e5e7eb",
-              display: "flex", justifyContent: "space-between", alignItems: "center",
-            }}>
-              <h2 style={{ margin: 0, fontSize: "1.2rem", fontWeight: 700, color: "#1f2937" }}>
-                Share Your Thought
-              </h2>
-              <button onClick={() => { setShowCreate(false); setError(""); }} style={{
-                background: "transparent", border: "none", borderRadius: "50%",
-                width: 36, height: 36, cursor: "pointer", display: "flex",
-                alignItems: "center", justifyContent: "center",
-                color: "#6b7280", fontSize: 18, transition: "all 0.2s",
+            <textarea
+              value={newText}
+              onChange={e => setNewText(e.target.value)}
+              placeholder="What's on your mind regarding our mission?"
+              maxLength={2000}
+              style={{
+                width: "100%", minHeight: 88, background: C.input,
+                border: `1.5px solid ${C.border}`,
+                borderRadius: 12, padding: "14px 16px", fontSize: 14,
+                color: C.text, resize: "none", outline: "none",
+                fontFamily: "inherit", lineHeight: 1.6, transition: "border-color 0.2s",
               }}
-                onMouseEnter={e => { e.currentTarget.style.background = "#f3f4f6"; e.currentTarget.style.color = "#1f2937"; }}
-                onMouseLeave={e => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "#6b7280"; }}
+              onFocus={e => e.target.style.borderColor = C.green}
+              onBlur={e => e.target.style.borderColor = C.border}
+            />
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 12 }}>
+              <span style={{ fontSize: 12, color: C.muted }}>Text only posts are allowed (no images)</span>
+              <button
+                onClick={handleCreate}
+                disabled={!newText.trim() || submitting}
+                style={{
+                  padding: "10px 26px", borderRadius: 10, border: "none",
+                  background: newText.trim() && !submitting ? C.green : "#2a2a2a",
+                  color: newText.trim() && !submitting ? "#000" : C.muted,
+                  fontWeight: 700, fontSize: 14, transition: "all 0.2s",
+                  cursor: newText.trim() && !submitting ? "pointer" : "not-allowed",
+                }}
               >
-                <FaTimes />
+                {submitting ? "Posting…" : "Post Thought"}
               </button>
             </div>
+          </div>
+        ) : (
+          <div style={{
+            background: C.card, borderRadius: 16, padding: "24px",
+            border: `1px solid ${C.border}`, marginBottom: 28, textAlign: "center",
+          }}>
+            <p style={{ color: C.muted, margin: "0 0 14px", fontSize: 14 }}>
+              Join the conversation — share your thoughts with the community
+            </p>
+            <button
+              onClick={() => navigate("/login")}
+              style={{
+                padding: "10px 28px", borderRadius: 10, border: "none",
+                background: C.green, color: "#000", fontWeight: 700, fontSize: 14, cursor: "pointer",
+              }}
+            >Login to Post</button>
+          </div>
+        )}
 
-            {/* Scrollable body */}
-            <div style={{ padding: "24px 28px", overflowY: "auto", flex: 1 }}>
-              {/* Textarea */}
-              <textarea
-                value={newText}
-                onChange={e => setNewText(e.target.value)}
-                placeholder="What would you like to share?"
-                maxLength={2000}
-                style={{
-                  width: "100%", minHeight: 150,
-                  border: "1px solid #d1d5db", borderRadius: 10,
-                  padding: "14px 16px", fontSize: 14, resize: "vertical",
-                  outline: "none", fontFamily: "inherit", boxSizing: "border-box",
-                  color: "#374151", lineHeight: 1.6, background: "#f9fafb",
-                  transition: "all 0.2s",
-                }}
-                onFocus={e => { e.target.style.borderColor = "#059669"; e.target.style.boxShadow = "0 0 0 3px rgba(5, 150, 105, 0.1)"; e.target.style.background = "#fff"; }}
-                onBlur={e => { e.target.style.borderColor = "#d1d5db"; e.target.style.boxShadow = "none"; e.target.style.background = "#f9fafb"; }}
-              />
-              <div style={{ fontSize: 12, color: "#9ca3af", textAlign: "right", marginTop: 8, marginBottom: 20 }}>
-                {newText.length} / 2000
-              </div>
-
-              {error && (
-                <div style={{
-                  background: "#fee2e2", color: "#991b1b",
-                  padding: "12px 16px", borderRadius: 8, fontSize: 13,
-                  marginBottom: 20, border: "1px solid #fecaca",
-                }}>
-                  ⚠ {error}
+        {/* Posts */}
+        {loading && page === 1 ? (
+          /* skeleton */
+          [1, 2, 3].map(i => (
+            <div key={i} style={{
+              background: C.card, borderRadius: 16, padding: 24,
+              border: `1px solid ${C.border}`, marginBottom: 16,
+            }}>
+              <div style={{ display: "flex", gap: 12, marginBottom: 16 }}>
+                <div style={{ width: 44, height: 44, borderRadius: "50%", background: "#242424" }} />
+                <div>
+                  <div style={{ width: 120, height: 14, borderRadius: 6, background: "#242424", marginBottom: 8 }} />
+                  <div style={{ width: 70, height: 11, borderRadius: 6, background: "#1e1e1e" }} />
                 </div>
-              )}
+              </div>
+              <div style={{ width: "100%", height: 12, borderRadius: 6, background: "#242424", marginBottom: 8 }} />
+              <div style={{ width: "75%", height: 12, borderRadius: 6, background: "#1e1e1e" }} />
+            </div>
+          ))
+        ) : posts.length === 0 ? (
+          <div style={{
+            background: C.card, borderRadius: 16, padding: "60px 24px",
+            border: `1px solid ${C.border}`, textAlign: "center",
+          }}>
+            <div style={{ fontSize: 52, marginBottom: 16 }}>{myPosts ? "📝" : "🌱"}</div>
+            <p style={{ fontWeight: 700, color: C.text, fontSize: "1rem", margin: "0 0 8px" }}>
+              {myPosts ? "You haven't posted anything yet" : "No posts yet"}
+            </p>
+            <p style={{ color: C.muted, fontSize: 14, margin: 0 }}>
+              {myPosts ? "Share your first thought above!" : "Be the first to share your story!"}
+            </p>
+          </div>
+        ) : (
+          <>
+            {posts.map((post, i) => (
+              <PostCard
+                key={post._id}
+                post={post}
+                onLike={handleLike}
+                onPostDelete={handlePostDelete}
+                onPostUpdate={handlePostUpdate}
+                onCommentCountChange={(id, delta) =>
+                  setPosts(prev => prev.map(p =>
+                    p._id === id ? { ...p, commentCount: (p.commentCount || 0) + delta } : p
+                  ))
+                }
+                delay={Math.min(i, 5) * 0.08}
+              />
+            ))}
 
-              {/* Actions */}
-              <div style={{ display: "flex", gap: 12, justifyContent: "flex-end" }}>
-                <button onClick={() => { setShowCreate(false); setError(""); setNewText(""); }} style={{
-                  padding: "10px 24px", borderRadius: 8,
-                  border: "1px solid #d1d5db", background: "transparent",
-                  cursor: "pointer", fontWeight: 600, fontSize: 14, color: "#6b7280",
-                  transition: "all 0.2s",
-                }}
-                  onMouseEnter={e => { e.currentTarget.style.background = "#f9fafb"; e.currentTarget.style.color = "#1f2937"; }}
-                  onMouseLeave={e => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "#6b7280"; }}
-                >
-                  Cancel
-                </button>
+            {hasMore && (
+              <div style={{ textAlign: "center", marginTop: 8 }}>
                 <button
-                  onClick={handleCreate}
-                  disabled={!newText.trim() || submitting}
+                  onClick={() => { const next = page + 1; setPage(next); fetchPosts(next, myPosts ? userId : ""); }}
+                  disabled={loading}
                   style={{
-                    padding: "10px 28px", borderRadius: 8, border: "none",
-                    background: newText.trim() && !submitting ? "#059669" : "#d1d5db",
-                    color: "#fff", fontWeight: 700, fontSize: 14,
-                    cursor: newText.trim() && !submitting ? "pointer" : "not-allowed",
-                    boxShadow: newText.trim() && !submitting ? "0 2px 8px rgba(5, 150, 105, 0.2)" : "none",
+                    padding: "12px 36px", borderRadius: 10,
+                    border: `1px solid ${C.border}`,
+                    background: "none", color: C.sub, fontWeight: 600,
+                    fontSize: 14, cursor: loading ? "not-allowed" : "pointer",
                     transition: "all 0.2s",
                   }}
-                  onMouseEnter={e => { if (newText.trim() && !submitting) { e.currentTarget.style.background = "#047857"; e.currentTarget.style.transform = "translateY(-2px)"; e.currentTarget.style.boxShadow = "0 4px 12px rgba(5, 150, 105, 0.3)"; } }}
-                  onMouseLeave={e => { if (newText.trim() && !submitting) { e.currentTarget.style.background = "#059669"; e.currentTarget.style.transform = ""; e.currentTarget.style.boxShadow = "0 2px 8px rgba(5, 150, 105, 0.2)"; } }}
+                  onMouseEnter={e => { e.currentTarget.style.background = C.card; e.currentTarget.style.color = C.text; }}
+                  onMouseLeave={e => { e.currentTarget.style.background = "none"; e.currentTarget.style.color = C.sub; }}
                 >
-                  {submitting ? "Posting…" : "Post"}
+                  {loading ? "Loading…" : "Load More"}
                 </button>
               </div>
-            </div>
-          </div>
-        </div>
-      )}
+            )}
+          </>
+        )}
+      </div>
+      </main>
     </div>
   );
 }

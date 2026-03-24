@@ -72,7 +72,6 @@ const NgoFundLedger           = lazy(() => import("../pages/ngo/NgoFundLedger.js
 const NgoEmployment           = lazy(() => import("../pages/ngo/NgoEmployment.jsx"));
 const NgoStaff                = lazy(() => import("../pages/ngo/NgoStaff.jsx"));
 const NgoSurveys              = lazy(() => import("../pages/ngo/NgoSurveys.jsx"));
-const NgoImpactReports        = lazy(() => import("../pages/ngo/NgoImpactReports.jsx"));
 const NgoProblems             = lazy(() => import("../pages/ngo/NgoProblems.jsx"));
 
 // Public survey responder & listing
@@ -107,6 +106,7 @@ const OurStory                = lazy(() => import("../pages/about/OurStory.jsx")
 const Strategy2045            = lazy(() => import("../pages/about/Strategy2045.jsx"));
 const OurBoard                = lazy(() => import("../pages/about/OurBoard.jsx"));
 const Founders                = lazy(() => import("../pages/about/Founders.jsx"));
+const OurImpact               = lazy(() => import("../pages/about/OurImpact.jsx"));
 const WorkWithUs              = lazy(() => import("../pages/WorkWithUs.jsx"));
 
 // Community
@@ -250,6 +250,7 @@ function AppRoutes() {
           <Route path="/about/strategy-2045" element={<Strategy2045 />} />
           <Route path="/about/our-board"     element={<OurBoard />} />
           <Route path="/about/founders"      element={<Founders />} />
+          <Route path="/about/our-impact"    element={<OurImpact />} />
           <Route path="/work-with-us"        element={<WorkWithUs />} />
 
           {/* Public */}
@@ -309,7 +310,6 @@ function AppRoutes() {
             <Route path="employment"  element={<NgoEmployment />} />
             <Route path="staff"       element={<NgoStaff />} />
             <Route path="surveys"         element={<NgoSurveys />} />
-            <Route path="impact-reports"  element={<NgoImpactReports />} />
             <Route path="problems"        element={<NgoProblems />} />
           </Route>
         </Routes>

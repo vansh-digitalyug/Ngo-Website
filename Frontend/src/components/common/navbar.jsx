@@ -105,6 +105,7 @@ function Navbar() {
     { name: "Strategy 2045", path: "/about/strategy-2045" },
     { name: "Our Board", path: "/about/our-board" },
     { name: "Founders", path: "/about/founders" },
+    { name: "Our Impact", path: "/about/our-impact" },
   ];
 
   const getInvolvedLinks = [

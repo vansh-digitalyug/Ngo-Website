@@ -19,7 +19,6 @@ import {
   Briefcase,
   Users,
   ClipboardList,
-  BarChart2,
   AlertTriangle,
 } from "lucide-react";
 import "./ngo.css";
@@ -40,7 +39,6 @@ const NAV_ITEMS = [
   { path: "/ngo/employment", label: "Employment & Rojgar", icon: Briefcase },
   { path: "/ngo/staff", label: "Staff & Professionals", icon: Users },
   { path: "/ngo/surveys", label: "Surveys", icon: ClipboardList },
-  { path: "/ngo/impact-reports", label: "Impact Reports", icon: BarChart2 },
 ];
 
 function NgoLayout() {

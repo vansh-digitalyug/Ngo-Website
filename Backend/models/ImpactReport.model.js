@@ -16,7 +16,7 @@ const metricSchema = new Schema(
 
 const impactReportSchema = new Schema(
     {
-        ngoId:     { type: Schema.Types.ObjectId, ref: "Ngo", required: true, index: true },
+        ngoId:     { type: Schema.Types.ObjectId, ref: "Ngo", default: null, index: true },
         villageId: { type: Schema.Types.ObjectId, ref: "VillageAdoption", default: null },
 
         title:       { type: String, required: true, trim: true },
