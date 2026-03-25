@@ -21,7 +21,7 @@ export const getMySurveys = async (req, res) => {
 
 export const createSurvey = async (req, res) => {
     try {
-        const { title, description, questions, status, targetAudience, startDate, endDate, villageId, isPublic } = req.body;
+        const { title, description, questions, status, targetAudience, startDate, endDate, villageId, isPublic, coverImageKey } = req.body;
         if (!title?.trim()) return err(res, "Title is required", 400);
         const survey = await Survey.create({
             ngoId: req.ngo._id,
@@ -34,6 +34,7 @@ export const createSurvey = async (req, res) => {
             startDate: startDate ? new Date(startDate) : null,
             endDate: endDate ? new Date(endDate) : null,
             isPublic: isPublic !== false,
+            coverImageKey: coverImageKey || "",
         });
         ok(res, { survey }, "Survey created", 201);
     } catch (e) { err(res, e.message); }
@@ -45,7 +46,7 @@ export const updateSurvey = async (req, res) => {
         if (!survey) return err(res, "Not found", 404);
         if (survey.ngoId.toString() !== req.ngo._id.toString()) return err(res, "Not authorized", 403);
 
-        const allowed = ["title","description","questions","status","targetAudience","startDate","endDate","villageId","isPublic"];
+        const allowed = ["title","description","questions","status","targetAudience","startDate","endDate","villageId","isPublic","coverImageKey"];
         allowed.forEach(k => {
             if (req.body[k] !== undefined) {
                 if (["startDate","endDate"].includes(k)) survey[k] = req.body[k] ? new Date(req.body[k]) : null;

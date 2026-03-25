@@ -84,6 +84,74 @@ const TYPE_LABEL = {
   scale:           { label: "Scale",            color: "#7c3aed", bg: "#f5f3ff" },
 };
 
+/* ─── Cover Image Loader ───────────────────────────────────── */
+function CoverImageDisplay({ imgKey, title, description }) {
+  const [url, setUrl] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!imgKey) { setLoading(false); return; }
+    fetch(`${API}/api/s3/get-url?key=${encodeURIComponent(imgKey)}`)
+      .then(r => r.json())
+      .then(d => { if (d.data?.Url) setUrl(d.data.Url); })
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, [imgKey]);
+
+  if (!url && !loading) return null;
+
+  return (
+    <div style={{
+      height: 240, borderRadius: 16, overflow: "hidden",
+      boxShadow: "0 8px 32px rgba(0,0,0,0.12)", marginBottom: 24,
+      background: "#e2e8f0", position: "relative",
+    }}>
+      {loading && (
+        <div className="sr-skel" style={{ width: "100%", height: "100%" }} />
+      )}
+      {url && (
+        <>
+          <img
+            src={url}
+            alt="Survey cover"
+            style={{
+              width: "100%", height: "100%", objectFit: "cover",
+              objectPosition: "center", display: "block"
+            }}
+          />
+          {/* Dark overlay for text readability */}
+          <div style={{
+            position: "absolute", inset: 0,
+            background: "linear-gradient(to bottom, rgba(0,0,0,0.2), rgba(0,0,0,0.4))",
+            display: "flex", flexDirection: "column", justifyContent: "flex-end",
+            padding: "28px 24px",
+          }}>
+            <h1 style={{
+              color: "#fff", fontSize: "clamp(1.4rem,4vw,2rem)",
+              fontWeight: 900, margin: 0, lineHeight: 1.2,
+              textShadow: "0 2px 10px rgba(0,0,0,0.4)",
+            }}>
+              {title}
+            </h1>
+            {description && (
+              <p style={{
+                color: "rgba(255,255,255,0.9)", fontSize: 13,
+                lineHeight: 1.6, margin: "10px 0 0",
+                textShadow: "0 1px 6px rgba(0,0,0,0.3)",
+              }}>
+                {description.length > 120 
+                  ? description.substring(0, 120) + '...'
+                  : description
+                }
+              </p>
+            )}
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
 /* ─── Star Rating ───────────────────────────────────────────── */
 function StarRating({ value, onChange }) {
   const [hover, setHover] = useState(0);
@@ -488,119 +556,124 @@ export default function SurveyRespond() {
         </div>
       </div>
 
-      {/* ── Hero header ── */}
+      {/* ── Cover Image Section ── */}
       <div style={{
-        background: "linear-gradient(135deg,#064e3b 0%,#0f766e 55%,#1d4ed8 100%)",
-        padding: "40px 20px 52px",
-        position: "relative",
-        overflow: "hidden",
+        maxWidth: 800, margin: "0 auto", padding: "20px 16px",
       }}>
-        {/* Decorative dots */}
-        <div style={{
-          position: "absolute", inset: 0, opacity: 0.04, pointerEvents: "none",
-          backgroundImage: "radial-gradient(rgba(255,255,255,0.9) 1px, transparent 1px)",
-          backgroundSize: "24px 24px",
-        }} />
-
-        <div style={{ maxWidth: 660, margin: "0 auto", position: "relative", zIndex: 1 }}>
-          {/* NGO badge */}
+        {survey?.coverImageKey ? (
+          <CoverImageDisplay 
+            imgKey={survey.coverImageKey}
+            title={survey.title}
+            description={survey.description}
+          />
+        ) : (
+          /* Fallback gradient header */
           <div style={{
-            display: "inline-flex", alignItems: "center", gap: 7,
-            background: "rgba(255,255,255,0.14)", color: "#fff",
-            borderRadius: 999, padding: "5px 14px", fontSize: 11,
-            fontWeight: 700, letterSpacing: "0.08em", marginBottom: 18,
-            border: "1px solid rgba(255,255,255,0.22)", backdropFilter: "blur(8px)",
+            background: "linear-gradient(135deg,#1a5f52 0%,#0f766e 55%,#065f46 100%)",
+            borderRadius: 16, padding: "40px 24px", marginBottom: 24,
+            position: "relative", overflow: "hidden",
           }}>
-            🏢 {survey?.ngoId?.ngoName || "NGO Survey"}
-          </div>
-
-          <h1 style={{
-            color: "#fff", fontSize: "clamp(1.5rem,4vw,2.2rem)",
-            fontWeight: 900, margin: "0 0 12px", lineHeight: 1.15,
-            letterSpacing: "-0.02em",
-          }}>
-            {survey?.title}
-          </h1>
-
-          {survey?.description && (
-            <p style={{ color: "rgba(255,255,255,0.8)", fontSize: 15, lineHeight: 1.7, margin: "0 0 16px", maxWidth: 520 }}>
-              {survey.description}
-            </p>
-          )}
-
-          {/* Meta pills */}
-          <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
-            {survey?.villageId && (
-              <div style={{
-                background: "rgba(255,255,255,0.12)", color: "#fff",
-                borderRadius: 999, padding: "5px 12px", fontSize: 12, fontWeight: 600,
-                border: "1px solid rgba(255,255,255,0.2)",
-              }}>
-                📍 {survey.villageId.villageName}, {survey.villageId.district}
-              </div>
-            )}
-            {survey?.targetAudience && (
-              <div style={{
-                background: "rgba(255,255,255,0.12)", color: "#fff",
-                borderRadius: 999, padding: "5px 12px", fontSize: 12, fontWeight: 600,
-                border: "1px solid rgba(255,255,255,0.2)",
-              }}>
-                👥 {survey.targetAudience}
-              </div>
-            )}
+            {/* NGO badge */}
             <div style={{
-              background: "rgba(255,255,255,0.12)", color: "#fff",
-              borderRadius: 999, padding: "5px 12px", fontSize: 12, fontWeight: 600,
+              display: "inline-flex", alignItems: "center", gap: 7,
+              background: "rgba(255,255,255,0.15)", color: "#fff",
+              borderRadius: 999, padding: "5px 12px", fontSize: 10,
+              fontWeight: 700, letterSpacing: "0.05em", marginBottom: 14,
               border: "1px solid rgba(255,255,255,0.2)",
             }}>
-              📝 {total} Question{total !== 1 ? "s" : ""}
+              🏢 {survey?.ngoId?.ngoName || "NGO Survey"}
+            </div>
+
+            <h1 style={{
+              color: "#fff", fontSize: "clamp(1.4rem,4vw,2rem)",
+              fontWeight: 900, margin: "0 0 12px", lineHeight: 1.2,
+            }}>
+              {survey?.title}
+            </h1>
+
+            {survey?.description && (
+              <p style={{
+                color: "rgba(255,255,255,0.85)", fontSize: 14,
+                lineHeight: 1.6, margin: 0, maxWidth: 520,
+              }}>
+                {survey.description}
+              </p>
+            )}
+
+            {/* Meta pills */}
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginTop: 14 }}>
+              {survey?.villageId && (
+                <div style={{
+                  background: "rgba(255,255,255,0.12)", color: "#fff",
+                  borderRadius: 999, padding: "4px 10px", fontSize: 11, fontWeight: 600,
+                  border: "1px solid rgba(255,255,255,0.2)",
+                }}>
+                  📍 {survey.villageId.villageName}
+                </div>
+              )}
+              {survey?.targetAudience && (
+                <div style={{
+                  background: "rgba(255,255,255,0.12)", color: "#fff",
+                  borderRadius: 999, padding: "4px 10px", fontSize: 11, fontWeight: 600,
+                  border: "1px solid rgba(255,255,255,0.2)",
+                }}>
+                  👥 {survey.targetAudience}
+                </div>
+              )}
+              <div style={{
+                background: "rgba(255,255,255,0.12)", color: "#fff",
+                borderRadius: 999, padding: "4px 10px", fontSize: 11, fontWeight: 600,
+                border: "1px solid rgba(255,255,255,0.2)",
+              }}>
+                📝 {total} Q
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* ── Content ── */}
+      <div style={{ maxWidth: 700, margin: "0 auto", padding: "28px 16px 80px" }}>
+
+        {/* Respondent info card */}
+        <div className="sr-fade" style={{
+          background: "#fff", borderRadius: 14, padding: "18px 20px",
+          marginBottom: 24, boxShadow: "0 2px 10px rgba(0,0,0,0.05)",
+          border: "1px solid #f0f4f8",
+        }}>
+          <p style={{ margin: "0 0 12px", fontWeight: 700, fontSize: 13, color: "#1e293b", display: "flex", alignItems: "center", gap: 6 }}>
+            <span style={{ fontSize: 16 }}>👤</span> Your Information
+            <span style={{ fontWeight: 500, color: "#cbd5e1", fontSize: 11 }}>optional</span>
+          </p>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+            <div>
+              <label style={{ fontSize: 11, fontWeight: 600, color: "#64748b", display: "block", marginBottom: 4 }}>
+                Full Name
+              </label>
+              <input
+                className="sr-text-input"
+                value={respondentName}
+                onChange={e => setRespondentName(e.target.value)}
+                placeholder="Enter your name"
+              />
+            </div>
+            <div>
+              <label style={{ fontSize: 11, fontWeight: 600, color: "#64748b", display: "block", marginBottom: 4 }}>
+                Phone Number
+              </label>
+              <input
+                className="sr-text-input"
+                value={respondentPhone}
+                onChange={e => setRespondentPhone(e.target.value)}
+                placeholder="+91 00000 00000"
+                type="tel"
+              />
             </div>
           </div>
         </div>
 
-        {/* Wave bottom */}
-        <div style={{ position: "absolute", bottom: -2, left: 0, right: 0, lineHeight: 0 }}>
-          <svg viewBox="0 0 1440 40" preserveAspectRatio="none" style={{ width: "100%", height: 40 }}>
-            <path d="M0,20 C480,40 960,0 1440,20 L1440,40 L0,40Z" fill="#f1f5f9" />
-          </svg>
-        </div>
-      </div>
-
-      {/* ── Content ── */}
-      <div style={{ maxWidth: 660, margin: "0 auto", padding: "24px 16px 80px" }}>
-
-        {/* Respondent info card */}
-        <div className="sr-fade" style={{
-          background: "#fff", borderRadius: 18, padding: "20px 22px",
-          marginBottom: 20, boxShadow: "0 2px 12px rgba(0,0,0,0.06)",
-          border: "1.5px solid #f1f5f9",
-        }}>
-          <p style={{ margin: "0 0 14px", fontWeight: 800, fontSize: 14, color: "#374151", display: "flex", alignItems: "center", gap: 7 }}>
-            <span style={{ fontSize: 18 }}>👤</span> Your Information
-            <span style={{ fontWeight: 500, color: "#9ca3af", fontSize: 12 }}>(optional)</span>
-          </p>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
-            <input
-              className="sr-text-input"
-              value={respondentName}
-              onChange={e => setRespondentName(e.target.value)}
-              placeholder="Your name"
-            />
-            <input
-              className="sr-text-input"
-              value={respondentPhone}
-              onChange={e => setRespondentPhone(e.target.value)}
-              placeholder="Phone number"
-              type="tel"
-            />
-          </div>
-          <p style={{ margin: "10px 0 0", fontSize: 11.5, color: "#94a3b8" }}>
-            You can fill this survey anonymously. Name and phone are not required.
-          </p>
-        </div>
-
         {/* Questions */}
-        <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
           {(survey?.questions || []).map((q, i) => (
             <QuestionCard
               key={q._id}
@@ -616,26 +689,26 @@ export default function SurveyRespond() {
         {/* Error */}
         {submitError && (
           <div style={{
-            margin: "20px 0 0",
-            background: "#fff1f2", border: "1.5px solid #fecdd3",
-            color: "#be123c", padding: "14px 16px", borderRadius: 12,
-            fontSize: 13, fontWeight: 600, display: "flex", alignItems: "center", gap: 9,
+            margin: "24px 0 0",
+            background: "#fee2e2", border: "1px solid #fecaca",
+            color: "#c41211", padding: "12px 16px", borderRadius: 10,
+            fontSize: 12, fontWeight: 600, display: "flex", alignItems: "center", gap: 8,
           }}>
             <span style={{ fontSize: 18 }}>⚠️</span> {submitError}
           </div>
         )}
 
         {/* Submit */}
-        <div style={{ marginTop: 28 }}>
+        <div style={{ marginTop: 32 }}>
           {/* Completion indicator */}
           {requiredLeft > 0 && (
-            <p style={{ textAlign: "center", fontSize: 13, color: "#f97316", fontWeight: 600, marginBottom: 12 }}>
-              ⚠ {requiredLeft} required question{requiredLeft > 1 ? "s" : ""} still unanswered
+            <p style={{ textAlign: "center", fontSize: 12, color: "#ea580c", fontWeight: 600, marginBottom: 14 }}>
+              ⏳ {requiredLeft} required question{requiredLeft > 1 ? "s" : ""} remaining
             </p>
           )}
           {requiredLeft === 0 && total > 0 && (
-            <p style={{ textAlign: "center", fontSize: 13, color: "#059669", fontWeight: 700, marginBottom: 12 }}>
-              ✅ All required questions answered — ready to submit!
+            <p style={{ textAlign: "center", fontSize: 12, color: "#059669", fontWeight: 700, marginBottom: 14 }}>
+              ✅ All required questions answered
             </p>
           )}
 
@@ -643,33 +716,32 @@ export default function SurveyRespond() {
             onClick={handleSubmit}
             disabled={submitting}
             style={{
-              width: "100%", padding: "16px",
-              borderRadius: 14, border: "none",
+              width: "100%", padding: "14px 20px",
+              borderRadius: 10, border: "none",
               background: submitting
-                ? "#94a3b8"
-                : "linear-gradient(135deg,#0f766e 0%,#065f46 100%)",
-              color: "#fff", fontWeight: 900, fontSize: 17,
+                ? "#cbd5e1"
+                : "#0f766e",
+              color: "#fff", fontWeight: 800, fontSize: 15,
               cursor: submitting ? "not-allowed" : "pointer",
-              boxShadow: submitting ? "none" : "0 8px 28px rgba(15,118,110,0.35)",
-              transition: "all 0.3s",
-              display: "flex", alignItems: "center", justifyContent: "center", gap: 10,
+              boxShadow: submitting ? "none" : "0 4px 12px rgba(15,118,110,0.2)",
+              transition: "all 0.25s",
+              display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
             }}
-            onMouseEnter={e => { if (!submitting) { e.currentTarget.style.transform = "translateY(-2px)"; e.currentTarget.style.boxShadow = "0 12px 36px rgba(15,118,110,0.45)"; } }}
-            onMouseLeave={e => { if (!submitting) { e.currentTarget.style.transform = ""; e.currentTarget.style.boxShadow = "0 8px 28px rgba(15,118,110,0.35)"; } }}
+            onMouseEnter={e => { if (!submitting) { e.currentTarget.style.transform = "translateY(-1px)"; e.currentTarget.style.boxShadow = "0 6px 16px rgba(15,118,110,0.28)"; } }}
+            onMouseLeave={e => { if (!submitting) { e.currentTarget.style.transform = ""; e.currentTarget.style.boxShadow = "0 4px 12px rgba(15,118,110,0.2)"; } }}
           >
             {submitting ? (
               <>
-                <div style={{ width: 20, height: 20, border: "3px solid rgba(255,255,255,0.3)", borderTopColor: "#fff", borderRadius: "50%" }} className="sr-spin" />
+                <div style={{ width: 18, height: 18, border: "3px solid rgba(255,255,255,0.3)", borderTopColor: "#fff", borderRadius: "50%" }} className="sr-spin" />
                 Submitting…
               </>
             ) : (
-              <>🚀 Submit Response</>
+              <>Submit Survey Response →</>
             )}
           </button>
 
-          <p style={{ textAlign: "center", fontSize: 12, color: "#94a3b8", marginTop: 14, lineHeight: 1.6 }}>
-            By submitting, your feedback will be shared with {survey?.ngoId?.ngoName}.<br />
-            This survey is powered by <strong style={{ color: "#0f766e" }}>SevaIndia</strong>.
+          <p style={{ textAlign: "center", fontSize: 11, color: "#94a3b8", marginTop: 12, lineHeight: 1.6 }}>
+            Your privacy is important to us. Data is used for community improvement only.
           </p>
         </div>
       </div>

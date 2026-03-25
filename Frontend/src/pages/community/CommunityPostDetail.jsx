@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { FaArrowLeft, FaHeart, FaRegHeart, FaComment, FaEdit, FaTrash, FaReply, FaTimes } from "react-icons/fa";
+import { FaArrowLeft, FaHeart, FaRegHeart, FaComment, FaEdit, FaTrash, FaReply, FaTimes, FaCloudUploadAlt } from "react-icons/fa";
 import { API } from "../../utils/S3.js";
 
 const styles = `
@@ -243,7 +243,7 @@ export default function CommunityPostDetail() {
   };
 
   if (loading) return (
-    <div style={{ minHeight: "100vh", background: "#f8fafc", display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}>
+    <div style={{ minHeight: "100vh", background: "#f5f1e8", display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}>
       <div style={{ width: "100%", maxWidth: 700 }}>
         <div className="skeleton" style={{ height: 60, borderRadius: 12, marginBottom: 20 }} />
         <div className="skeleton" style={{ height: 120, borderRadius: 12, marginBottom: 20 }} />
@@ -253,7 +253,7 @@ export default function CommunityPostDetail() {
   );
 
   if (!post) return (
-    <div style={{ minHeight: "100vh", background: "#f9fafb", display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}>
+    <div style={{ minHeight: "100vh", background: "#f5f1e8", display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}>
       <div style={{ textAlign: "center" }}>
         <div style={{ fontSize: 64, marginBottom: 16 }}>📭</div>
         <p style={{ color: "#6b7280", fontSize: "1.1rem", fontWeight: 600 }}>Post not found</p>
@@ -279,7 +279,7 @@ export default function CommunityPostDetail() {
   );
 
   return (
-    <div style={{ minHeight: "100vh", background: "#f9fafb", padding: "20px 16px 60px" }}>
+    <div style={{ minHeight: "100vh", background: "#f5f1e8", padding: "20px 16px 60px" }}>
       <div style={{ maxWidth: 700, margin: "0 auto" }}>
         {/* Back Button */}
         <button
@@ -455,9 +455,16 @@ export default function CommunityPostDetail() {
               {post.isLiked ? <FaHeart /> : <FaRegHeart />}
               <span>{post.likeCount || 0}</span>
             </button>
-            <span style={{ display: "flex", alignItems: "center", gap: 8, color: "#6b7280", fontWeight: 700, fontSize: 16 }}>
-              <FaComment /> {post.commentCount || 0}
-            </span>
+            <button style={{ 
+              background: "none", border: "none", cursor: "pointer", padding: 0,
+              display: "flex", alignItems: "center", gap: 8, color: "#6b7280", fontWeight: 700, fontSize: 16,
+              transition: "all 0.2s",
+            }}
+            onMouseEnter={e => { e.currentTarget.style.color = "#6b8e23"; }}
+            onMouseLeave={e => { e.currentTarget.style.color = "#6b7280"; }}
+            >
+              <FaComment /> {post.commentCount || 0} Comment{post.commentCount !== 1 ? "s" : ""}
+            </button>
           </div>
         </div>
 
@@ -550,40 +557,38 @@ export default function CommunityPostDetail() {
           </div>
         ) : (
           <div style={{
-            background: "rgba(16, 185, 129, 0.1)",
+            background: "linear-gradient(135deg, rgba(107, 142, 35, 0.08) 0%, rgba(107, 142, 35, 0.04) 100%)",
             borderRadius: 18, 
-            padding: "28px 24px", 
+            padding: "32px 28px", 
             marginBottom: 28,
             textAlign: "center", 
-            boxShadow: "0 2px 12px rgba(0,0,0,0.4)",
-            border: "1px solid rgba(16, 185, 129, 0.2)",
+            boxShadow: "0 2px 12px rgba(0,0,0,0.04)",
+            border: "1.5px solid rgba(107, 142, 35, 0.2)",
           }}>
-            <p style={{ margin: "0 0 14px", color: "#ccc", fontSize: "1.02rem", fontWeight: 600 }}>
+            <p style={{ margin: "0 0 16px", color: "#475569", fontSize: "1.05rem", fontWeight: 600 }}>
               Sign in to join the conversation
             </p>
             <button 
               onClick={() => navigate("/login")}
               style={{
-                background: "#10b981",
-                color: "#000", 
+                background: "linear-gradient(135deg, #6b8e23, #556b2f)",
+                color: "#fff", 
                 border: "none", 
                 borderRadius: 12,
-                padding: "12px 32px", 
+                padding: "13px 36px", 
                 fontWeight: 700, 
                 fontSize: 15,
                 cursor: "pointer",
                 transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
-                boxShadow: "0 6px 16px rgba(16, 185, 129, 0.2)",
+                boxShadow: "0 6px 16px rgba(107, 142, 35, 0.25)",
               }}
               onMouseEnter={e => {
-                e.currentTarget.style.background = "#059669";
                 e.currentTarget.style.transform = "translateY(-2px)";
-                e.currentTarget.style.boxShadow = "0 10px 24px rgba(5, 150, 105, 0.2)";
+                e.currentTarget.style.boxShadow = "0 12px 28px rgba(107, 142, 35, 0.35)";
               }}
               onMouseLeave={e => {
-                e.currentTarget.style.background = "#059669";
                 e.currentTarget.style.transform = "translateY(0)";
-                e.currentTarget.style.boxShadow = "0 6px 16px rgba(5, 150, 105, 0.15)";
+                e.currentTarget.style.boxShadow = "0 6px 16px rgba(107, 142, 35, 0.25)";
               }}
             >
               Login to Comment
@@ -593,8 +598,8 @@ export default function CommunityPostDetail() {
 
         {/* ── Comments ── */}
         <div>
-          <h3 style={{ fontSize: "1.1rem", fontWeight: 700, color: "#1f2937", margin: "0 0 20px" }}>
-            💭 Comments ({post.commentCount || 0})
+          <h3 style={{ fontSize: "1.1rem", fontWeight: 700, color: "#1f2937", margin: "0 0 20px", display: "flex", alignItems: "center", gap: 10 }}>
+            <FaComment size={18} style={{ color: "#6b8e23" }} /> Comments ({post.commentCount || 0})
           </h3>
           {commentsLoading ? (
             <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>

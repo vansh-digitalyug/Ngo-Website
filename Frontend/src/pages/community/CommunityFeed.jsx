@@ -1,25 +1,25 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   FaHeart, FaRegHeart, FaComment, FaShare,
   FaTh, FaUsers, FaCalendarAlt, FaTrophy,
   FaChartLine, FaLeaf, FaPaperPlane,
-  FaEdit, FaTrash,
+  FaEdit, FaTrash, FaCloudUploadAlt,
 } from "react-icons/fa";
 import { API } from "../../utils/S3.js";
 
 /* ── design tokens ── */
 const C = {
-  bg:     "#0f0f0f",
-  side:   "#141414",
-  card:   "#1a1a1a",
-  input:  "#242424",
-  bubble: "#222222",
-  green:  "#22c55e",
-  border: "#282828",
-  text:   "#f1f5f9",
-  sub:    "#94a3b8",
-  muted:  "#6b7280",
+  bg:     "#f5f1e8",
+  side:   "#ffffff",
+  card:   "#ffffff",
+  input:  "#f0ebe2",
+  bubble: "#f0ebe2",
+  green:  "#6b8e23",
+  border: "#e8dfd3",
+  text:   "#0f172a",
+  sub:    "#475569",
+  muted:  "#94a3b8",
 };
 
 /* ── keyframes injected once ── */
@@ -34,6 +34,13 @@ const STYLES = `
     100%{ transform:scale(1); }
   }
   .cf-card { animation: cfFadeUp 0.38s ease-out both; }
+  @keyframes cfShimmer { 0%{background-position:-700px 0} 100%{background-position:700px 0} }
+  .cf-img-skel {
+    background: linear-gradient(90deg,#e8ecf0 0%,#d1d8e0 50%,#e8ecf0 100%);
+    background-size: 700px 100%;
+    animation: cfShimmer 1.6s infinite;
+    border-radius: 12px;
+  }
 `;
 
 /* ── timeAgo ── */
@@ -68,6 +75,120 @@ function Avatar({ name = "?", size = 40 }) {
       border: "2px solid rgba(255,255,255,0.12)",
     }}>
       {letters}
+    </div>
+  );
+}
+
+/* ── PostCarousel — Instagram-style image carousel ── */
+function PostCarousel({ imageKeys }) {
+  const [urls,    setUrls]    = useState([]);
+  const [current, setCurrent] = useState(0);
+  const token = localStorage.getItem("token");
+
+  useEffect(() => {
+    if (!imageKeys?.length) return;
+    setCurrent(0);
+    Promise.all(
+      imageKeys.map(key =>
+        fetch(`${API}/api/s3/get-url?key=${encodeURIComponent(key)}`, {
+          headers: token ? { Authorization: `Bearer ${token}` } : {},
+        })
+          .then(r => r.json())
+          .then(d => d.data?.Url || null)
+          .catch(() => null)
+      )
+    ).then(results => setUrls(results.filter(Boolean)));
+  }, [imageKeys]);
+
+  if (!urls.length) {
+    return <div className="cf-img-skel" style={{ height: 320, borderRadius: 12 }} />;
+  }
+
+  const total = urls.length;
+  const prev  = (e) => { e.stopPropagation(); setCurrent(c => (c - 1 + total) % total); };
+  const next  = (e) => { e.stopPropagation(); setCurrent(c => (c + 1) % total); };
+
+  return (
+    <div style={{ position: "relative", borderRadius: 12, overflow: "hidden", background: "#0f172a", userSelect: "none" }}>
+
+      {/* Image */}
+      <img
+        src={urls[current]}
+        alt={`Photo ${current + 1}`}
+        style={{
+          width: "100%", display: "block",
+          maxHeight: 480, objectFit: "cover",
+          transition: "opacity 0.25s",
+        }}
+      />
+
+      {/* Only show controls if more than 1 image */}
+      {total > 1 && (
+        <>
+          {/* ← Left arrow */}
+          {current > 0 && (
+            <button
+              onClick={prev}
+              style={{
+                position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)",
+                width: 34, height: 34, borderRadius: "50%",
+                background: "rgba(255,255,255,0.88)", border: "none",
+                color: "#0f172a", cursor: "pointer",
+                display: "flex", alignItems: "center", justifyContent: "center",
+                fontSize: 20, fontWeight: 900, zIndex: 3,
+                boxShadow: "0 2px 8px rgba(0,0,0,0.25)",
+                lineHeight: 1,
+              }}
+            >‹</button>
+          )}
+
+          {/* → Right arrow */}
+          {current < total - 1 && (
+            <button
+              onClick={next}
+              style={{
+                position: "absolute", right: 10, top: "50%", transform: "translateY(-50%)",
+                width: 34, height: 34, borderRadius: "50%",
+                background: "rgba(255,255,255,0.88)", border: "none",
+                color: "#0f172a", cursor: "pointer",
+                display: "flex", alignItems: "center", justifyContent: "center",
+                fontSize: 20, fontWeight: 900, zIndex: 3,
+                boxShadow: "0 2px 8px rgba(0,0,0,0.25)",
+                lineHeight: 1,
+              }}
+            >›</button>
+          )}
+
+          {/* Dots */}
+          <div style={{
+            position: "absolute", bottom: 10, left: "50%", transform: "translateX(-50%)",
+            display: "flex", gap: 5, zIndex: 3,
+          }}>
+            {urls.map((_, idx) => (
+              <div
+                key={idx}
+                onClick={(e) => { e.stopPropagation(); setCurrent(idx); }}
+                style={{
+                  width: idx === current ? 20 : 7,
+                  height: 7, borderRadius: 4,
+                  background: idx === current ? "#fff" : "rgba(255,255,255,0.5)",
+                  cursor: "pointer", transition: "all 0.25s ease",
+                }}
+              />
+            ))}
+          </div>
+
+          {/* Counter badge */}
+          <div style={{
+            position: "absolute", top: 10, right: 10,
+            background: "rgba(0,0,0,0.55)", color: "#fff",
+            borderRadius: 999, padding: "3px 10px",
+            fontSize: 12, fontWeight: 700, zIndex: 3,
+          }}>
+            {current + 1} / {total}
+          </div>
+        </>
+      )}
     </div>
   );
 }
@@ -237,7 +358,7 @@ function PostCard({ post, onLike, onPostDelete, onPostUpdate, onCommentCountChan
                 display: "flex", alignItems: "center", gap: 5, padding: "5px 10px",
                 borderRadius: 8, fontSize: 13, fontWeight: 600, transition: "all 0.2s",
               }}
-              onMouseEnter={e => { e.currentTarget.style.color = "#60a5fa"; e.currentTarget.style.background = "#1d3461"; }}
+              onMouseEnter={e => { e.currentTarget.style.color = "#2563eb"; e.currentTarget.style.background = "#dbeafe"; }}
               onMouseLeave={e => { e.currentTarget.style.color = C.muted; e.currentTarget.style.background = "none"; }}
             >
               <FaEdit size={11} /> Edit
@@ -249,7 +370,7 @@ function PostCard({ post, onLike, onPostDelete, onPostUpdate, onCommentCountChan
                 display: "flex", alignItems: "center", gap: 5, padding: "5px 10px",
                 borderRadius: 8, fontSize: 13, fontWeight: 600, transition: "all 0.2s",
               }}
-              onMouseEnter={e => { e.currentTarget.style.color = "#f87171"; e.currentTarget.style.background = "#3f1515"; }}
+              onMouseEnter={e => { e.currentTarget.style.color = "#dc2626"; e.currentTarget.style.background = "#fee2e2"; }}
               onMouseLeave={e => { e.currentTarget.style.color = C.muted; e.currentTarget.style.background = "none"; }}
             >
               <FaTrash size={11} /> Delete
@@ -286,7 +407,7 @@ function PostCard({ post, onLike, onPostDelete, onPostUpdate, onCommentCountChan
                 disabled={!editText.trim() || editSubmitting}
                 style={{
                   padding: "7px 20px", borderRadius: 8, border: "none",
-                  background: editText.trim() ? C.green : "#2d2d2d",
+                  background: editText.trim() ? C.green : C.input,
                   color: editText.trim() ? "#000" : C.muted,
                   cursor: editText.trim() ? "pointer" : "not-allowed",
                   fontSize: 13, fontWeight: 700,
@@ -310,6 +431,13 @@ function PostCard({ post, onLike, onPostDelete, onPostUpdate, onCommentCountChan
                     borderRadius: 999, padding: "3px 12px", fontSize: 12, fontWeight: 600,
                   }}>#{tag}</span>
                 ))}
+              </div>
+            )}
+
+            {/* ── Post Images ── */}
+            {post.imageKeys?.length > 0 && (
+              <div style={{ marginTop: 14 }}>
+                <PostCarousel imageKeys={post.imageKeys} />
               </div>
             )}
           </>
@@ -344,16 +472,17 @@ function PostCard({ post, onLike, onPostDelete, onPostUpdate, onCommentCountChan
         <button
           onClick={toggleComments}
           style={{
-            background: "none", border: "none", cursor: "pointer", padding: 0,
-            display: "flex", alignItems: "center", gap: 7,
+            background: "none", border: "none", cursor: "pointer", padding: "6px 0",
+            display: "flex", alignItems: "center", gap: 8,
             color: showComments ? C.green : C.muted,
-            fontSize: 14, fontWeight: 600, transition: "color 0.2s",
+            fontSize: 14, fontWeight: 600, transition: "all 0.2s",
+            borderRadius: 6,
           }}
-          onMouseEnter={e => { if (!showComments) e.currentTarget.style.color = C.sub; }}
-          onMouseLeave={e => { if (!showComments) e.currentTarget.style.color = C.muted; }}
+          onMouseEnter={e => { if (!showComments) { e.currentTarget.style.color = C.green; e.currentTarget.style.background = `${C.green}08`; } }}
+          onMouseLeave={e => { if (!showComments) { e.currentTarget.style.color = C.muted; e.currentTarget.style.background = "none"; } }}
         >
-          <FaComment />
-          <span>{post.commentCount || 0} Comments</span>
+          <FaComment size={15} />
+          <span>{post.commentCount || 0} Comment{post.commentCount !== 1 ? "s" : ""}</span>
         </button>
 
         {/* Share */}
@@ -373,7 +502,7 @@ function PostCard({ post, onLike, onPostDelete, onPostUpdate, onCommentCountChan
 
       {/* ══ Comments Dropdown ══ */}
       {showComments && (
-        <div style={{ borderTop: `1px solid ${C.border}`, background: "#161616", padding: "20px 24px 24px" }}>
+        <div style={{ borderTop: `1px solid ${C.border}`, background: C.bg, padding: "20px 24px 24px" }}>
           {loadingCmts ? (
             <div style={{ textAlign: "center", padding: "20px 0", color: C.muted, fontSize: 14 }}>
               Loading comments…
@@ -402,12 +531,12 @@ function PostCard({ post, onLike, onPostDelete, onPostUpdate, onCommentCountChan
                               <span style={{ fontWeight: 700, color: C.text, fontSize: 14 }}>
                                 {comment.author?.name || "Anonymous"}
                               </span>
-                              <span style={{ color: "#3f3f3f", fontSize: 12 }}>•</span>
+                              <span style={{ color: C.muted, fontSize: 12 }}>•</span>
                               <span style={{ color: C.muted, fontSize: 12 }}>
                                 {timeAgo(comment.createdAt)}
                               </span>
                             </div>
-                            <p style={{ margin: 0, color: "#cbd5e1", fontSize: 14, lineHeight: 1.65 }}>
+                            <p style={{ margin: 0, color: C.sub, fontSize: 14, lineHeight: 1.65 }}>
                               {comment.text}
                             </p>
                           </div>
@@ -458,7 +587,7 @@ function PostCard({ post, onLike, onPostDelete, onPostUpdate, onCommentCountChan
                                 onClick={() => handleReply(comment._id)}
                                 disabled={!replyText.trim() || submitting}
                                 style={{
-                                  background: replyText.trim() ? C.green : "#2d2d2d",
+                                  background: replyText.trim() ? C.green : C.input,
                                   border: "none", borderRadius: 20,
                                   padding: "8px 16px", cursor: replyText.trim() ? "pointer" : "not-allowed",
                                   color: replyText.trim() ? "#000" : C.muted,
@@ -485,14 +614,14 @@ function PostCard({ post, onLike, onPostDelete, onPostUpdate, onCommentCountChan
                                 <div key={reply._id} style={{ display: "flex", gap: 10 }}>
                                   <Avatar name={reply.author?.name || "?"} size={30} />
                                   <div style={{
-                                    background: "#1c1c1c", borderRadius: "4px 12px 12px 12px",
+                                    background: C.bubble, borderRadius: "4px 12px 12px 12px",
                                     padding: "10px 14px", flex: 1,
                                     border: `1px solid ${C.border}`,
                                   }}>
                                     <span style={{ fontWeight: 700, color: C.text, fontSize: 13 }}>
                                       {reply.author?.name || "Anonymous"}
                                     </span>
-                                    <p style={{ margin: "4px 0 0", color: "#cbd5e1", fontSize: 13, lineHeight: 1.55 }}>
+                                    <p style={{ margin: "4px 0 0", color: C.sub, fontSize: 13, lineHeight: 1.55 }}>
                                       {reply.text}
                                     </p>
                                   </div>
@@ -577,9 +706,12 @@ export default function CommunityFeed() {
   const [page,       setPage]       = useState(1);
   const [hasMore,    setHasMore]    = useState(false);
   const [myPosts,    setMyPosts]    = useState(false);
-  const [newText,    setNewText]    = useState("");
-  const [submitting, setSubmitting] = useState(false);
-  const [totalPosts, setTotalPosts] = useState(0);
+  const [newText,          setNewText]          = useState("");
+  const [submitting,       setSubmitting]       = useState(false);
+  const [totalPosts,       setTotalPosts]       = useState(0);
+  const [newImages,        setNewImages]        = useState([]);   // File[]
+  const [newImagePreviews, setNewImagePreviews] = useState([]);   // blob URLs
+  const imgInputRef = useRef(null);
 
   const userId = (user?.id || user?._id || "").toString();
 
@@ -627,16 +759,52 @@ export default function CommunityFeed() {
     } catch (e) { console.error(e); }
   };
 
+  const handleImageSelect = (e) => {
+    const incoming = Array.from(e.target.files || []);
+    if (!incoming.length) return;
+    const remaining = 4 - newImages.length;
+    const toAdd = incoming.slice(0, remaining);
+    if (!toAdd.length) return;
+    setNewImages(prev => [...prev, ...toAdd]);
+    setNewImagePreviews(prev => [...prev, ...toAdd.map(f => URL.createObjectURL(f))]);
+    e.target.value = "";
+  };
+
+  const removeImage = (idx) => {
+    URL.revokeObjectURL(newImagePreviews[idx]);
+    setNewImages(prev => prev.filter((_, i) => i !== idx));
+    setNewImagePreviews(prev => prev.filter((_, i) => i !== idx));
+  };
+
   const handleCreate = async () => {
     if (!newText.trim() || submitting) return;
     setSubmitting(true);
     try {
+      // Upload images to S3 first
+      const keys = [];
+      for (const file of newImages) {
+        const r1 = await fetch(`${API}/api/s3/generate-upload-url`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+          body: JSON.stringify({ fileName: file.name, fileType: file.type, location: "community-posts" }),
+        });
+        const d1 = await r1.json();
+        if (d1.data?.uploadUrl && d1.data?.key) {
+          await fetch(d1.data.uploadUrl, { method: "PUT", body: file, headers: { "Content-Type": file.type } });
+          keys.push(d1.data.key);
+        }
+      }
       const res = await fetch(`${API}/api/posts`, {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ text: newText.trim(), tags: [] }),
+        body: JSON.stringify({ text: newText.trim(), imageKeys: keys, tags: [] }),
       });
-      if (res.ok) { setNewText(""); fetchPosts(1, myPosts ? userId : ""); }
+      if (res.ok) {
+        setNewText("");
+        setNewImagePreviews(prev => { prev.forEach(u => URL.revokeObjectURL(u)); return []; });
+        setNewImages([]);
+        fetchPosts(1, myPosts ? userId : "");
+      }
     } catch (e) { console.error(e); }
     finally { setSubmitting(false); }
   };
@@ -701,7 +869,7 @@ export default function CommunityFeed() {
                 fontWeight: item.active ? 700 : 500,
                 textAlign: "left", width: "100%", transition: "all 0.18s",
               }}
-              onMouseEnter={e => { if (!item.active) { e.currentTarget.style.background = "#1e1e1e"; e.currentTarget.style.color = C.sub; } }}
+              onMouseEnter={e => { if (!item.active) { e.currentTarget.style.background = C.input; e.currentTarget.style.color = C.sub; } }}
               onMouseLeave={e => { if (!item.active) { e.currentTarget.style.background = "none"; e.currentTarget.style.color = C.muted; } }}
             >
               {item.icon} {item.label}
@@ -720,7 +888,7 @@ export default function CommunityFeed() {
                 fontWeight: myPosts ? 700 : 500,
                 textAlign: "left", width: "100%", transition: "all 0.18s",
               }}
-              onMouseEnter={e => { if (!myPosts) { e.currentTarget.style.background = "#1e1e1e"; e.currentTarget.style.color = C.sub; } }}
+              onMouseEnter={e => { if (!myPosts) { e.currentTarget.style.background = C.input; e.currentTarget.style.color = C.sub; } }}
               onMouseLeave={e => { if (!myPosts) { e.currentTarget.style.background = "none"; e.currentTarget.style.color = C.muted; } }}
             >
               <FaUsers size={14} /> My Posts
@@ -792,14 +960,74 @@ export default function CommunityFeed() {
               onFocus={e => e.target.style.borderColor = C.green}
               onBlur={e => e.target.style.borderColor = C.border}
             />
+            {/* Image previews */}
+            {newImagePreviews.length > 0 && (
+              <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 12 }}>
+                {newImagePreviews.map((src, idx) => (
+                  <div key={idx} style={{ position: "relative" }}>
+                    <img
+                      src={src} alt=""
+                      style={{
+                        width: 80, height: 80, objectFit: "cover",
+                        borderRadius: 10, border: `1.5px solid ${C.border}`, display: "block",
+                      }}
+                    />
+                    <button
+                      onClick={() => removeImage(idx)}
+                      style={{
+                        position: "absolute", top: -7, right: -7,
+                        width: 20, height: 20, borderRadius: "50%",
+                        border: "none", background: "#ef4444", color: "#fff",
+                        fontSize: 11, cursor: "pointer", lineHeight: 1,
+                        display: "flex", alignItems: "center", justifyContent: "center",
+                      }}
+                    >✕</button>
+                  </div>
+                ))}
+                {newImages.length < 4 && (
+                  <button
+                    onClick={() => imgInputRef.current?.click()}
+                    style={{
+                      width: 80, height: 80, borderRadius: 10,
+                      border: `1.5px dashed ${C.border}`, background: C.input,
+                      cursor: "pointer", color: C.muted, fontSize: 22,
+                      display: "flex", alignItems: "center", justifyContent: "center",
+                    }}
+                  >+</button>
+                )}
+              </div>
+            )}
+
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 12 }}>
-              <span style={{ fontSize: 12, color: C.muted }}>Text only posts are allowed (no images)</span>
+              {/* Upload media button */}
+              <button
+                onClick={() => imgInputRef.current?.click()}
+                style={{
+                  background: "none", border: `1.5px solid ${C.border}`,
+                  borderRadius: 10, padding: "8px 16px", cursor: "pointer",
+                  color: C.sub, display: "flex", alignItems: "center",
+                  gap: 8, fontSize: 13, fontWeight: 600, transition: "all 0.2s",
+                }}
+                onMouseEnter={e => { e.currentTarget.style.borderColor = C.green; e.currentTarget.style.color = C.green; e.currentTarget.style.background = `${C.green}08`; }}
+                onMouseLeave={e => { e.currentTarget.style.borderColor = C.border; e.currentTarget.style.color = C.sub; e.currentTarget.style.background = "none"; }}
+              >
+                <FaCloudUploadAlt size={14} /> {newImages.length > 0 ? `${newImages.length} file${newImages.length > 1 ? "s" : ""} added` : "Upload Media"}
+              </button>
+              <input
+                ref={imgInputRef}
+                type="file"
+                accept="image/*"
+                multiple
+                style={{ display: "none" }}
+                onChange={handleImageSelect}
+              />
+
               <button
                 onClick={handleCreate}
                 disabled={!newText.trim() || submitting}
                 style={{
                   padding: "10px 26px", borderRadius: 10, border: "none",
-                  background: newText.trim() && !submitting ? C.green : "#2a2a2a",
+                  background: newText.trim() && !submitting ? C.green : C.input,
                   color: newText.trim() && !submitting ? "#000" : C.muted,
                   fontWeight: 700, fontSize: 14, transition: "all 0.2s",
                   cursor: newText.trim() && !submitting ? "pointer" : "not-allowed",
@@ -836,14 +1064,14 @@ export default function CommunityFeed() {
               border: `1px solid ${C.border}`, marginBottom: 16,
             }}>
               <div style={{ display: "flex", gap: 12, marginBottom: 16 }}>
-                <div style={{ width: 44, height: 44, borderRadius: "50%", background: "#242424" }} />
+                <div style={{ width: 44, height: 44, borderRadius: "50%", background: C.border }} />
                 <div>
-                  <div style={{ width: 120, height: 14, borderRadius: 6, background: "#242424", marginBottom: 8 }} />
-                  <div style={{ width: 70, height: 11, borderRadius: 6, background: "#1e1e1e" }} />
+                  <div style={{ width: 120, height: 14, borderRadius: 6, background: C.border, marginBottom: 8 }} />
+                  <div style={{ width: 70, height: 11, borderRadius: 6, background: C.input }} />
                 </div>
               </div>
-              <div style={{ width: "100%", height: 12, borderRadius: 6, background: "#242424", marginBottom: 8 }} />
-              <div style={{ width: "75%", height: 12, borderRadius: 6, background: "#1e1e1e" }} />
+              <div style={{ width: "100%", height: 12, borderRadius: 6, background: C.border, marginBottom: 8 }} />
+              <div style={{ width: "75%", height: 12, borderRadius: 6, background: C.input }} />
             </div>
           ))
         ) : posts.length === 0 ? (

@@ -35,6 +35,7 @@ const surveySchema = new Schema(
         },
         responseCount: { type: Number, default: 0 },
         isPublic: { type: Boolean, default: true },
+        coverImageKey: { type: String, default: "" },
     },
     { timestamps: true }
 );
