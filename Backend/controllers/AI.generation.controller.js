@@ -13,6 +13,31 @@ const DESCRIPTION_PROMPTS = {
     "blog-excerpt": "You are writing a short excerpt (teaser) for an NGO blog post shown on a blog listing card. Write 1-2 compelling sentences that hook the reader and make them want to read more. Max 200 characters. Be punchy and engaging.",
 };
 
+export async function fixGrammar(req, res) {
+    const { text } = req.body;
+    if (!text?.trim()) {
+        return res.status(400).json({ success: false, message: "Text is required" });
+    }
+    if (text.trim().length > 5000) {
+        return res.status(400).json({ success: false, message: "Text too long (max 5000 characters)" });
+    }
+
+    const apiKey = process.env.GEMINI_API_KEY;
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
+
+    const prompt = `Fix the grammar, spelling, and punctuation of the following text. Keep the original meaning and tone. Return ONLY the corrected text — no explanation, no labels, no quotes, no markdown.\n\n${text.trim()}`;
+
+    const response = await axios.post(url, {
+        contents: [{ parts: [{ text: prompt }] }],
+        generationConfig: { temperature: 0.2, maxOutputTokens: 1024 },
+    });
+
+    const fixed = response.data?.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
+    if (!fixed) return res.status(500).json({ success: false, message: "AI returned no content" });
+
+    return res.json({ success: true, text: fixed });
+}
+
 export async function generateDescription(req, res) {
     const { context, hint } = req.body;
     if (!context || !DESCRIPTION_PROMPTS[context]) {

@@ -1,4 +1,6 @@
 import { useState, useEffect } from "react";
+import FixGrammarButton from "../../components/ui/FixGrammarButton";
+import { usePincodeAutoFill } from "../../hooks/usePincodeAutoFill";
 import { useOutletContext } from "react-router-dom";
 import {
   MapPin, Plus, Edit2, Trash2, CheckCircle, PauseCircle, Flag,
@@ -44,6 +46,11 @@ function VillageModal({ village, onClose, onSaved }) {
   const token = localStorage.getItem("token");
 
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
+
+  const { fetchPincode, pincodeLoading, pincodeError } = usePincodeAutoFill((info) => {
+    setForm(f => ({ ...f, district: info.district, state: info.state }));
+  });
+
   const setNeed = (need, pct) => setForm(f => ({
     ...f, basicNeeds: { ...f.basicNeeds, [need]: { coveragePercent: Number(pct) } }
   }));
@@ -98,7 +105,9 @@ function VillageModal({ village, onClose, onSaved }) {
           </div>
           <div>
             <label style={{ fontSize: "12px", fontWeight: "600", color: "#374151", display: "block", marginBottom: "5px" }}>Pincode</label>
-            <input style={inp} value={form.pincode} onChange={e => set("pincode", e.target.value)} placeholder="221001" />
+            <input style={inp} value={form.pincode} onChange={e => { set("pincode", e.target.value); fetchPincode(e.target.value); }} placeholder="221001" />
+            {pincodeLoading && <p style={{ fontSize: "11px", color: "#9ca3af", marginTop: "3px" }}>Fetching location…</p>}
+            {pincodeError  && <p style={{ fontSize: "11px", color: "#ef4444", marginTop: "3px" }}>{pincodeError}</p>}
           </div>
           <div>
             <label style={{ fontSize: "12px", fontWeight: "600", color: "#374151", display: "block", marginBottom: "5px" }}>Total Families</label>
@@ -117,7 +126,10 @@ function VillageModal({ village, onClose, onSaved }) {
             </div>
           </div>
           <div style={{ gridColumn: "1/-1" }}>
-            <label style={{ fontSize: "12px", fontWeight: "600", color: "#374151", display: "block", marginBottom: "5px" }}>Description</label>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "5px" }}>
+              <label style={{ fontSize: "12px", fontWeight: "600", color: "#374151" }}>Description</label>
+              <FixGrammarButton text={form.description} onFixed={t => set("description", t)} />
+            </div>
             <textarea rows={3} style={{ ...inp, resize: "vertical" }} value={form.description} onChange={e => set("description", e.target.value)} placeholder="Briefly describe the village and your goals…" />
           </div>
         </div>

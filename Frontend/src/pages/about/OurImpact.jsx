@@ -158,7 +158,7 @@ function ReportModal({ report, onClose }) {
                           <BarChart data={barData} margin={{ top:4, right:8, left:0, bottom:44 }}>
                             <XAxis dataKey="name" tick={{ fontSize:9, fill:"#94a3b8" }} angle={-30} textAnchor="end" interval={0} />
                             <YAxis tick={{ fontSize:9, fill:"#94a3b8" }} width={38} />
-                            <Tooltip formatter={(v,n,p) => [`${v} ${p.payload.unit||""}`, p.payload.name]} contentStyle={{ fontSize:11, borderRadius:8 }} />
+                            <Tooltip formatter={(v,_,p) => [`${v} ${p.payload.unit||""}`, p.payload.name]} contentStyle={{ fontSize:11, borderRadius:8 }} />
                             <Bar dataKey="value" radius={[4,4,0,0]}>{barData.map((d,i) => <Cell key={i} fill={CAT[d.category]?.color || "#94a3b8"} />)}</Bar>
                           </BarChart>
                         </ResponsiveContainer>
@@ -386,15 +386,25 @@ export default function OurImpact() {
 
   useEffect(() => {
     const q = new URLSearchParams({ page, limit: LIMIT });
-    setLoading(true);
-    fetch(`${API}/api/impact-reports/public?${q}`)
-      .then(r => r.json())
-      .then(d => {
-        setReports(d.data?.reports || []);
-        setPagination(d.data?.pagination || { total: 0, pages: 1 });
-      })
-      .catch(() => setReports([]))
-      .finally(() => setLoading(false));
+    let active = true;
+
+    (async () => {
+      setLoading(true);
+      try {
+        const r = await fetch(`${API}/api/impact-reports/public?${q}`);
+        const d = await r.json();
+        if (active) {
+          setReports(d.data?.reports || []);
+          setPagination(d.data?.pagination || { total: 0, pages: 1 });
+        }
+      } catch {
+        if (active) setReports([]);
+      } finally {
+        if (active) setLoading(false);
+      }
+    })();
+
+    return () => { active = false; };
   }, [page]);
 
   const filtered = filter === "all"

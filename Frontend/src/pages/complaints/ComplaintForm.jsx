@@ -1,5 +1,7 @@
 import { useState, useEffect, createElement } from "react";
 import { useNavigate } from "react-router-dom";
+import FixGrammarButton from "../../components/ui/FixGrammarButton";
+import { usePincodeAutoFill } from "../../hooks/usePincodeAutoFill";
 import {
   AlertTriangle, CheckCircle, Search,
   Loader2, X, ArrowLeft, MapPin, FileText,
@@ -153,6 +155,10 @@ export default function ComplaintForm() {
   const [errors,   setErrors]   = useState({});
   const [status,   setStatus]   = useState("idle");
   const [apiError, setApiError] = useState("");
+
+  const { fetchPincode, pincodeLoading, pincodeError } = usePincodeAutoFill((info) => {
+    setForm(f => ({ ...f, district: info.district, state: info.state }));
+  });
 
   const field = (key) => (val) => {
     setForm(p => ({ ...p, [key]: val }));
@@ -363,11 +369,13 @@ export default function ComplaintForm() {
                   <input
                     type="text"
                     value={form.pincode}
-                    onChange={e => field("pincode")(e.target.value)}
+                    onChange={e => { field("pincode")(e.target.value); fetchPincode(e.target.value); }}
                     placeholder="e.g. 202001"
                     maxLength={6}
                     className="w-full px-4 py-3 border border-gray-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-orange-400"
                   />
+                  {pincodeLoading && <p className="text-xs text-gray-400 mt-1">Fetching location…</p>}
+                  {pincodeError  && <p className="text-xs text-red-500 mt-1">{pincodeError}</p>}
                 </div>
               </div>
             )}
@@ -445,9 +453,12 @@ export default function ComplaintForm() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                Description <span className="text-gray-400 text-xs font-normal">(Optional — more details help faster resolution)</span>
-              </label>
+              <div className="flex items-center justify-between mb-1.5">
+                <label className="text-sm font-medium text-gray-700">
+                  Description <span className="text-gray-400 text-xs font-normal">(Optional — more details help faster resolution)</span>
+                </label>
+                <FixGrammarButton text={form.description} onFixed={text => field("description")(text)} />
+              </div>
               <textarea
                 value={form.description}
                 maxLength={2000}

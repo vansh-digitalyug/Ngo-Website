@@ -17,6 +17,8 @@ import {
   ShieldCheck,
 } from 'lucide-react';
 import AIDescribeButton from '../components/ui/AIDescribeButton.jsx';
+import FixGrammarButton from '../components/ui/FixGrammarButton.jsx';
+import { usePincodeAutoFill } from '../hooks/usePincodeAutoFill.js';
 
 const API = String(import.meta.env.VITE_API_BASE_URL || "http://localhost:5000").replace(/\/$/, "");
 
@@ -147,6 +149,10 @@ const AddNGOPage = () => {
   // This is used as the S3 folder name: Uploads/ngoDocs/{ngoS3Id}/filename
   const [ngoS3Id] = useState(() => crypto.randomUUID());
 
+  const { fetchPincode, pincodeLoading, pincodeError } = usePincodeAutoFill((info) => {
+    setFormData(f => ({ ...f, district: info.district, state: info.state, city: info.city }));
+  });
+
   // State for Form Data
   const [formData, setFormData] = useState({
     // Step 1
@@ -203,6 +209,7 @@ const AddNGOPage = () => {
     if (name === "pincode") {
       // Keep pincode numeric-only and max 6 digits (prevents negative values too).
       nextValue = String(value).replace(/\D/g, "").slice(0, 6);
+      fetchPincode(nextValue);
     }
 
     if (name === "panNumber") {
@@ -603,7 +610,10 @@ const AddNGOPage = () => {
                 <div className="form-group">
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '4px' }}>
                     <label className="form-label" style={{ margin: 0 }}>Short Description</label>
-                    <AIDescribeButton context="ngo" hint={formData.ngoName} onGenerated={v => handleInputChange({ target: { name: 'description', value: v } })} />
+                    <span style={{ display: 'flex', gap: '6px' }}>
+                      <AIDescribeButton context="ngo" hint={formData.ngoName} onGenerated={v => handleInputChange({ target: { name: 'description', value: v } })} />
+                      <FixGrammarButton text={formData.description} onFixed={v => handleInputChange({ target: { name: 'description', value: v } })} />
+                    </span>
                   </div>
                   <textarea
                     name="description"
@@ -631,7 +641,11 @@ const AddNGOPage = () => {
 
                 <div className="form-grid">
                   <InputField label="City / Locality" name="city" required placeholder="e.g. Vasant Kunj" value={formData.city} onChange={handleInputChange} error={errors.city} />
-                  <InputField label="Pincode" name="pincode" type="number" required placeholder="1100XX" value={formData.pincode} onChange={handleInputChange} error={errors.pincode} maxLength={6} />
+                  <div>
+                    <InputField label="Pincode" name="pincode" type="number" required placeholder="1100XX" value={formData.pincode} onChange={handleInputChange} error={errors.pincode} maxLength={6} />
+                    {pincodeLoading && <p style={{ fontSize: "11px", color: "#9ca3af", marginTop: "3px" }}>Fetching location…</p>}
+                    {pincodeError  && <p style={{ fontSize: "11px", color: "#ef4444", marginTop: "3px" }}>{pincodeError}</p>}
+                  </div>
                 </div>
 
                 <div className="form-group">
