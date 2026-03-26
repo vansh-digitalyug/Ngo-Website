@@ -23,19 +23,26 @@ export async function fixGrammar(req, res) {
     }
 
     const apiKey = process.env.GEMINI_API_KEY;
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
+    if (!apiKey) {
+        return res.status(500).json({ success: false, message: "AI service not configured" });
+    }
 
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
     const prompt = `Fix the grammar, spelling, and punctuation of the following text. Keep the original meaning and tone. Return ONLY the corrected text — no explanation, no labels, no quotes, no markdown.\n\n${text.trim()}`;
 
-    const response = await axios.post(url, {
-        contents: [{ parts: [{ text: prompt }] }],
-        generationConfig: { temperature: 0.2, maxOutputTokens: 1024 },
-    });
-
-    const fixed = response.data?.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
-    if (!fixed) return res.status(500).json({ success: false, message: "AI returned no content" });
-
-    return res.json({ success: true, text: fixed });
+    try {
+        const response = await axios.post(url, {
+            contents: [{ parts: [{ text: prompt }] }],
+            generationConfig: { temperature: 0.2, maxOutputTokens: 1024 },
+        });
+        const fixed = response.data?.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
+        if (!fixed) return res.status(500).json({ success: false, message: "AI returned no content" });
+        return res.json({ success: true, text: fixed });
+    } catch (err) {
+        const status = err.response?.status;
+        const detail = err.response?.data?.error?.message || err.message;
+        return res.status(500).json({ success: false, message: `AI error${status ? ` (${status})` : ""}: ${detail}` });
+    }
 }
 
 export async function generateDescription(req, res) {
@@ -45,22 +52,28 @@ export async function generateDescription(req, res) {
     }
 
     const apiKey = process.env.GEMINI_API_KEY;
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
+    if (!apiKey) return res.status(500).json({ success: false, message: "AI service not configured" });
+
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
 
     const systemPrompt = DESCRIPTION_PROMPTS[context];
     const userPrompt = hint
         ? `Generate a description for: "${hint}"\n\nReturn ONLY the description text — no quotes, no labels, no markdown.`
         : `Generate a generic example description.\n\nReturn ONLY the description text — no quotes, no labels, no markdown.`;
 
-    const response = await axios.post(url, {
-        contents: [{ parts: [{ text: `${systemPrompt}\n\n${userPrompt}` }] }],
-        generationConfig: { temperature: 0.75, maxOutputTokens: 512 },
-    });
-
-    const text = response.data?.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
-    if (!text) return res.status(500).json({ success: false, message: "AI returned no content" });
-
-    return res.json({ success: true, description: text });
+    try {
+        const response = await axios.post(url, {
+            contents: [{ parts: [{ text: `${systemPrompt}\n\n${userPrompt}` }] }],
+            generationConfig: { temperature: 0.75, maxOutputTokens: 512 },
+        });
+        const text = response.data?.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
+        if (!text) return res.status(500).json({ success: false, message: "AI returned no content" });
+        return res.json({ success: true, description: text });
+    } catch (err) {
+        const status = err.response?.status;
+        const detail = err.response?.data?.error?.message || err.message;
+        return res.status(500).json({ success: false, message: `AI error${status ? ` (${status})` : ""}: ${detail}` });
+    }
 }
 
 const VALID_CATEGORIES = [
@@ -94,7 +107,7 @@ Guidelines:
 
 export async function generateAIContent(prompt) {
     const apiKey = process.env.GEMINI_API_KEY;
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
 
     const response = await axios.post(url, {
         contents: [
