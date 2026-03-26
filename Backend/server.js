@@ -64,19 +64,17 @@ app.use(morgan(
 ));
 
 // ─── CORS ─────────────────────────────────────────────────────────────────────
-const allowedOrigins = [
-    "http://localhost:5173",
-    "http://localhost:3000",
-    process.env.FRONTEND_URL,
-].filter(Boolean);
-
 app.use(cors({
     origin: (origin, callback) => {
         // allow requests with no origin (mobile apps, curl, Postman)
         if (!origin) return callback(null, true);
-        if (allowedOrigins.some(o => origin.startsWith(o.replace(/\/$/, "")))) {
-            return callback(null, true);
-        }
+        // allow localhost for development
+        if (origin.startsWith("http://localhost")) return callback(null, true);
+        // allow all vercel.app preview + production deployments
+        if (origin.endsWith(".vercel.app")) return callback(null, true);
+        // allow custom FRONTEND_URL if set
+        const frontendUrl = (process.env.FRONTEND_URL || "").replace(/\/$/, "");
+        if (frontendUrl && origin === frontendUrl) return callback(null, true);
         return callback(new Error(`CORS: origin ${origin} not allowed`));
     },
     credentials: true,
