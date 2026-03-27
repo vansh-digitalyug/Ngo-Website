@@ -7,3 +7,4 @@ export { default as NgoVolunteers } from './NgoVolunteers';
 export { default as NgoPending } from './NgoPending';
 export { default as NgoFundRequests } from './NgoFundRequests';
 export { default as NgoEvents } from './NgoEvents';
+export { default as NgoEmployment } from './NgoEmployment';

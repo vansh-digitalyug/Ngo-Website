@@ -34,6 +34,20 @@ export const listPublic = async (req, res) => {
     }
 };
 
+// GET /api/employment/:id — single public listing
+export const getOne = async (req, res) => {
+    try {
+        const job = await Employment.findById(req.params.id)
+            .populate("ngoId", "ngoName logo")
+            .populate("villageId", "villageName district state")
+            .lean();
+        if (!job) return err(res, "Not found", 404);
+        ok(res, { job });
+    } catch (e) {
+        err(res, e.message);
+    }
+};
+
 // ── NGO ────────────────────────────────────────────────────────────────────
 
 // GET /api/employment/my — NGO's own listings

@@ -53,6 +53,7 @@ const AdminSurveys            = lazy(() => import("../pages/admin/AdminSurveys.j
 const AdminImpactReports      = lazy(() => import("../pages/admin/AdminImpactReports.jsx"));
 
 // Public pages (lazy)
+const RojgarYojana            = lazy(() => import("../pages/public/RojgarYojana.jsx"));
 const VillageList             = lazy(() => import("../pages/villages/VillageList.jsx"));
 const VillageDetail           = lazy(() => import("../pages/villages/VillageDetail.jsx"));
 const Transparency            = lazy(() => import("../pages/Transparency.jsx"));
@@ -258,6 +259,7 @@ function AppRoutes() {
           <Route path="/transparency"  element={<Transparency />} />
           <Route path="/villages"      element={<VillageList />} />
           <Route path="/villages/:id"  element={<VillageDetail />} />
+          <Route path="/rojgar"         element={<RojgarYojana />} />
           <Route path="/surveys"        element={<PublicSurveys />} />
           <Route path="/survey/:token" element={<SurveyRespond />} />
 
