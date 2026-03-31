@@ -14,6 +14,8 @@ const Contact = () => {
   const [errors, setErrors] = useState({});
   const [status, setStatus] = useState('idle'); // 'idle', 'submitting', 'success', 'error'
   const [submitMessage, setSubmitMessage] = useState('');
+  const [fixingGrammar, setFixingGrammar] = useState(false);
+  const [grammarError, setGrammarError] = useState('');
 
   // 2. Handle Input Changes
   const handleChange = (e) => {
@@ -49,6 +51,27 @@ const Contact = () => {
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
+  };
+
+  // Fix Grammar using AI
+  const handleFixGrammar = async () => {
+    if (!formData.message.trim()) return;
+    setFixingGrammar(true);
+    setGrammarError('');
+    try {
+      const res = await fetch('http://localhost:5000/api/ai/fix-grammar', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text: formData.message }),
+      });
+      const d = await res.json();
+      if (!d.success) throw new Error(d.message || 'Failed');
+      setFormData(f => ({ ...f, message: d.text }));
+    } catch (e) {
+      setGrammarError(e.message || 'Grammar fix failed. Try again.');
+    } finally {
+      setFixingGrammar(false);
+    }
   };
 
   // 4. Handle Submission
@@ -445,15 +468,38 @@ const Contact = () => {
 
               {/* Message */}
               <div className="form-group">
-                <label>Message</label>
-                <textarea 
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                  <label style={{ margin: 0 }}>Message</label>
+                  <button
+                    type="button"
+                    onClick={handleFixGrammar}
+                    disabled={fixingGrammar || !formData.message.trim()}
+                    style={{
+                      display: 'flex', alignItems: 'center', gap: '5px',
+                      padding: '4px 12px', borderRadius: '8px',
+                      border: '1px solid #2563eb', background: fixingGrammar ? '#eff6ff' : '#fff',
+                      color: '#2563eb', fontSize: '12px', fontWeight: '600',
+                      cursor: fixingGrammar || !formData.message.trim() ? 'not-allowed' : 'pointer',
+                      opacity: !formData.message.trim() ? 0.5 : 1,
+                      transition: 'all 0.2s',
+                    }}
+                  >
+                    {fixingGrammar ? (
+                      <><span style={{ width: '10px', height: '10px', border: '2px solid #2563eb', borderTopColor: 'transparent', borderRadius: '50%', display: 'inline-block', animation: 'spin 0.7s linear infinite' }} /> Fixing…</>
+                    ) : (
+                      <><span>✦</span> Fix Grammar</>
+                    )}
+                  </button>
+                </div>
+                <textarea
                   name="message"
                   value={formData.message}
                   onChange={handleChange}
                   className={errors.message ? 'error-input' : ''}
-                  rows="5" 
+                  rows="5"
                   placeholder="How can we help you?"
                 ></textarea>
+                {grammarError && <span className="error-msg">{grammarError}</span>}
                 {errors.message && <span className="error-msg">{errors.message}</span>}
               </div>
 

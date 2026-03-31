@@ -136,3 +136,209 @@ body {
     top: 70px;
   }
 }
+
+/* ════════════════════════════════════════════════════════
+   ADMIN PANEL — Utility Classes
+   (Layout is handled by Tailwind in AdminLayout.jsx)
+   ════════════════════════════════════════════════════════ */
+
+@layer components {
+
+  /* Spin animation */
+  .spin { animation: admin-spin 1s linear infinite; }
+  @keyframes admin-spin {
+    from { transform: rotate(0deg); }
+    to   { transform: rotate(360deg); }
+  }
+
+  /* ── Page title ── */
+  .admin-page-title {
+    @apply text-2xl font-bold text-slate-800 mb-6;
+  }
+
+  /* ── Stats grid ── */
+  .admin-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    @apply gap-4 mb-7;
+  }
+  .admin-stat-card {
+    @apply bg-white rounded-xl p-5 shadow-sm flex items-center gap-4 transition-shadow hover:shadow-md;
+  }
+  .admin-stat-icon {
+    @apply w-12 h-12 rounded-xl flex items-center justify-center text-2xl flex-shrink-0;
+  }
+  .admin-stat-info h3 { @apply text-2xl font-bold text-slate-800 m-0 leading-none; }
+  .admin-stat-info p  { @apply text-xs text-slate-500 mt-1 m-0; }
+
+  /* ── Table wrapper ── */
+  .admin-table-wrapper {
+    @apply bg-white rounded-xl shadow-sm overflow-x-auto mb-7;
+  }
+  .admin-table-header {
+    @apply flex items-center justify-between px-5 py-4 border-b border-slate-100 flex-wrap gap-3;
+  }
+  .admin-table-header h3 { @apply text-base font-semibold text-slate-800 m-0; }
+  .admin-table-controls  { @apply flex items-center gap-2 flex-wrap; }
+
+  /* ── Search / select inputs ── */
+  .admin-search-input {
+    @apply px-3.5 py-2 border border-gray-300 rounded-lg text-sm outline-none transition-colors
+           focus:border-blue-500 w-full sm:w-auto sm:min-w-[200px];
+  }
+  .admin-filter-select {
+    @apply px-3 py-2 border border-gray-300 rounded-lg text-sm outline-none bg-white cursor-pointer
+           w-full sm:w-auto;
+  }
+  .admin-status-select {
+    @apply px-2 py-1 border border-gray-300 rounded-md text-xs outline-none bg-white cursor-pointer;
+  }
+
+  /* ── Table ── */
+  .admin-table { @apply w-full border-collapse; }
+  .admin-table th {
+    @apply text-left px-4 py-3 text-[0.72rem] font-semibold uppercase tracking-wide
+           text-slate-500 bg-slate-50 border-b border-slate-200;
+  }
+  .admin-table td {
+    @apply px-4 py-3 text-sm text-slate-600 border-b border-slate-50 align-middle;
+  }
+  .admin-table tr:last-child td { @apply border-b-0; }
+  .admin-table tr:hover td     { @apply bg-slate-50; }
+
+  /* ── Badges ── */
+  .admin-badge {
+    @apply inline-block px-2.5 py-0.5 rounded-full text-xs font-semibold whitespace-nowrap;
+  }
+  .admin-badge.green  { @apply bg-green-100 text-green-800; }
+  .admin-badge.yellow { @apply bg-yellow-100 text-yellow-800; }
+  .admin-badge.red    { @apply bg-red-100 text-red-800; }
+  .admin-badge.blue   { @apply bg-blue-100 text-blue-800; }
+  .admin-badge.gray   { @apply bg-slate-100 text-slate-600; }
+
+  /* ── Action buttons ── */
+  .admin-action-btn {
+    @apply px-3 py-1 rounded-md border border-gray-300 text-xs font-medium cursor-pointer
+           transition-all bg-white text-slate-600 hover:bg-slate-50 mr-1.5;
+  }
+  .admin-action-btn.approve { @apply border-green-400 text-green-700 hover:bg-green-50; }
+  .admin-action-btn.reject  { @apply border-red-400 text-red-700 hover:bg-red-50; }
+  .admin-action-btn.delete  { @apply border-red-400 text-red-700 hover:bg-red-50; }
+
+  /* ── Pagination ── */
+  .admin-pagination {
+    @apply flex items-center justify-center gap-2 px-5 py-4 border-t border-slate-100 flex-wrap;
+  }
+  .admin-pagination button {
+    @apply px-3.5 py-1.5 border border-gray-300 rounded-md bg-white cursor-pointer
+           text-sm text-slate-600 transition-all hover:enabled:bg-slate-50
+           disabled:opacity-40 disabled:cursor-not-allowed;
+  }
+  .admin-pagination button.active { @apply bg-blue-600 text-white border-blue-600; }
+  .admin-pagination span          { @apply text-sm text-slate-500; }
+
+  /* ── Recent grid (Dashboard) ── */
+  .admin-recent-grid { @apply grid grid-cols-1 md:grid-cols-2 gap-5; }
+
+  /* ── Loading / Empty ── */
+  .admin-loading     { @apply text-center py-16 px-5 text-slate-400 text-base; }
+  .admin-empty       { @apply text-center py-10 px-5 text-slate-400 text-sm; }
+  .admin-empty-state { @apply text-center py-16 px-5 text-slate-400 text-base; }
+
+  /* ── Filters bar ── */
+  .admin-filters { @apply flex items-center gap-3 mb-5 flex-wrap; }
+
+  /* ── Modals ── */
+  .admin-modal-overlay {
+    @apply fixed inset-0 z-[9999] bg-black/50 flex items-center justify-center p-4;
+  }
+  .admin-modal {
+    @apply bg-white rounded-xl w-full max-w-xl max-h-[85vh] overflow-y-auto p-6;
+  }
+  .admin-modal h3 { @apply m-0 mb-4 text-lg text-slate-800; }
+  .admin-modal-row {
+    @apply flex mb-2 text-sm flex-wrap gap-1;
+  }
+  .admin-modal-row strong { @apply w-36 flex-shrink-0 text-slate-500; }
+  .admin-modal-row span   { @apply text-slate-800 flex-1; }
+
+  .admin-modal-card {
+    @apply bg-white rounded-2xl w-full max-h-[85vh] overflow-y-auto;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.18);
+  }
+  .admin-modal-header {
+    @apply flex items-center justify-between px-5 py-4 border-b border-gray-200;
+  }
+  .admin-modal-header h3 { @apply m-0 text-base font-bold text-gray-900; }
+  .admin-modal-close {
+    @apply bg-gray-100 border-0 rounded-md px-2 py-1.5 cursor-pointer text-gray-600
+           flex items-center transition-colors hover:bg-gray-200 mt-0;
+  }
+  .admin-modal-body   { @apply px-5 py-4; }
+  .admin-modal-footer {
+    @apply flex justify-end gap-2.5 px-5 py-3.5 border-t border-gray-200 bg-gray-50 rounded-b-2xl;
+  }
+
+  /* ── Expanded row (Contacts) ── */
+  .admin-expanded-row td { @apply bg-slate-50; padding: 16px 20px !important; }
+  .admin-message-preview { @apply max-w-2xl; }
+  .admin-message-preview strong { @apply text-slate-600 text-sm; }
+  .admin-message-preview p {
+    @apply mt-2 m-0 text-slate-500 text-sm leading-relaxed whitespace-pre-wrap;
+  }
+
+  /* ── Form elements ── */
+  .admin-form-label {
+    @apply block text-xs font-semibold text-gray-600 mb-1 mt-3;
+  }
+  .admin-form-input,
+  .admin-form-select,
+  .admin-form-textarea {
+    @apply w-full px-3 py-2 border border-gray-300 rounded-lg text-sm text-gray-900
+           bg-white box-border transition-colors outline-none
+           focus:border-[#2E7D32];
+    box-shadow: none;
+  }
+  .admin-form-input:focus,
+  .admin-form-select:focus,
+  .admin-form-textarea:focus {
+    box-shadow: 0 0 0 3px rgba(46,125,50,0.1);
+  }
+
+  /* ── Buttons ── */
+  .admin-btn-primary {
+    @apply px-5 py-2 bg-[#2E7D32] text-white border-0 rounded-lg text-sm font-semibold
+           cursor-pointer transition-colors hover:bg-[#1b5e20] disabled:opacity-60 disabled:cursor-not-allowed;
+  }
+  .admin-btn-secondary {
+    @apply px-4 py-2 bg-white text-gray-600 border border-gray-300 rounded-lg text-sm
+           font-semibold cursor-pointer transition-colors hover:bg-gray-50
+           disabled:opacity-60 disabled:cursor-not-allowed;
+  }
+}
+
+/* ── Responsive tweaks for admin utility classes ── */
+@media (max-width: 640px) {
+  .admin-page-title        { font-size: 1.25rem !important; margin-bottom: 1rem !important; }
+  .admin-stats-grid        { grid-template-columns: repeat(2, 1fr) !important; gap: 10px !important; }
+  .admin-stat-card         { padding: 14px !important; gap: 10px !important; }
+  .admin-stat-info h3      { font-size: 1.25rem !important; }
+  .admin-filters           { flex-direction: column !important; align-items: stretch !important; }
+  .admin-search-input      { min-width: unset !important; width: 100% !important; }
+  .admin-filter-select     { width: 100% !important; }
+  .admin-table-header      { flex-direction: column !important; align-items: flex-start !important; }
+  .admin-table-controls    { width: 100% !important; }
+  .admin-recent-grid       { grid-template-columns: 1fr !important; }
+  .admin-modal             { padding: 16px !important; }
+  .admin-modal-body        { padding: 14px 16px !important; }
+  .admin-modal-header      { padding: 12px 16px !important; }
+  .admin-modal-footer      { padding: 10px 16px !important; }
+  .admin-modal-row         { flex-direction: column !important; }
+  .admin-modal-row strong  { width: auto !important; }
+  .admin-pagination        { gap: 6px !important; }
+  .admin-pagination button { padding: 5px 10px !important; font-size: 0.75rem !important; }
+}
+
+@media (max-width: 400px) {
+  .admin-stats-grid { grid-template-columns: 1fr !important; }
+}

@@ -9,6 +9,7 @@ import {
   FaRupeeSign, FaStar, FaHandHoldingUsd, FaRegClock, FaFireAlt,
 } from "react-icons/fa";
 import "./home.css";
+import { MapContainer, TileLayer, CircleMarker, Popup } from "react-leaflet";
 import elderImage       from "../assets/images/elderly/elder.png";
 import elderMedical     from "../assets/images/elderly/medical.webp";
 import elderFood        from "../assets/images/elderly/food.jpg";
@@ -20,6 +21,51 @@ import widow            from "../assets/images/women/widow.png";
 import kandyaDan        from "../assets/images/socialWelfare/kanyadan.png";
 import kanyaHero        from "../assets/images/socialWelfare/Kanyadan/hero.png";
 import road             from "../assets/images/infrastructure/road.jpg";
+
+/* ── map data ── */
+const CAT_COLORS = {
+  child:   "#f59e0b",
+  health:  "#ef4444",
+  elder:   "#3b82f6",
+  women:   "#ec4899",
+  infra:   "#22c55e",
+  welfare: "#8b5cf6",
+};
+const CATEGORIES = [
+  { key: "child",   label: "Child Welfare",    color: "#f59e0b" },
+  { key: "health",  label: "Medical Aid",       color: "#ef4444" },
+  { key: "elder",   label: "Elderly Care",      color: "#3b82f6" },
+  { key: "women",   label: "Women Empowerment", color: "#ec4899" },
+  { key: "infra",   label: "Infrastructure",    color: "#22c55e" },
+  { key: "welfare", label: "Social Welfare",    color: "#8b5cf6" },
+];
+const MAP_LOCATIONS = [
+  { city: "New Delhi",   lat: 28.6139, lng: 77.2090, ngos: 42, cat: "child",   cause: "Child Welfare & Education"  },
+  { city: "Mumbai",      lat: 19.0760, lng: 72.8777, ngos: 38, cat: "health",  cause: "Medical Aid & Health Camps" },
+  { city: "Bangalore",   lat: 12.9716, lng: 77.5946, ngos: 31, cat: "women",   cause: "Women Empowerment"          },
+  { city: "Chennai",     lat: 13.0827, lng: 80.2707, ngos: 24, cat: "elder",   cause: "Elderly Care"               },
+  { city: "Kolkata",     lat: 22.5726, lng: 88.3639, ngos: 28, cat: "child",   cause: "Orphan Welfare"             },
+  { city: "Hyderabad",   lat: 17.3850, lng: 78.4867, ngos: 19, cat: "health",  cause: "Free Health Camps"          },
+  { city: "Pune",        lat: 18.5204, lng: 73.8567, ngos: 16, cat: "child",   cause: "Child Nutrition"            },
+  { city: "Ahmedabad",   lat: 23.0225, lng: 72.5714, ngos: 22, cat: "welfare", cause: "Kanya Daan Yojana"          },
+  { city: "Jaipur",      lat: 26.9124, lng: 75.7873, ngos: 18, cat: "women",   cause: "Widow Support"              },
+  { city: "Lucknow",     lat: 26.8467, lng: 80.9462, ngos: 15, cat: "elder",   cause: "Senior Citizen Care"        },
+  { city: "Patna",       lat: 25.5941, lng: 85.1376, ngos: 12, cat: "child",   cause: "Rural Education"            },
+  { city: "Bhopal",      lat: 23.2599, lng: 77.4126, ngos: 14, cat: "infra",   cause: "Rural Infrastructure"       },
+  { city: "Chandigarh",  lat: 30.7333, lng: 76.7794, ngos: 11, cat: "health",  cause: "Medical Camps"              },
+  { city: "Guwahati",    lat: 26.1445, lng: 91.7362, ngos:  9, cat: "child",   cause: "Child Welfare"              },
+  { city: "Kochi",       lat:  9.9312, lng: 76.2673, ngos: 13, cat: "elder",   cause: "Elderly Nutrition"          },
+  { city: "Bhubaneswar", lat: 20.2961, lng: 85.8245, ngos: 10, cat: "infra",   cause: "Road Construction"          },
+  { city: "Ranchi",      lat: 23.3441, lng: 85.3096, ngos:  8, cat: "women",   cause: "Tribal Women Support"       },
+  { city: "Varanasi",    lat: 25.3176, lng: 82.9739, ngos: 11, cat: "welfare", cause: "Social Welfare & Rites"     },
+  { city: "Indore",      lat: 22.7196, lng: 75.8577, ngos: 13, cat: "child",   cause: "Orphan Education"           },
+  { city: "Surat",       lat: 21.1702, lng: 72.8311, ngos: 15, cat: "health",  cause: "Cancer & Kidney Aid"        },
+  { city: "Amritsar",    lat: 31.6340, lng: 74.8723, ngos:  9, cat: "elder",   cause: "Senior Care"                },
+  { city: "Nagpur",      lat: 21.1458, lng: 79.0882, ngos: 12, cat: "infra",   cause: "Infrastructure"             },
+  { city: "Coimbatore",  lat: 11.0168, lng: 76.9558, ngos: 10, cat: "women",   cause: "Women Empowerment"          },
+  { city: "Dehradun",    lat: 30.3165, lng: 78.0322, ngos:  7, cat: "child",   cause: "Mountain Communities"       },
+  { city: "Mysuru",      lat: 12.2958, lng: 76.6394, ngos:  8, cat: "child",   cause: "Child Education"            },
+];
 
 /* ── animated counter ── */
 function useCountUp(end, duration = 2000, trigger = false) {
@@ -584,6 +630,121 @@ export default function Home() {
             <Link to="/add-ngo" className="btn-navy-outline">Register Your NGO</Link>
           </div>
 
+        </div>
+      </section>
+
+      {/* ══════════════════════════════════════════
+          PAN-INDIA REACH MAP
+      ══════════════════════════════════════════ */}
+      <section style={{ background: "#f1f5f9", padding: "80px 0" }}>
+        <div style={{ maxWidth: 1200, margin: "0 auto", padding: "0 24px" }}>
+
+          <div className="sr sec-center" style={{ marginBottom: "52px" }}>
+            <h2 className="sec-title">Our <span>Pan-India Network</span></h2>
+            <div className="sec-divider center" />
+            <p className="sec-sub">
+              25+ states · 200+ districts · from Himalayan villages to coastal towns.
+              Click any circle to see active NGOs in that city.
+            </p>
+          </div>
+
+          <div style={{ display: "flex", gap: "28px", alignItems: "flex-start", flexWrap: "wrap" }}>
+
+            {/* ── Map ── */}
+            <div style={{ flex: "1 1 500px", borderRadius: 18, overflow: "hidden", boxShadow: "0 12px 48px rgba(0,0,0,0.13)", border: "2px solid #e2e8f0" }}>
+              <MapContainer
+                center={[22.5, 82.5]}
+                zoom={5}
+                style={{ height: 520, width: "100%" }}
+                scrollWheelZoom={false}
+                attributionControl={true}
+              >
+                <TileLayer
+                  url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
+                  attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>'
+                  maxZoom={19}
+                />
+                {MAP_LOCATIONS.map((loc, i) => (
+                  <CircleMarker
+                    key={i}
+                    center={[loc.lat, loc.lng]}
+                    radius={7 + Math.min(loc.ngos / 7, 9)}
+                    pathOptions={{
+                      fillColor: CAT_COLORS[loc.cat],
+                      fillOpacity: 0.88,
+                      color: "#ffffff",
+                      weight: 2,
+                    }}
+                  >
+                    <Popup>
+                      <div style={{ minWidth: 148, fontFamily: "inherit" }}>
+                        <div style={{ fontWeight: 800, fontSize: "1rem", color: "#1a2d5a", marginBottom: 4 }}>
+                          {loc.city}
+                        </div>
+                        <div style={{ display: "inline-block", background: CAT_COLORS[loc.cat] + "22", color: CAT_COLORS[loc.cat], fontWeight: 700, fontSize: ".75rem", borderRadius: 20, padding: "2px 10px", marginBottom: 6 }}>
+                          {loc.cause}
+                        </div>
+                        <div style={{ color: "#475569", fontSize: ".8rem" }}>
+                          <strong style={{ color: "#1a2d5a" }}>{loc.ngos}</strong> verified NGOs active
+                        </div>
+                      </div>
+                    </Popup>
+                  </CircleMarker>
+                ))}
+              </MapContainer>
+            </div>
+
+            {/* ── Sidebar ── */}
+            <div style={{ flex: "0 1 270px", display: "flex", flexDirection: "column", gap: "18px" }}>
+
+              {/* Total NGOs */}
+              <div style={{ background: "#1a2d5a", color: "#fff", borderRadius: 16, padding: "26px 20px", textAlign: "center" }}>
+                <div style={{ fontSize: "3rem", fontWeight: 900, color: "#f59e0b", lineHeight: 1 }}>{ngoTotal}+</div>
+                <div style={{ fontSize: ".9rem", opacity: .85, marginTop: 6 }}>Verified NGOs Across India</div>
+                <div style={{ marginTop: 10, fontSize: ".75rem", opacity: .6, letterSpacing: ".04em" }}>25+ STATES · 200+ DISTRICTS</div>
+              </div>
+
+              {/* Category Legend */}
+              <div style={{ background: "#fff", borderRadius: 16, padding: "20px", boxShadow: "0 2px 20px rgba(0,0,0,0.07)", border: "1px solid #e2e8f0" }}>
+                <div style={{ fontWeight: 800, color: "#1a2d5a", marginBottom: 14, fontSize: ".88rem", letterSpacing: ".03em", textTransform: "uppercase" }}>
+                  Cause Categories
+                </div>
+                {CATEGORIES.map(c => (
+                  <div key={c.key} style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 11 }}>
+                    <div style={{
+                      width: 14, height: 14, borderRadius: "50%", background: c.color, flexShrink: 0,
+                      border: "2px solid #fff", boxShadow: `0 0 0 2px ${c.color}55`
+                    }} />
+                    <span style={{ fontSize: ".82rem", color: "#475569" }}>{c.label}</span>
+                  </div>
+                ))}
+                <div style={{ marginTop: 8, fontSize: ".75rem", color: "#94a3b8", borderTop: "1px solid #f1f5f9", paddingTop: 10 }}>
+                  Circle size = number of NGOs in that city
+                </div>
+              </div>
+
+              {/* Quick stats grid */}
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+                {[
+                  { n: "25+",  label: "States"        },
+                  { n: "200+", label: "Districts"      },
+                  { n: "10K+", label: "Lives Changed"  },
+                  { n: "100%", label: "Transparent"    },
+                ].map(s => (
+                  <div key={s.label} style={{ background: "#fff", borderRadius: 12, padding: "14px 8px", textAlign: "center", boxShadow: "0 2px 12px rgba(0,0,0,0.06)", border: "1px solid #e2e8f0" }}>
+                    <div style={{ fontSize: "1.25rem", fontWeight: 900, color: "#1a2d5a" }}>{s.n}</div>
+                    <div style={{ fontSize: ".71rem", color: "#64748b", marginTop: 3 }}>{s.label}</div>
+                  </div>
+                ))}
+              </div>
+
+              {/* CTA */}
+              <Link to="/find-ngos" className="btn-navy" style={{ textAlign: "center", display: "block" }}>
+                Explore All NGOs →
+              </Link>
+
+            </div>
+          </div>
         </div>
       </section>
 

@@ -5,6 +5,14 @@ export default {
     "./src/**/*.{js,ts,jsx,tsx}",
   ],
   theme: {
+    screens: {
+      xs:  '480px',
+      sm:  '640px',
+      md:  '768px',
+      lg:  '1024px',
+      xl:  '1280px',
+      '2xl': '1536px',
+    },
     extend: {
       colors: {
         primary: {
@@ -20,10 +28,44 @@ export default {
         },
         cream:       '#faf9f7',
         'home-slate':'#f2f3f5',
+        olive: {
+          50:  '#f4f7ec',
+          100: '#e8f0d0',
+          200: '#d4e8a8',
+          300: '#a8c870',
+          400: '#7a9a50',
+          500: '#5a8a20',
+          600: '#4a6a1a',
+          700: '#3a5a10',
+          800: '#2e4a0e',
+          900: '#1a2a08',
+        },
+        beige: {
+          50:  '#fafaf7',
+          100: '#f5f2ea',
+          200: '#f0ede6',
+          300: '#eae6de',
+          400: '#e8e4d8',
+          500: '#d8d4cc',
+          600: '#c8d4b8',
+          700: '#b0b8a0',
+        },
+        charcoal: {
+          DEFAULT: '#1c1c1c',
+          light:   '#2a2a2a',
+        },
+        ink: {
+          DEFAULT: '#111108',
+          light:   '#1a1a0a',
+          muted:   '#5a5a48',
+          subtle:  '#8a8a6a',
+        },
+        lime: '#c8f040',
       },
       fontFamily: {
-        sans:  ['Inter', 'Segoe UI', 'Roboto', 'sans-serif'],
-        inter: ['Inter', 'Segoe UI', 'Roboto', 'sans-serif'],
+        sans:     ['Inter', 'Segoe UI', 'Roboto', 'sans-serif'],
+        inter:    ['Inter', 'Segoe UI', 'Roboto', 'sans-serif'],
+        playfair: ["'Playfair Display'", 'Georgia', 'serif'],
       },
       keyframes: {
         fadeUp: {

@@ -110,8 +110,9 @@ function Navbar() {
 
   const getInvolvedLinks = [
     { name: "Volunteer With Us", path: "/volunteer" },
-    { name: "Work With Us", path: "/add-ngo" },
-    { name: "Give Feedback", path: "/feedback" },
+    { name: "Rojgar Yojana",     path: "/rojgar"    },
+    { name: "Work With Us",      path: "/add-ngo"   },
+    { name: "Give Feedback",     path: "/feedback"  },
   ];
 
   const mediaLinks = [
