@@ -4,13 +4,13 @@ import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell,
   RadialBarChart, RadialBar,
 } from "recharts";
-import CountUp from "react-countup";
 import { useInView } from "react-intersection-observer";
-import { motion, AnimatePresence } from "framer-motion";
+import { AnimatePresence } from "framer-motion";
 
 /* ── image imports ── */
 import imgEducation  from "../../assets/images/orphanage/education.jpg";
 import imgCamp       from "../../assets/images/Medical/camp.jpg";
+
 
 /* ══════════════════════════════════════════
    STYLES
@@ -133,11 +133,25 @@ function fmtDate(d) {
 ══════════════════════════════════════════ */
 function AnimCounter({ end, suffix = "", prefix = "", duration = 2.5 }) {
   const { ref, inView } = useInView({ triggerOnce: true, threshold: 0.3 });
+  const [count, setCount] = useState(0);
+  const started = useRef(false);
+  useEffect(() => {
+    if (inView && !started.current) {
+      started.current = true;
+      const startTime = performance.now();
+      const durationMs = duration * 1000;
+      const tick = (now) => {
+        const progress = Math.min((now - startTime) / durationMs, 1);
+        const eased = 1 - Math.pow(1 - progress, 3);
+        setCount(Math.round(eased * end));
+        if (progress < 1) requestAnimationFrame(tick);
+      };
+      requestAnimationFrame(tick);
+    }
+  }, [inView, end, duration]);
   return (
     <span ref={ref}>
-      {inView
-        ? <CountUp start={0} end={end} duration={duration} separator="," prefix={prefix} suffix={suffix} />
-        : `${prefix}0${suffix}`}
+      {prefix}{count.toLocaleString("en-IN")}{suffix}
     </span>
   );
 }
@@ -479,7 +493,6 @@ export default function OurImpact() {
     },
   ];
 
-  const { ref: leanRef, inView: leanInView } = useInView({ triggerOnce: true, threshold: 0.3 });
 
   return (
     <div style={{ background: "#f8fafc", fontFamily: "Inter, system-ui, sans-serif", overflowX: "hidden" }}>
@@ -878,7 +891,6 @@ export default function OurImpact() {
 
             {/* Radial / donut chart */}
             <motion.div
-              ref={leanRef}
               initial={{ opacity: 0, scale: 0.8 }}
               whileInView={{ opacity: 1, scale: 1 }}
               viewport={{ once: true }}
@@ -902,7 +914,7 @@ export default function OurImpact() {
                   alignItems: "center", justifyContent: "center",
                 }}>
                   <div style={{ fontSize: 52, fontWeight: 900, color: "#fff", lineHeight: 1 }}>
-                    {leanInView ? <CountUp start={0} end={90} duration={2} suffix="%" /> : "0%"}
+                    <AnimCounter end={90} suffix="%" duration={2} />
                   </div>
                   <div style={{ fontSize: 12, color: "#64748b", marginTop: 4, textAlign: "center" }}>
                     to programs
