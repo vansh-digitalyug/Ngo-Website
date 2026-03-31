@@ -1,40 +1,21 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { FaArrowLeft, FaHeart, FaRegHeart, FaComment, FaEdit, FaTrash, FaReply, FaTimes, FaCloudUploadAlt } from "react-icons/fa";
+import { FaArrowLeft, FaHeart, FaRegHeart, FaComment, FaEdit, FaTrash, FaReply, FaTimes } from "react-icons/fa";
 import { API } from "../../utils/S3.js";
 
 const styles = `
   @keyframes fadeInUp {
-    from {
-      opacity: 0;
-      transform: translateY(30px);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
+    from { opacity: 0; transform: translateY(30px); }
+    to   { opacity: 1; transform: translateY(0); }
   }
-  
   @keyframes slideInDown {
-    from {
-      opacity: 0;
-      transform: translateY(-30px);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
+    from { opacity: 0; transform: translateY(-30px); }
+    to   { opacity: 1; transform: translateY(0); }
   }
-  
   @keyframes shimmer {
-    0% {
-      background-position: -1000px 0;
-    }
-    100% {
-      background-position: 1000px 0;
-    }
+    0%   { background-position: -1000px 0; }
+    100% { background-position: 1000px 0; }
   }
-  
   .skeleton {
     background: linear-gradient(90deg, #e8e8e8 0%, #f0f0f0 50%, #e8e8e8 100%);
     background-size: 1000px 100%;
@@ -68,18 +49,9 @@ function Avatar({ name, size = 40 }) {
   const color = palette[(name || "").charCodeAt(0) % palette.length];
   return (
     <div style={{
-      width: size, 
-      height: size, 
-      borderRadius: "50%", 
-      background: color, 
-      color: "#fff",
-      display: "flex", 
-      alignItems: "center", 
-      justifyContent: "center",
-      fontWeight: 700, 
-      fontSize: size * 0.36, 
-      flexShrink: 0, 
-      userSelect: "none",
+      width: size, height: size, borderRadius: "50%", background: color,
+      color: "#fff", display: "flex", alignItems: "center", justifyContent: "center",
+      fontWeight: 700, fontSize: size * 0.36, flexShrink: 0, userSelect: "none",
       boxShadow: "0 4px 15px rgba(75, 85, 99, 0.2)",
       transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
       border: "2px solid rgba(255, 255, 255, 0.3)",
@@ -115,10 +87,7 @@ export default function CommunityPostDetail() {
     return () => styleSheet.remove();
   }, []);
 
-  useEffect(() => {
-    fetchPost();
-    fetchComments();
-  }, [id]);
+  useEffect(() => { fetchPost(); fetchComments(); }, [id]);
 
   const fetchPost = async () => {
     setLoading(true);
@@ -149,9 +118,7 @@ export default function CommunityPostDetail() {
         method: "POST", headers: { Authorization: `Bearer ${token}` },
       });
       const data = await res.json();
-      const liked = data.data?.liked;
-      const likeCount = data.data?.likeCount;
-      setPost(prev => ({ ...prev, likeCount, isLiked: liked }));
+      setPost(prev => ({ ...prev, likeCount: data.data?.likeCount, isLiked: data.data?.liked }));
     } catch (e) { console.error(e); }
   };
 
@@ -182,11 +149,7 @@ export default function CommunityPostDetail() {
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
         body: JSON.stringify({ text: replyText.trim(), parentComment: parentCommentId }),
       });
-      if (res.ok) {
-        setReplyText("");
-        setReplyTo(null);
-        fetchComments();
-      }
+      if (res.ok) { setReplyText(""); setReplyTo(null); fetchComments(); }
     } catch (e) { console.error(e); }
     finally { setSubmitting(false); }
   };
@@ -202,7 +165,6 @@ export default function CommunityPostDetail() {
     } catch (e) { console.error(e); }
   };
 
-  // backend stores user id as "id" (not "_id") — confirmed from auth controller
   const userId = (user?.id || user?._id || "").toString();
   const isPostOwner = !!(user && post && userId &&
     userId === (post.author?._id || post.author || "").toString());
@@ -238,39 +200,27 @@ export default function CommunityPostDetail() {
 
   const canDeleteComment = (author) => {
     if (!user) return false;
-    const authorStr = (author?._id || author || "").toString();
-    return userId === authorStr || user.role === "admin";
+    return userId === (author?._id || author || "").toString() || user.role === "admin";
   };
 
   if (loading) return (
-    <div style={{ minHeight: "100vh", background: "#f5f1e8", display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}>
-      <div style={{ width: "100%", maxWidth: 700 }}>
-        <div className="skeleton" style={{ height: 60, borderRadius: 12, marginBottom: 20 }} />
-        <div className="skeleton" style={{ height: 120, borderRadius: 12, marginBottom: 20 }} />
-        <div className="skeleton" style={{ height: 80, borderRadius: 12 }} />
+    <div className="min-h-screen bg-[#f5f1e8] flex items-center justify-center p-4">
+      <div className="w-full max-w-[700px]">
+        <div className="skeleton h-[50px] sm:h-[60px] rounded-xl mb-4 sm:mb-5" />
+        <div className="skeleton h-[100px] sm:h-[120px] rounded-xl mb-4 sm:mb-5" />
+        <div className="skeleton h-16 sm:h-20 rounded-xl" />
       </div>
     </div>
   );
 
   if (!post) return (
-    <div style={{ minHeight: "100vh", background: "#f5f1e8", display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}>
-      <div style={{ textAlign: "center" }}>
-        <div style={{ fontSize: 64, marginBottom: 16 }}>📭</div>
-        <p style={{ color: "#6b7280", fontSize: "1.1rem", fontWeight: 600 }}>Post not found</p>
-        <button 
+    <div className="min-h-screen bg-[#f5f1e8] flex items-center justify-center p-4">
+      <div className="text-center">
+        <div className="text-[52px] sm:text-[64px] mb-3 sm:mb-4">📭</div>
+        <p className="text-[#6b7280] text-base sm:text-[1.1rem] font-semibold">Post not found</p>
+        <button
           onClick={() => navigate("/community")}
-          style={{
-            marginTop: 20,
-            padding: "10px 24px",
-            borderRadius: 10,
-            border: "none",
-            background: "#059669",
-            color: "#fff",
-            cursor: "pointer",
-            fontWeight: 600,
-          }}
-          onMouseEnter={e => e.currentTarget.style.background = "#047857"}
-          onMouseLeave={e => e.currentTarget.style.background = "#059669"}
+          className="mt-4 sm:mt-5 px-5 sm:px-6 py-2.5 sm:py-[10px] rounded-[10px] border-none bg-[#059669] text-white cursor-pointer font-semibold hover:bg-[#047857] transition-colors text-sm sm:text-base"
         >
           Back to Community
         </button>
@@ -279,114 +229,44 @@ export default function CommunityPostDetail() {
   );
 
   return (
-    <div style={{ minHeight: "100vh", background: "#f5f1e8", padding: "20px 16px 60px" }}>
-      <div style={{ maxWidth: 700, margin: "0 auto" }}>
+    <div className="min-h-screen bg-[#f5f1e8] px-3 sm:px-4 pt-4 sm:pt-5 pb-[60px]">
+      <div className="max-w-[700px] mx-auto">
+
         {/* Back Button */}
         <button
           onClick={() => navigate("/community")}
-          style={{
-            background: "rgba(5, 150, 105, 0.1)",
-            border: "none", 
-            cursor: "pointer",
-            display: "inline-flex", 
-            alignItems: "center", 
-            gap: 8,
-            color: "#059669", 
-            fontWeight: 700, 
-            fontSize: 15, 
-            marginBottom: 28, 
-            padding: "10px 16px",
-            borderRadius: 10,
-            transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
-          }}
-          onMouseEnter={e => {
-            e.currentTarget.style.background = "rgba(16, 185, 129, 0.2)";
-            e.currentTarget.style.transform = "translateX(-4px)";
-          }}
-          onMouseLeave={e => {
-            e.currentTarget.style.background = "rgba(16, 185, 129, 0.12)";
-            e.currentTarget.style.transform = "translateX(0)";
-          }}
+          className="bg-[rgba(5,150,105,0.1)] border-none cursor-pointer inline-flex items-center gap-2 text-[#059669] font-bold text-sm sm:text-[15px] mb-5 sm:mb-7 px-3 sm:px-4 py-2 sm:py-[10px] rounded-[10px] transition-all hover:bg-[rgba(16,185,129,0.2)] hover:-translate-x-1"
         >
-          <FaArrowLeft /> Back to Community
+          <FaArrowLeft /> <span>Back to Community</span>
         </button>
 
         {/* ── Post card ── */}
-        <div 
-          className="fade-in-up"
-          style={{
-            background: "#ffffff", 
-            borderRadius: 12, 
-            padding: "28px",
-            boxShadow: "0 1px 3px rgba(0,0,0,0.05)", 
-            marginBottom: 28,
-            border: "1px solid #e5e7eb",
-          }}>
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 20 }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
-              <Avatar name={post.author?.name} size={50} />
+        <div className="bg-white rounded-xl p-4 sm:p-7 shadow-[0_1px_3px_rgba(0,0,0,0.05)] mb-5 sm:mb-7 border border-[#e5e7eb]">
+
+          {/* Post header */}
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4 sm:mb-5">
+            <div className="flex items-center gap-3 sm:gap-[14px]">
+              <Avatar name={post.author?.name} size={44} />
               <div>
-                <div style={{ fontWeight: 700, color: "#1f2937", fontSize: 17 }}>
+                <div className="font-bold text-[#1f2937] text-base sm:text-[17px]">
                   {post.author?.name || "Anonymous"}
                 </div>
-                <div style={{ fontSize: 13, color: "#6b7280", marginTop: 2 }}>
+                <div className="text-xs sm:text-[13px] text-[#6b7280] mt-[2px]">
                   {timeAgo(post.createdAt)}
                 </div>
               </div>
             </div>
             {isPostOwner && (
-              <div style={{ display: "flex", gap: 8 }}>
+              <div className="flex gap-2 sm:ml-auto flex-wrap">
                 <button
                   onClick={() => { setEditText(post.text); setEditTags((post.tags || []).join(", ")); setShowEdit(true); }}
-                  style={{
-                    background: "rgba(59, 130, 246, 0.1)",
-                    border: "1.5px solid rgba(59, 130, 246, 0.2)", 
-                    borderRadius: 10,
-                    padding: "8px 14px", 
-                    cursor: "pointer", 
-                    color: "#2563eb",
-                    display: "flex", 
-                    alignItems: "center", 
-                    gap: 6, 
-                    fontSize: 14, 
-                    fontWeight: 600,
-                    transition: "all 0.2s",
-                  }}
-                  onMouseEnter={e => {
-                    e.currentTarget.style.background = "rgba(29, 78, 216, 0.12)";
-                    e.currentTarget.style.transform = "translateY(-2px)";
-                  }}
-                  onMouseLeave={e => {
-                    e.currentTarget.style.background = "linear-gradient(135deg, rgba(29, 78, 216, 0.1) 0%, rgba(59, 130, 246, 0.05) 100%)";
-                    e.currentTarget.style.transform = "translateY(0)";
-                  }}
+                  className="bg-[rgba(59,130,246,0.1)] border-[1.5px] border-[rgba(59,130,246,0.2)] rounded-[10px] px-3 sm:px-[14px] py-1.5 sm:py-2 cursor-pointer text-[#2563eb] flex items-center gap-[6px] text-xs sm:text-sm font-semibold transition-all hover:bg-[rgba(29,78,216,0.12)] hover:-translate-y-[2px]"
                 >
                   <FaEdit /> Edit
                 </button>
                 <button
                   onClick={handleDeletePost}
-                  style={{
-                    background: "linear-gradient(135deg, rgba(220, 38, 38, 0.1) 0%, rgba(239, 68, 68, 0.05) 100%)",
-                    border: "1.5px solid rgba(220, 38, 38, 0.2)", 
-                    borderRadius: 10,
-                    padding: "8px 14px", 
-                    cursor: "pointer", 
-                    color: "#dc2626",
-                    display: "flex", 
-                    alignItems: "center", 
-                    gap: 6, 
-                    fontSize: 14, 
-                    fontWeight: 600,
-                    transition: "all 0.2s",
-                  }}
-                  onMouseEnter={e => {
-                    e.currentTarget.style.background = "rgba(220, 38, 38, 0.12)";
-                    e.currentTarget.style.transform = "translateY(-2px)";
-                  }}
-                  onMouseLeave={e => {
-                    e.currentTarget.style.background = "linear-gradient(135deg, rgba(220, 38, 38, 0.1) 0%, rgba(239, 68, 68, 0.05) 100%)";
-                    e.currentTarget.style.transform = "translateY(0)";
-                  }}
+                  className="bg-[rgba(220,38,38,0.1)] border-[1.5px] border-[rgba(220,38,38,0.2)] rounded-[10px] px-3 sm:px-[14px] py-1.5 sm:py-2 cursor-pointer text-[#dc2626] flex items-center gap-[6px] text-xs sm:text-sm font-semibold transition-all hover:bg-[rgba(220,38,38,0.12)] hover:-translate-y-[2px]"
                 >
                   <FaTrash /> Delete
                 </button>
@@ -394,75 +274,29 @@ export default function CommunityPostDetail() {
             )}
           </div>
 
-          <p style={{ 
-            margin: "0 0 20px", 
-            color: "#374151", 
-            lineHeight: 1.8, 
-            fontSize: "1rem", 
-            whiteSpace: "pre-wrap",
-          }}>
+          <p className="m-0 mb-4 sm:mb-5 text-[#374151] leading-[1.75] sm:leading-[1.8] text-sm sm:text-base whitespace-pre-wrap">
             {post.text}
           </p>
 
           {post.tags?.length > 0 && (
-            <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 20 }}>
+            <div className="flex gap-2 flex-wrap mb-4 sm:mb-5">
               {post.tags.map(tag => (
-                <span key={tag} style={{
-                  background: "rgba(5, 150, 105, 0.1)",
-                  color: "#059669", 
-                  borderRadius: 999,
-                  padding: "6px 14px", 
-                  fontSize: 13, 
-                  fontWeight: 700,
-                  border: "1px solid rgba(5, 150, 105, 0.2)",
-                  transition: "all 0.2s",
-                }}>
+                <span key={tag} className="bg-[rgba(5,150,105,0.1)] text-[#059669] rounded-full px-3 sm:px-[14px] py-1 sm:py-[6px] text-xs sm:text-[13px] font-bold border border-[rgba(5,150,105,0.2)]">
                   #{tag}
                 </span>
               ))}
             </div>
           )}
 
-          <div style={{ display: "flex", gap: 28, borderTop: "1px solid #e5e7eb", paddingTop: 18 }}>
+          <div className="flex gap-5 sm:gap-7 border-t border-[#e5e7eb] pt-4 sm:pt-[18px] flex-wrap">
             <button
               onClick={handleLike}
-              style={{
-                background: "none", 
-                border: "none", 
-                cursor: "pointer", 
-                padding: 0,
-                display: "flex", 
-                alignItems: "center", 
-                gap: 8,
-                color: post.isLiked ? "#dc2626" : "#6b7280",
-                fontWeight: 700, 
-                fontSize: 16, 
-                transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
-              }}
-              onMouseEnter={e => {
-                if (!post.isLiked) {
-                  e.currentTarget.style.color = "#059669";
-                  e.currentTarget.style.transform = "scale(1.05)";
-                }
-              }}
-              onMouseLeave={e => {
-                if (!post.isLiked) {
-                  e.currentTarget.style.color = "#6b7280";
-                  e.currentTarget.style.transform = "scale(1)";
-                }
-              }}
+              className={`bg-transparent border-none cursor-pointer p-0 flex items-center gap-2 font-bold text-sm sm:text-base transition-all ${post.isLiked ? "text-[#dc2626]" : "text-[#6b7280] hover:text-[#059669] hover:scale-105"}`}
             >
               {post.isLiked ? <FaHeart /> : <FaRegHeart />}
               <span>{post.likeCount || 0}</span>
             </button>
-            <button style={{ 
-              background: "none", border: "none", cursor: "pointer", padding: 0,
-              display: "flex", alignItems: "center", gap: 8, color: "#6b7280", fontWeight: 700, fontSize: 16,
-              transition: "all 0.2s",
-            }}
-            onMouseEnter={e => { e.currentTarget.style.color = "#6b8e23"; }}
-            onMouseLeave={e => { e.currentTarget.style.color = "#6b7280"; }}
-            >
+            <button className="bg-transparent border-none cursor-pointer p-0 flex items-center gap-2 text-[#6b7280] font-bold text-sm sm:text-base transition-all hover:text-[#6b8e23]">
               <FaComment /> {post.commentCount || 0} Comment{post.commentCount !== 1 ? "s" : ""}
             </button>
           </div>
@@ -470,84 +304,27 @@ export default function CommunityPostDetail() {
 
         {/* ── Add comment ── */}
         {token ? (
-          <div 
-            className="fade-in-up"
-            style={{
-              background: "#ffffff", 
-              borderRadius: 12, 
-              padding: "24px 28px",
-              boxShadow: "0 1px 3px rgba(0,0,0,0.05)", 
-              marginBottom: 28,
-              border: "1px solid #e5e7eb",
-            }}>
-            <h3 style={{ margin: "0 0 18px", fontSize: "1rem", fontWeight: 700, color: "#1f2937" }}>
+          <div className="bg-white rounded-xl px-4 sm:px-7 py-4 sm:py-6 shadow-[0_1px_3px_rgba(0,0,0,0.05)] mb-5 sm:mb-7 border border-[#e5e7eb]">
+            <h3 className="m-0 mb-3 sm:mb-[18px] text-sm sm:text-base font-bold text-[#1f2937]">
               💬 Share Your Thoughts
             </h3>
-            <div style={{ display: "flex", gap: 14 }}>
-              <Avatar name={user?.name} size={40} />
-              <div style={{ flex: 1 }}>
+            <div className="flex gap-3 sm:gap-[14px]">
+              <Avatar name={user?.name} size={36} />
+              <div className="flex-1 min-w-0">
                 <textarea
                   value={commentText}
                   onChange={e => setCommentText(e.target.value)}
                   placeholder="Share your thoughts…"
                   maxLength={500}
-                  style={{
-                    width: "100%", 
-                    minHeight: 90, 
-                    border: "2px solid #e5e7eb",
-                    borderRadius: 12, 
-                    padding: "12px 16px", 
-                    fontSize: 15,
-                    resize: "none", 
-                    outline: "none", 
-                    fontFamily: "inherit",
-                    boxSizing: "border-box", 
-                    color: "#1f2937",
-                    transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
-                    lineHeight: 1.6,
-                  }}
-                  onFocus={e => {
-                    e.target.style.borderColor = "#059669";
-                    e.target.style.boxShadow = "0 0 0 3px rgba(5, 150, 105, 0.1)";
-                  }}
-                  onBlur={e => {
-                    e.target.style.borderColor = "#e5e7eb";
-                    e.target.style.boxShadow = "none";
-                  }}
+                  className="w-full min-h-[80px] sm:min-h-[90px] border-2 border-[#e5e7eb] rounded-xl px-3 sm:px-4 py-2.5 sm:py-3 text-sm sm:text-[15px] resize-none outline-none text-[#1f2937] transition-all leading-relaxed focus:border-[#059669] focus:shadow-[0_0_0_3px_rgba(5,150,105,0.1)]"
+                  style={{ fontFamily: "inherit" }}
                 />
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 10 }}>
-                  <div style={{ fontSize: 12, color: "#6b7280" }}>
-                    {commentText.length}/500
-                  </div>
+                <div className="flex justify-between items-center mt-2 sm:mt-[10px] gap-2">
+                  <div className="text-xs text-[#6b7280] flex-shrink-0">{commentText.length}/500</div>
                   <button
                     onClick={handleComment}
                     disabled={!commentText.trim() || submitting}
-                    style={{
-                      padding: "10px 24px", 
-                      borderRadius: 10, 
-                      border: "none",
-                      background: commentText.trim() && !submitting 
-                        ? "linear-gradient(135deg, #059669 0%, #047857 100%)" 
-                        : "#d1d5db",
-                      color: "#fff", 
-                      fontWeight: 700, 
-                      fontSize: 15,
-                      cursor: commentText.trim() && !submitting ? "pointer" : "not-allowed",
-                      transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
-                      boxShadow: commentText.trim() && !submitting ? "0 6px 16px rgba(15, 118, 110, 0.25)" : "none",
-                    }}
-                    onMouseEnter={e => {
-                      if (commentText.trim() && !submitting) {
-                        e.currentTarget.style.transform = "translateY(-2px)";
-                        e.currentTarget.style.boxShadow = "0 10px 24px rgba(15, 118, 110, 0.35)";
-                      }
-                    }}
-                    onMouseLeave={e => {
-                      if (commentText.trim() && !submitting) {
-                        e.currentTarget.style.transform = "translateY(0)";
-                        e.currentTarget.style.boxShadow = "0 6px 16px rgba(15, 118, 110, 0.25)";
-                      }
-                    }}
+                    className={`px-4 sm:px-6 py-2 sm:py-[10px] rounded-[10px] border-none text-white font-bold text-sm sm:text-[15px] transition-all ${commentText.trim() && !submitting ? "bg-gradient-to-br from-[#059669] to-[#047857] cursor-pointer shadow-[0_6px_16px_rgba(15,118,110,0.25)] hover:-translate-y-[2px] hover:shadow-[0_10px_24px_rgba(15,118,110,0.35)]" : "bg-[#d1d5db] cursor-not-allowed"}`}
                   >
                     {submitting ? "Posting…" : "Comment"}
                   </button>
@@ -556,40 +333,13 @@ export default function CommunityPostDetail() {
             </div>
           </div>
         ) : (
-          <div style={{
-            background: "linear-gradient(135deg, rgba(107, 142, 35, 0.08) 0%, rgba(107, 142, 35, 0.04) 100%)",
-            borderRadius: 18, 
-            padding: "32px 28px", 
-            marginBottom: 28,
-            textAlign: "center", 
-            boxShadow: "0 2px 12px rgba(0,0,0,0.04)",
-            border: "1.5px solid rgba(107, 142, 35, 0.2)",
-          }}>
-            <p style={{ margin: "0 0 16px", color: "#475569", fontSize: "1.05rem", fontWeight: 600 }}>
+          <div className="bg-gradient-to-br from-[rgba(107,142,35,0.08)] to-[rgba(107,142,35,0.04)] rounded-[18px] px-4 sm:px-7 py-6 sm:py-8 mb-5 sm:mb-7 text-center shadow-[0_2px_12px_rgba(0,0,0,0.04)] border-[1.5px] border-[rgba(107,142,35,0.2)]">
+            <p className="m-0 mb-3 sm:mb-4 text-[#475569] text-sm sm:text-[1.05rem] font-semibold">
               Sign in to join the conversation
             </p>
-            <button 
+            <button
               onClick={() => navigate("/login")}
-              style={{
-                background: "linear-gradient(135deg, #6b8e23, #556b2f)",
-                color: "#fff", 
-                border: "none", 
-                borderRadius: 12,
-                padding: "13px 36px", 
-                fontWeight: 700, 
-                fontSize: 15,
-                cursor: "pointer",
-                transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
-                boxShadow: "0 6px 16px rgba(107, 142, 35, 0.25)",
-              }}
-              onMouseEnter={e => {
-                e.currentTarget.style.transform = "translateY(-2px)";
-                e.currentTarget.style.boxShadow = "0 12px 28px rgba(107, 142, 35, 0.35)";
-              }}
-              onMouseLeave={e => {
-                e.currentTarget.style.transform = "translateY(0)";
-                e.currentTarget.style.boxShadow = "0 6px 16px rgba(107, 142, 35, 0.25)";
-              }}
+              className="bg-gradient-to-br from-[#6b8e23] to-[#556b2f] text-white border-none rounded-xl px-7 sm:px-9 py-3 sm:py-[13px] font-bold text-sm sm:text-[15px] cursor-pointer transition-all shadow-[0_6px_16px_rgba(107,142,35,0.25)] hover:-translate-y-[2px] hover:shadow-[0_12px_28px_rgba(107,142,35,0.35)]"
             >
               Login to Comment
             </button>
@@ -598,162 +348,106 @@ export default function CommunityPostDetail() {
 
         {/* ── Comments ── */}
         <div>
-          <h3 style={{ fontSize: "1.1rem", fontWeight: 700, color: "#1f2937", margin: "0 0 20px", display: "flex", alignItems: "center", gap: 10 }}>
-            <FaComment size={18} style={{ color: "#6b8e23" }} /> Comments ({post.commentCount || 0})
+          <h3 className="text-sm sm:text-[1.1rem] font-bold text-[#1f2937] m-0 mb-4 sm:mb-5 flex items-center gap-2 sm:gap-[10px]">
+            <FaComment size={16} className="text-[#6b8e23]" /> Comments ({post.commentCount || 0})
           </h3>
+
           {commentsLoading ? (
-            <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+            <div className="flex flex-col gap-3">
               {[1, 2].map(i => (
-                <div key={i} style={{
-                  background: "#fff", 
-                  borderRadius: 14, 
-                  padding: 16,
-                  boxShadow: "0 2px 8px rgba(0,0,0,0.05)",
-                }}>
-                  <div style={{ display: "flex", gap: 12, marginBottom: 12 }}>
-                    <div className="skeleton" style={{ width: 36, height: 36, borderRadius: "50%" }} />
-                    <div style={{ flex: 1 }}>
-                      <div className="skeleton" style={{ width: "30%", height: 14, marginBottom: 6, borderRadius: 4 }} />
-                      <div className="skeleton" style={{ width: "50%", height: 10, borderRadius: 4 }} />
+                <div key={i} className="bg-white rounded-2xl p-3 sm:p-4 shadow-[0_2px_8px_rgba(0,0,0,0.05)]">
+                  <div className="flex gap-3 mb-3">
+                    <div className="skeleton w-8 h-8 sm:w-9 sm:h-9 rounded-full flex-shrink-0" />
+                    <div className="flex-1">
+                      <div className="skeleton w-[30%] h-[12px] mb-[6px] rounded" />
+                      <div className="skeleton w-[50%] h-[10px] rounded" />
                     </div>
                   </div>
-                  <div className="skeleton" style={{ width: "100%", height: 40, borderRadius: 4 }} />
+                  <div className="skeleton w-full h-9 sm:h-10 rounded" />
                 </div>
               ))}
             </div>
           ) : comments.length === 0 ? (
-            <div style={{
-              background: "linear-gradient(135deg, rgba(15, 118, 110, 0.03) 0%, rgba(13, 107, 99, 0.02) 100%)",
-              borderRadius: 16, 
-              padding: "48px 24px", 
-              textAlign: "center",
-              boxShadow: "0 2px 12px rgba(0,0,0,0.04)",
-              border: "1px solid rgba(15, 118, 110, 0.1)",
-            }}>
-              <div style={{ fontSize: 52, marginBottom: 12 }}>💬</div>
-              <p style={{ color: "#475569", margin: 0, fontSize: "1.02rem", fontWeight: 600 }}>
-                No comments yet
-              </p>
-              <p style={{ color: "#6b7280", margin: "6px 0 0", fontSize: "0.95rem" }}>
-                Be the first to share your thoughts!
-              </p>
+            <div className="bg-gradient-to-br from-[rgba(15,118,110,0.03)] to-[rgba(13,107,99,0.02)] rounded-2xl px-4 sm:px-6 py-10 sm:py-12 text-center shadow-[0_2px_12px_rgba(0,0,0,0.04)] border border-[rgba(15,118,110,0.1)]">
+              <div className="text-[44px] sm:text-[52px] mb-2 sm:mb-3">💬</div>
+              <p className="text-[#475569] m-0 text-sm sm:text-[1.02rem] font-semibold">No comments yet</p>
+              <p className="text-[#6b7280] mt-[6px] m-0 text-xs sm:text-[0.95rem]">Be the first to share your thoughts!</p>
             </div>
           ) : (
-            <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+            <div className="flex flex-col gap-3 sm:gap-[14px]">
               {comments.map((comment, idx) => (
-                <div 
-                  key={comment._id} 
-                  style={{
-                    background: "#fff", 
-                    borderRadius: 16, 
-                    padding: "20px 22px",
-                    boxShadow: "0 2px 12px rgba(0,0,0,0.05)",
-                    border: "1px solid rgba(0,0,0,0.02)",
-                    animation: `fadeInUp 0.5s ease-out ${idx * 0.1}s both`,
-                    transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
-                  }}
-                  onMouseEnter={e => {
-                    e.currentTarget.style.boxShadow = "0 8px 24px rgba(0,0,0,0.08)";
-                    e.currentTarget.style.transform = "translateY(-2px)";
-                  }}
-                  onMouseLeave={e => {
-                    e.currentTarget.style.boxShadow = "0 2px 12px rgba(0,0,0,0.05)";
-                    e.currentTarget.style.transform = "translateY(0)";
-                  }}
+                <div
+                  key={comment._id}
+                  className="bg-white rounded-2xl px-3 sm:px-[22px] py-4 sm:py-5 shadow-[0_2px_12px_rgba(0,0,0,0.05)] border border-[rgba(0,0,0,0.02)] transition-all hover:shadow-[0_8px_24px_rgba(0,0,0,0.08)] hover:-translate-y-[2px]"
+                  style={{ animation: `fadeInUp 0.5s ease-out ${idx * 0.1}s both` }}
                 >
                   {/* Comment header */}
-                  <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 12 }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                      <Avatar name={comment.author?.name} size={38} />
-                      <div>
-                        <div style={{ fontWeight: 700, color: "#1f2937", fontSize: 15 }}>
+                  <div className="flex justify-between mb-2 sm:mb-3 gap-2">
+                    <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+                      <Avatar name={comment.author?.name} size={34} />
+                      <div className="min-w-0">
+                        <div className="font-bold text-[#1f2937] text-sm sm:text-[15px] truncate">
                           {comment.author?.name || "Anonymous"}
                         </div>
-                        <div style={{ fontSize: 12, color: "#6b7280", marginTop: 2 }}>
+                        <div className="text-[11px] sm:text-xs text-[#6b7280] mt-[2px]">
                           {timeAgo(comment.createdAt)}
                         </div>
                       </div>
                     </div>
-                    <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                    <div className="flex gap-1 sm:gap-2 items-center flex-shrink-0">
                       {token && (
                         <button
                           onClick={() => setReplyTo(
                             replyTo?.commentId === comment._id ? null :
                             { commentId: comment._id, authorName: comment.author?.name }
                           )}
-                          style={{
-                            background: "none", border: "none", cursor: "pointer",
-                            color: "#6b7280", fontSize: 13, display: "flex",
-                            alignItems: "center", gap: 5, fontWeight: 700,
-                            transition: "all 0.2s", padding: "4px 8px", borderRadius: 6,
-                          }}
-                          onMouseEnter={e => {
-                            e.currentTarget.style.color = "#059669";
-                            e.currentTarget.style.background = "rgba(15, 118, 110, 0.08)";
-                          }}
-                          onMouseLeave={e => {
-                            e.currentTarget.style.color = "#6b7280";
-                            e.currentTarget.style.background = "none";
-                          }}
+                          className="bg-transparent border-none cursor-pointer text-[#6b7280] text-xs sm:text-[13px] flex items-center gap-1 sm:gap-[5px] font-bold transition-all px-1.5 sm:px-2 py-1 rounded-md hover:text-[#059669] hover:bg-[rgba(15,118,110,0.08)]"
                         >
-                          <FaReply /> Reply
+                          <FaReply size={11} /> <span className="hidden xs:inline">Reply</span>
                         </button>
                       )}
                       {canDeleteComment(comment.author) && (
                         <button
                           onClick={() => handleDeleteComment(comment._id)}
-                          style={{ 
-                            background: "none", 
-                            border: "none", 
-                            cursor: "pointer", 
-                            color: "#ef4444", 
-                            fontSize: 14,
-                            padding: "4px 8px",
-                            borderRadius: 6,
-                            transition: "all 0.2s",
-                          }}
-                          onMouseEnter={e => {
-                            e.currentTarget.style.background = "rgba(239, 68, 68, 0.1)";
-                            e.currentTarget.style.color = "#dc2626";
-                          }}
-                          onMouseLeave={e => {
-                            e.currentTarget.style.background = "none";
-                            e.currentTarget.style.color = "#ef4444";
-                          }}
+                          className="bg-transparent border-none cursor-pointer text-[#ef4444] text-xs sm:text-sm px-1.5 sm:px-2 py-1 rounded-md transition-all hover:bg-[rgba(239,68,68,0.1)] hover:text-[#dc2626]"
                         >
-                          <FaTrash />
+                          <FaTrash size={11} />
                         </button>
                       )}
                     </div>
                   </div>
 
-                  <p style={{ margin: 0, color: "#334155", fontSize: "0.96rem", lineHeight: 1.7 }}>
+                  <p className="m-0 text-[#334155] text-xs sm:text-[0.96rem] leading-[1.65] sm:leading-[1.7]">
                     {comment.text}
                   </p>
 
                   {/* Replies */}
                   {comment.replies?.length > 0 && (
-                    <div style={{ marginTop: 14, paddingLeft: 16, borderLeft: "2.5px solid #e5e7eb", display: "flex", flexDirection: "column", gap: 10 }}>
+                    <div className="mt-3 sm:mt-[14px] pl-3 sm:pl-4 border-l-[2.5px] border-[#e5e7eb] flex flex-col gap-2 sm:gap-[10px]">
                       {comment.replies.map(reply => (
                         <div key={reply._id}>
-                          <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}>
-                            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                              <Avatar name={reply.author?.name} size={28} />
+                          <div className="flex justify-between mb-1.5 sm:mb-[6px] gap-2">
+                            <div className="flex items-center gap-2">
+                              <Avatar name={reply.author?.name} size={24} />
                               <div>
-                                <span style={{ fontWeight: 700, color: "#111827", fontSize: 13 }}>{reply.author?.name || "Anonymous"}</span>
-                                <span style={{ fontSize: 11, color: "#9ca3af", marginLeft: 8 }}>{timeAgo(reply.createdAt)}</span>
+                                <span className="font-bold text-[#111827] text-xs sm:text-[13px]">
+                                  {reply.author?.name || "Anonymous"}
+                                </span>
+                                <span className="text-[10px] sm:text-[11px] text-[#9ca3af] ml-1.5 sm:ml-2">
+                                  {timeAgo(reply.createdAt)}
+                                </span>
                               </div>
                             </div>
                             {canDeleteComment(reply.author) && (
                               <button
                                 onClick={() => handleDeleteComment(reply._id)}
-                                style={{ background: "none", border: "none", cursor: "pointer", color: "#ef4444", fontSize: 12 }}
+                                className="bg-transparent border-none cursor-pointer text-[#ef4444] text-[10px] sm:text-xs flex-shrink-0"
                               >
                                 <FaTrash />
                               </button>
                             )}
                           </div>
-                          <p style={{ margin: 0, color: "#374151", fontSize: "0.88rem", lineHeight: 1.6, paddingLeft: 36 }}>
+                          <p className="m-0 text-[#374151] text-[11px] sm:text-[0.88rem] leading-[1.6] pl-7 sm:pl-9">
                             {reply.text}
                           </p>
                         </div>
@@ -763,39 +457,29 @@ export default function CommunityPostDetail() {
 
                   {/* Reply input */}
                   {replyTo?.commentId === comment._id && (
-                    <div style={{ marginTop: 14, paddingLeft: 16, borderLeft: "2.5px solid #059669" }}>
-                      <div style={{ display: "flex", gap: 8 }}>
-                        <Avatar name={user?.name} size={28} />
-                        <div style={{ flex: 1 }}>
+                    <div className="mt-3 sm:mt-[14px] pl-3 sm:pl-4 border-l-[2.5px] border-[#059669]">
+                      <div className="flex gap-2">
+                        <Avatar name={user?.name} size={26} />
+                        <div className="flex-1 min-w-0">
                           <textarea
                             value={replyText}
                             onChange={e => setReplyText(e.target.value)}
                             placeholder={`Replying to ${replyTo.authorName}…`}
                             maxLength={500}
-                            style={{
-                              width: "100%", minHeight: 64, border: "1.5px solid #e5e7eb",
-                              borderRadius: 8, padding: "8px 12px", fontSize: 13,
-                              resize: "none", outline: "none", fontFamily: "inherit",
-                              boxSizing: "border-box",
-                            }}
-                            onFocus={e => { e.target.style.borderColor = "#059669"; }}
-                            onBlur={e => { e.target.style.borderColor = "#e5e7eb"; }}
+                            className="w-full min-h-[56px] sm:min-h-[64px] border-[1.5px] border-[#e5e7eb] rounded-lg px-2.5 sm:px-3 py-2 text-xs sm:text-[13px] resize-none outline-none focus:border-[#059669]"
+                            style={{ fontFamily: "inherit" }}
                           />
-                          <div style={{ display: "flex", gap: 8, justifyContent: "flex-end", marginTop: 6 }}>
+                          <div className="flex gap-2 justify-end mt-1.5 sm:mt-[6px]">
                             <button
                               onClick={() => { setReplyTo(null); setReplyText(""); }}
-                              style={{ padding: "7px 16px", borderRadius: 8, border: "1.5px solid #e5e7eb", background: "#f9fafb", cursor: "pointer", fontSize: 13 }}
+                              className="px-3 sm:px-4 py-1.5 sm:py-[7px] rounded-lg border-[1.5px] border-[#e5e7eb] bg-[#f9fafb] cursor-pointer text-xs sm:text-[13px]"
                             >
                               Cancel
                             </button>
                             <button
                               onClick={() => handleReply(comment._id)}
                               disabled={!replyText.trim() || submitting}
-                              style={{
-                                padding: "7px 18px", borderRadius: 8, border: "none",
-                                background: replyText.trim() && !submitting ? "#059669" : "#9ca3af",
-                                color: "#fff", fontWeight: 700, fontSize: 13, cursor: "pointer",
-                              }}
+                              className={`px-3 sm:px-[18px] py-1.5 sm:py-[7px] rounded-lg border-none font-bold text-xs sm:text-[13px] text-white cursor-pointer ${replyText.trim() && !submitting ? "bg-[#059669]" : "bg-[#9ca3af]"}`}
                             >
                               {submitting ? "…" : "Reply"}
                             </button>
@@ -813,18 +497,14 @@ export default function CommunityPostDetail() {
 
       {/* ── Edit Post Modal ── */}
       {showEdit && (
-        <div style={{
-          position: "fixed", inset: 0, background: "rgba(0,0,0,0.55)",
-          display: "flex", alignItems: "center", justifyContent: "center",
-          zIndex: 1000, padding: 16,
-        }}>
-          <div style={{
-            background: "#fff", borderRadius: 20, width: "100%", maxWidth: 560,
-            padding: "32px 28px", boxShadow: "0 24px 60px rgba(0,0,0,0.22)",
-          }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 22 }}>
-              <h2 style={{ margin: 0, fontSize: "1.3rem", fontWeight: 800, color: "#111827" }}>Edit Post</h2>
-              <button onClick={() => setShowEdit(false)} style={{ background: "none", border: "none", cursor: "pointer", color: "#6b7280", fontSize: 20, padding: 4 }}>
+        <div className="fixed inset-0 bg-[rgba(0,0,0,0.55)] flex items-center justify-center z-[1000] p-3 sm:p-4">
+          <div className="bg-white rounded-[20px] w-full max-w-[560px] px-4 sm:px-7 py-5 sm:py-8 shadow-[0_24px_60px_rgba(0,0,0,0.22)] max-h-[90vh] overflow-y-auto">
+            <div className="flex justify-between items-center mb-4 sm:mb-[22px]">
+              <h2 className="m-0 text-base sm:text-[1.3rem] font-extrabold text-[#111827]">Edit Post</h2>
+              <button
+                onClick={() => setShowEdit(false)}
+                className="bg-transparent border-none cursor-pointer text-[#6b7280] text-lg sm:text-xl p-1"
+              >
                 <FaTimes />
               </button>
             </div>
@@ -832,46 +512,30 @@ export default function CommunityPostDetail() {
               value={editText}
               onChange={e => setEditText(e.target.value)}
               maxLength={2000}
-              style={{
-                width: "100%", minHeight: 130, border: "1.5px solid #e5e7eb",
-                borderRadius: 12, padding: "14px 16px", fontSize: 15,
-                resize: "vertical", outline: "none", fontFamily: "inherit",
-                boxSizing: "border-box", color: "#111827", lineHeight: 1.65,
-              }}
-              onFocus={e => { e.target.style.borderColor = "#059669"; }}
-              onBlur={e => { e.target.style.borderColor = "#e5e7eb"; }}
+              className="w-full min-h-[110px] sm:min-h-[130px] border-[1.5px] border-[#e5e7eb] rounded-xl px-3 sm:px-4 py-3 sm:py-[14px] text-sm sm:text-[15px] resize-y outline-none text-[#111827] leading-[1.65] focus:border-[#059669]"
+              style={{ fontFamily: "inherit" }}
             />
-            <div style={{ fontSize: 12, color: "#9ca3af", textAlign: "right", marginTop: 4, marginBottom: 14 }}>
+            <div className="text-[11px] sm:text-xs text-[#9ca3af] text-right mt-1 mb-3 sm:mb-[14px]">
               {editText.length}/2000
             </div>
             <input
               value={editTags}
               onChange={e => setEditTags(e.target.value)}
               placeholder="Tags: health, education (comma separated)"
-              style={{
-                width: "100%", border: "1.5px solid #e5e7eb", borderRadius: 12,
-                padding: "12px 16px", fontSize: 14, outline: "none",
-                fontFamily: "inherit", boxSizing: "border-box", marginBottom: 20, color: "#374151",
-              }}
-              onFocus={e => { e.target.style.borderColor = "#059669"; }}
-              onBlur={e => { e.target.style.borderColor = "#e5e7eb"; }}
+              className="w-full border-[1.5px] border-[#e5e7eb] rounded-xl px-3 sm:px-4 py-2.5 sm:py-3 text-xs sm:text-sm outline-none mb-4 sm:mb-5 text-[#374151] focus:border-[#059669]"
+              style={{ fontFamily: "inherit" }}
             />
-            <div style={{ display: "flex", gap: 10, justifyContent: "flex-end" }}>
+            <div className="flex gap-2 sm:gap-[10px] justify-end">
               <button
                 onClick={() => setShowEdit(false)}
-                style={{ padding: "11px 24px", borderRadius: 10, border: "1.5px solid #e5e7eb", background: "#f9fafb", cursor: "pointer", fontWeight: 600, fontSize: 14 }}
+                className="px-4 sm:px-6 py-2 sm:py-[11px] rounded-[10px] border-[1.5px] border-[#e5e7eb] bg-[#f9fafb] cursor-pointer font-semibold text-xs sm:text-sm"
               >
                 Cancel
               </button>
               <button
                 onClick={handleEditPost}
                 disabled={!editText.trim() || editSubmitting}
-                style={{
-                  padding: "11px 28px", borderRadius: 10, border: "none",
-                  background: editText.trim() && !editSubmitting ? "#059669" : "#9ca3af",
-                  color: "#fff", fontWeight: 700, fontSize: 14,
-                  cursor: editText.trim() && !editSubmitting ? "pointer" : "not-allowed",
-                }}
+                className={`px-5 sm:px-7 py-2 sm:py-[11px] rounded-[10px] border-none font-bold text-xs sm:text-sm text-white cursor-pointer ${editText.trim() && !editSubmitting ? "bg-[#059669]" : "bg-[#9ca3af] cursor-not-allowed"}`}
               >
                 {editSubmitting ? "Saving…" : "Save Changes"}
               </button>

@@ -1,36 +1,75 @@
 import { useState, useEffect, useCallback } from "react";
-import { Heart, Loader, Search, ChevronLeft, ChevronRight, Eye, Trash2, X } from "lucide-react";
+import {
+  BarChart2, Eye, Trash2, X, ChevronLeft, ChevronRight,
+  Loader, MoreHorizontal, CheckCircle2, XCircle, MapPin, Search,
+  Wallet, Megaphone, Clock,
+} from "lucide-react";
 import { API_BASE_URL } from "./AdminLayout.jsx";
 
+const LIMIT = 8;
 const STATUS_OPTIONS = ["Pending", "Under Review", "Approved", "Rejected"];
 
-const STATUS_COLORS = {
-  "Pending":      { bg: "#fef9c3", color: "#854d0e", border: "#fde047" },
-  "Under Review": { bg: "#dbeafe", color: "#1e40af", border: "#93c5fd" },
-  "Approved":     { bg: "#dcfce7", color: "#166534", border: "#86efac" },
-  "Rejected":     { bg: "#fee2e2", color: "#991b1b", border: "#fca5a5" },
+const INCOME_LABELS = {
+  "below1L": "Below 1,00,000",
+  "1to1.5L": "₹1,00,000 – ₹1,50,000",
+  "1.5to2L": "₹1,50,000 – ₹2,00,000",
+  "2to2.5L": "₹2,00,000 – ₹2,50,000",
 };
 
-const INCOME_LABELS = {
-  "below1L":  "Below ₹1,00,000",
-  "1to1.5L":  "₹1,00,000 – ₹1,50,000",
-  "1.5to2L":  "₹1,50,000 – ₹2,00,000",
-  "2to2.5L":  "₹2,00,000 – ₹2,50,000",
+/* Status pill in table */
+const STATUS_CFG = {
+  "Pending":      { dot: "bg-yellow-400", pill: "border border-yellow-300 text-yellow-700 bg-yellow-50" },
+  "Under Review": { dot: "bg-blue-400",   pill: "border border-blue-300 text-blue-700 bg-blue-50"       },
+  "Approved":     { dot: "bg-green-500",  pill: "border border-green-400 text-green-700 bg-green-50"    },
+  "Rejected":     { dot: "bg-red-400",    pill: "border border-red-300 text-red-600 bg-red-50"          },
 };
+
+/* Status hero-card in modal */
+const STATUS_CARD_CFG = {
+  "Pending":      { bg: "bg-yellow-50",   text: "text-yellow-700",   Icon: Clock         },
+  "Under Review": { bg: "bg-blue-50",     text: "text-blue-700",     Icon: Eye           },
+  "Approved":     { bg: "bg-[#eef8e4]",   text: "text-[#2d5a1b]",   Icon: CheckCircle2  },
+  "Rejected":     { bg: "bg-red-100",     text: "text-red-700",      Icon: XCircle       },
+};
+
+const PALETTE = [
+  { bg: "#c8f56a", text: "#2d5a1b" },
+  { bg: "#fde68a", text: "#92400e" },
+  { bg: "#c7d9f0", text: "#1e40af" },
+  { bg: "#fecaca", text: "#991b1b" },
+  { bg: "#d8e8b8", text: "#3a5c1a" },
+  { bg: "#e9d5ff", text: "#6d28d9" },
+  { bg: "#fed7aa", text: "#9a3412" },
+  { bg: "#d1fae5", text: "#065f46" },
+];
+const avatarStyle = (name) => PALETTE[(name || " ").charCodeAt(0) % PALETTE.length];
+const getInitials = (name) =>
+  (name || "?").split(" ").slice(0, 2).map((w) => w[0]).join("").toUpperCase();
+
+function pageRange(current, total) {
+  if (total <= 5) return Array.from({ length: total }, (_, i) => i + 1);
+  if (current <= 3) return [1, 2, 3, "...", total];
+  if (current >= total - 2) return [1, "...", total - 2, total - 1, total];
+  return [1, "...", current - 1, current, current + 1, "...", total];
+}
+
+const formatDate = (d) =>
+  d ? new Date(d).toLocaleDateString("en-IN", { day: "numeric", month: "numeric", year: "numeric" }) : "—";
+
+const formatDateLong = (d) =>
+  d ? new Date(d).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" }) : "—";
 
 function StatusBadge({ status }) {
-  const s = STATUS_COLORS[status] || { bg: "#f3f4f6", color: "#374151", border: "#d1d5db" };
+  const cfg = STATUS_CFG[status] || { dot: "bg-gray-400", pill: "border border-gray-300 text-gray-600 bg-gray-50" };
   return (
-    <span style={{
-      background: s.bg, color: s.color, border: `1px solid ${s.border}`,
-      borderRadius: "6px", padding: "3px 10px", fontSize: "0.78rem", fontWeight: 600,
-      whiteSpace: "nowrap"
-    }}>
+    <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold whitespace-nowrap ${cfg.pill}`}>
+      <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${cfg.dot}`} />
       {status}
     </span>
   );
 }
 
+/* ════════════════════════════════════════════════════ */
 function AdminKanyadan() {
   const [applications, setApplications] = useState([]);
   const [stats, setStats] = useState({ total: 0, pending: 0, underReview: 0, approved: 0, rejected: 0 });
@@ -38,11 +77,11 @@ function AdminKanyadan() {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
   const [page, setPage] = useState(1);
-  const [pagination, setPagination] = useState({ total: 0, totalPages: 1 });
+  const [pagination, setPagination] = useState({ total: 0, pages: 1 });
   const [actionLoading, setActionLoading] = useState(null);
 
-  // Detail modal
   const [selected, setSelected] = useState(null);
+  const [modalOpen, setModalOpen] = useState(false);
   const [adminNote, setAdminNote] = useState("");
   const [newStatus, setNewStatus] = useState("");
   const [updating, setUpdating] = useState(false);
@@ -50,33 +89,33 @@ function AdminKanyadan() {
 
   const token = localStorage.getItem("token");
 
-  // ── Fetch stats ──────────────────────────────────────────────────────────────
   const fetchStats = useCallback(() => {
     fetch(`${API_BASE_URL}/api/admin/kanyadan/stats`, {
-      headers: { Authorization: `Bearer ${token}` },
-      credentials: "include"
+      headers: { Authorization: `Bearer ${token}` }, credentials: "include",
     })
-      .then(r => r.json())
-      .then(d => { if (d.success) setStats(d.data); })
+      .then((r) => r.json())
+      .then((d) => { if (d.success) setStats(d.data); })
       .catch(() => {});
   }, [token]);
 
-  // ── Fetch applications ────────────────────────────────────────────────────────
   const fetchApplications = useCallback(() => {
     setLoading(true);
-    const params = new URLSearchParams({ page, limit: 15 });
+    const params = new URLSearchParams({ page, limit: LIMIT });
     if (search) params.set("search", search);
     if (statusFilter) params.set("status", statusFilter);
-
     fetch(`${API_BASE_URL}/api/admin/kanyadan?${params}`, {
-      headers: { Authorization: `Bearer ${token}` },
-      credentials: "include"
+      headers: { Authorization: `Bearer ${token}` }, credentials: "include",
     })
-      .then(r => r.json())
-      .then(d => {
+      .then((r) => r.json())
+      .then((d) => {
         if (d.success) {
-          setApplications(d.data.applications || []);
-          setPagination(d.data.pagination || { total: 0, totalPages: 1 });
+          const apps = d.data.applications || [];
+          setApplications(apps);
+          const p = d.data.pagination || {};
+          const total =
+            p.total ?? p.count ?? p.totalCount ?? p.totalDocs ??
+            d.data.total ?? d.data.count ?? apps.length;
+          setPagination({ total, pages: Math.ceil(total / LIMIT) || 1 });
         }
       })
       .catch(() => {})
@@ -85,11 +124,21 @@ function AdminKanyadan() {
 
   useEffect(() => { fetchStats(); }, [fetchStats]);
   useEffect(() => { fetchApplications(); }, [fetchApplications]);
-
-  // Reset to page 1 on filter change
   useEffect(() => { setPage(1); }, [search, statusFilter]);
 
-  // ── Update status ────────────────────────────────────────────────────────────
+  const openModal = (app) => {
+    setSelected(app);
+    setNewStatus(app.status);
+    setAdminNote(app.adminNote || "");
+    setModalError("");
+    requestAnimationFrame(() => requestAnimationFrame(() => setModalOpen(true)));
+  };
+  const closeModal = () => {
+    if (updating) return;
+    setModalOpen(false);
+    setTimeout(() => setSelected(null), 320);
+  };
+
   const handleUpdateStatus = async () => {
     if (!newStatus) { setModalError("Please select a status."); return; }
     setUpdating(true);
@@ -103,7 +152,7 @@ function AdminKanyadan() {
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok || !data.success) throw new Error(data.message || "Update failed");
-      setSelected(null);
+      closeModal();
       fetchApplications();
       fetchStats();
     } catch (err) {
@@ -113,15 +162,13 @@ function AdminKanyadan() {
     }
   };
 
-  // ── Delete ───────────────────────────────────────────────────────────────────
   const handleDelete = async (id) => {
     if (!window.confirm("Delete this application? This cannot be undone.")) return;
     setActionLoading(id);
     try {
       const res = await fetch(`${API_BASE_URL}/api/admin/kanyadan/${id}`, {
         method: "DELETE",
-        headers: { Authorization: `Bearer ${token}` },
-        credentials: "include"
+        headers: { Authorization: `Bearer ${token}` }, credentials: "include",
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok || !data.success) throw new Error(data.message);
@@ -134,251 +181,487 @@ function AdminKanyadan() {
     }
   };
 
-  // ── Open detail modal ────────────────────────────────────────────────────────
-  const openModal = (app) => {
-    setSelected(app);
-    setNewStatus(app.status);
-    setAdminNote(app.adminNote || "");
-    setModalError("");
-  };
+  const showFrom = pagination.total === 0 ? 0 : (page - 1) * LIMIT + 1;
+  const showTo   = Math.min(page * LIMIT, pagination.total);
 
   return (
-    <div style={{ padding: "28px", maxWidth: "1200px" }}>
+    <div className="-m-4 sm:-m-6 lg:-m-8 min-h-screen bg-[#f5f0e8]">
+      <div className="p-4 sm:p-6 lg:p-8">
 
-      {/* Header */}
-      <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "24px" }}>
-        <Heart size={24} color="#2e7d32" />
-        <div>
-          <h1 style={{ margin: 0, fontSize: "1.6rem", fontWeight: 700, color: "#111827" }}>
+        {/* ══ HEADER ══ */}
+        <div className="mb-8">
+          <p className="text-[11px] font-black uppercase tracking-widest text-[#2d5a1b] mb-2 m-0">
+            Application Management
+          </p>
+          <h1 className="text-[2rem] sm:text-[2.8rem] font-black text-gray-900 leading-tight m-0 mb-3">
             Kanyadan Yojna Applications
           </h1>
-          <p style={{ margin: 0, color: "#6b7280", fontSize: "0.9rem" }}>
-            LIC policy enrollment applications for underprivileged girls
+          <p className="text-sm sm:text-base text-gray-500 m-0 max-w-xl leading-relaxed">
+            LIC policy enrollment applications for underprivileged girls. Empowering
+            communities through radical transparency and financial inclusion.
           </p>
         </div>
-      </div>
 
-      {/* Stats Cards */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))", gap: "14px", marginBottom: "28px" }}>
-        {[
-          { label: "Total", value: stats.total, bg: "#f8fafc", color: "#374151" },
-          { label: "Pending", value: stats.pending, bg: "#fef9c3", color: "#854d0e" },
-          { label: "Under Review", value: stats.underReview, bg: "#dbeafe", color: "#1e40af" },
-          { label: "Approved", value: stats.approved, bg: "#dcfce7", color: "#166534" },
-          { label: "Rejected", value: stats.rejected, bg: "#fee2e2", color: "#991b1b" },
-        ].map(s => (
-          <div key={s.label} style={{ background: s.bg, borderRadius: "10px", padding: "16px 18px", border: "1px solid #e5e7eb" }}>
-            <p style={{ margin: "0 0 4px", fontSize: "0.82rem", color: s.color, fontWeight: 600 }}>{s.label}</p>
-            <p style={{ margin: 0, fontSize: "1.8rem", fontWeight: 700, color: s.color }}>{s.value}</p>
+        {/* ══ STAT CARDS ══ */}
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4 mb-8">
+
+          <div className="bg-white rounded-2xl p-5 flex flex-col justify-between min-h-[130px]">
+            <div className="flex items-start justify-between">
+              <p className="text-[11px] font-black uppercase tracking-widest text-gray-400 m-0">Total</p>
+              <BarChart2 size={18} className="text-gray-300" />
+            </div>
+            <div>
+              <p className="text-5xl font-black text-gray-900 leading-none m-0 mb-1">
+                {String(stats.total).padStart(2, "0")}
+              </p>
+              <p className="text-xs text-[#2d5a1b] font-semibold m-0">+12% vs last month</p>
+            </div>
           </div>
-        ))}
-      </div>
 
-      {/* Filters */}
-      <div style={{ display: "flex", gap: "12px", marginBottom: "20px", flexWrap: "wrap" }}>
-        <div style={{ position: "relative", flex: 1, minWidth: "200px" }}>
-          <Search size={16} style={{ position: "absolute", left: "12px", top: "50%", transform: "translateY(-50%)", color: "#9ca3af" }} />
-          <input
-            type="text"
-            placeholder="Search by name, mobile, state..."
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-            style={{ width: "100%", padding: "9px 12px 9px 36px", border: "1px solid #d1d5db", borderRadius: "8px", fontSize: "0.9rem", boxSizing: "border-box", outline: "none" }}
-          />
+          <div className="bg-white rounded-2xl p-5 flex flex-col justify-between min-h-[130px]">
+            <div className="flex items-start justify-between">
+              <p className="text-[11px] font-black uppercase tracking-widest text-gray-400 m-0">Pending</p>
+              <MoreHorizontal size={18} className="text-gray-300" />
+            </div>
+            <p className="text-5xl font-black text-gray-900 leading-none m-0">
+              {String(stats.pending).padStart(2, "0")}
+            </p>
+          </div>
+
+          <div className="bg-white rounded-2xl p-5 flex flex-col justify-between min-h-[130px] border-l-4 border-gray-200">
+            <div className="flex items-start justify-between">
+              <p className="text-[11px] font-black uppercase tracking-widest text-gray-400 m-0 leading-tight">
+                Under<br />Review
+              </p>
+              <Eye size={18} className="text-gray-300" />
+            </div>
+            <p className="text-5xl font-black text-gray-900 leading-none m-0">
+              {String(stats.underReview).padStart(2, "0")}
+            </p>
+          </div>
+
+          <div className="bg-[#c8f56a] rounded-2xl p-5 flex flex-col justify-between min-h-[130px]">
+            <div className="flex items-start justify-between">
+              <p className="text-[11px] font-black uppercase tracking-widest text-[#2d5a1b] m-0">Approved</p>
+              <CheckCircle2 size={18} className="text-[#2d5a1b]" />
+            </div>
+            <div>
+              <p className="text-5xl font-black text-[#2d5a1b] leading-none m-0 mb-1">
+                {String(stats.approved).padStart(2, "0")}
+              </p>
+              <p className="text-xs text-[#2d5a1b] font-semibold m-0">Action required: 0</p>
+            </div>
+          </div>
+
+          <div className="bg-red-50 rounded-2xl p-5 flex flex-col justify-between min-h-[130px]">
+            <div className="flex items-start justify-between">
+              <p className="text-[11px] font-black uppercase tracking-widest text-red-400 m-0">Rejected</p>
+              <XCircle size={18} className="text-red-300" />
+            </div>
+            <p className="text-5xl font-black text-red-500 leading-none m-0">
+              {String(stats.rejected).padStart(2, "0")}
+            </p>
+          </div>
         </div>
-        <select
-          value={statusFilter}
-          onChange={e => setStatusFilter(e.target.value)}
-          style={{ padding: "9px 12px", border: "1px solid #d1d5db", borderRadius: "8px", fontSize: "0.9rem", minWidth: "150px", background: "#fff" }}
-        >
-          <option value="">All Statuses</option>
-          {STATUS_OPTIONS.map(s => <option key={s}>{s}</option>)}
-        </select>
-      </div>
 
-      {/* Table */}
-      <div style={{ background: "#fff", border: "1px solid #e5e7eb", borderRadius: "12px", overflow: "hidden" }}>
-        {loading ? (
-          <div style={{ padding: "60px", textAlign: "center", color: "#6b7280" }}>
-            <Loader size={28} style={{ animation: "spin 1s linear infinite" }} />
-            <p style={{ marginTop: "12px" }}>Loading applications...</p>
+        {/* ══ TABLE CARD ══ */}
+        <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
+
+          {/* Card top bar */}
+          <div className="px-5 py-4 border-b border-gray-100">
+            <h2 className="text-base font-black text-gray-900 m-0">Recent Enrollment Requests</h2>
           </div>
-        ) : applications.length === 0 ? (
-          <div style={{ padding: "60px", textAlign: "center", color: "#9ca3af" }}>
-            <Heart size={36} style={{ marginBottom: "12px", opacity: 0.4 }} />
-            <p style={{ margin: 0, fontWeight: 500 }}>No applications found</p>
+
+          {/* Filters */}
+          <div className="flex flex-col sm:flex-row gap-3 px-5 py-3 bg-[#fafaf9] border-b border-gray-100">
+            <div className="relative flex-1">
+              <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+              <input
+                type="text"
+                placeholder="Search by name, mobile, state..."
+                value={search}
+                onChange={(e) => { setSearch(e.target.value); setPage(1); }}
+                className="w-full pl-9 pr-4 py-2 bg-white border border-gray-200 rounded-xl text-sm outline-none focus:border-[#2d5a1b] transition-colors"
+              />
+            </div>
+            <select
+              value={statusFilter}
+              onChange={(e) => { setStatusFilter(e.target.value); setPage(1); }}
+              className="px-4 py-2 bg-white border border-gray-200 rounded-xl text-sm outline-none cursor-pointer w-full sm:w-[160px]"
+            >
+              <option value="">All Statuses</option>
+              {STATUS_OPTIONS.map((s) => <option key={s}>{s}</option>)}
+            </select>
           </div>
-        ) : (
-          <div style={{ overflowX: "auto" }}>
-            <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.88rem" }}>
-              <thead>
-                <tr style={{ background: "#f9fafb", borderBottom: "1px solid #e5e7eb" }}>
-                  {["Guardian", "Mobile", "Girl's Name", "Age", "State / District", "Income", "Status", "Date", "Actions"].map(h => (
-                    <th key={h} style={{ padding: "12px 14px", textAlign: "left", fontWeight: 600, color: "#374151", whiteSpace: "nowrap" }}>{h}</th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {applications.map((app, i) => (
-                  <tr key={app._id} style={{ borderBottom: "1px solid #f3f4f6", background: i % 2 === 0 ? "#fff" : "#fafafa" }}>
-                    <td style={{ padding: "12px 14px", fontWeight: 600, color: "#111827" }}>{app.guardianName}</td>
-                    <td style={{ padding: "12px 14px", color: "#374151" }}>{app.mobile}</td>
-                    <td style={{ padding: "12px 14px", color: "#374151" }}>{app.girlName}</td>
-                    <td style={{ padding: "12px 14px", color: "#374151", textAlign: "center" }}>{app.girlAge}</td>
-                    <td style={{ padding: "12px 14px", color: "#374151" }}>
-                      {app.state}
-                      {app.district && <span style={{ display: "block", fontSize: "0.8rem", color: "#9ca3af" }}>{app.district}</span>}
-                    </td>
-                    <td style={{ padding: "12px 14px", color: "#374151", fontSize: "0.82rem" }}>{INCOME_LABELS[app.annualIncome] || app.annualIncome}</td>
-                    <td style={{ padding: "12px 14px" }}><StatusBadge status={app.status} /></td>
-                    <td style={{ padding: "12px 14px", color: "#9ca3af", fontSize: "0.8rem", whiteSpace: "nowrap" }}>
-                      {new Date(app.createdAt).toLocaleDateString("en-IN")}
-                    </td>
-                    <td style={{ padding: "12px 14px" }}>
-                      <div style={{ display: "flex", gap: "6px" }}>
+
+          {/* Content */}
+          {loading ? (
+            <div className="flex flex-col items-center justify-center py-20 gap-3 text-gray-400">
+              <Loader size={28} className="animate-spin" />
+              <p className="text-sm m-0">Loading applications…</p>
+            </div>
+          ) : applications.length === 0 ? (
+            <div className="text-center py-20 text-gray-400 text-sm">No applications found.</div>
+          ) : (
+            <>
+              {/* Desktop table (md+) */}
+              <div className="hidden md:block overflow-x-auto">
+                <table className="w-full border-collapse">
+                  <thead>
+                    <tr className="border-b border-gray-100">
+                      {["Guardian", "Contact", "Girl's Name & Age", "Location", "Income Level", "Status", "Submitted", "Actions"].map((h) => (
+                        <th key={h} className="text-left px-5 py-3.5 text-[10px] font-black text-gray-400 uppercase tracking-widest whitespace-nowrap">
+                          {h}
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {applications.map((app) => {
+                      const av   = avatarStyle(app.guardianName);
+                      const busy = actionLoading === app._id;
+                      return (
+                        <tr key={app._id} className="border-b border-gray-50 last:border-b-0 hover:bg-gray-50/50 transition-colors">
+                          <td className="px-5 py-4">
+                            <div className="flex items-center gap-3">
+                              <div
+                                className="w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0"
+                                style={{ background: av.bg, color: av.text }}
+                              >
+                                {getInitials(app.guardianName)}
+                              </div>
+                              <span className="font-bold text-gray-900 text-sm leading-snug">{app.guardianName}</span>
+                            </div>
+                          </td>
+                          <td className="px-5 py-4 text-sm text-gray-600 whitespace-nowrap">+91 {app.mobile}</td>
+                          <td className="px-5 py-4">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <span className="font-semibold text-gray-800 text-sm">{app.girlName}</span>
+                              <span className="px-2 py-0.5 bg-gray-100 text-gray-500 rounded-full text-[11px] font-semibold whitespace-nowrap">
+                                {app.girlAge} yrs
+                              </span>
+                            </div>
+                          </td>
+                          <td className="px-5 py-4">
+                            <p className="text-sm text-gray-700 m-0">{app.state}</p>
+                            {app.district && <p className="text-xs text-gray-400 m-0 mt-0.5">{app.district}</p>}
+                          </td>
+                          <td className="px-5 py-4">
+                            <span className="px-2.5 py-1 bg-gray-100 text-gray-600 rounded-full text-[11px] font-semibold whitespace-nowrap">
+                              {INCOME_LABELS[app.annualIncome] || app.annualIncome}
+                            </span>
+                          </td>
+                          <td className="px-5 py-4"><StatusBadge status={app.status} /></td>
+                          <td className="px-5 py-4 text-sm text-gray-400 whitespace-nowrap">{formatDate(app.createdAt)}</td>
+                          <td className="px-5 py-4">
+                            <div className="flex items-center gap-1.5">
+                              <button
+                                onClick={() => openModal(app)}
+                                className="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-100 flex items-center justify-center transition-colors border-0 cursor-pointer"
+                              >
+                                <Eye size={15} />
+                              </button>
+                              <button
+                                onClick={() => handleDelete(app._id)}
+                                disabled={busy}
+                                className="w-8 h-8 rounded-lg bg-red-50 text-red-500 hover:bg-red-100 flex items-center justify-center transition-colors border-0 cursor-pointer disabled:opacity-40"
+                              >
+                                {busy ? <Loader size={14} className="animate-spin" /> : <Trash2 size={15} />}
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Mobile cards (< md) */}
+              <div className="md:hidden divide-y divide-gray-100">
+                {applications.map((app) => {
+                  const av   = avatarStyle(app.guardianName);
+                  const busy = actionLoading === app._id;
+                  return (
+                    <div key={app._id} className="px-4 py-4">
+                      <div className="flex items-center gap-3 mb-3">
+                        <div
+                          className="w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0"
+                          style={{ background: av.bg, color: av.text }}
+                        >
+                          {getInitials(app.guardianName)}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="font-bold text-gray-900 text-sm m-0 truncate">{app.guardianName}</p>
+                          <p className="text-xs text-gray-400 m-0 mt-0.5">+91 {app.mobile}</p>
+                        </div>
+                        <StatusBadge status={app.status} />
+                      </div>
+                      <div className="flex flex-wrap gap-2 mb-3 pl-[3.25rem]">
+                        <span className="text-xs text-gray-600 bg-gray-50 border border-gray-200 px-2.5 py-1 rounded-full">
+                          {app.girlName}, {app.girlAge} yrs
+                        </span>
+                        <span className="text-xs text-gray-500 bg-gray-50 border border-gray-200 px-2.5 py-1 rounded-full inline-flex items-center gap-1">
+                          <MapPin size={10} />
+                          {[app.state, app.district].filter(Boolean).join(", ")}
+                        </span>
+                        <span className="text-xs text-gray-500 bg-gray-100 px-2.5 py-1 rounded-full">
+                          {INCOME_LABELS[app.annualIncome] || app.annualIncome}
+                        </span>
+                        <span className="text-xs text-gray-400 bg-gray-50 border border-gray-200 px-2.5 py-1 rounded-full">
+                          {formatDate(app.createdAt)}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2 pl-[3.25rem]">
                         <button
                           onClick={() => openModal(app)}
-                          title="View & Update"
-                          style={{ background: "#eff6ff", border: "none", borderRadius: "6px", padding: "6px 8px", cursor: "pointer", color: "#1d4ed8" }}
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-50 text-blue-600 text-xs font-semibold hover:bg-blue-100 border-0 cursor-pointer transition-colors"
                         >
-                          <Eye size={15} />
+                          <Eye size={13} /> View
                         </button>
                         <button
                           onClick={() => handleDelete(app._id)}
-                          disabled={actionLoading === app._id}
-                          title="Delete"
-                          style={{ background: "#fff1f2", border: "none", borderRadius: "6px", padding: "6px 8px", cursor: "pointer", color: "#e11d48" }}
+                          disabled={busy}
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-red-50 text-red-500 text-xs font-semibold hover:bg-red-100 border-0 cursor-pointer transition-colors disabled:opacity-40"
                         >
-                          {actionLoading === app._id ? <Loader size={15} /> : <Trash2 size={15} />}
+                          {busy ? <Loader size={12} className="animate-spin" /> : <Trash2 size={12} />}
+                          Delete
                         </button>
                       </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+                    </div>
+                  );
+                })}
+              </div>
+            </>
+          )}
+        </div>
+
+        {/* ══ PAGINATION ══ */}
+        {!loading && applications.length > 0 && (
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mt-5">
+            <p className="text-sm text-gray-500 m-0">
+              Showing{" "}
+              <strong className="text-gray-800">{showFrom}–{showTo}</strong>
+              {" "}of{" "}
+              <strong className="text-gray-800">{pagination.total}</strong> applications
+            </p>
+            <div className="flex items-center gap-1.5 flex-wrap justify-center">
+              <button
+                onClick={() => setPage((p) => p - 1)}
+                disabled={page <= 1}
+                className="w-9 h-9 flex items-center justify-center rounded-full border border-gray-300 bg-white text-gray-500 hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors cursor-pointer"
+              >
+                <ChevronLeft size={16} />
+              </button>
+              {pageRange(page, pagination.pages).map((n, i) =>
+                n === "..." ? (
+                  <span key={`e${i}`} className="w-9 h-9 flex items-center justify-center text-gray-400 text-sm">…</span>
+                ) : (
+                  <button
+                    key={n}
+                    onClick={() => setPage(n)}
+                    className={`w-9 h-9 flex items-center justify-center rounded-full text-sm font-semibold transition-colors cursor-pointer border-0 ${
+                      page === n
+                        ? "bg-[#2d5a1b] text-white shadow-sm"
+                        : "border border-gray-300 bg-white text-gray-600 hover:bg-gray-50"
+                    }`}
+                  >
+                    {n}
+                  </button>
+                )
+              )}
+              <button
+                onClick={() => setPage((p) => p + 1)}
+                disabled={page >= pagination.pages}
+                className="w-9 h-9 flex items-center justify-center rounded-full border border-gray-300 bg-white text-gray-500 hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors cursor-pointer"
+              >
+                <ChevronRight size={16} />
+              </button>
+            </div>
           </div>
         )}
+
       </div>
 
-      {/* Pagination */}
-      {pagination.totalPages > 1 && (
-        <div style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: "12px", marginTop: "20px" }}>
-          <button
-            onClick={() => setPage(p => Math.max(1, p - 1))}
-            disabled={page === 1}
-            style={{ border: "1px solid #d1d5db", borderRadius: "8px", padding: "7px 12px", background: "#fff", cursor: page === 1 ? "not-allowed" : "pointer", display: "flex", alignItems: "center" }}
-          >
-            <ChevronLeft size={16} />
-          </button>
-          <span style={{ color: "#374151", fontSize: "0.9rem" }}>
-            Page {page} of {pagination.totalPages} &nbsp;·&nbsp; {pagination.total} total
-          </span>
-          <button
-            onClick={() => setPage(p => Math.min(pagination.totalPages, p + 1))}
-            disabled={page === pagination.totalPages}
-            style={{ border: "1px solid #d1d5db", borderRadius: "8px", padding: "7px 12px", background: "#fff", cursor: page === pagination.totalPages ? "not-allowed" : "pointer", display: "flex", alignItems: "center" }}
-          >
-            <ChevronRight size={16} />
-          </button>
-        </div>
-      )}
+      {/* ══ DETAIL MODAL ══ */}
+      {selected && (() => {
+        const scfg = STATUS_CARD_CFG[selected.status] || STATUS_CARD_CFG["Pending"];
+        const StatusIcon = scfg.Icon;
+        const appYear = selected.createdAt ? new Date(selected.createdAt).getFullYear() : "";
+        const appId   = selected._id?.slice(-4).toUpperCase();
+        return (
+          <>
+            {/* Backdrop */}
+            <div
+              onClick={closeModal}
+              className="fixed inset-0 z-[9998] transition-all duration-300"
+              style={{ background: modalOpen ? "rgba(0,0,0,0.55)" : "rgba(0,0,0,0)" }}
+            />
 
-      {/* Detail / Update Modal */}
-      {selected && (
-        <div style={{ position: "fixed", inset: 0, background: "rgba(15,23,42,0.55)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 3000, padding: "16px" }} onClick={() => setSelected(null)}>
-          <div style={{ background: "#fff", borderRadius: "14px", width: "100%", maxWidth: "560px", maxHeight: "90vh", overflowY: "auto", boxShadow: "0 20px 60px rgba(0,0,0,0.2)" }} onClick={e => e.stopPropagation()}>
+            {/* Sheet: bottom on mobile, centred on sm+ */}
+            <div className="fixed z-[9999] inset-x-0 bottom-0 sm:inset-0 sm:flex sm:items-center sm:justify-center sm:p-4 pointer-events-none">
+              <div
+                onClick={(e) => e.stopPropagation()}
+                className="pointer-events-auto bg-[#f5f0e8] w-full sm:max-w-2xl max-h-[95vh] overflow-y-auto rounded-t-3xl sm:rounded-3xl shadow-2xl transition-all duration-300 ease-out"
+                style={{
+                  transform: modalOpen ? "translateY(0)" : "translateY(40px)",
+                  opacity:   modalOpen ? 1 : 0,
+                }}
+              >
+                {/* Pull handle — mobile only */}
+                <div className="sm:hidden flex justify-center pt-3 pb-1">
+                  <div className="w-10 h-1 rounded-full bg-gray-300" />
+                </div>
 
-            {/* Modal header */}
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "20px 24px", borderBottom: "1px solid #e5e7eb" }}>
-              <h3 style={{ margin: 0, fontSize: "1.1rem", fontWeight: 700, color: "#111827" }}>Application Details</h3>
-              <button onClick={() => setSelected(null)} style={{ background: "none", border: "none", cursor: "pointer", color: "#6b7280" }}><X size={20} /></button>
-            </div>
-
-            {/* Modal body */}
-            <div style={{ padding: "20px 24px" }}>
-
-              {/* Info grid */}
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "14px", marginBottom: "20px" }}>
-                {[
-                  ["Guardian Name", selected.guardianName],
-                  ["Mobile", selected.mobile],
-                  ["Girl's Name", selected.girlName],
-                  ["Girl's Age", `${selected.girlAge} years`],
-                  ["State", selected.state],
-                  ["District", selected.district],
-                  ["Village / Area", selected.village || "—"],
-                  ["Annual Income", INCOME_LABELS[selected.annualIncome] || selected.annualIncome],
-                  ["How They Heard", selected.howHeard || "—"],
-                  ["Applied On", new Date(selected.createdAt).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" })],
-                ].map(([label, value]) => (
-                  <div key={label}>
-                    <p style={{ margin: "0 0 2px", fontSize: "0.75rem", color: "#9ca3af", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.5px" }}>{label}</p>
-                    <p style={{ margin: 0, fontSize: "0.9rem", color: "#111827", fontWeight: 500 }}>{value}</p>
+                {/* ── Modal Header ── */}
+                <div className="flex items-start justify-between px-6 pt-5 pb-4">
+                  <div>
+                    <h2 className="text-2xl font-black text-gray-900 m-0 leading-tight">Application Details</h2>
+                    <p className="text-sm text-gray-400 m-0 mt-1">
+                      ID: #Ka-{appYear}-{appId} &nbsp;•&nbsp; Submitted on {formatDateLong(selected.createdAt)}
+                    </p>
                   </div>
-                ))}
-              </div>
-
-              {selected.message && (
-                <div style={{ background: "#f9fafb", border: "1px solid #e5e7eb", borderRadius: "8px", padding: "12px 14px", marginBottom: "20px" }}>
-                  <p style={{ margin: "0 0 4px", fontSize: "0.75rem", color: "#9ca3af", fontWeight: 600, textTransform: "uppercase" }}>Additional Message</p>
-                  <p style={{ margin: 0, fontSize: "0.9rem", color: "#374151" }}>{selected.message}</p>
+                  <button
+                    onClick={closeModal}
+                    disabled={updating}
+                    className="p-2 rounded-xl hover:bg-black/5 text-gray-400 hover:text-gray-600 transition-colors border-0 bg-transparent cursor-pointer flex-shrink-0 mt-1"
+                  >
+                    <X size={20} />
+                  </button>
                 </div>
-              )}
 
-              {/* Current status */}
-              <div style={{ marginBottom: "16px" }}>
-                <p style={{ margin: "0 0 6px", fontSize: "0.85rem", fontWeight: 600, color: "#374151" }}>Current Status</p>
-                <StatusBadge status={selected.status} />
-              </div>
+                {/* ── White inner card ── */}
+                <div className="mx-4 mb-4 bg-white rounded-2xl p-5">
 
-              {/* Update status */}
-              <div style={{ marginBottom: "14px" }}>
-                <label style={{ display: "block", marginBottom: "6px", fontSize: "0.85rem", fontWeight: 600, color: "#374151" }}>Update Status</label>
-                <select
-                  value={newStatus}
-                  onChange={e => setNewStatus(e.target.value)}
-                  style={{ width: "100%", padding: "9px 12px", border: "1px solid #d1d5db", borderRadius: "8px", fontSize: "0.9rem", background: "#fff" }}
-                >
-                  {STATUS_OPTIONS.map(s => <option key={s}>{s}</option>)}
-                </select>
-              </div>
+                  {/* Row 1: Status card + Guardian info */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
 
-              {/* Admin note */}
-              <div style={{ marginBottom: "16px" }}>
-                <label style={{ display: "block", marginBottom: "6px", fontSize: "0.85rem", fontWeight: 600, color: "#374151" }}>Admin Note (optional)</label>
-                <textarea
-                  rows={3}
-                  value={adminNote}
-                  onChange={e => setAdminNote(e.target.value)}
-                  placeholder="Internal note visible only to admins..."
-                  style={{ width: "100%", padding: "9px 12px", border: "1px solid #d1d5db", borderRadius: "8px", fontSize: "0.9rem", resize: "vertical", boxSizing: "border-box" }}
-                />
-              </div>
+                    {/* Current Status card */}
+                    <div className={`${scfg.bg} rounded-2xl p-5 flex flex-col justify-between min-h-[140px]`}>
+                      <p className={`text-[10px] font-black uppercase tracking-widest m-0 ${scfg.text}`}>
+                        Current Status
+                      </p>
+                      <div className={`flex items-center gap-2.5 ${scfg.text}`}>
+                        <StatusIcon size={28} strokeWidth={2} />
+                        <span className="text-2xl font-black leading-tight">{selected.status}</span>
+                      </div>
+                    </div>
 
-              {modalError && (
-                <div style={{ background: "#fee2e2", color: "#b91c1c", border: "1px solid #fca5a5", borderRadius: "8px", padding: "10px 12px", marginBottom: "14px", fontSize: "0.88rem" }}>
-                  {modalError}
+                    {/* Guardian / girl info grid */}
+                    <div className="bg-[#f5f0e8] rounded-2xl p-5 grid grid-cols-2 gap-x-4 gap-y-4">
+                      {[
+                        ["Guardian Name", selected.guardianName],
+                        ["Mobile Number", selected.mobile],
+                        ["Girl's Name",   selected.girlName],
+                        ["Girl's Age",    `${selected.girlAge} years`],
+                      ].map(([label, val]) => (
+                        <div key={label}>
+                          <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-0.5 m-0">{label}</p>
+                          <p className="text-sm font-bold text-gray-900 m-0 break-words">{val || "—"}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Row 2: Location · Income · How They Heard */}
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
+
+                    <div className="bg-[#f5f0e8] rounded-2xl p-4">
+                      <MapPin size={18} className="text-gray-400 mb-2" />
+                      <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1 m-0">Location</p>
+                      <p className="text-sm font-bold text-gray-900 m-0">{selected.state || "—"}</p>
+                      {(selected.district || selected.village) && (
+                        <p className="text-xs text-gray-500 m-0 mt-0.5">
+                          {[selected.district, selected.village].filter(Boolean).join(", ")}
+                        </p>
+                      )}
+                    </div>
+
+                    <div className="bg-[#f5f0e8] rounded-2xl p-4">
+                      <Wallet size={18} className="text-gray-400 mb-2" />
+                      <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1 m-0">Annual Income</p>
+                      <p className="text-sm font-bold text-gray-900 m-0">
+                        {INCOME_LABELS[selected.annualIncome] || selected.annualIncome || "—"}
+                      </p>
+                    </div>
+
+                    <div className="bg-[#f5f0e8] rounded-2xl p-4">
+                      <Megaphone size={18} className="text-gray-400 mb-2" />
+                      <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1 m-0">How They Heard</p>
+                      <p className="text-sm font-bold text-gray-900 m-0">{selected.howHeard || "—"}</p>
+                    </div>
+                  </div>
+
+                  {/* Additional message */}
+                  {selected.message && (
+                    <div className="bg-[#f5f0e8] rounded-2xl p-4 mb-4">
+                      <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1 m-0">Additional Message</p>
+                      <p className="text-sm text-gray-700 m-0 leading-relaxed">{selected.message}</p>
+                    </div>
+                  )}
+
+                  {/* Row 3: Update Status + Admin Note side by side */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className="text-sm font-bold text-gray-900 mb-2 block">
+                        Update Application Status
+                      </label>
+                      <div className="relative">
+                        <select
+                          value={newStatus}
+                          onChange={(e) => setNewStatus(e.target.value)}
+                          className="w-full appearance-none px-4 py-3 bg-[#f0ede8] border-0 rounded-2xl text-sm font-semibold text-gray-800 outline-none cursor-pointer pr-10"
+                        >
+                          {STATUS_OPTIONS.map((s) => <option key={s}>{s}</option>)}
+                        </select>
+                        <div className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 text-xs">▼</div>
+                      </div>
+                    </div>
+                    <div>
+                      <label className="text-sm font-bold text-gray-900 mb-2 block">
+                        Admin Note{" "}
+                        <span className="font-normal text-gray-400">(optional)</span>
+                      </label>
+                      <input
+                        type="text"
+                        value={adminNote}
+                        onChange={(e) => setAdminNote(e.target.value)}
+                        placeholder="Add internal notes for processing..."
+                        className="w-full px-4 py-3 bg-[#f0ede8] border-0 rounded-2xl text-sm outline-none placeholder:text-gray-400"
+                      />
+                    </div>
+                  </div>
+
+                  {modalError && (
+                    <div className="mt-4 bg-red-50 border border-red-200 text-red-600 rounded-xl px-4 py-3 text-sm">
+                      {modalError}
+                    </div>
+                  )}
                 </div>
-              )}
 
-              {/* Actions */}
-              <div style={{ display: "flex", justifyContent: "flex-end", gap: "10px" }}>
-                <button onClick={() => setSelected(null)} style={{ padding: "9px 16px", border: "1px solid #d1d5db", borderRadius: "8px", background: "#fff", cursor: "pointer", fontWeight: 600, color: "#374151" }}>
-                  Cancel
-                </button>
-                <button
-                  onClick={handleUpdateStatus}
-                  disabled={updating}
-                  style={{ padding: "9px 20px", border: "none", borderRadius: "8px", background: "#2e7d32", color: "#fff", cursor: updating ? "not-allowed" : "pointer", fontWeight: 600, opacity: updating ? 0.7 : 1 }}
-                >
-                  {updating ? "Saving..." : "Save Changes"}
-                </button>
+                {/* ── Modal Footer ── */}
+                <div className="flex items-center justify-end gap-4 px-6 pb-6 pt-2">
+                  <button
+                    onClick={closeModal}
+                    disabled={updating}
+                    className="text-sm font-semibold text-gray-500 hover:text-gray-800 transition-colors cursor-pointer border-0 bg-transparent px-2 py-2"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleUpdateStatus}
+                    disabled={updating}
+                    className="px-8 py-3 rounded-full bg-[#c8f56a] hover:bg-[#b8e855] text-[#1a3a0a] text-sm font-black transition-colors cursor-pointer border-0 disabled:opacity-60 inline-flex items-center gap-2"
+                  >
+                    {updating ? <><Loader size={14} className="animate-spin" /> Saving…</> : "Save Changes"}
+                  </button>
+                </div>
               </div>
             </div>
-          </div>
-        </div>
-      )}
+          </>
+        );
+      })()}
+
     </div>
   );
 }
