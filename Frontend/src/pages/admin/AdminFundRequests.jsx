@@ -1,14 +1,11 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { useSearchParams } from "react-router-dom";
-import { IndianRupee, CheckCircle, XCircle, Clock, Send, ChevronDown, ChevronUp, Search } from "lucide-react";
+import {
+  CheckCircle, XCircle, Send, Search,
+  ChevronLeft, ChevronRight, ChevronDown, ChevronUp,
+  Wallet, AlertCircle, RefreshCw,
+} from "lucide-react";
 import { API_BASE_URL } from "./AdminLayout.jsx";
-
-const STATUS_STYLES = {
-  Pending:  { bg: "#fef3c7", color: "#92400e", icon: Clock },
-  Approved: { bg: "#dbeafe", color: "#1e40af", icon: CheckCircle },
-  Released: { bg: "#d1fae5", color: "#065f46", icon: Send },
-  Rejected: { bg: "#fee2e2", color: "#991b1b", icon: XCircle },
-};
 
 const fmt = (n) =>
   new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 0 }).format(n);
@@ -16,17 +13,41 @@ const fmt = (n) =>
 const fmtDate = (d) =>
   d ? new Date(d).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" }) : "—";
 
+const AVATAR_HEX = ["#6366f1", "#0ea5e9", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6", "#ec4899", "#14b8a6"];
+const avatarColor = (name) => AVATAR_HEX[(name?.charCodeAt(0) || 0) % AVATAR_HEX.length];
+const getInitials = (name) =>
+  name ? name.split(" ").map((w) => w[0]).slice(0, 2).join("").toUpperCase() : "?";
+
+const STATUS_META = {
+  Pending:  { label: "PENDING",  cls: "bg-yellow-100 text-yellow-700", dot: "bg-yellow-500" },
+  Approved: { label: "APPROVED", cls: "bg-lime text-olive-800",         dot: "bg-olive-600"  },
+  Released: { label: "RELEASED", cls: "bg-olive-100 text-olive-700",    dot: "bg-olive-500"  },
+  Rejected: { label: "REJECTED", cls: "bg-red-100 text-red-600",        dot: "bg-red-500"    },
+};
+
+function StatusBadge({ status }) {
+  const m = STATUS_META[status] || { label: status?.toUpperCase(), cls: "bg-gray-100 text-gray-500", dot: "bg-gray-400" };
+  return (
+    <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold whitespace-nowrap ${m.cls}`}>
+      <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${m.dot}`} />
+      {m.label}
+    </span>
+  );
+}
+
+const LIMIT = 8;
+
 export default function AdminFundRequests() {
   const [searchParams, setSearchParams] = useSearchParams();
-  const [requests, setRequests] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [pagination, setPagination] = useState({ total: 0, totalPages: 1, page: 1 });
-  const [statusFilter, setStatusFilter] = useState(searchParams.get("status") || "");
-  const [search, setSearch] = useState(searchParams.get("search") || "");
-  const [page, setPage] = useState(Number(searchParams.get("page")) || 1);
-  const [expandedId, setExpandedId] = useState(null);
+  const [requests, setRequests]           = useState([]);
+  const [loading, setLoading]             = useState(true);
+  const [pagination, setPagination]       = useState({ total: 0, totalPages: 1, page: 1 });
+  const [statusFilter, setStatusFilter]   = useState(searchParams.get("status") || "");
+  const [search, setSearch]               = useState(searchParams.get("search") || "");
+  const [page, setPage]                   = useState(Number(searchParams.get("page")) || 1);
+  const [expandedId, setExpandedId]       = useState(null);
   const [actionLoading, setActionLoading] = useState(null);
-  const [noteInputs, setNoteInputs] = useState({});   // { [id]: string }
+  const [noteInputs, setNoteInputs]       = useState({});
 
   const token = localStorage.getItem("token");
 
@@ -34,9 +55,9 @@ export default function AdminFundRequests() {
     setLoading(true);
     const params = new URLSearchParams();
     if (statusFilter) params.set("status", statusFilter);
-    if (search) params.set("search", search);
+    if (search)       params.set("search", search);
     params.set("page", page);
-    params.set("limit", 15);
+    params.set("limit", LIMIT);
 
     fetch(`${API_BASE_URL}/api/admin/funds?${params}`, {
       headers: { Authorization: `Bearer ${token}` },
@@ -58,8 +79,8 @@ export default function AdminFundRequests() {
   useEffect(() => {
     const p = {};
     if (statusFilter) p.status = statusFilter;
-    if (search) p.search = search;
-    if (page > 1) p.page = page;
+    if (search)       p.search = search;
+    if (page > 1)     p.page   = page;
     setSearchParams(p, { replace: true });
   }, [statusFilter, search, page, setSearchParams]);
 
@@ -73,18 +94,14 @@ export default function AdminFundRequests() {
         body: JSON.stringify({ status, adminNote: noteInputs[id] || "" }),
       });
       const d = await res.json();
-      if (d.success) {
-        fetchRequests();
-        setExpandedId(null);
-      } else {
-        alert(d.message || "Failed to update status");
-      }
-    } catch {
-      alert("Network error");
-    } finally {
-      setActionLoading(null);
-    }
+      if (d.success) { fetchRequests(); setExpandedId(null); }
+      else alert(d.message || "Failed to update status");
+    } catch { alert("Network error"); }
+    finally { setActionLoading(null); }
   };
+
+  const handleFilterChange = (f) => { setStatusFilter(f); setPage(1); setExpandedId(null); };
+  const toggleExpand = (id) => setExpandedId((prev) => (prev === id ? null : id));
 
   const statusCounts = requests.reduce((acc, r) => {
     acc[r.status] = (acc[r.status] || 0) + 1;
@@ -92,202 +109,306 @@ export default function AdminFundRequests() {
   }, {});
 
   return (
-    <div>
-      <h1 className="admin-page-title">Fund Requests</h1>
+    <div className="min-h-screen bg-beige-300 p-3 sm:p-5 lg:p-8">
 
-      {/* Summary Badges */}
-      <div style={{ display: "flex", gap: "12px", flexWrap: "wrap", marginBottom: "24px" }}>
-        {[
-          { label: "Total",    value: pagination.total || 0,       bg: "#f1f5f9", color: "#334155" },
-          { label: "Pending",  value: statusCounts.Pending || 0,   bg: "#fef3c7", color: "#92400e" },
-          { label: "Approved", value: statusCounts.Approved || 0,  bg: "#dbeafe", color: "#1e40af" },
-          { label: "Released", value: statusCounts.Released || 0,  bg: "#d1fae5", color: "#065f46" },
-          { label: "Rejected", value: statusCounts.Rejected || 0,  bg: "#fee2e2", color: "#991b1b" },
-        ].map(({ label, value, bg, color }) => (
-          <div key={label} style={{ padding: "10px 20px", borderRadius: "8px", background: bg, color, fontWeight: "600", fontSize: "14px" }}>
-            {label}: {value}
+      {/* ── Page Header ── */}
+      <div className="flex flex-col xs:flex-row xs:items-start xs:justify-between gap-3 mb-6 sm:mb-8">
+        <div>
+          <h1 className="text-2xl sm:text-3xl lg:text-5xl font-extrabold text-gray-900 leading-tight mb-1 sm:mb-2">
+            Fund Requests
+          </h1>
+          <p className="text-gray-500 text-xs sm:text-sm lg:text-base max-w-lg leading-relaxed">
+            Review and process ongoing funding applications from verified NGO partners.
+          </p>
+        </div>
+        {/* Summary pills */}
+        <div className="flex items-center gap-2 sm:gap-3 shrink-0 flex-wrap">
+          <div className="px-3 sm:px-4 py-2 rounded-2xl bg-beige-100 border border-beige-300 text-center">
+            <div className="text-lg sm:text-2xl font-extrabold text-gray-900 leading-none">{pagination.total}</div>
+            <div className="text-[10px] sm:text-xs font-bold text-gray-400 uppercase tracking-wider mt-0.5">Total</div>
           </div>
-        ))}
+          <div className="px-3 sm:px-4 py-2 rounded-2xl bg-yellow-50 border border-yellow-100 text-center">
+            <div className="text-lg sm:text-2xl font-extrabold text-yellow-700 leading-none">{statusCounts.Pending || 0}</div>
+            <div className="text-[10px] sm:text-xs font-bold text-yellow-500 uppercase tracking-wider mt-0.5">Pending</div>
+          </div>
+          <div className="px-3 sm:px-4 py-2 rounded-2xl bg-olive-50 border border-olive-100 text-center">
+            <div className="text-lg sm:text-2xl font-extrabold text-olive-700 leading-none">{statusCounts.Released || 0}</div>
+            <div className="text-[10px] sm:text-xs font-bold text-olive-500 uppercase tracking-wider mt-0.5">Released</div>
+          </div>
+        </div>
       </div>
 
-      {/* Filters */}
-      <div className="admin-filters">
-        <div style={{ position: "relative", flex: 1, minWidth: "220px" }}>
-          <Search size={16} style={{ position: "absolute", left: "12px", top: "50%", transform: "translateY(-50%)", color: "#94a3b8" }} />
+      {/* ── Search + Filters ── */}
+      <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 mb-4 sm:mb-6">
+        <div className="relative flex-1 min-w-0">
+          <Search size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
           <input
             type="text"
             placeholder="Search by NGO name or purpose..."
             value={search}
             onChange={(e) => { setSearch(e.target.value); setPage(1); }}
-            className="admin-search-input"
-            style={{ paddingLeft: "36px" }}
+            className="w-full pl-9 pr-3 py-2.5 border border-gray-200 rounded-2xl text-sm outline-none bg-white focus:border-olive-500 transition-colors"
           />
         </div>
-        <select
-          value={statusFilter}
-          onChange={(e) => { setStatusFilter(e.target.value); setPage(1); }}
-          className="admin-filter-select"
-        >
-          <option value="">All Status</option>
-          <option value="Pending">Pending</option>
-          <option value="Approved">Approved</option>
-          <option value="Released">Released</option>
-          <option value="Rejected">Rejected</option>
-        </select>
+        <div className="flex gap-2 overflow-x-auto no-scrollbar shrink-0">
+          {[["", "All"], ["Pending", "Pending"], ["Approved", "Approved"], ["Released", "Released"], ["Rejected", "Rejected"]].map(([val, label]) => (
+            <button
+              key={val}
+              onClick={() => handleFilterChange(val)}
+              className={`px-3 py-2 rounded-2xl border text-xs font-semibold cursor-pointer transition-all whitespace-nowrap shrink-0 ${
+                statusFilter === val
+                  ? "bg-olive-700 text-white border-olive-700"
+                  : "bg-white text-gray-600 border-gray-200 hover:border-gray-400"
+              }`}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
       </div>
 
-      {/* List */}
-      <div className="admin-table-wrapper">
-        {loading ? (
-          <div className="admin-loading">Loading fund requests...</div>
-        ) : requests.length === 0 ? (
-          <div className="admin-empty-state">No fund requests found.</div>
-        ) : (
-          <div style={{ display: "grid", gap: "16px" }}>
-            {requests.map((req) => {
-              const s = STATUS_STYLES[req.status] || STATUS_STYLES.Pending;
-              const Icon = s.icon;
-              const isExpanded = expandedId === req._id;
+      {/* ── Request List ── */}
+      {loading ? (
+        <div className="bg-beige-100 rounded-3xl p-12 flex items-center justify-center gap-2 text-gray-400">
+          <RefreshCw size={20} className="animate-spin" />
+          <span className="text-sm">Loading fund requests…</span>
+        </div>
+      ) : requests.length === 0 ? (
+        <div className="bg-beige-100 rounded-3xl p-12 text-center text-gray-400">
+          <Wallet size={36} className="mx-auto mb-3 opacity-30" />
+          <p className="text-sm">No fund requests found.</p>
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {requests.map((req) => {
+            const ngoName   = req.ngoId?.ngoName || req.ngoName || "NGO";
+            const isExpanded = expandedId === req._id;
+            const canAct    = req.status !== "Rejected" && req.status !== "Released";
 
-              return (
-                <div key={req._id} style={{ border: "1px solid #e5e7eb", borderRadius: "10px", overflow: "hidden", background: "#fff" }}>
-                  {/* Card Header */}
+            return (
+              <div
+                key={req._id}
+                className="bg-white rounded-2xl sm:rounded-3xl overflow-hidden shadow-sm border border-beige-300"
+              >
+                {/* ── Collapsed header row — always visible, clickable ── */}
+                <div
+                  onClick={() => toggleExpand(req._id)}
+                  className="flex items-center gap-3 sm:gap-4 px-4 sm:px-6 py-4 sm:py-5 cursor-pointer hover:bg-beige-50 transition-colors select-none"
+                >
+                  {/* Avatar */}
                   <div
-                    style={{ padding: "16px 20px", background: "#f9fafb", borderBottom: isExpanded ? "1px solid #e5e7eb" : "none", display: "flex", justifyContent: "space-between", alignItems: "center", cursor: "pointer", gap: "16px" }}
-                    onClick={() => setExpandedId(isExpanded ? null : req._id)}
+                    className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl flex items-center justify-center text-white font-bold text-sm sm:text-base shrink-0"
+                    style={{ background: avatarColor(ngoName) }}
                   >
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ display: "flex", alignItems: "center", gap: "10px", flexWrap: "wrap" }}>
-                        <span style={{ fontWeight: "700", fontSize: "15px", color: "#0f172a" }}>
-                          {req.ngoId?.ngoName || req.ngoName}
-                        </span>
-                        <span style={{ padding: "3px 10px", borderRadius: "20px", fontSize: "12px", fontWeight: "600", background: s.bg, color: s.color, display: "flex", alignItems: "center", gap: "4px" }}>
-                          <Icon size={12} /> {req.status}
-                        </span>
-                      </div>
-                      <div style={{ fontSize: "13px", color: "#6b7280", marginTop: "4px" }}>
-                        {req.ngoId?.email && <span>{req.ngoId.email} • </span>}
-                        {req.ngoId?.city && <span>{req.ngoId.city}, {req.ngoId.state}</span>}
-                      </div>
+                    {getInitials(ngoName)}
+                  </div>
+
+                  {/* Name + ID */}
+                  <div className="flex-1 min-w-0">
+                    <div className="font-extrabold text-gray-900 text-sm sm:text-base leading-tight truncate">
+                      {ngoName}
+                    </div>
                     </div>
 
-                    <div style={{ display: "flex", alignItems: "center", gap: "20px", flexShrink: 0 }}>
-                      <div style={{ textAlign: "right" }}>
-                        <div style={{ fontWeight: "700", fontSize: "17px", color: "#16a34a" }}>{fmt(req.amount)}</div>
-                        <div style={{ fontSize: "12px", color: "#94a3b8" }}>{fmtDate(req.createdAt)}</div>
-                      </div>
-                      {isExpanded ? <ChevronUp size={18} color="#64748b" /> : <ChevronDown size={18} color="#64748b" />}
+                  {/* Status badge — hidden on very small, shown sm+ */}
+                  <div className="hidden sm:block shrink-0">
+                    <StatusBadge status={req.status} />
+                  </div>
+
+                  {/* Amount */}
+                  <div className="shrink-0 text-right">
+                    <div className="font-extrabold text-gray-900 text-sm sm:text-base whitespace-nowrap">
+                      {fmt(req.amount)}
+                    </div>
+                    <div className="text-gray-400 text-xs mt-0.5 hidden sm:block">
+                      {fmtDate(req.createdAt)}
                     </div>
                   </div>
 
-                  {/* Expanded Details */}
-                  {isExpanded && (
-                    <div style={{ padding: "20px" }}>
-                      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: "16px", marginBottom: "20px" }}>
-                        <div>
-                          <div style={{ fontSize: "12px", fontWeight: "600", color: "#6b7280", marginBottom: "4px", textTransform: "uppercase", letterSpacing: "0.05em" }}>Purpose</div>
-                          <div style={{ fontSize: "14px", color: "#1f2937" }}>{req.purpose}</div>
-                        </div>
-                        <div>
-                          <div style={{ fontSize: "12px", fontWeight: "600", color: "#6b7280", marginBottom: "4px", textTransform: "uppercase", letterSpacing: "0.05em" }}>Amount Requested</div>
-                          <div style={{ fontSize: "14px", color: "#16a34a", fontWeight: "600" }}>{fmt(req.amount)}</div>
-                        </div>
-                        <div>
-                          <div style={{ fontSize: "12px", fontWeight: "600", color: "#6b7280", marginBottom: "4px", textTransform: "uppercase", letterSpacing: "0.05em" }}>Submitted</div>
-                          <div style={{ fontSize: "14px", color: "#1f2937" }}>{fmtDate(req.createdAt)}</div>
-                        </div>
-                        {req.releasedAt && (
-                          <div>
-                            <div style={{ fontSize: "12px", fontWeight: "600", color: "#6b7280", marginBottom: "4px", textTransform: "uppercase", letterSpacing: "0.05em" }}>Released At</div>
-                            <div style={{ fontSize: "14px", color: "#065f46" }}>{fmtDate(req.releasedAt)}</div>
-                          </div>
-                        )}
+                  {/* Chevron */}
+                  <div className="shrink-0 ml-1">
+                    {isExpanded
+                      ? <ChevronUp size={18} className="text-gray-400" />
+                      : <ChevronDown size={18} className="text-gray-400" />
+                    }
+                  </div>
+                </div>
+
+                {/* ── Expanded details ── */}
+                {isExpanded && (
+                  <div className="border-t border-beige-300 px-4 sm:px-6 py-4 sm:py-5 space-y-4">
+
+                    {/* Status badge on mobile */}
+                    <div className="flex items-center gap-2 sm:hidden">
+                      <StatusBadge status={req.status} />
+                      <span className="text-gray-400 text-xs">{fmtDate(req.createdAt)}</span>
+                    </div>
+
+                    {/* Info grid */}
+                    <div className="grid grid-cols-1 xs:grid-cols-2 lg:grid-cols-4 gap-3">
+                      <div className="bg-beige-100 rounded-2xl px-4 py-3">
+                        <div className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Amount Requested</div>
+                        <div className="text-lg sm:text-xl font-extrabold text-gray-900">{fmt(req.amount)}</div>
                       </div>
-
-                      {req.description && (
-                        <div style={{ marginBottom: "16px", padding: "12px 16px", background: "#f8fafc", borderRadius: "8px", border: "1px solid #e2e8f0" }}>
-                          <div style={{ fontSize: "12px", fontWeight: "600", color: "#6b7280", marginBottom: "6px", textTransform: "uppercase", letterSpacing: "0.05em" }}>Description</div>
-                          <p style={{ margin: 0, fontSize: "14px", color: "#374151", lineHeight: "1.6" }}>{req.description}</p>
+                      <div className="bg-beige-100 rounded-2xl px-4 py-3">
+                        <div className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">
+                          {req.releasedAt ? "Released On" : "Submitted"}
                         </div>
-                      )}
-
-                      {req.adminNote && (
-                        <div style={{ marginBottom: "16px", padding: "12px 16px", background: "#eff6ff", borderRadius: "8px", border: "1px solid #bfdbfe" }}>
-                          <div style={{ fontSize: "12px", fontWeight: "600", color: "#1e40af", marginBottom: "6px", textTransform: "uppercase", letterSpacing: "0.05em" }}>Admin Note</div>
-                          <p style={{ margin: 0, fontSize: "14px", color: "#1e3a8a" }}>{req.adminNote}</p>
+                        <div className="text-base sm:text-lg font-extrabold text-gray-900">
+                          {req.releasedAt ? fmtDate(req.releasedAt) : fmtDate(req.createdAt)}
                         </div>
-                      )}
-
-                      {req.isResolved && (
-                        <div style={{ marginBottom: "16px", padding: "10px 16px", background: "#d1fae5", borderRadius: "8px", border: "1px solid #a7f3d0", fontSize: "13px", fontWeight: "600", color: "#065f46" }}>
-                          ✓ NGO has acknowledged receipt of funds
-                        </div>
-                      )}
-
-                      {/* Action Buttons — only for non-terminal statuses */}
-                      {req.status !== "Rejected" && req.status !== "Released" && (
-                        <div style={{ borderTop: "1px solid #e5e7eb", paddingTop: "16px" }}>
-                          <div style={{ marginBottom: "12px" }}>
-                            <label style={{ display: "block", fontSize: "13px", fontWeight: "600", color: "#374151", marginBottom: "6px" }}>
-                              Admin Note (optional)
-                            </label>
-                            <textarea
-                              rows={2}
-                              placeholder="Add a note for the NGO..."
-                              value={noteInputs[req._id] || ""}
-                              onChange={(e) => setNoteInputs(prev => ({ ...prev, [req._id]: e.target.value }))}
-                              style={{ width: "100%", padding: "10px 12px", border: "1px solid #d1d5db", borderRadius: "8px", fontSize: "14px", resize: "vertical", boxSizing: "border-box", fontFamily: "inherit" }}
-                            />
+                      </div>
+                      {req.ngoId?.city && (
+                        <div className="bg-beige-100 rounded-2xl px-4 py-3">
+                          <div className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Location</div>
+                          <div className="text-sm font-semibold text-gray-700">
+                            {[req.ngoId.city, req.ngoId.state].filter(Boolean).join(", ")}
                           </div>
-
-                          <div style={{ display: "flex", gap: "10px", flexWrap: "wrap" }}>
-                            {req.status === "Pending" && (
-                              <>
-                                <button
-                                  disabled={actionLoading === `${req._id}-Approved`}
-                                  onClick={() => updateStatus(req._id, "Approved")}
-                                  style={{ padding: "9px 20px", background: "#2563eb", color: "white", border: "none", borderRadius: "7px", cursor: "pointer", fontWeight: "600", fontSize: "13px", opacity: actionLoading === `${req._id}-Approved` ? 0.6 : 1 }}
-                                >
-                                  ✓ Approve
-                                </button>
-                                <button
-                                  disabled={actionLoading === `${req._id}-Rejected`}
-                                  onClick={() => updateStatus(req._id, "Rejected")}
-                                  style={{ padding: "9px 20px", background: "#fee2e2", color: "#991b1b", border: "1px solid #fca5a5", borderRadius: "7px", cursor: "pointer", fontWeight: "600", fontSize: "13px", opacity: actionLoading === `${req._id}-Rejected` ? 0.6 : 1 }}
-                                >
-                                  ✗ Reject
-                                </button>
-                              </>
-                            )}
-                            {req.status === "Approved" && (
-                              <button
-                                disabled={actionLoading === `${req._id}-Released`}
-                                onClick={() => updateStatus(req._id, "Released")}
-                                style={{ padding: "9px 20px", background: "#10b981", color: "white", border: "none", borderRadius: "7px", cursor: "pointer", fontWeight: "600", fontSize: "13px", opacity: actionLoading === `${req._id}-Released` ? 0.6 : 1 }}
-                              >
-                                💸 Release Funds
-                              </button>
-                            )}
-                          </div>
+                        </div>
+                      )}
+                      {req.ngoId?.email && (
+                        <div className="bg-beige-100 rounded-2xl px-4 py-3">
+                          <div className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Contact</div>
+                          <div className="text-sm font-semibold text-gray-700 truncate">{req.ngoId.email}</div>
                         </div>
                       )}
                     </div>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        )}
-      </div>
 
-      {/* Pagination */}
-      {pagination.totalPages > 1 && (
-        <div className="admin-pagination">
-          <button disabled={page <= 1} onClick={() => setPage(p => p - 1)}>← Prev</button>
-          <span>Page {page} of {pagination.totalPages} ({pagination.total} total)</span>
-          <button disabled={page >= pagination.totalPages} onClick={() => setPage(p => p + 1)}>Next →</button>
+                    {/* Purpose */}
+                    {req.purpose && (
+                      <div className="bg-beige-100 rounded-2xl px-4 py-3">
+                        <div className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Purpose</div>
+                        <p className="text-sm text-gray-700 leading-relaxed">{req.purpose}</p>
+                      </div>
+                    )}
+
+                    {/* Description */}
+                    {req.description && (
+                      <div className="bg-beige-100 rounded-2xl px-4 py-3">
+                        <div className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Description</div>
+                        <p className="text-sm text-gray-600 leading-relaxed">{req.description}</p>
+                      </div>
+                    )}
+
+                    {/* Existing admin note */}
+                    {req.adminNote && (
+                      <div className="bg-olive-50 rounded-2xl px-4 py-3 border border-olive-200">
+                        <div className="text-xs font-bold text-olive-600 uppercase tracking-wider mb-1">Admin Note</div>
+                        <p className="text-sm text-olive-700">{req.adminNote}</p>
+                      </div>
+                    )}
+
+                    {/* Acknowledged */}
+                    {req.isResolved && (
+                      <div className="flex items-center gap-2 px-4 py-3 bg-olive-50 rounded-2xl border border-olive-200">
+                        <CheckCircle size={15} className="text-olive-600 shrink-0" />
+                        <span className="text-sm font-semibold text-olive-700">NGO has acknowledged receipt of funds</span>
+                      </div>
+                    )}
+
+                    {/* Verified badge */}
+                    <div className="flex items-center gap-2">
+                      <CheckCircle size={14} className="text-olive-600" />
+                      <span className="text-xs font-semibold text-gray-500">Verified Partner</span>
+                    </div>
+
+                    {/* Action area */}
+                    {canAct && (
+                      <div className="border-t border-beige-300 pt-4 space-y-3">
+                        <div>
+                          <div className="flex items-center gap-1.5 text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">
+                            <AlertCircle size={11} /> Admin Notes
+                          </div>
+                          <textarea
+                            rows={2}
+                            placeholder="Add disbursement notes here..."
+                            value={noteInputs[req._id] || ""}
+                            onChange={(e) => setNoteInputs((p) => ({ ...p, [req._id]: e.target.value }))}
+                            className="w-full px-4 py-3 bg-beige-100 rounded-2xl text-sm outline-none placeholder-gray-400 focus:ring-2 focus:ring-olive-400 transition-all border-0 resize-none"
+                          />
+                        </div>
+
+                        <div className="flex flex-col xs:flex-row gap-2 sm:gap-3">
+                          {req.status === "Pending" && (
+                            <>
+                              <button
+                                disabled={!!actionLoading}
+                                onClick={() => updateStatus(req._id, "Approved")}
+                                className={`flex-1 py-3 rounded-2xl font-bold text-sm flex items-center justify-center gap-2 transition-colors border-0 cursor-pointer ${
+                                  actionLoading === `${req._id}-Approved`
+                                    ? "bg-lime/60 text-olive-800 cursor-not-allowed"
+                                    : "bg-lime text-olive-900 hover:brightness-95"
+                                }`}
+                              >
+                                <CheckCircle size={15} />
+                                {actionLoading === `${req._id}-Approved` ? "Approving…" : "Approve"}
+                              </button>
+                              <button
+                                disabled={!!actionLoading}
+                                onClick={() => updateStatus(req._id, "Rejected")}
+                                className={`flex-1 py-3 rounded-2xl font-bold text-sm flex items-center justify-center gap-2 transition-colors border cursor-pointer ${
+                                  actionLoading === `${req._id}-Rejected`
+                                    ? "bg-red-50 border-red-200 text-red-400 cursor-not-allowed"
+                                    : "bg-red-50 border-red-200 text-red-600 hover:bg-red-100"
+                                }`}
+                              >
+                                <XCircle size={15} />
+                                {actionLoading === `${req._id}-Rejected` ? "Rejecting…" : "Reject"}
+                              </button>
+                            </>
+                          )}
+                          {req.status === "Approved" && (
+                            <button
+                              disabled={!!actionLoading}
+                              onClick={() => updateStatus(req._id, "Released")}
+                              className={`w-full py-3.5 rounded-2xl font-bold text-sm sm:text-base flex items-center justify-center gap-2 transition-colors border-0 cursor-pointer ${
+                                actionLoading === `${req._id}-Released`
+                                  ? "bg-olive-400 text-white cursor-not-allowed"
+                                  : "bg-olive-700 hover:bg-olive-800 text-white"
+                              }`}
+                            >
+                              <Send size={16} />
+                              {actionLoading === `${req._id}-Released` ? "Releasing…" : "Release Funds Now"}
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            );
+          })}
         </div>
       )}
+
+      {/* ── Pagination ── */}
+      {pagination.totalPages > 1 && (
+        <div className="flex items-center justify-between mt-5 sm:mt-7 pt-4 sm:pt-5 border-t border-beige-400">
+          <p className="text-xs sm:text-sm text-gray-500 font-medium">
+            Page {page} of {pagination.totalPages}
+            <span className="hidden sm:inline"> · {pagination.total} total</span>
+          </p>
+          <div className="flex items-center gap-2">
+            <button
+              disabled={page <= 1}
+              onClick={() => setPage((p) => p - 1)}
+              className="w-9 h-9 rounded-full border border-beige-400 bg-white flex items-center justify-center text-gray-600 disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer hover:border-gray-400 transition-colors"
+            >
+              <ChevronLeft size={16} />
+            </button>
+            <button
+              disabled={page >= pagination.totalPages}
+              onClick={() => setPage((p) => p + 1)}
+              className="w-9 h-9 rounded-full bg-olive-700 hover:bg-olive-800 border-0 flex items-center justify-center disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer transition-colors"
+            >
+              <ChevronRight size={16} className="text-white" />
+            </button>
+          </div>
+        </div>
+      )}
+
+      <style>{`.no-scrollbar::-webkit-scrollbar{display:none}.no-scrollbar{-ms-overflow-style:none;scrollbar-width:none}`}</style>
     </div>
   );
 }

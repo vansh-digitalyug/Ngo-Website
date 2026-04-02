@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import {
   FolderPlus, Layers, Upload, X, Image as ImageIcon, Plus,
-  CheckCircle, AlertCircle, Loader2, Trash2, Eye
+  CheckCircle, AlertCircle, Loader2
 } from "lucide-react";
 import AIDescribeButton from "../../components/ui/AIDescribeButton.jsx";
 import {
@@ -12,20 +12,17 @@ import {
 import {
   generateUploadUrl,
   uploadfileToS3,
-  getDownloadUrl,
 } from "../../services/uploadService.js";
 
 // ─── tiny helpers ──────────────────────────────────────────────────────────────
 const uid = () => Math.random().toString(36).slice(2, 9);
 
-// Convert a string to a URL-safe slug: "Free Health Camp" → "free-health-camp"
 const toSlug = (str) =>
   str.trim().toLowerCase()
     .replace(/[^a-z0-9\s-]/g, "")
     .replace(/\s+/g, "-")
     .replace(/-+/g, "-");
 
-// Track uploads in localStorage so incomplete uploads can be cleaned up
 const LS_KEY = "svc_pending_uploads";
 function getPending() { try { return JSON.parse(localStorage.getItem(LS_KEY) || "[]"); } catch { return []; } }
 function setPending(arr) { localStorage.setItem(LS_KEY, JSON.stringify(arr)); }
@@ -35,65 +32,41 @@ function addPending(key) { const p = getPending(); if (!p.includes(key)) setPend
 // ─── FilePreview chip ──────────────────────────────────────────────────────────
 function FileChip({ file, previewUrl, onRemove }) {
   return (
-    <div className="relative group flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm text-slate-700">
+    <div className="relative group flex items-center gap-2 bg-beige-50 border border-beige-200 rounded-lg px-3 py-2 text-sm text-olive-700">
       {previewUrl ? (
         <img src={previewUrl} alt={file.name} className="w-10 h-10 object-cover rounded" />
       ) : (
-        <ImageIcon size={18} className="text-slate-400" />
+        <ImageIcon size={18} className="text-olive-400" />
       )}
       <span className="max-w-[140px] truncate">{file.name}</span>
       <button type="button" onClick={onRemove}
-        className="ml-auto text-slate-400 hover:text-red-500 transition-colors">
+        className="ml-auto text-olive-400 hover:text-red-500 transition-colors">
         <X size={14} />
       </button>
     </div>
   );
 }
 
-// ─── Uploaded key chip (shows presigned URL as preview) ───────────────────────
-function UploadedChip({ s3Key, onRemove }) {
-  const [url, setUrl] = useState(null);
-  useEffect(() => {
-    getDownloadUrl(s3Key).then(setUrl).catch(() => { });
-  }, [s3Key]);
-  return (
-    <div className="relative group flex items-center gap-2 bg-green-50 border border-green-200 rounded-lg px-3 py-2 text-sm text-green-800">
-      {url ? (
-        <a href={url} target="_blank" rel="noreferrer">
-          <img src={url} alt="uploaded" className="w-10 h-10 object-cover rounded hover:opacity-80 transition" />
-        </a>
-      ) : (
-        <Loader2 size={18} className="animate-spin text-green-400" />
-      )}
-      <span className="max-w-[140px] truncate font-mono text-xs">{s3Key}</span>
-      <button type="button" onClick={onRemove}
-        className="ml-auto text-green-400 hover:text-red-500 transition-colors">
-        <X size={14} />
-      </button>
-    </div>
-  );
-}
 
 // ─── Step badge ────────────────────────────────────────────────────────────────
 function StepBadge({ step, current, done }) {
   const base = "w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold transition-all";
-  if (done) return <div className={`${base} bg-green-500 text-white`}><CheckCircle size={16} /></div>;
-  if (step === current) return <div className={`${base} bg-indigo-600 text-white ring-4 ring-indigo-100`}>{step}</div>;
-  return <div className={`${base} bg-slate-200 text-slate-500`}>{step}</div>;
+  if (done) return <div className={`${base} bg-olive-600 text-white`}><CheckCircle size={16} /></div>;
+  if (step === current) return <div className={`${base} bg-olive-900 text-lime ring-4 ring-olive-200`}>{step}</div>;
+  return <div className={`${base} bg-beige-200 text-olive-400`}>{step}</div>;
 }
 
 // ══════════════════════════════════════════════════════════════════════════════
 export default function AddServices() {
-  const [mode, setMode] = useState("program"); // "category" | "program"
-  const [step, setStep] = useState(1);         // 1 = fill form | 2 = uploading | 3 = done
+  const [mode, setMode] = useState("program");
+  const [step, setStep] = useState(1);
   const [categories, setCategories] = useState([]);
-  const [toast, setToast] = useState(null);    // { type, msg }
+  const [toast, setToast] = useState(null);
 
   /* ── Category form state ──────────────────────────────────────────── */
   const [catForm, setCatForm] = useState({ name: "", description: "" });
   const [catCoverFile, setCatCoverFile] = useState(null);
   const [catCoverPreview, setCatCoverPreview] = useState(null);
-  const [savedCatKey, setSavedCatKey] = useState(null);   // after upload
   const catCoverRef = useRef();
 
   /* ── Program form state ───────────────────────────────────────────── */
@@ -107,16 +80,16 @@ export default function AddServices() {
     href: "",
   });
 
-  // Auto-derive href from category name + title whenever either changes
   const autoHref = (() => {
     const cat = categories.find(c => c._id === progForm.categoryId);
     const catSlug = cat ? toSlug(cat.name) : "";
     const titleSlug = toSlug(progForm.title);
     return catSlug && titleSlug ? `/services/${catSlug}/${titleSlug}` : "";
   })();
+
   const [coverFile, setCoverFile] = useState(null);
   const [coverPreview, setCoverPreview] = useState(null);
-  const [galleryFiles, setGalleryFiles] = useState([]); // [{id, file, preview}]
+  const [galleryFiles, setGalleryFiles] = useState([]);
   const [savedCoverKey, setSavedCoverKey] = useState(null);
   const [savedGalleryKeys, setSavedGalleryKeys] = useState([]);
   const coverRef = useRef();
@@ -133,7 +106,6 @@ export default function AddServices() {
     setTimeout(() => setToast(null), 4000);
   };
 
-  // ── File pickers ─────────────────────────────────────────────────────
   const pickCatCover = (e) => {
     const f = e.target.files[0];
     if (!f) return;
@@ -159,19 +131,15 @@ export default function AddServices() {
     e.target.value = "";
   };
 
-  // ── Reset entire form ───────────────────────────────────────────────
   const resetAll = () => {
     setCatForm({ name: "", description: "" });
-    setCatCoverFile(null); setCatCoverPreview(null); setSavedCatKey(null);
+    setCatCoverFile(null); setCatCoverPreview(null);
     setProgForm({ categoryId: "", title: "", description: "", fullDescription: "", donationTitle: "", cta: "Help Now", href: "" });
     setCoverFile(null); setCoverPreview(null); setSavedCoverKey(null);
     setGalleryFiles([]); setSavedGalleryKeys([]);
     setStep(1); setProgress({ done: 0, total: 0 }); setStatusMsg("");
   };
 
-  // ════════════════════════════════════════════════════════════════════
-  // SUBMIT – the main orchestration function
-  // ════════════════════════════════════════════════════════════════════
   const handleSubmit = async (e) => {
     e.preventDefault();
     setUploading(true);
@@ -197,14 +165,11 @@ export default function AddServices() {
     }
   };
 
-  // ─── Category submit ────────────────────────────────────────────────
   const submitCategory = async () => {
-    // 1. Create without image
     setStatusMsg("Creating category record…");
     const created = await createCategory({ name: catForm.name, description: catForm.description });
     const catId = created._id;
 
-    // 2. Upload cover if selected
     if (catCoverFile) {
       const location = `services/category/${catId}`;
       setProgress({ done: 0, total: 1 });
@@ -215,19 +180,15 @@ export default function AddServices() {
       await uploadfileToS3(catCoverFile, uploadUrl);
       setProgress({ done: 1, total: 1 });
 
-      // 3. Save key in DB
       setStatusMsg("Saving image key to database…");
       await updateCategory(catId, { imageUrl: key });
       removePending(key);
-      setSavedCatKey(key);
     }
   };
 
-  // ─── Program submit ─────────────────────────────────────────────────
   const submitProgram = async () => {
     const resolvedHref = progForm.href.trim() || autoHref || null;
 
-    // 1. Create without images
     setStatusMsg("Creating program record…");
     const created = await createProgram({
       title: progForm.title,
@@ -243,7 +204,6 @@ export default function AddServices() {
     const totalFiles = (coverFile ? 1 : 0) + galleryFiles.length;
     setProgress({ done: 0, total: totalFiles });
 
-    // If no images selected, we're done
     if (totalFiles === 0) {
       setStatusMsg("Program created — no images to upload.");
       return;
@@ -252,7 +212,6 @@ export default function AddServices() {
     let covKey = null;
     let galKeys = [];
 
-    // 2. Upload cover image
     if (coverFile) {
       setStatusMsg(`Uploading cover image… (1/${totalFiles})`);
       const location = `services/program/${progId}`;
@@ -265,7 +224,6 @@ export default function AddServices() {
       setSavedCoverKey(key);
     }
 
-    // 3. Upload gallery images one by one
     for (let i = 0; i < galleryFiles.length; i++) {
       const item = galleryFiles[i];
       const imgNum = (coverFile ? 1 : 0) + i + 1;
@@ -280,7 +238,6 @@ export default function AddServices() {
       setSavedGalleryKeys(prev => [...prev, key]);
     }
 
-    // 4. Save image keys in DB via update
     setStatusMsg("Saving image keys to database…");
     if (covKey || galKeys.length > 0) {
       await updateProgram(progId, {
@@ -290,19 +247,17 @@ export default function AddServices() {
     }
   };
 
-  // ── Shared textarea / input styles ──────────────────────────────────
-  const inputCls = "w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent transition";
-  const labelCls = "block text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1";
+  const inputCls = "w-full rounded-lg border border-beige-200 bg-beige-50 px-3 py-2 text-sm text-olive-900 placeholder-olive-300 focus:outline-none focus:ring-2 focus:ring-olive-400 focus:border-transparent transition";
+  const labelCls = "block text-xs font-semibold text-olive-500 uppercase tracking-wide mb-1";
 
-  // ════════════════════════════════════════════════════════════════════
-  // RENDER
-  // ════════════════════════════════════════════════════════════════════
   return (
-    <div className="min-h-screen bg-slate-50 py-8 px-4">
+    <div className="min-h-screen py-8 px-4">
       {/* Toast */}
       {toast && (
         <div className={`fixed top-5 right-5 z-50 flex items-center gap-3 px-4 py-3 rounded-xl shadow-lg text-sm font-medium transition-all
-          ${toast.type === "success" ? "bg-green-50 border border-green-200 text-green-800" : "bg-red-50 border border-red-200 text-red-700"}`}>
+          ${toast.type === "success"
+            ? "bg-olive-50 border border-olive-200 text-olive-800"
+            : "bg-red-50 border border-red-200 text-red-700"}`}>
           {toast.type === "success" ? <CheckCircle size={18} /> : <AlertCircle size={18} />}
           {toast.msg}
           <button onClick={() => setToast(null)}><X size={14} /></button>
@@ -312,58 +267,52 @@ export default function AddServices() {
       <div className="max-w-3xl mx-auto">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-2xl font-bold text-slate-800">Add Service</h1>
-          <p className="text-slate-500 mt-1 text-sm">Create a new program or category for the services section.</p>
+          <h1 className="text-2xl font-bold text-olive-900">Add Service</h1>
+          <p className="text-olive-500 mt-1 text-sm">Create a new program or category for the services section.</p>
         </div>
 
         {/* Progress Steps */}
         <div className="flex items-center gap-3 mb-8">
           <StepBadge step={1} current={step} done={step > 1} />
-          <span className={`text-sm font-medium ${step === 1 ? "text-indigo-600" : "text-slate-400"}`}>Fill Details</span>
-          <div className="flex-1 h-px bg-slate-200" />
+          <span className={`text-sm font-medium ${step === 1 ? "text-olive-700" : "text-olive-400"}`}>Fill Details</span>
+          <div className="flex-1 h-px bg-beige-200" />
           <StepBadge step={2} current={step} done={step > 2} />
-          <span className={`text-sm font-medium ${step === 2 ? "text-indigo-600" : "text-slate-400"}`}>Uploading</span>
-          <div className="flex-1 h-px bg-slate-200" />
+          <span className={`text-sm font-medium ${step === 2 ? "text-olive-700" : "text-olive-400"}`}>Uploading</span>
+          <div className="flex-1 h-px bg-beige-200" />
           <StepBadge step={3} current={step} done={step === 3} />
-          <span className={`text-sm font-medium ${step === 3 ? "text-green-600" : "text-slate-400"}`}>Done</span>
+          <span className={`text-sm font-medium ${step === 3 ? "text-olive-600" : "text-olive-400"}`}>Done</span>
         </div>
 
         {/* ── Success screen ── */}
         {step === 3 && (
-          <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-10 text-center">
-            <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <CheckCircle size={32} className="text-green-500" />
+          <div className="bg-white rounded-2xl shadow-sm border border-beige-100 p-10 text-center">
+            <div className="w-16 h-16 bg-lime rounded-full flex items-center justify-center mx-auto mb-4">
+              <CheckCircle size={32} className="text-olive-700" />
             </div>
-            <h2 className="text-xl font-bold text-slate-800 mb-2">
+            <h2 className="text-xl font-bold text-olive-900 mb-2">
               {mode === "category" ? "Category" : "Program"} Created!
             </h2>
-            <p className="text-slate-500 text-sm mb-2">
+            <p className="text-olive-500 text-sm mb-2">
               {mode === "category"
                 ? catCoverFile ? "Cover image uploaded and saved to database." : "Category saved to database."
                 : (() => {
-                  const total = (savedCoverKey ? 1 : 0) + savedGalleryKeys.length;
-                  return total > 0
-                    ? `${total} image${total > 1 ? "s" : ""} uploaded and saved to database.`
-                    : "Program saved to database (no images uploaded).";
-                })()
+                    const total = (savedCoverKey ? 1 : 0) + savedGalleryKeys.length;
+                    return total > 0
+                      ? `${total} image${total > 1 ? "s" : ""} uploaded and saved to database.`
+                      : "Program saved to database (no images uploaded).";
+                  })()
               }
             </p>
 
-            {/* Simple uploaded count — no spinning presigned-URL chips */}
-            {(savedCoverKey || savedGalleryKeys.length > 0 || savedCatKey) && (
+            {(savedCoverKey || savedGalleryKeys.length > 0) && (
               <div className="flex flex-wrap justify-center gap-2 mb-6 mt-4">
-                {savedCatKey && (
-                  <span className="inline-flex items-center gap-1.5 bg-green-50 border border-green-200 text-green-700 text-xs font-medium px-3 py-1.5 rounded-full">
-                    <CheckCircle size={12} /> Category cover image
-                  </span>
-                )}
                 {savedCoverKey && (
-                  <span className="inline-flex items-center gap-1.5 bg-green-50 border border-green-200 text-green-700 text-xs font-medium px-3 py-1.5 rounded-full">
+                  <span className="inline-flex items-center gap-1.5 bg-olive-50 border border-olive-200 text-olive-700 text-xs font-medium px-3 py-1.5 rounded-full">
                     <CheckCircle size={12} /> Program cover image
                   </span>
                 )}
                 {savedGalleryKeys.length > 0 && (
-                  <span className="inline-flex items-center gap-1.5 bg-green-50 border border-green-200 text-green-700 text-xs font-medium px-3 py-1.5 rounded-full">
+                  <span className="inline-flex items-center gap-1.5 bg-olive-50 border border-olive-200 text-olive-700 text-xs font-medium px-3 py-1.5 rounded-full">
                     <CheckCircle size={12} /> {savedGalleryKeys.length} gallery image{savedGalleryKeys.length > 1 ? "s" : ""}
                   </span>
                 )}
@@ -371,7 +320,7 @@ export default function AddServices() {
             )}
 
             <button onClick={resetAll}
-              className="mt-6 inline-flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2.5 rounded-lg font-semibold text-sm transition-colors">
+              className="mt-6 inline-flex items-center gap-2 bg-olive-900 hover:bg-olive-800 text-lime px-6 py-2.5 rounded-lg font-semibold text-sm transition-colors">
               <Plus size={16} /> Add Another Service
             </button>
           </div>
@@ -379,19 +328,23 @@ export default function AddServices() {
 
         {/* ── Main form (steps 1 & 2) ── */}
         {step !== 3 && (
-          <form onSubmit={handleSubmit} className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+          <form onSubmit={handleSubmit} className="bg-white rounded-2xl shadow-sm border border-beige-100 overflow-hidden">
             {/* Mode toggle */}
-            <div className="flex border-b border-slate-100">
+            <div className="flex border-b border-beige-100">
               <button type="button"
                 onClick={() => { setMode("program"); resetAll(); }}
                 className={`flex-1 flex items-center justify-center gap-2 py-4 text-sm font-semibold transition-colors
-                  ${mode === "program" ? "bg-indigo-50 text-indigo-700 border-b-2 border-indigo-600" : "text-slate-500 hover:text-slate-700"}`}>
+                  ${mode === "program"
+                    ? "bg-olive-50 text-olive-700 border-b-2 border-olive-600"
+                    : "text-olive-400 hover:text-olive-600"}`}>
                 <Layers size={16} /> Add Program
               </button>
               <button type="button"
                 onClick={() => { setMode("category"); resetAll(); }}
                 className={`flex-1 flex items-center justify-center gap-2 py-4 text-sm font-semibold transition-colors
-                  ${mode === "category" ? "bg-indigo-50 text-indigo-700 border-b-2 border-indigo-600" : "text-slate-500 hover:text-slate-700"}`}>
+                  ${mode === "category"
+                    ? "bg-olive-50 text-olive-700 border-b-2 border-olive-600"
+                    : "text-olive-400 hover:text-olive-600"}`}>
                 <FolderPlus size={16} /> Add Category
               </button>
             </div>
@@ -430,8 +383,8 @@ export default function AddServices() {
                       </div>
                     ) : (
                       <button type="button" onClick={() => catCoverRef.current.click()}
-                        className="w-full border-2 border-dashed border-slate-200 hover:border-indigo-400 rounded-xl p-8 flex flex-col items-center gap-2 text-slate-400 hover:text-indigo-500 transition-colors group">
-                        <div className="w-12 h-12 bg-slate-50 group-hover:bg-indigo-50 rounded-full flex items-center justify-center transition-colors">
+                        className="w-full border-2 border-dashed border-beige-200 hover:border-olive-400 rounded-xl p-8 flex flex-col items-center gap-2 text-olive-400 hover:text-olive-600 transition-colors group">
+                        <div className="w-12 h-12 bg-beige-50 group-hover:bg-olive-50 rounded-full flex items-center justify-center transition-colors">
                           <Upload size={20} />
                         </div>
                         <span className="text-sm font-medium">Click to select cover image</span>
@@ -510,12 +463,11 @@ export default function AddServices() {
                     </div>
                   </div>
 
-
                   {/* Href */}
                   <div>
                     <label className={labelCls}>
                       Link (href)
-                      <span className="ml-1 text-slate-400 font-normal normal-case tracking-normal">
+                      <span className="ml-1 text-olive-300 font-normal normal-case tracking-normal">
                         — leave blank to auto-generate
                       </span>
                     </label>
@@ -525,20 +477,18 @@ export default function AddServices() {
                       placeholder={autoHref || "/services/category/program-title"}
                       className={inputCls}
                     />
-                    {/* Live preview */}
                     {(autoHref || progForm.href) && (
-                      <p className="mt-1.5 flex items-center gap-1.5 text-xs text-slate-500">
-                        <span className="font-medium text-slate-400">Will save as:</span>
-                        <code className={`px-2 py-0.5 rounded font-mono ${progForm.href.trim() ? "bg-indigo-50 text-indigo-700" : "bg-amber-50 text-amber-700"}`}>
+                      <p className="mt-1.5 flex items-center gap-1.5 text-xs text-olive-500">
+                        <span className="font-medium text-olive-400">Will save as:</span>
+                        <code className={`px-2 py-0.5 rounded font-mono ${progForm.href.trim() ? "bg-olive-50 text-olive-700" : "bg-beige-100 text-olive-600"}`}>
                           {progForm.href.trim() || autoHref}
                         </code>
                         {!progForm.href.trim() && (
-                          <span className="text-amber-500 italic">(auto-generated)</span>
+                          <span className="text-olive-400 italic">(auto-generated)</span>
                         )}
                       </p>
                     )}
                   </div>
-
 
                   {/* Cover image */}
                   <div>
@@ -550,8 +500,8 @@ export default function AddServices() {
                       </div>
                     ) : (
                       <button type="button" onClick={() => coverRef.current.click()}
-                        className="w-full border-2 border-dashed border-slate-200 hover:border-indigo-400 rounded-xl p-6 flex flex-col items-center gap-2 text-slate-400 hover:text-indigo-500 transition-colors group">
-                        <div className="w-10 h-10 bg-slate-50 group-hover:bg-indigo-50 rounded-full flex items-center justify-center transition-colors">
+                        className="w-full border-2 border-dashed border-beige-200 hover:border-olive-400 rounded-xl p-6 flex flex-col items-center gap-2 text-olive-400 hover:text-olive-600 transition-colors group">
+                        <div className="w-10 h-10 bg-beige-50 group-hover:bg-olive-50 rounded-full flex items-center justify-center transition-colors">
                           <Upload size={18} />
                         </div>
                         <span className="text-sm font-medium">Click to select cover image</span>
@@ -563,8 +513,8 @@ export default function AddServices() {
                   {/* Gallery images */}
                   <div>
                     <label className={labelCls}>Gallery Images</label>
-                    <p className="text-xs text-slate-400 mb-2">
-                      These will be stored at <code className="bg-slate-100 px-1 rounded">services/program/&#123;id&#125;/galleryImage</code> and displayed on the program's detail page (not the admin gallery).
+                    <p className="text-xs text-olive-400 mb-2">
+                      These will be stored at <code className="bg-beige-100 px-1 rounded">services/program/&#123;id&#125;/galleryImage</code> and displayed on the program's detail page.
                     </p>
 
                     {galleryFiles.length > 0 && (
@@ -577,7 +527,7 @@ export default function AddServices() {
                     )}
 
                     <button type="button" onClick={() => galleryRef.current.click()}
-                      className="inline-flex items-center gap-2 border border-slate-200 hover:border-indigo-400 hover:text-indigo-600 text-slate-500 text-sm font-medium px-4 py-2 rounded-lg transition-colors">
+                      className="inline-flex items-center gap-2 border border-beige-200 hover:border-olive-400 hover:text-olive-700 text-olive-500 text-sm font-medium px-4 py-2 rounded-lg transition-colors">
                       <Plus size={15} /> Add Gallery Images
                     </button>
                     <input ref={galleryRef} type="file" accept="image/*" multiple className="hidden" onChange={pickGallery} />
@@ -587,20 +537,20 @@ export default function AddServices() {
 
               {/* Upload progress panel (step 2) */}
               {step === 2 && (
-                <div className="bg-indigo-50 border border-indigo-100 rounded-xl p-4 space-y-3">
-                  <div className="flex items-center gap-3 text-indigo-700 text-sm">
+                <div className="bg-olive-50 border border-olive-100 rounded-xl p-4 space-y-3">
+                  <div className="flex items-center gap-3 text-olive-700 text-sm">
                     <Loader2 size={18} className="animate-spin flex-shrink-0" />
                     <span className="font-medium">{statusMsg || "Processing…"}</span>
                   </div>
                   {progress.total > 0 && (
                     <>
-                      <div className="flex justify-between text-xs font-semibold text-indigo-600">
+                      <div className="flex justify-between text-xs font-semibold text-olive-600">
                         <span>Images uploaded</span>
                         <span>{progress.done}/{progress.total}</span>
                       </div>
-                      <div className="w-full bg-indigo-100 rounded-full h-2">
+                      <div className="w-full bg-olive-100 rounded-full h-2">
                         <div
-                          className="bg-indigo-600 h-2 rounded-full transition-all duration-500"
+                          className="bg-olive-600 h-2 rounded-full transition-all duration-500"
                           style={{ width: `${(progress.done / progress.total) * 100}%` }}
                         />
                       </div>
@@ -608,17 +558,16 @@ export default function AddServices() {
                   )}
                 </div>
               )}
-
             </div>
 
             {/* Footer */}
             <div className="px-6 pb-6 flex justify-end gap-3">
               <button type="button" onClick={resetAll} disabled={uploading}
-                className="px-4 py-2 rounded-lg text-sm font-semibold text-slate-600 border border-slate-200 hover:bg-slate-50 disabled:opacity-40 transition-colors">
+                className="px-4 py-2 rounded-lg text-sm font-semibold text-olive-600 border border-beige-200 hover:bg-beige-50 disabled:opacity-40 transition-colors">
                 Reset
               </button>
               <button type="submit" disabled={uploading}
-                className="inline-flex items-center gap-2 px-6 py-2 rounded-lg text-sm font-semibold bg-indigo-600 hover:bg-indigo-700 text-white disabled:opacity-60 disabled:cursor-not-allowed transition-colors shadow-sm">
+                className="inline-flex items-center gap-2 px-6 py-2 rounded-lg text-sm font-semibold bg-olive-900 hover:bg-olive-800 text-lime disabled:opacity-60 disabled:cursor-not-allowed transition-colors shadow-sm">
                 {uploading ? (
                   <><Loader2 size={16} className="animate-spin" /> Processing…</>
                 ) : (

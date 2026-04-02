@@ -21,8 +21,8 @@ const toSlug = (str) =>
     .replace(/\s+/g, "-")
     .replace(/-+/g, "-");
 
-// Thumbnail that lazy-loads a presigned URL from an S3 key
-function S3Thumb({ s3Key, className = "w-14 h-14 object-cover rounded-lg" }) {
+// S3 thumbnail with optional fallback icon
+function S3Thumb({ s3Key, className = "w-full h-full object-cover rounded-xl", fallbackIcon }) {
   const [url, setUrl] = useState(null);
   const [err, setErr] = useState(false);
   useEffect(() => {
@@ -30,27 +30,29 @@ function S3Thumb({ s3Key, className = "w-14 h-14 object-cover rounded-lg" }) {
     if (s3Key.startsWith("http")) { setUrl(s3Key); return; }
     getDownloadUrl(s3Key).then(setUrl).catch(() => setErr(true));
   }, [s3Key]);
-  if (!s3Key) return <div className="w-14 h-14 rounded-lg bg-slate-100 flex items-center justify-center"><ImageIcon size={18} className="text-slate-300" /></div>;
-  if (err) return <div className="w-14 h-14 rounded-lg bg-red-50 flex items-center justify-center"><ImageIcon size={18} className="text-red-300" /></div>;
-  if (!url) return <div className="w-14 h-14 rounded-lg bg-slate-100 animate-pulse" />;
+  if (!s3Key || err) return fallbackIcon ?? <ImageIcon size={18} className="text-olive-400" />;
+  if (!url) return <div className="w-full h-full animate-pulse bg-olive-100/40 rounded-xl" />;
   return <img src={url} alt="" className={className} />;
 }
 
-// Inline toast
+// Toast
 function Toast({ toast, onClose }) {
   if (!toast) return null;
   return (
     <div className={`fixed top-5 right-5 z-50 flex items-center gap-3 px-4 py-3 rounded-xl shadow-lg text-sm font-medium
-      ${toast.type === "success" ? "bg-green-50 border border-green-200 text-green-800" : "bg-red-50 border border-red-200 text-red-700"}`}>
+      ${toast.type === "success"
+        ? "bg-olive-50 border border-olive-200 text-olive-800"
+        : "bg-red-50 border border-red-200 text-red-700"}`}>
       {toast.type === "success" ? <CheckCircle size={16} /> : <AlertCircle size={16} />}
       {toast.msg}
-      <button onClick={onClose}><X size={14} /></button>
+      <button onClick={onClose} className="cursor-pointer border-0 bg-transparent"><X size={14} /></button>
     </div>
   );
 }
 
-const inputCls = "w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-400 transition";
-const labelCls = "block text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1";
+// Shared input/label styles
+const inputCls = "w-full rounded-xl border border-beige-200 bg-beige-50 px-3 py-2.5 text-sm text-olive-900 placeholder-olive-300 focus:outline-none focus:ring-2 focus:ring-olive-400 focus:border-olive-400 transition";
+const labelCls = "block text-[10px] font-bold text-olive-500 uppercase tracking-widest mb-1.5";
 
 // ══════════════════════════════════════════════════════════════════════════════
 // EDIT CATEGORY MODAL
@@ -73,10 +75,7 @@ function EditCategoryModal({ category, onClose, onSaved }) {
         await uploadfileToS3(coverFile, uploadUrl);
         imageUrl = key;
       }
-      await updateCategory(category._id, {
-        name, description,
-        ...(imageUrl !== undefined && { imageUrl }),
-      });
+      await updateCategory(category._id, { name, description, ...(imageUrl !== undefined && { imageUrl }) });
       onSaved();
     } catch (err) {
       console.error(err);
@@ -88,9 +87,13 @@ function EditCategoryModal({ category, onClose, onSaved }) {
   return (
     <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg">
-        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100">
-          <h2 className="font-bold text-slate-800 text-base flex items-center gap-2"><Pencil size={16} className="text-indigo-500" /> Edit Category</h2>
-          <button onClick={onClose}><X size={18} className="text-slate-400 hover:text-slate-600" /></button>
+        <div className="flex items-center justify-between px-6 py-4 border-b border-beige-100">
+          <h2 className="font-bold text-olive-900 text-base flex items-center gap-2">
+            <Pencil size={16} className="text-olive-600" /> Edit Category
+          </h2>
+          <button onClick={onClose} className="cursor-pointer border-0 bg-transparent text-olive-400 hover:text-olive-700">
+            <X size={18} />
+          </button>
         </div>
         <div className="p-6 space-y-4">
           <div>
@@ -98,7 +101,7 @@ function EditCategoryModal({ category, onClose, onSaved }) {
             <input value={name} onChange={e => setName(e.target.value)} className={inputCls} />
           </div>
           <div>
-            <div className="flex items-center justify-between mb-1">
+            <div className="flex items-center justify-between mb-1.5">
               <label className={labelCls} style={{ margin: 0 }}>Description *</label>
               <AIDescribeButton context="service-category" hint={name} onGenerated={setDescription} />
             </div>
@@ -107,16 +110,20 @@ function EditCategoryModal({ category, onClose, onSaved }) {
           <div>
             <label className={labelCls}>Cover Image (optional — replaces current)</label>
             <div className="flex items-center gap-3">
-              <S3Thumb s3Key={category.imageUrl} />
+              <div className="w-14 h-14 bg-lime rounded-2xl overflow-hidden flex items-center justify-center flex-shrink-0">
+                <S3Thumb s3Key={category.imageUrl} fallbackIcon={<FolderOpen size={20} className="text-olive-700" />} />
+              </div>
               {coverFile ? (
-                <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm">
-                  <img src={coverPreview} alt="" className="w-10 h-10 object-cover rounded" />
-                  <span className="truncate max-w-[120px]">{coverFile.name}</span>
-                  <button type="button" onClick={() => { setCoverFile(null); setCoverPreview(null); }}><X size={13} className="text-red-400" /></button>
+                <div className="flex items-center gap-2 bg-beige-50 border border-beige-200 rounded-xl px-3 py-2 text-sm">
+                  <img src={coverPreview} alt="" className="w-10 h-10 object-cover rounded-lg" />
+                  <span className="truncate max-w-[120px] text-olive-700">{coverFile.name}</span>
+                  <button type="button" onClick={() => { setCoverFile(null); setCoverPreview(null); }} className="border-0 bg-transparent cursor-pointer">
+                    <X size={13} className="text-red-400" />
+                  </button>
                 </div>
               ) : (
                 <button type="button" onClick={() => fileRef.current.click()}
-                  className="flex items-center gap-2 text-sm text-indigo-600 border border-indigo-200 hover:bg-indigo-50 rounded-lg px-3 py-2 transition">
+                  className="flex items-center gap-2 text-sm text-olive-700 border border-beige-200 hover:bg-beige-50 rounded-xl px-3 py-2 transition cursor-pointer bg-transparent">
                   <Upload size={14} /> Change image
                 </button>
               )}
@@ -128,9 +135,12 @@ function EditCategoryModal({ category, onClose, onSaved }) {
           </div>
         </div>
         <div className="flex justify-end gap-3 px-6 pb-5">
-          <button onClick={onClose} className="px-4 py-2 rounded-lg text-sm font-semibold text-slate-600 border border-slate-200 hover:bg-slate-50 transition">Cancel</button>
+          <button onClick={onClose}
+            className="px-4 py-2 rounded-xl text-sm font-semibold text-olive-600 border border-beige-200 hover:bg-beige-50 transition cursor-pointer bg-transparent">
+            Cancel
+          </button>
           <button onClick={handleSave} disabled={saving || !name.trim() || !description.trim()}
-            className="inline-flex items-center gap-2 px-5 py-2 rounded-lg text-sm font-semibold bg-indigo-600 hover:bg-indigo-700 text-white disabled:opacity-50 transition">
+            className="inline-flex items-center gap-2 px-5 py-2 rounded-xl text-sm font-semibold bg-olive-900 hover:bg-olive-800 text-lime disabled:opacity-50 transition cursor-pointer border-0">
             {saving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />} Save
           </button>
         </div>
@@ -160,16 +170,12 @@ function EditProgramModal({ program, onClose, onSaved }) {
   const coverRef = useRef();
   const galleryRef = useRef();
 
-  // Auto-generate href based on title when href is empty
   const autoHref = (() => {
     const titleSlug = toSlug(form.title);
     const existing = program.href || "";
-    // Preserve the category part of the existing href if it exists
     if (existing) {
       const parts = existing.split("/").filter(Boolean);
-      if (parts.length >= 2) {
-        return `/${parts.slice(0, -1).join("/")}/${titleSlug}`;
-      }
+      if (parts.length >= 2) return `/${parts.slice(0, -1).join("/")}/${titleSlug}`;
     }
     return "";
   })();
@@ -179,11 +185,9 @@ function EditProgramModal({ program, onClose, onSaved }) {
     try {
       const updates = { ...form };
       if (!updates.href.trim()) updates.href = autoHref || null;
-
       const totalFiles = (coverFile ? 1 : 0) + galleryFiles.length;
       if (totalFiles > 0) setUploadProgress({ done: 0, total: totalFiles });
 
-      // Upload new cover
       if (coverFile) {
         const location = `services/program/${program._id}`;
         const { uploadUrl, key } = await generateUploadUrl(coverFile.type, coverFile.name, location);
@@ -191,8 +195,6 @@ function EditProgramModal({ program, onClose, onSaved }) {
         updates.imagekeys = key;
         setUploadProgress(p => ({ ...p, done: p.done + 1 }));
       }
-
-      // Upload new gallery images
       if (galleryFiles.length > 0) {
         const newKeys = [];
         for (const f of galleryFiles) {
@@ -206,7 +208,6 @@ function EditProgramModal({ program, onClose, onSaved }) {
       } else {
         updates.galleryImageKeys = existingGallery;
       }
-
       await updateProgram(program._id, updates);
       onSaved();
     } catch (err) {
@@ -220,9 +221,13 @@ function EditProgramModal({ program, onClose, onSaved }) {
   return (
     <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4 overflow-y-auto">
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl my-6">
-        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100">
-          <h2 className="font-bold text-slate-800 text-base flex items-center gap-2"><Pencil size={16} className="text-indigo-500" /> Edit Program</h2>
-          <button onClick={onClose}><X size={18} className="text-slate-400 hover:text-slate-600" /></button>
+        <div className="flex items-center justify-between px-6 py-4 border-b border-beige-100">
+          <h2 className="font-bold text-olive-900 text-base flex items-center gap-2">
+            <Pencil size={16} className="text-olive-600" /> Edit Program
+          </h2>
+          <button onClick={onClose} className="cursor-pointer border-0 bg-transparent text-olive-400 hover:text-olive-700">
+            <X size={18} />
+          </button>
         </div>
         <div className="p-6 space-y-4">
           <div className="grid grid-cols-2 gap-4">
@@ -231,14 +236,14 @@ function EditProgramModal({ program, onClose, onSaved }) {
               <input value={form.title} onChange={e => setForm(f => ({ ...f, title: e.target.value }))} className={inputCls} />
             </div>
             <div className="col-span-2">
-              <div className="flex items-center justify-between mb-1">
+              <div className="flex items-center justify-between mb-1.5">
                 <label className={labelCls} style={{ margin: 0 }}>Short Description *</label>
                 <AIDescribeButton context="service-program" hint={form.title} onGenerated={v => setForm(f => ({ ...f, description: v }))} />
               </div>
               <textarea rows={2} value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} className={`${inputCls} resize-none`} />
             </div>
             <div className="col-span-2">
-              <div className="flex items-center justify-between mb-1">
+              <div className="flex items-center justify-between mb-1.5">
                 <label className={labelCls} style={{ margin: 0 }}>Full Description</label>
                 <AIDescribeButton context="service-program-full" hint={form.title} onGenerated={v => setForm(f => ({ ...f, fullDescription: v }))} />
               </div>
@@ -255,14 +260,13 @@ function EditProgramModal({ program, onClose, onSaved }) {
             <div className="col-span-2">
               <label className={labelCls}>
                 Link (href)
-                <span className="ml-1 text-slate-400 font-normal normal-case tracking-normal">— leave blank to keep current</span>
+                <span className="ml-1 text-olive-300 font-normal normal-case tracking-normal">— leave blank to keep current</span>
               </label>
               <input value={form.href} onChange={e => setForm(f => ({ ...f, href: e.target.value }))}
-                placeholder={program.href || autoHref || "/services/..."}
-                className={inputCls} />
+                placeholder={program.href || autoHref || "/services/..."} className={inputCls} />
               {(form.href || program.href) && (
-                <p className="mt-1.5 text-xs text-slate-400">
-                  Will save as: <code className="bg-indigo-50 text-indigo-700 px-1.5 py-0.5 rounded">{form.href.trim() || program.href}</code>
+                <p className="mt-1.5 text-xs text-olive-400">
+                  Will save as: <code className="bg-olive-50 text-olive-700 px-1.5 py-0.5 rounded">{form.href.trim() || program.href}</code>
                 </p>
               )}
             </div>
@@ -272,16 +276,20 @@ function EditProgramModal({ program, onClose, onSaved }) {
           <div>
             <label className={labelCls}>Cover Image</label>
             <div className="flex items-center gap-3">
-              <S3Thumb s3Key={program.imagekeys} />
+              <div className="w-14 h-14 bg-beige-100 rounded-xl overflow-hidden flex items-center justify-center flex-shrink-0">
+                <S3Thumb s3Key={program.imagekeys} fallbackIcon={<ImageIcon size={18} className="text-olive-400" />} />
+              </div>
               {coverFile ? (
-                <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm">
-                  <img src={coverPreview} alt="" className="w-10 h-10 object-cover rounded" />
-                  <span className="truncate max-w-[120px]">{coverFile.name}</span>
-                  <button type="button" onClick={() => { setCoverFile(null); setCoverPreview(null); }}><X size={13} className="text-red-400" /></button>
+                <div className="flex items-center gap-2 bg-beige-50 border border-beige-200 rounded-xl px-3 py-2 text-sm">
+                  <img src={coverPreview} alt="" className="w-10 h-10 object-cover rounded-lg" />
+                  <span className="truncate max-w-[120px] text-olive-700">{coverFile.name}</span>
+                  <button type="button" onClick={() => { setCoverFile(null); setCoverPreview(null); }} className="border-0 bg-transparent cursor-pointer">
+                    <X size={13} className="text-red-400" />
+                  </button>
                 </div>
               ) : (
                 <button type="button" onClick={() => coverRef.current.click()}
-                  className="flex items-center gap-2 text-sm text-indigo-600 border border-indigo-200 hover:bg-indigo-50 rounded-lg px-3 py-2 transition">
+                  className="flex items-center gap-2 text-sm text-olive-700 border border-beige-200 hover:bg-beige-50 rounded-xl px-3 py-2 transition cursor-pointer bg-transparent">
                   <Upload size={14} /> {program.imagekeys ? "Replace" : "Add"} cover
                 </button>
               )}
@@ -299,11 +307,12 @@ function EditProgramModal({ program, onClose, onSaved }) {
               <div className="flex flex-wrap gap-2 mb-2">
                 {existingGallery.map((key, i) => (
                   <div key={key} className="relative group">
-                    <S3Thumb s3Key={key} className="w-16 h-16 object-cover rounded-lg border border-slate-200" />
-                    <button
-                      type="button"
+                    <div className="w-16 h-16 bg-beige-100 rounded-xl overflow-hidden">
+                      <S3Thumb s3Key={key} className="w-full h-full object-cover" />
+                    </div>
+                    <button type="button"
                       onClick={() => setExistingGallery(prev => prev.filter((_, idx) => idx !== i))}
-                      className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-red-500 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition">
+                      className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-red-500 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition cursor-pointer border-0">
                       <X size={10} />
                     </button>
                   </div>
@@ -314,9 +323,9 @@ function EditProgramModal({ program, onClose, onSaved }) {
               <div className="flex flex-wrap gap-2 mb-2">
                 {galleryFiles.map((f, i) => (
                   <div key={i} className="relative group">
-                    <img src={URL.createObjectURL(f)} alt="" className="w-16 h-16 object-cover rounded-lg border-2 border-indigo-300" />
+                    <img src={URL.createObjectURL(f)} alt="" className="w-16 h-16 object-cover rounded-xl border-2 border-olive-300" />
                     <button type="button" onClick={() => setGalleryFiles(prev => prev.filter((_, idx) => idx !== i))}
-                      className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-red-500 text-white rounded-full flex items-center justify-center">
+                      className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-red-500 text-white rounded-full flex items-center justify-center cursor-pointer border-0">
                       <X size={10} />
                     </button>
                   </div>
@@ -324,7 +333,7 @@ function EditProgramModal({ program, onClose, onSaved }) {
               </div>
             )}
             <button type="button" onClick={() => galleryRef.current.click()}
-              className="inline-flex items-center gap-2 text-sm text-indigo-600 border border-indigo-200 hover:bg-indigo-50 rounded-lg px-3 py-2 transition">
+              className="inline-flex items-center gap-2 text-sm text-olive-700 border border-beige-200 hover:bg-beige-50 rounded-xl px-3 py-2 transition cursor-pointer bg-transparent">
               <Plus size={14} /> Add gallery images
             </button>
             <input ref={galleryRef} type="file" accept="image/*" multiple className="hidden" onChange={e => {
@@ -335,13 +344,13 @@ function EditProgramModal({ program, onClose, onSaved }) {
 
           {/* Upload progress */}
           {uploadProgress && (
-            <div className="bg-indigo-50 border border-indigo-100 rounded-xl p-3">
-              <div className="flex justify-between text-xs font-semibold text-indigo-600 mb-1.5">
+            <div className="bg-olive-50 border border-olive-100 rounded-xl p-3">
+              <div className="flex justify-between text-xs font-semibold text-olive-600 mb-1.5">
                 <span>Uploading images…</span>
                 <span>{uploadProgress.done}/{uploadProgress.total}</span>
               </div>
-              <div className="w-full bg-indigo-100 rounded-full h-1.5">
-                <div className="bg-indigo-600 h-1.5 rounded-full transition-all"
+              <div className="w-full bg-olive-100 rounded-full h-1.5">
+                <div className="bg-olive-600 h-1.5 rounded-full transition-all"
                   style={{ width: `${(uploadProgress.done / uploadProgress.total) * 100}%` }} />
               </div>
             </div>
@@ -349,10 +358,40 @@ function EditProgramModal({ program, onClose, onSaved }) {
         </div>
 
         <div className="flex justify-end gap-3 px-6 pb-5">
-          <button onClick={onClose} className="px-4 py-2 rounded-lg text-sm font-semibold text-slate-600 border border-slate-200 hover:bg-slate-50 transition">Cancel</button>
+          <button onClick={onClose}
+            className="px-4 py-2 rounded-xl text-sm font-semibold text-olive-600 border border-beige-200 hover:bg-beige-50 transition cursor-pointer bg-transparent">
+            Cancel
+          </button>
           <button onClick={handleSave} disabled={saving || !form.title.trim() || !form.description.trim()}
-            className="inline-flex items-center gap-2 px-5 py-2 rounded-lg text-sm font-semibold bg-indigo-600 hover:bg-indigo-700 text-white disabled:opacity-50 transition">
+            className="inline-flex items-center gap-2 px-5 py-2 rounded-xl text-sm font-semibold bg-olive-900 hover:bg-olive-800 text-lime disabled:opacity-50 transition cursor-pointer border-0">
             {saving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />} Save Changes
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// CONFIRM DIALOG
+// ══════════════════════════════════════════════════════════════════════════════
+function ConfirmDialog({ title, subtitle, confirmLabel = "Confirm", confirmClass = "bg-red-500 hover:bg-red-600", icon, iconBg = "bg-red-100", onConfirm, onCancel, loading }) {
+  return (
+    <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6 text-center">
+        <div className={`w-14 h-14 ${iconBg} rounded-full flex items-center justify-center mx-auto mb-4`}>
+          {icon ?? <Trash2 size={24} className="text-red-500" />}
+        </div>
+        <h3 className="font-bold text-olive-900 text-base mb-1">{title}</h3>
+        <p className="text-sm text-olive-500 mb-6">{subtitle}</p>
+        <div className="flex gap-3 justify-center">
+          <button onClick={onCancel}
+            className="px-5 py-2 rounded-xl border border-beige-200 text-sm font-semibold text-olive-600 hover:bg-beige-50 transition cursor-pointer bg-transparent">
+            Cancel
+          </button>
+          <button onClick={onConfirm} disabled={loading}
+            className={`inline-flex items-center gap-2 px-5 py-2 rounded-xl text-white text-sm font-semibold disabled:opacity-50 transition cursor-pointer border-0 ${confirmClass}`}>
+            {loading ? <Loader2 size={14} className="animate-spin" /> : null} {confirmLabel}
           </button>
         </div>
       </div>
@@ -366,53 +405,71 @@ function EditProgramModal({ program, onClose, onSaved }) {
 function ProgramRow({ program, onEdit, onHide, onUnhide, onHardDelete }) {
   const isHidden = !program.isActive;
   return (
-    <div className={`flex items-center gap-4 px-5 py-3.5 border-b border-slate-50 last:border-0 hover:bg-slate-50/70 transition group ${isHidden ? "bg-slate-50/60 opacity-60" : "bg-white"}`}>
-      <S3Thumb s3Key={program.imagekeys} />
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2">
-          <p className="font-semibold text-slate-800 text-sm truncate">{program.title}</p>
-          {isHidden && <span className="text-[10px] font-semibold bg-slate-200 text-slate-500 px-1.5 py-0.5 rounded-full shrink-0">Hidden</span>}
-        </div>
-        <p className="text-xs text-slate-400 truncate mt-0.5">{program.description}</p>
-        <div className="flex items-center gap-2 mt-1 flex-wrap">
-          {program.href && (
-            <a href={program.href} target="_blank" rel="noreferrer"
-              className="inline-flex items-center gap-1 text-[11px] text-indigo-500 hover:text-indigo-700 font-mono bg-indigo-50 px-1.5 py-0.5 rounded truncate max-w-[220px]">
-              <Eye size={10} /> {program.href}
-            </a>
-          )}
-          {program.galleryImageKeys?.length > 0 && (
-            <span className="text-[11px] bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded">
-              {program.galleryImageKeys.length} gallery img{program.galleryImageKeys.length !== 1 ? "s" : ""}
-            </span>
-          )}
-          {program.cta && (
-            <span className="text-[11px] bg-green-50 text-green-700 px-1.5 py-0.5 rounded font-medium">{program.cta}</span>
-          )}
-        </div>
+    <div className={`bg-white rounded-2xl border border-beige-100 flex items-center gap-3 px-3 sm:px-4 py-3 sm:py-3.5 transition
+      ${isHidden ? "opacity-50" : ""}`}>
+
+      {/* Thumbnail */}
+      <div className="w-9 h-9 sm:w-10 sm:h-10 bg-beige-100 rounded-xl overflow-hidden flex items-center justify-center flex-shrink-0">
+        <S3Thumb s3Key={program.imagekeys} className="w-full h-full object-cover"
+          fallbackIcon={<ImageIcon size={14} className="text-olive-400" />} />
       </div>
-      <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition">
+
+      {/* Title + hidden badge */}
+      <div className="flex-1 min-w-0">
+        <p className="font-bold text-olive-900 text-sm truncate leading-tight">{program.title}</p>
+        {/* Mobile: show gallery count below title */}
+        {program.galleryImageKeys?.length > 0 && (
+          <p className="sm:hidden text-[10px] text-olive-400 mt-0.5">
+            {program.galleryImageKeys.length} gallery imgs
+          </p>
+        )}
+        {isHidden && (
+          <span className="sm:hidden inline-block text-[10px] font-bold bg-beige-200 text-olive-500 px-2 py-0.5 rounded-full mt-0.5">Hidden</span>
+        )}
+      </div>
+
+      {/* Desktop: meta badges + hidden badge */}
+      <div className="hidden sm:flex items-center gap-3 flex-shrink-0">
+        {isHidden && (
+          <span className="text-[10px] font-bold bg-beige-200 text-olive-500 px-2 py-0.5 rounded-full">Hidden</span>
+        )}
+        {program.galleryImageKeys?.length > 0 && (
+          <span className="text-[10px] font-semibold text-olive-400 uppercase tracking-wider">
+            {program.galleryImageKeys.length} Gallery Imgs
+          </span>
+        )}
+      </div>
+
+      {/* Divider — desktop only */}
+      <div className="hidden sm:block w-px h-5 bg-beige-200 flex-shrink-0" />
+
+      {/* Action buttons */}
+      <div className="flex items-center gap-0.5 sm:gap-1 flex-shrink-0">
         {!isHidden && (
           <button onClick={() => onEdit(program)}
-            className="p-2 rounded-lg hover:bg-indigo-50 text-slate-400 hover:text-indigo-600 transition" title="Edit">
-            <Pencil size={15} />
+            className="w-8 h-8 rounded-full hover:bg-beige-100 flex items-center justify-center text-olive-400 hover:text-olive-700 transition cursor-pointer border-0 bg-transparent"
+            title="Edit">
+            <Pencil size={14} />
           </button>
         )}
         {isHidden ? (
           <>
             <button onClick={() => onUnhide(program)}
-              className="p-2 rounded-lg hover:bg-green-50 text-slate-400 hover:text-green-600 transition" title="Unhide">
-              <Eye size={15} />
+              className="w-8 h-8 rounded-full hover:bg-olive-50 flex items-center justify-center text-olive-400 hover:text-olive-700 transition cursor-pointer border-0 bg-transparent"
+              title="Unhide">
+              <Eye size={14} />
             </button>
             <button onClick={() => onHardDelete(program)}
-              className="p-2 rounded-lg hover:bg-red-50 text-slate-400 hover:text-red-500 transition" title="Delete permanently">
-              <Trash2 size={15} />
+              className="w-8 h-8 rounded-full hover:bg-red-50 flex items-center justify-center text-olive-400 hover:text-red-500 transition cursor-pointer border-0 bg-transparent"
+              title="Delete permanently">
+              <Trash2 size={14} />
             </button>
           </>
         ) : (
           <button onClick={() => onHide(program)}
-            className="p-2 rounded-lg hover:bg-amber-50 text-slate-400 hover:text-amber-500 transition" title="Hide">
-            <EyeOff size={15} />
+            className="w-8 h-8 rounded-full hover:bg-beige-100 flex items-center justify-center text-olive-400 hover:text-olive-700 transition cursor-pointer border-0 bg-transparent"
+            title="Hide">
+            <Eye size={14} />
           </button>
         )}
       </div>
@@ -433,7 +490,7 @@ function CategoryCard({ category, showHidden, onEditCat, onHideCat, onUnhideCat,
     setLoadingProgs(true);
     fetchProgramsByCategoryAdmin(category._id, showHidden)
       .then(setPrograms)
-      .catch(() => { })
+      .catch(() => {})
       .finally(() => setLoadingProgs(false));
   };
 
@@ -443,52 +500,88 @@ function CategoryCard({ category, showHidden, onEditCat, onHideCat, onUnhideCat,
   }, [open, category._id, showHidden]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
-    <div className={`rounded-2xl border shadow-sm overflow-hidden ${isHidden ? "bg-slate-50 border-slate-300 opacity-70" : "bg-white border-slate-200"}`}>
+    <div className={`rounded-3xl border overflow-hidden transition ${isHidden ? "border-beige-200 opacity-60" : "border-beige-200"} bg-beige-100`}>
+
       {/* Category header */}
-      <div className="flex items-center gap-4 px-5 py-4 cursor-pointer select-none hover:bg-slate-50 transition"
-        onClick={() => setOpen(o => !o)}>
-        <S3Thumb s3Key={category.imageUrl} className="w-12 h-12 object-cover rounded-xl" />
+      <div
+        className="flex items-start gap-3 sm:gap-4 px-4 sm:px-5 py-4 sm:py-5 cursor-pointer select-none hover:bg-beige-200/40 transition"
+        onClick={() => setOpen(o => !o)}
+      >
+        {/* Lime icon box */}
+        <div className="w-12 h-12 sm:w-14 sm:h-14 bg-lime rounded-2xl overflow-hidden flex items-center justify-center flex-shrink-0 mt-0.5">
+          <S3Thumb
+            s3Key={category.imageUrl}
+            className="w-full h-full object-cover"
+            fallbackIcon={<FolderOpen size={20} className="text-olive-700" />}
+          />
+        </div>
+
+        {/* Info + actions */}
         <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2">
-            <p className="font-bold text-slate-800 text-sm">{category.name}</p>
-            {isHidden && <span className="text-[10px] font-semibold bg-slate-200 text-slate-500 px-2 py-0.5 rounded-full">Hidden</span>}
+          {/* Top row: name + action buttons */}
+          <div className="flex items-start justify-between gap-2">
+            {/* Name + badges */}
+            <div className="min-w-0">
+              <div className="flex flex-wrap items-center gap-1.5 mb-1">
+                <h3 className="text-base sm:text-xl font-extrabold text-olive-900 leading-tight">{category.name}</h3>
+                {isHidden && (
+                  <span className="text-[10px] font-bold bg-beige-300 text-olive-500 px-2 py-0.5 rounded-full">Hidden</span>
+                )}
+              </div>
+              <span className="inline-block text-[10px] font-bold bg-beige-200 text-olive-600 px-2.5 py-1 rounded-full uppercase tracking-wider mb-1.5">
+                {programs.length} {programs.length === 1 ? "Program" : "Programs"}
+              </span>
+              <p className="hidden sm:block text-sm text-olive-500 line-clamp-2 leading-relaxed">{category.description}</p>
+            </div>
+
+            {/* Action buttons — always horizontal */}
+            <div
+              className="flex flex-row items-center gap-1.5 flex-shrink-0"
+              onClick={e => e.stopPropagation()}
+            >
+              {!isHidden && (
+                <button
+                  onClick={() => onEditCat(category)}
+                  className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-beige-200 hover:bg-beige-300 flex items-center justify-center text-olive-600 transition cursor-pointer border-0"
+                  title="Edit">
+                  <Pencil size={14} />
+                </button>
+              )}
+              {isHidden ? (
+                <button
+                  onClick={() => onUnhideCat(category)}
+                  className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-beige-200 hover:bg-beige-300 flex items-center justify-center text-olive-600 transition cursor-pointer border-0"
+                  title="Unhide">
+                  <Eye size={14} />
+                </button>
+              ) : (
+                <button
+                  onClick={() => onHideCat(category)}
+                  className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-beige-200 hover:bg-beige-300 flex items-center justify-center text-olive-600 transition cursor-pointer border-0"
+                  title="Hide">
+                  <Eye size={14} />
+                </button>
+              )}
+              {/* Chevron — hidden on mobile to save space */}
+              <button
+                onClick={e => { e.stopPropagation(); setOpen(o => !o); }}
+                className="hidden sm:flex w-9 h-9 rounded-full bg-beige-200 hover:bg-beige-300 items-center justify-center text-olive-600 transition cursor-pointer border-0">
+                {open ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
+              </button>
+            </div>
           </div>
-          <p className="text-xs text-slate-400 truncate">{category.description}</p>
-        </div>
-        <div className="flex items-center gap-1" onClick={e => e.stopPropagation()}>
-          <span className="text-xs text-slate-400 mr-2">{programs.length} program{programs.length !== 1 ? "s" : ""}</span>
-          {!isHidden && (
-            <button onClick={() => onEditCat(category)}
-              className="p-2 rounded-lg hover:bg-indigo-50 text-slate-400 hover:text-indigo-600 transition" title="Edit">
-              <Pencil size={15} />
-            </button>
-          )}
-          {isHidden ? (
-            <button onClick={() => onUnhideCat(category)}
-              className="p-2 rounded-lg hover:bg-green-50 text-slate-400 hover:text-green-600 transition" title="Unhide">
-              <Eye size={15} />
-            </button>
-          ) : (
-            <button onClick={() => onHideCat(category)}
-              className="p-2 rounded-lg hover:bg-amber-50 text-slate-400 hover:text-amber-500 transition" title="Hide">
-              <EyeOff size={15} />
-            </button>
-          )}
-        </div>
-        <div className="text-slate-300">
-          {open ? <ChevronDown size={18} /> : <ChevronRight size={18} />}
         </div>
       </div>
 
       {/* Programs list */}
       {open && (
-        <div className="border-t border-slate-100">
+        <div className="px-3 sm:px-4 pb-3 sm:pb-4 space-y-2 border-t border-beige-200/60 pt-3">
           {loadingProgs ? (
-            <div className="flex items-center justify-center gap-2 py-8 text-slate-400 text-sm">
+            <div className="flex items-center justify-center gap-2 py-8 text-olive-400 text-sm">
               <Loader2 size={16} className="animate-spin" /> Loading programs…
             </div>
           ) : programs.length === 0 ? (
-            <div className="text-center py-8 text-slate-400 text-sm">No programs in this category.</div>
+            <div className="text-center py-8 text-olive-400 text-sm">No programs in this category.</div>
           ) : (
             programs.map(prog => (
               <ProgramRow
@@ -508,47 +601,22 @@ function CategoryCard({ category, showHidden, onEditCat, onHideCat, onUnhideCat,
 }
 
 // ══════════════════════════════════════════════════════════════════════════════
-// CONFIRM DELETE DIALOG
-// ══════════════════════════════════════════════════════════════════════════════
-function ConfirmDialog({ title, subtitle, confirmLabel = "Confirm", confirmClass = "bg-red-500 hover:bg-red-600", icon, iconBg = "bg-red-100", onConfirm, onCancel, loading }) {
-  return (
-    <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6 text-center">
-        <div className={`w-14 h-14 ${iconBg} rounded-full flex items-center justify-center mx-auto mb-4`}>
-          {icon ?? <Trash2 size={24} className="text-red-500" />}
-        </div>
-        <h3 className="font-bold text-slate-800 text-base mb-1">{title}</h3>
-        <p className="text-sm text-slate-500 mb-6">{subtitle}</p>
-        <div className="flex gap-3 justify-center">
-          <button onClick={onCancel} className="px-5 py-2 rounded-lg border border-slate-200 text-sm font-semibold text-slate-600 hover:bg-slate-50 transition">Cancel</button>
-          <button onClick={onConfirm} disabled={loading}
-            className={`inline-flex items-center gap-2 px-5 py-2 rounded-lg text-white text-sm font-semibold disabled:opacity-50 transition ${confirmClass}`}>
-            {loading ? <Loader2 size={14} className="animate-spin" /> : null} {confirmLabel}
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// ══════════════════════════════════════════════════════════════════════════════
 // MAIN PAGE
 // ══════════════════════════════════════════════════════════════════════════════
 export default function ManageServices() {
-  const [categories, setCategories] = useState([]);
-  const [loading, setLoading]       = useState(true);
-  const [showHidden, setShowHidden] = useState(false);
-  const [toast, setToast]           = useState(null);
+  const [categories, setCategories]   = useState([]);
+  const [loading, setLoading]         = useState(true);
+  const [showHidden, setShowHidden]   = useState(false);
+  const [toast, setToast]             = useState(null);
 
-  // Modal / action state
-  const [editingCat, setEditingCat]         = useState(null);
-  const [editingProg, setEditingProg]       = useState(null); // { prog, refresh }
-  const [hidingCat, setHidingCat]           = useState(null);
-  const [unhidingCat, setUnhidingCat]       = useState(null);
-  const [hidingProg, setHidingProg]         = useState(null); // { prog, refresh }
-  const [unhidingProg, setUnhidingProg]     = useState(null); // { prog, refresh }
-  const [hardDeletingProg, setHardDeletingProg] = useState(null); // { prog, refresh }
-  const [actionLoading, setActionLoading]   = useState(false);
+  const [editingCat, setEditingCat]             = useState(null);
+  const [editingProg, setEditingProg]           = useState(null);
+  const [hidingCat, setHidingCat]               = useState(null);
+  const [unhidingCat, setUnhidingCat]           = useState(null);
+  const [hidingProg, setHidingProg]             = useState(null);
+  const [unhidingProg, setUnhidingProg]         = useState(null);
+  const [hardDeletingProg, setHardDeletingProg] = useState(null);
+  const [actionLoading, setActionLoading]       = useState(false);
 
   const showToast = (type, msg) => {
     setToast({ type, msg });
@@ -565,223 +633,164 @@ export default function ManageServices() {
 
   useEffect(() => { loadCategories(); }, [showHidden]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // ── Hide category ──────────────────────────────────────────────────
   const confirmHideCat = async () => {
     if (!hidingCat) return;
     setActionLoading(true);
     try {
       await hideCategory(hidingCat._id);
       showToast("success", `Category "${hidingCat.name}" hidden`);
-      setHidingCat(null);
-      loadCategories();
-    } catch (err) {
-      showToast("error", err?.response?.data?.message || "Failed to hide category");
-    } finally {
-      setActionLoading(false);
-    }
+      setHidingCat(null); loadCategories();
+    } catch (err) { showToast("error", err?.response?.data?.message || "Failed to hide category"); }
+    finally { setActionLoading(false); }
   };
 
-  // ── Unhide category ────────────────────────────────────────────────
   const confirmUnhideCat = async () => {
     if (!unhidingCat) return;
     setActionLoading(true);
     try {
       await unhideCategory(unhidingCat._id);
       showToast("success", `Category "${unhidingCat.name}" is now visible`);
-      setUnhidingCat(null);
-      loadCategories();
-    } catch (err) {
-      showToast("error", err?.response?.data?.message || "Failed to unhide category");
-    } finally {
-      setActionLoading(false);
-    }
+      setUnhidingCat(null); loadCategories();
+    } catch (err) { showToast("error", err?.response?.data?.message || "Failed to unhide category"); }
+    finally { setActionLoading(false); }
   };
 
-  // ── Hide program ───────────────────────────────────────────────────
   const confirmHideProg = async () => {
     if (!hidingProg) return;
     setActionLoading(true);
     try {
       await hideProgram(hidingProg.prog._id);
       showToast("success", `Program "${hidingProg.prog.title}" hidden`);
-      hidingProg.refresh();
-      setHidingProg(null);
-    } catch (err) {
-      showToast("error", err?.response?.data?.message || "Failed to hide program");
-    } finally {
-      setActionLoading(false);
-    }
+      hidingProg.refresh(); setHidingProg(null);
+    } catch (err) { showToast("error", err?.response?.data?.message || "Failed to hide program"); }
+    finally { setActionLoading(false); }
   };
 
-  // ── Unhide program ─────────────────────────────────────────────────
   const confirmUnhideProg = async () => {
     if (!unhidingProg) return;
     setActionLoading(true);
     try {
       await unhideProgram(unhidingProg.prog._id);
       showToast("success", `Program "${unhidingProg.prog.title}" is now visible`);
-      unhidingProg.refresh();
-      setUnhidingProg(null);
-    } catch (err) {
-      showToast("error", err?.response?.data?.message || "Failed to unhide program");
-    } finally {
-      setActionLoading(false);
-    }
+      unhidingProg.refresh(); setUnhidingProg(null);
+    } catch (err) { showToast("error", err?.response?.data?.message || "Failed to unhide program"); }
+    finally { setActionLoading(false); }
   };
 
-  // ── Hard delete program ────────────────────────────────────────────
   const confirmHardDeleteProg = async () => {
     if (!hardDeletingProg) return;
     setActionLoading(true);
     try {
       await hardDeleteProgram(hardDeletingProg.prog._id);
       showToast("success", `Program "${hardDeletingProg.prog.title}" permanently deleted`);
-      hardDeletingProg.refresh();
-      setHardDeletingProg(null);
-    } catch (err) {
-      showToast("error", err?.response?.data?.message || "Failed to delete program");
-    } finally {
-      setActionLoading(false);
-    }
+      hardDeletingProg.refresh(); setHardDeletingProg(null);
+    } catch (err) { showToast("error", err?.response?.data?.message || "Failed to delete program"); }
+    finally { setActionLoading(false); }
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 py-8 px-4">
+    <div className="min-h-screen">
       <Toast toast={toast} onClose={() => setToast(null)} />
 
       {/* Modals */}
       {editingCat && (
-        <EditCategoryModal
-          category={editingCat}
-          onClose={() => setEditingCat(null)}
-          onSaved={() => { setEditingCat(null); showToast("success", "Category updated!"); loadCategories(); }}
-        />
+        <EditCategoryModal category={editingCat} onClose={() => setEditingCat(null)}
+          onSaved={() => { setEditingCat(null); showToast("success", "Category updated!"); loadCategories(); }} />
       )}
       {editingProg && (
-        <EditProgramModal
-          program={editingProg.prog}
-          onClose={() => setEditingProg(null)}
-          onSaved={() => { setEditingProg(null); showToast("success", "Program updated!"); editingProg.refresh(); }}
-        />
+        <EditProgramModal program={editingProg.prog} onClose={() => setEditingProg(null)}
+          onSaved={() => { setEditingProg(null); showToast("success", "Program updated!"); editingProg.refresh(); }} />
       )}
       {hidingCat && (
-        <ConfirmDialog
-          title={`Hide "${hidingCat.name}"?`}
-          subtitle="This will hide the category and all its programs from the public site. You can unhide it anytime."
-          confirmLabel="Hide"
-          confirmClass="bg-amber-500 hover:bg-amber-600"
-          icon={<EyeOff size={24} className="text-amber-500" />}
-          iconBg="bg-amber-100"
-          onConfirm={confirmHideCat}
-          onCancel={() => setHidingCat(null)}
-          loading={actionLoading}
-        />
+        <ConfirmDialog title={`Hide "${hidingCat.name}"?`}
+          subtitle="This will hide the category and all its programs from the public site."
+          confirmLabel="Hide" confirmClass="bg-amber-500 hover:bg-amber-600"
+          icon={<EyeOff size={24} className="text-amber-500" />} iconBg="bg-amber-100"
+          onConfirm={confirmHideCat} onCancel={() => setHidingCat(null)} loading={actionLoading} />
       )}
       {unhidingCat && (
-        <ConfirmDialog
-          title={`Unhide "${unhidingCat.name}"?`}
-          subtitle="This will make the category and its active programs visible on the public site again."
-          confirmLabel="Unhide"
-          confirmClass="bg-green-600 hover:bg-green-700"
-          icon={<Eye size={24} className="text-green-600" />}
-          iconBg="bg-green-100"
-          onConfirm={confirmUnhideCat}
-          onCancel={() => setUnhidingCat(null)}
-          loading={actionLoading}
-        />
+        <ConfirmDialog title={`Unhide "${unhidingCat.name}"?`}
+          subtitle="This will make the category and its active programs visible again."
+          confirmLabel="Unhide" confirmClass="bg-olive-600 hover:bg-olive-700"
+          icon={<Eye size={24} className="text-olive-600" />} iconBg="bg-olive-100"
+          onConfirm={confirmUnhideCat} onCancel={() => setUnhidingCat(null)} loading={actionLoading} />
       )}
       {hidingProg && (
-        <ConfirmDialog
-          title={`Hide "${hidingProg.prog.title}"?`}
+        <ConfirmDialog title={`Hide "${hidingProg.prog.title}"?`}
           subtitle="The program will be hidden from the public site. You can unhide it anytime."
-          confirmLabel="Hide"
-          confirmClass="bg-amber-500 hover:bg-amber-600"
-          icon={<EyeOff size={24} className="text-amber-500" />}
-          iconBg="bg-amber-100"
-          onConfirm={confirmHideProg}
-          onCancel={() => setHidingProg(null)}
-          loading={actionLoading}
-        />
+          confirmLabel="Hide" confirmClass="bg-amber-500 hover:bg-amber-600"
+          icon={<EyeOff size={24} className="text-amber-500" />} iconBg="bg-amber-100"
+          onConfirm={confirmHideProg} onCancel={() => setHidingProg(null)} loading={actionLoading} />
       )}
       {unhidingProg && (
-        <ConfirmDialog
-          title={`Unhide "${unhidingProg.prog.title}"?`}
+        <ConfirmDialog title={`Unhide "${unhidingProg.prog.title}"?`}
           subtitle="The program will be visible on the public site again."
-          confirmLabel="Unhide"
-          confirmClass="bg-green-600 hover:bg-green-700"
-          icon={<Eye size={24} className="text-green-600" />}
-          iconBg="bg-green-100"
-          onConfirm={confirmUnhideProg}
-          onCancel={() => setUnhidingProg(null)}
-          loading={actionLoading}
-        />
+          confirmLabel="Unhide" confirmClass="bg-olive-600 hover:bg-olive-700"
+          icon={<Eye size={24} className="text-olive-600" />} iconBg="bg-olive-100"
+          onConfirm={confirmUnhideProg} onCancel={() => setUnhidingProg(null)} loading={actionLoading} />
       )}
       {hardDeletingProg && (
-        <ConfirmDialog
-          title={`Permanently delete "${hardDeletingProg.prog.title}"?`}
-          subtitle="This cannot be undone. The program will be removed from the database forever."
-          confirmLabel="Delete Forever"
-          confirmClass="bg-red-500 hover:bg-red-600"
-          icon={<Trash2 size={24} className="text-red-500" />}
-          iconBg="bg-red-100"
-          onConfirm={confirmHardDeleteProg}
-          onCancel={() => setHardDeletingProg(null)}
-          loading={actionLoading}
-        />
+        <ConfirmDialog title={`Permanently delete "${hardDeletingProg.prog.title}"?`}
+          subtitle="This cannot be undone. The program will be removed forever."
+          confirmLabel="Delete Forever" confirmClass="bg-red-500 hover:bg-red-600"
+          icon={<Trash2 size={24} className="text-red-500" />} iconBg="bg-red-100"
+          onConfirm={confirmHardDeleteProg} onCancel={() => setHardDeletingProg(null)} loading={actionLoading} />
       )}
 
-      <div className="max-w-4xl mx-auto">
-        {/* Header */}
-        <div className="flex items-center justify-between mb-8">
-          <div>
-            <h1 className="text-2xl font-bold text-slate-800">Manage Services</h1>
-            <p className="text-slate-500 text-sm mt-1">Edit, hide, or restore categories and programs.</p>
-          </div>
-          <div className="flex items-center gap-3">
-            <button
-              onClick={() => setShowHidden(h => !h)}
-              className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg border text-sm font-medium transition ${showHidden ? "border-indigo-300 bg-indigo-50 text-indigo-700" : "border-slate-200 text-slate-600 hover:bg-slate-100"}`}
-            >
-              {showHidden ? <Eye size={15} /> : <EyeOff size={15} />}
-              {showHidden ? "Showing hidden" : "Show hidden"}
-            </button>
-            <button onClick={loadCategories}
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-slate-200 text-sm font-medium text-slate-600 hover:bg-slate-100 transition">
-              <RefreshCw size={15} /> Refresh
-            </button>
-          </div>
+      {/* ── Page Header ── */}
+      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-8 sm:mb-10">
+        <div>
+          <p className="text-[10px] font-bold uppercase tracking-widest text-olive-500 mb-1">Management Dashboard</p>
+          <h1 className="text-3xl sm:text-5xl font-extrabold text-olive-900 leading-tight m-0">Manage Services</h1>
         </div>
-
-        {/* Content */}
-        {loading ? (
-          <div className="flex items-center justify-center gap-3 py-20 text-slate-400">
-            <Loader2 size={22} className="animate-spin" /> Loading categories…
-          </div>
-        ) : categories.length === 0 ? (
-          <div className="text-center py-20 bg-white rounded-2xl border border-dashed border-slate-200">
-            <FolderOpen size={40} className="mx-auto text-slate-300 mb-3" />
-            <p className="font-semibold text-slate-500">No categories found</p>
-            <p className="text-sm text-slate-400 mt-1">Add some categories from the "Add Services" page.</p>
-          </div>
-        ) : (
-          <div className="space-y-5">
-            {categories.map(cat => (
-              <CategoryCard
-                key={cat._id}
-                category={cat}
-                showHidden={showHidden}
-                onEditCat={setEditingCat}
-                onHideCat={setHidingCat}
-                onUnhideCat={setUnhidingCat}
-                onEditProg={(prog, refresh) => setEditingProg({ prog, refresh })}
-                onHideProg={(prog, refresh) => setHidingProg({ prog, refresh })}
-                onUnhideProg={(prog, refresh) => setUnhidingProg({ prog, refresh })}
-                onHardDeleteProg={(prog, refresh) => setHardDeletingProg({ prog, refresh })}
-              />
-            ))}
-          </div>
-        )}
+        <div className="flex items-center gap-2 sm:gap-3">
+          <button
+            onClick={() => setShowHidden(h => !h)}
+            className={`inline-flex items-center gap-2 px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl border text-xs sm:text-sm font-semibold transition cursor-pointer
+              ${showHidden
+                ? "border-olive-400 bg-olive-50 text-olive-700"
+                : "border-beige-300 bg-white text-olive-600 hover:bg-beige-50"}`}>
+            <Eye size={14} />
+            <span className="hidden xs:inline">{showHidden ? "Showing hidden" : "Show hidden"}</span>
+            <span className="xs:hidden">{showHidden ? "Hidden" : "Hidden"}</span>
+          </button>
+          <button onClick={loadCategories}
+            className="inline-flex items-center gap-2 px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl border border-beige-300 bg-white text-xs sm:text-sm font-semibold text-olive-600 hover:bg-beige-50 transition cursor-pointer">
+            <RefreshCw size={14} />
+            <span className="hidden xs:inline">Refresh</span>
+          </button>
+        </div>
       </div>
+
+      {/* ── Content ── */}
+      {loading ? (
+        <div className="flex items-center justify-center gap-3 py-24 text-olive-400">
+          <Loader2 size={22} className="animate-spin" /> Loading categories…
+        </div>
+      ) : categories.length === 0 ? (
+        <div className="text-center py-24 bg-white rounded-3xl border border-dashed border-beige-300">
+          <FolderOpen size={40} className="mx-auto text-olive-300 mb-3" />
+          <p className="font-bold text-olive-500">No categories found</p>
+          <p className="text-sm text-olive-400 mt-1">Add some categories from the "Add Services" page.</p>
+        </div>
+      ) : (
+        <div className="space-y-5">
+          {categories.map(cat => (
+            <CategoryCard
+              key={cat._id}
+              category={cat}
+              showHidden={showHidden}
+              onEditCat={setEditingCat}
+              onHideCat={setHidingCat}
+              onUnhideCat={setUnhidingCat}
+              onEditProg={(p, refresh) => setEditingProg({ prog: p, refresh })}
+              onHideProg={(p, refresh) => setHidingProg({ prog: p, refresh })}
+              onUnhideProg={(p, refresh) => setUnhidingProg({ prog: p, refresh })}
+              onHardDeleteProg={(p, refresh) => setHardDeletingProg({ prog: p, refresh })}
+            />
+          ))}
+        </div>
+      )}
     </div>
   );
 }

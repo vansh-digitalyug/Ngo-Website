@@ -1,66 +1,158 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import {
-  ClipboardList, IndianRupee, User, UserCheck, Trash2,
-  Eye, X, CheckCircle, Clock, Play, AlertCircle, RefreshCw
+  ClipboardList, Trash2,
+  Eye, X, CheckCircle, AlertCircle, RefreshCw,
+  ChevronLeft, ChevronRight, MoreVertical, GraduationCap,
+  ShieldCheck, Package, Zap,
 } from "lucide-react";
 import { API_BASE_URL } from "./AdminLayout.jsx";
 
 const token = () => localStorage.getItem("token");
-const fmt = (n) => new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 0 }).format(n);
-const fmtDate = (d) => d ? new Date(d).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" }) : "—";
+const fmtDate = (d) =>
+  d ? new Date(d).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" }) : "—";
 
-const STATUS_META = {
-  assigned:    { label: "Assigned",    bg: "#dbeafe", color: "#1e40af", Icon: Clock },
-  in_progress: { label: "In Progress", bg: "#fef9c3", color: "#854d0e", Icon: Play },
-  completed:   { label: "Completed",   bg: "#dcfce7", color: "#166534", Icon: CheckCircle },
+const isToday = (d) => {
+  if (!d) return false;
+  const t = new Date(d);
+  const now = new Date();
+  return t.getDate() === now.getDate() && t.getMonth() === now.getMonth() && t.getFullYear() === now.getFullYear();
 };
 
+const AVATAR_HEX = ["#6366f1", "#0ea5e9", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6", "#ec4899", "#14b8a6"];
+const avatarColor = (name) => AVATAR_HEX[(name?.charCodeAt(0) || 0) % AVATAR_HEX.length];
+
+// Pick task icon + icon bg based on title/service keywords
+const taskIcon = (title = "", service = "") => {
+  const text = (title + " " + service).toLowerCase();
+  if (text.includes("urgent") || text.includes("crisis") || text.includes("emergency"))
+    return { Icon: AlertCircle, bg: "bg-red-100", color: "text-red-500" };
+  if (text.includes("water") || text.includes("health") || text.includes("medical") || text.includes("guardian"))
+    return { Icon: ShieldCheck, bg: "bg-beige-200", color: "text-gray-500" };
+  if (text.includes("education") || text.includes("school") || text.includes("training") || text.includes("stationary"))
+    return { Icon: GraduationCap, bg: "bg-beige-200", color: "text-gray-500" };
+  if (text.includes("supply") || text.includes("logistics") || text.includes("distribution") || text.includes("resource"))
+    return { Icon: Package, bg: "bg-orange-100", color: "text-orange-500" };
+  if (text.includes("vocational") || text.includes("women") || text.includes("economic"))
+    return { Icon: Zap, bg: "bg-yellow-100", color: "text-yellow-500" };
+  return { Icon: ClipboardList, bg: "bg-beige-200", color: "text-gray-500" };
+};
+
+// Status badge
 function StatusBadge({ status }) {
-  const m = STATUS_META[status] || { label: status, bg: "#f1f5f9", color: "#475569", Icon: AlertCircle };
+  const styles = {
+    assigned:    "bg-lime text-olive-800",
+    in_progress: "bg-yellow-200 text-yellow-800",
+    completed:   "bg-gray-200 text-gray-600",
+  };
+  const labels = { assigned: "ASSIGNED", in_progress: "IN PROGRESS", completed: "COMPLETED" };
+  const dots = { assigned: "bg-olive-600", in_progress: "bg-yellow-500", completed: "bg-gray-400" };
+  const cls = styles[status] || "bg-gray-100 text-gray-500";
+  const label = labels[status] || status?.toUpperCase();
+  const dot = dots[status] || "bg-gray-400";
   return (
-    <span style={{ background: m.bg, color: m.color, padding: "3px 10px", borderRadius: "20px", fontSize: "12px", fontWeight: "600", display: "inline-flex", alignItems: "center", gap: "4px" }}>
-      <m.Icon size={11} /> {m.label}
+    <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold ${cls}`}>
+      <span className={`w-1.5 h-1.5 rounded-full ${dot}`} />
+      {label}
     </span>
   );
 }
 
+// Media lightbox
 function MediaLightbox({ task, onClose }) {
   return (
-    <div onClick={onClose} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.9)", zIndex: 1001, display: "flex", alignItems: "center", justifyContent: "center", padding: "24px" }}>
-      <button onClick={onClose} style={{ position: "absolute", top: "20px", right: "20px", background: "rgba(255,255,255,0.15)", border: "none", borderRadius: "50%", width: "40px", height: "40px", cursor: "pointer", color: "white", display: "flex", alignItems: "center", justifyContent: "center" }}>
-        <X size={22} />
+    <div
+      onClick={onClose}
+      className="fixed inset-0 bg-black/90 z-[1001] flex items-center justify-center p-6"
+    >
+      <button
+        onClick={onClose}
+        className="absolute top-5 right-5 bg-white/15 hover:bg-white/25 border-0 rounded-full w-10 h-10 flex items-center justify-center cursor-pointer text-white transition-colors"
+      >
+        <X size={20} />
       </button>
-      <div onClick={e => e.stopPropagation()} style={{ maxWidth: "90vw", maxHeight: "90vh", display: "flex", flexDirection: "column", alignItems: "center", gap: "12px" }}>
-        {task.mediaType === "video"
-          ? <video src={task.mediaUrl} controls autoPlay style={{ maxWidth: "100%", maxHeight: "80vh", borderRadius: "10px", background: "#000" }} />
-          : <img src={task.mediaUrl} alt={task.title} style={{ maxWidth: "100%", maxHeight: "80vh", objectFit: "contain", borderRadius: "10px" }} />
-        }
-        <p style={{ color: "#fff", margin: 0, fontWeight: "600" }}>{task.title}</p>
-        {task.volunteerNote && <p style={{ color: "#94a3b8", margin: 0, fontSize: "13px" }}>Note: {task.volunteerNote}</p>}
+      <div onClick={(e) => e.stopPropagation()} className="flex flex-col items-center gap-3 max-w-[90vw] max-h-[90vh]">
+        {task.mediaType === "video" ? (
+          <video src={task.mediaUrl} controls autoPlay className="max-w-full max-h-[80vh] rounded-xl bg-black" />
+        ) : (
+          <img src={task.mediaUrl} alt={task.title} className="max-w-full max-h-[80vh] object-contain rounded-xl" />
+        )}
+        <p className="text-white font-semibold m-0">{task.title}</p>
+        {task.volunteerNote && <p className="text-gray-400 text-sm m-0">Note: {task.volunteerNote}</p>}
       </div>
     </div>
   );
 }
 
+// Three-dot action menu
+function ActionsMenu({ task, onDelete, onPreview }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef(null);
+
+  useEffect(() => {
+    const handler = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false); };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
+
+  return (
+    <div className="relative" ref={ref}>
+      <button
+        onClick={() => setOpen((o) => !o)}
+        className="w-8 h-8 rounded-full flex items-center justify-center text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition-colors border-0 bg-transparent cursor-pointer"
+      >
+        <MoreVertical size={18} />
+      </button>
+      {open && (
+        <div className="absolute right-0 top-9 bg-white rounded-2xl shadow-xl border border-gray-100 py-1.5 z-50 min-w-[140px]">
+          {task.mediaUrl && (
+            <button
+              onClick={() => { onPreview(task); setOpen(false); }}
+              className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-gray-700 hover:bg-beige-100 transition-colors border-0 bg-transparent cursor-pointer text-left"
+            >
+              <Eye size={14} className="text-gray-400" /> View Media
+            </button>
+          )}
+          <button
+            onClick={() => { onDelete(task._id); setOpen(false); }}
+            className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-red-500 hover:bg-red-50 transition-colors border-0 bg-transparent cursor-pointer text-left"
+          >
+            <Trash2 size={14} /> Delete
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+const LIMIT = 8;
+
 export default function AdminTasks() {
   const [tasks, setTasks]           = useState([]);
   const [loading, setLoading]       = useState(true);
-  const [taskFilter, setTaskFilter] = useState("all");
-  const [previewTask, setPreviewTask] = useState(null);
-  const [msg, setMsg] = useState({ type: "", text: "" });
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [previewTask, setPreviewTask]   = useState(null);
+  const [page, setPage]                 = useState(1);
+  const [msg, setMsg]                   = useState({ type: "", text: "" });
 
-  const showMsg = (type, text) => { setMsg({ type, text }); setTimeout(() => setMsg({ type: "", text: "" }), 4000); };
+  const showMsg = (type, text) => {
+    setMsg({ type, text });
+    setTimeout(() => setMsg({ type: "", text: "" }), 4000);
+  };
 
   const loadTasks = useCallback(async () => {
     setLoading(true);
     try {
       const res = await fetch(`${API_BASE_URL}/api/tasks/admin/all`, {
-        headers: { Authorization: `Bearer ${token()}` }, credentials: "include"
+        headers: { Authorization: `Bearer ${token()}` },
+        credentials: "include",
       });
       const d = await res.json();
       if (d.success) setTasks(d.data || []);
-    } catch { showMsg("error", "Failed to load tasks"); }
-    finally { setLoading(false); }
+    } catch {
+      showMsg("error", "Failed to load tasks");
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
   useEffect(() => { loadTasks(); }, [loadTasks]);
@@ -71,115 +163,263 @@ export default function AdminTasks() {
       const res = await fetch(`${API_BASE_URL}/api/tasks/admin/${id}`, {
         method: "DELETE",
         headers: { Authorization: `Bearer ${token()}` },
-        credentials: "include"
+        credentials: "include",
       });
       const d = await res.json();
       if (!d.success) throw new Error(d.message);
-      setTasks(p => p.filter(t => t._id !== id));
+      setTasks((p) => p.filter((t) => t._id !== id));
       showMsg("success", "Task deleted");
-    } catch (e) { showMsg("error", e.message); }
+    } catch (e) {
+      showMsg("error", e.message);
+    }
   };
 
-  const filteredTasks = taskFilter === "all" ? tasks : tasks.filter(t => t.status === taskFilter);
-
-  const S = {
-    badge: (color, bg) => ({ background: bg, color, padding: "3px 10px", borderRadius: "20px", fontSize: "11px", fontWeight: "600" }),
-    btn: (c) => ({ padding: "7px 14px", background: c, color: "#fff", border: "none", borderRadius: "7px", cursor: "pointer", fontWeight: "600", fontSize: "13px", display: "inline-flex", alignItems: "center", gap: "5px" }),
-  };
-
-  // Count by status
   const counts = tasks.reduce((acc, t) => { acc[t.status] = (acc[t.status] || 0) + 1; return acc; }, {});
 
-  return (
-    <div>
-      <h1 className="admin-page-title">Tasks</h1>
+  const filtered = statusFilter === "all" ? tasks : tasks.filter((t) => t.status === statusFilter);
+  const totalPages = Math.ceil(filtered.length / LIMIT);
+  const paginated = filtered.slice((page - 1) * LIMIT, page * LIMIT);
 
-      {/* Summary badges */}
-      <div style={{ display: "flex", gap: "12px", flexWrap: "wrap", marginBottom: "24px" }}>
-        {[
-          { label: "Total",       value: tasks.length,              bg: "#f1f5f9", color: "#334155" },
-          { label: "Assigned",    value: counts.assigned    || 0,   bg: "#dbeafe", color: "#1e40af" },
-          { label: "In Progress", value: counts.in_progress || 0,   bg: "#fef9c3", color: "#854d0e" },
-          { label: "Completed",   value: counts.completed   || 0,   bg: "#dcfce7", color: "#166534" },
-        ].map(({ label, value, bg, color }) => (
-          <div key={label} style={{ padding: "10px 20px", borderRadius: "8px", background: bg, color, fontWeight: "600", fontSize: "14px" }}>
-            {label}: {value}
-          </div>
-        ))}
+  const handleFilterChange = (f) => { setStatusFilter(f); setPage(1); };
+
+  const statCards = [
+    { label: "Total Tasks",  value: tasks.length,           icon: CheckCircle,  highlight: false },
+    { label: "Assigned",     value: counts.assigned    || 0, icon: ClipboardList, highlight: true  },
+    { label: "In Progress",  value: counts.in_progress || 0, icon: RefreshCw,    highlight: false },
+    { label: "Completed",    value: counts.completed   || 0, icon: CheckCircle,  highlight: false },
+  ];
+
+  return (
+    <div className="min-h-screen bg-beige-300 p-3 sm:p-5 lg:p-8">
+
+      {/* ── Page Header ── */}
+      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-6 sm:mb-8">
+        <div>
+          <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-gray-900 leading-tight mb-2">
+            Tasks
+          </h1>
+          <p className="text-gray-500 text-sm sm:text-base max-w-lg leading-relaxed">
+            Manage and monitor grassroots operational duties. Real-time tracking of impact initiatives assigned to our global volunteers.
+          </p>
+        </div>
       </div>
 
+      {/* ── Alert ── */}
       {msg.text && (
-        <div style={{ padding: "12px 16px", borderRadius: "8px", marginBottom: "16px", background: msg.type === "success" ? "#dcfce7" : "#fee2e2", color: msg.type === "success" ? "#166534" : "#991b1b", fontWeight: "600", fontSize: "14px" }}>
+        <div className={`flex items-center gap-2 px-4 py-3 rounded-2xl mb-5 text-sm font-semibold ${
+          msg.type === "success"
+            ? "bg-olive-100 text-olive-800 border border-olive-200"
+            : "bg-red-50 text-red-700 border border-red-200"
+        }`}>
           {msg.text}
         </div>
       )}
 
-      {/* Filter pills */}
-      <div style={{ display: "flex", gap: "8px", marginBottom: "20px", flexWrap: "wrap" }}>
-        {["all", "assigned", "in_progress", "completed"].map(f => (
-          <button key={f} onClick={() => setTaskFilter(f)}
-            style={{ padding: "6px 14px", borderRadius: "20px", border: "1px solid", cursor: "pointer", fontSize: "13px", fontWeight: "600",
-              background: taskFilter === f ? "#1e40af" : "#fff",
-              color:      taskFilter === f ? "#fff"    : "#374151",
-              borderColor: taskFilter === f ? "#1e40af" : "#e2e8f0" }}>
-            {f === "all" ? `All (${tasks.length})` : `${STATUS_META[f]?.label} (${counts[f] || 0})`}
-          </button>
-        ))}
-      </div>
-
-      {/* Task list */}
-      <div className="admin-table-wrapper">
-        {loading ? (
-          <div className="admin-loading">
-            <RefreshCw size={22} style={{ animation: "spin 1s linear infinite", marginRight: "8px" }} />
-            Loading tasks…
-          </div>
-        ) : filteredTasks.length === 0 ? (
-          <div className="admin-empty-state">
-            <ClipboardList size={32} style={{ marginBottom: "12px", opacity: 0.4 }} />
-            <p style={{ margin: 0 }}>No tasks found.</p>
-          </div>
-        ) : filteredTasks.map(t => (
-          <div key={t._id} style={{
-            background: "#fff", border: "1px solid #e2e8f0",
-            borderLeft: `4px solid ${t.status === "completed" ? "#22c55e" : t.status === "in_progress" ? "#eab308" : "#3b82f6"}`,
-            borderRadius: "12px", padding: "16px", marginBottom: "12px"
-          }}>
-            <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", flexWrap: "wrap", gap: "10px" }}>
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap", marginBottom: "6px" }}>
-                  <span style={{ fontWeight: "700", color: "#0f172a", fontSize: "15px" }}>{t.title}</span>
-                  <StatusBadge status={t.status} />
-                  {t.addedToGallery && <span style={S.badge("#166534", "#dcfce7")}>Added to Gallery</span>}
-                </div>
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(180px,1fr))", gap: "4px 16px", fontSize: "13px", color: "#64748b" }}>
-                  <span><IndianRupee size={12} style={{ verticalAlign: "middle" }} /> {fmt(t.donationAmount)} · {t.serviceTitle || "General"}</span>
-                  <span><User size={12} style={{ verticalAlign: "middle" }} /> Donor: {t.donorName || t.donorEmail || "Anonymous"}</span>
-                  <span><UserCheck size={12} style={{ verticalAlign: "middle" }} /> Volunteer: {t.volunteerName || "—"}</span>
-                  <span>Created: {fmtDate(t.createdAt)}</span>
-                  {t.completedAt && <span>Completed: {fmtDate(t.completedAt)}</span>}
-                </div>
-                {t.description && <p style={{ margin: "8px 0 0", color: "#374151", fontSize: "13px" }}>{t.description}</p>}
-                {t.adminNote && <p style={{ margin: "6px 0 0", color: "#0369a1", fontSize: "12px", background: "#f0f9ff", padding: "4px 8px", borderRadius: "4px" }}>📋 {t.adminNote}</p>}
-                {t.volunteerNote && <p style={{ margin: "6px 0 0", color: "#166534", fontSize: "12px", background: "#f0fdf4", padding: "4px 8px", borderRadius: "4px" }}>✅ Volunteer note: {t.volunteerNote}</p>}
+      {/* ── Stat Cards ── */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6 sm:mb-8">
+        {statCards.map(({ label, value, icon: Icon, highlight }) => (
+          <div
+            key={label}
+            className={`rounded-2xl sm:rounded-3xl p-4 sm:p-5 flex flex-col gap-3 sm:gap-4 ${
+              highlight ? "bg-lime" : "bg-beige-100"
+            }`}
+          >
+            <Icon size={20} className={highlight ? "text-olive-700" : "text-gray-400"} />
+            <div>
+              <div className={`text-3xl sm:text-4xl font-extrabold leading-none mb-1 ${
+                highlight ? "text-olive-800" : "text-gray-900"
+              }`}>
+                {value}
               </div>
-              <div style={{ display: "flex", flexDirection: "column", gap: "6px", alignItems: "flex-end" }}>
-                {t.mediaUrl && (
-                  <button style={S.btn("#0369a1")} onClick={() => setPreviewTask(t)}>
-                    <Eye size={14} /> View Media
-                  </button>
-                )}
-                <button style={S.btn("#dc2626")} onClick={() => handleDelete(t._id)}>
-                  <Trash2 size={14} /> Delete
-                </button>
+              <div className={`text-xs font-bold uppercase tracking-widest ${
+                highlight ? "text-olive-700" : "text-gray-400"
+              }`}>
+                {label}
               </div>
             </div>
           </div>
         ))}
       </div>
 
+      {/* ── Active Assignments Card ── */}
+      <div className="bg-beige-100 rounded-2xl sm:rounded-3xl overflow-hidden shadow-sm">
+
+        {/* Card header */}
+        <div className="flex items-center justify-between px-5 sm:px-7 py-4 sm:py-5 border-b border-beige-300">
+          <h2 className="text-lg sm:text-xl font-extrabold text-gray-800">Active Assignments</h2>
+        </div>
+
+        {/* Filter pills */}
+        <div className="flex gap-2 px-5 sm:px-7 py-3 sm:py-4 overflow-x-auto no-scrollbar border-b border-beige-300">
+          {[
+            ["all", `All (${tasks.length})`],
+            ["assigned",    `Assigned (${counts.assigned    || 0})`],
+            ["in_progress", `In Progress (${counts.in_progress || 0})`],
+            ["completed",   `Completed (${counts.completed   || 0})`],
+          ].map(([val, label]) => (
+            <button
+              key={val}
+              onClick={() => handleFilterChange(val)}
+              className={`px-3 sm:px-4 py-1.5 sm:py-2 rounded-xl sm:rounded-2xl border text-xs sm:text-sm font-semibold cursor-pointer transition-all whitespace-nowrap shrink-0 ${
+                statusFilter === val
+                  ? "bg-olive-700 text-white border-olive-700"
+                  : "bg-white text-gray-600 border-gray-200 hover:border-gray-400"
+              }`}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+
+        {/* ── Table ── */}
+        {loading ? (
+          <div className="flex items-center justify-center py-20 text-gray-400 gap-2">
+            <RefreshCw size={20} className="animate-spin" />
+            <span className="text-sm">Loading tasks…</span>
+          </div>
+        ) : paginated.length === 0 ? (
+          <div className="text-center py-20 text-gray-400">
+            <ClipboardList size={36} className="mx-auto mb-3 opacity-30" />
+            <p className="text-sm">No tasks found.</p>
+          </div>
+        ) : (
+          <>
+            {/* Column headers — desktop only */}
+            <div className="hidden md:grid grid-cols-[2fr_1fr_1fr_1fr_auto] gap-4 px-5 sm:px-7 py-3 border-b border-beige-300">
+              {["Task Details", "Assignee", "Status", "Due Date", "Actions"].map((h) => (
+                <div key={h} className="text-xs font-bold text-gray-400 uppercase tracking-widest whitespace-nowrap">
+                  {h}
+                </div>
+              ))}
+            </div>
+
+            {/* Rows */}
+            <div className="divide-y divide-beige-300">
+              {paginated.map((t) => {
+                const { Icon, bg, color } = taskIcon(t.title, t.serviceTitle);
+                const volunteerInitials = t.volunteerName
+                  ? t.volunteerName.split(" ").map((w) => w[0]).slice(0, 2).join("").toUpperCase()
+                  : "?";
+                const due = t.dueDate || t.createdAt;
+                const todayDue = isToday(due);
+
+                return (
+                  <div key={t._id} className="px-5 sm:px-7 py-4 sm:py-5 hover:bg-beige-50 transition-colors">
+
+                    {/* ── Desktop row ── */}
+                    <div className="hidden md:grid grid-cols-[2fr_1fr_1fr_1fr_auto] gap-4 items-center">
+                      {/* Task details */}
+                      <div className="flex items-start gap-3 min-w-0">
+                        <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${bg}`}>
+                          <Icon size={18} className={color} />
+                        </div>
+                        <div className="min-w-0">
+                          <div className="font-bold text-gray-900 text-sm leading-tight mb-0.5 truncate">
+                            {t.title}
+                          </div>
+                          <div className="text-xs text-gray-500 truncate">
+                            {t.serviceTitle || "General Donation"}
+                          </div>
+                          {t.description && (
+                            <div className="text-xs text-gray-400 mt-0.5 truncate">{t.description}</div>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Assignee */}
+                      <div className="flex items-center gap-2 min-w-0">
+                        <div
+                          className="w-8 h-8 rounded-full flex items-center justify-center text-white font-bold text-xs shrink-0"
+                          style={{ background: avatarColor(t.volunteerName || "?") }}
+                        >
+                          {volunteerInitials}
+                        </div>
+                        <span className="text-sm text-gray-700 font-semibold truncate">
+                          {t.volunteerName || "—"}
+                        </span>
+                      </div>
+
+                      {/* Status */}
+                      <div><StatusBadge status={t.status} /></div>
+
+                      {/* Due date */}
+                      <div className={`text-sm font-semibold ${todayDue ? "text-red-500" : "text-gray-600"}`}>
+                        {todayDue ? "Today" : fmtDate(due)}
+                      </div>
+
+                      {/* Actions */}
+                      <div>
+                        <ActionsMenu task={t} onDelete={handleDelete} onPreview={setPreviewTask} />
+                      </div>
+                    </div>
+
+                    {/* ── Mobile row ── */}
+                    <div className="md:hidden flex items-start gap-3">
+                      <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${bg}`}>
+                        <Icon size={17} className={color} />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-start justify-between gap-2 mb-1">
+                          <div className="font-bold text-gray-900 text-sm leading-tight">{t.title}</div>
+                          <ActionsMenu task={t} onDelete={handleDelete} onPreview={setPreviewTask} />
+                        </div>
+                        <div className="text-xs text-gray-500 mb-2 truncate">
+                          {t.serviceTitle || "General Donation"}
+                        </div>
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <StatusBadge status={t.status} />
+                          {t.volunteerName && (
+                            <span className="flex items-center gap-1 text-xs text-gray-500">
+                              <div
+                                className="w-5 h-5 rounded-full flex items-center justify-center text-white font-bold text-[9px] shrink-0"
+                                style={{ background: avatarColor(t.volunteerName) }}
+                              >
+                                {volunteerInitials}
+                              </div>
+                              {t.volunteerName}
+                            </span>
+                          )}
+                          <span className={`text-xs font-semibold ${todayDue ? "text-red-500" : "text-gray-400"}`}>
+                            {todayDue ? "Due Today" : fmtDate(due)}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* ── Pagination ── */}
+            <div className="flex items-center justify-between px-5 sm:px-7 py-4 sm:py-5 border-t border-beige-300">
+              <p className="text-xs sm:text-sm text-gray-500 font-medium">
+                Showing {Math.min((page - 1) * LIMIT + 1, filtered.length)}–{Math.min(page * LIMIT, filtered.length)} of {filtered.length} active task{filtered.length !== 1 ? "s" : ""}
+              </p>
+              <div className="flex items-center gap-2">
+                <button
+                  disabled={page <= 1}
+                  onClick={() => setPage((p) => p - 1)}
+                  className="w-9 h-9 rounded-full border border-beige-400 flex items-center justify-center text-gray-600 disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer hover:border-gray-400 transition-colors bg-white"
+                >
+                  <ChevronLeft size={16} />
+                </button>
+                <button
+                  disabled={page >= totalPages}
+                  onClick={() => setPage((p) => p + 1)}
+                  className="w-9 h-9 rounded-full flex items-center justify-center text-olive-900 disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer transition-colors bg-olive-700 hover:bg-olive-800 border-0"
+                >
+                  <ChevronRight size={16} className="text-white" />
+                </button>
+              </div>
+            </div>
+          </>
+        )}
+      </div>
+
       {previewTask && <MediaLightbox task={previewTask} onClose={() => setPreviewTask(null)} />}
-      <style>{`@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`}</style>
+
+      <style>{`.no-scrollbar::-webkit-scrollbar{display:none}.no-scrollbar{-ms-overflow-style:none;scrollbar-width:none}`}</style>
     </div>
   );
 }

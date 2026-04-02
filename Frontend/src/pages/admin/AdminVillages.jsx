@@ -1,49 +1,65 @@
 import { useState, useEffect } from "react";
 import {
   MapPin, Plus, Pencil, Trash2, X, Loader2, RefreshCw,
-  CheckCircle, Clock, PauseCircle, Users, Flag, Droplets,
-  Zap, Trash, Route, ChevronDown, ChevronUp, Star
+  CheckCircle, PauseCircle, Users, Flag, Droplets,
+  Zap, Trash, Route, ChevronDown, ChevronUp, Star, ArrowRight,
 } from "lucide-react";
 import { API_BASE_URL } from "./AdminLayout.jsx";
 
-const token = () => localStorage.getItem("token");
-const fmt = (n) => new Intl.NumberFormat("en-IN").format(n);
-const fmtDate = (d) => d ? new Date(d).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" }) : "—";
+const token  = () => localStorage.getItem("token");
+const fmt    = (n) => new Intl.NumberFormat("en-IN").format(n);
+const fmtDate = (d) =>
+  d ? new Date(d).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" }) : "—";
 
 const STATUS_META = {
-  active:    { label: "Active",    bg: "#dcfce7", color: "#166534", Icon: CheckCircle },
-  paused:    { label: "Paused",    bg: "#fef9c3", color: "#854d0e", Icon: PauseCircle },
-  completed: { label: "Completed", bg: "#dbeafe", color: "#1e40af", Icon: Flag },
+  active:    { label: "Active",    Icon: CheckCircle },
+  paused:    { label: "Paused",    Icon: PauseCircle },
+  completed: { label: "Completed", Icon: Flag },
 };
 
-const NEED_ICONS = { water: Droplets, electricity: Zap, sanitation: Trash, roads: Route };
-const NEED_LABELS = { water: "Water", electricity: "Electricity", sanitation: "Sanitation", roads: "Roads" };
-const NEED_COLORS = { water: "#0ea5e9", electricity: "#eab308", sanitation: "#10b981", roads: "#8b5cf6" };
+const STATUS_BADGE = {
+  active:    "bg-emerald-100 text-emerald-800",
+  paused:    "bg-yellow-100 text-yellow-800",
+  completed: "bg-sky-100 text-sky-800",
+};
 
-// ── Inline helpers ────────────────────────────────────────────────────────────
+const NEED_ICONS  = { water: Droplets, electricity: Zap, sanitation: Trash, roads: Route };
+const NEED_LABELS = { water: "Water Access", electricity: "Electricity", sanitation: "Sanitation", roads: "Roads" };
+const NEED_BAR    = { water: "bg-sky-500", electricity: "bg-yellow-500", sanitation: "bg-emerald-500", roads: "bg-violet-500" };
+const NEED_TEXT   = { water: "text-sky-600", electricity: "text-yellow-600", sanitation: "text-emerald-600", roads: "text-violet-600" };
+
+const inputCls = "w-full rounded-lg border border-beige-200 bg-beige-50 px-3 py-2.5 text-sm text-olive-900 placeholder-olive-300 focus:outline-none focus:ring-2 focus:ring-olive-400 focus:border-transparent transition";
+const labelCls = "block text-xs font-semibold text-olive-500 uppercase tracking-wide mb-1";
+
+// ── Status Badge ──────────────────────────────────────────────────────────────
 function StatusBadge({ status }) {
-  const m = STATUS_META[status] || STATUS_META.active;
+  const m   = STATUS_META[status] || STATUS_META.active;
+  const cls = STATUS_BADGE[status] || STATUS_BADGE.active;
   return (
-    <span style={{ background: m.bg, color: m.color, padding: "3px 10px", borderRadius: "20px", fontSize: "12px", fontWeight: "600", display: "inline-flex", alignItems: "center", gap: "4px" }}>
+    <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold ${cls}`}>
       <m.Icon size={11} /> {m.label}
     </span>
   );
 }
 
-function NeedBar({ need, value, status }) {
+// ── Need Progress Bar ─────────────────────────────────────────────────────────
+function NeedBar({ need, value }) {
   const Icon = NEED_ICONS[need];
-  const color = NEED_COLORS[need];
-  const pct = Math.min(100, Math.max(0, value || 0));
+  const pct  = Math.min(100, Math.max(0, value || 0));
   return (
-    <div style={{ marginBottom: "8px" }}>
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "3px" }}>
-        <span style={{ display: "flex", alignItems: "center", gap: "4px", fontSize: "12px", color: "#64748b" }}>
-          <Icon size={12} color={color} /> {NEED_LABELS[need]}
+    <div className="mb-2.5">
+      <div className="flex items-center justify-between mb-1">
+        <span className="flex items-center gap-1 text-xs text-olive-500">
+          <Icon size={11} className={NEED_TEXT[need]} />
+          {NEED_LABELS[need]}
         </span>
-        <span style={{ fontSize: "11px", fontWeight: "600", color }}>{pct}%</span>
+        <span className={`text-xs font-bold ${NEED_TEXT[need]}`}>{pct}%</span>
       </div>
-      <div style={{ height: "6px", background: "#f1f5f9", borderRadius: "4px" }}>
-        <div style={{ height: "100%", width: `${pct}%`, background: color, borderRadius: "4px", transition: "width 0.5s ease" }} />
+      <div className="h-1.5 bg-beige-100 rounded-full">
+        <div
+          className={`h-full rounded-full transition-all duration-500 ${NEED_BAR[need]}`}
+          style={{ width: `${pct}%` }}
+        />
       </div>
     </div>
   );
@@ -53,36 +69,36 @@ function NeedBar({ need, value, status }) {
 function VillageFormModal({ village, ngos, onClose, onSaved }) {
   const isEdit = Boolean(village);
   const [form, setForm] = useState(isEdit ? {
-    ngoId: village.ngoId?._id || village.ngoId || "",
-    villageName: village.villageName || "",
-    district: village.district || "",
-    state: village.state || "",
-    pincode: village.pincode || "",
+    ngoId:         village.ngoId?._id || village.ngoId || "",
+    villageName:   village.villageName || "",
+    district:      village.district || "",
+    state:         village.state || "",
+    pincode:       village.pincode || "",
     totalFamilies: village.totalFamilies || 0,
-    description: village.description || "",
-    status: village.status || "active",
+    description:   village.description || "",
+    status:        village.status || "active",
   } : {
     ngoId: "", villageName: "", district: "", state: "",
     pincode: "", totalFamilies: 0, description: "", status: "active",
   });
   const [saving, setSaving] = useState(false);
-  const [err, setErr] = useState("");
+  const [err,    setErr]    = useState("");
 
   const set = (k, v) => setForm(p => ({ ...p, [k]: v }));
 
   const submit = async (e) => {
     e.preventDefault();
-    if (!form.villageName.trim()) { setErr("Village name required"); return; }
+    if (!form.villageName.trim())                    { setErr("Village name required"); return; }
     if (!form.district.trim() || !form.state.trim()) { setErr("District and State required"); return; }
-    if (!isEdit && !form.ngoId) { setErr("Select an NGO"); return; }
+    if (!isEdit && !form.ngoId)                      { setErr("Select an NGO"); return; }
 
     setSaving(true); setErr("");
     try {
-      const url = isEdit
+      const url    = isEdit
         ? `${API_BASE_URL}/api/villages/${village._id}`
         : `${API_BASE_URL}/api/villages/admin/create`;
       const method = isEdit ? "PUT" : "POST";
-      const res = await fetch(url, {
+      const res    = await fetch(url, {
         method,
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token()}` },
         credentials: "include",
@@ -98,26 +114,39 @@ function VillageFormModal({ village, ngos, onClose, onSaved }) {
     }
   };
 
-  const inp = { width: "100%", padding: "9px 12px", border: "1.5px solid #e2e8f0", borderRadius: "8px", fontSize: "14px", outline: "none", boxSizing: "border-box", fontFamily: "inherit" };
-  const lbl = { display: "block", marginBottom: "5px", fontSize: "12px", fontWeight: "600", color: "#374151" };
-
   return (
-    <div onClick={onClose} style={{ position: "fixed", inset: 0, background: "rgba(15,23,42,0.6)", backdropFilter: "blur(4px)", zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center", padding: "20px" }}>
-      <div onClick={e => e.stopPropagation()} style={{ background: "#fff", borderRadius: "16px", width: "100%", maxWidth: "560px", maxHeight: "92vh", overflowY: "auto", boxShadow: "0 25px 60px rgba(0,0,0,0.2)" }}>
-        <div style={{ padding: "20px 24px 16px", borderBottom: "1px solid #f1f5f9", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-          <h3 style={{ margin: 0, fontWeight: "800", color: "#0f172a", fontSize: "16px" }}>
+    <div
+      onClick={onClose}
+      className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[1000] flex items-center justify-center p-5"
+    >
+      <div
+        onClick={e => e.stopPropagation()}
+        className="bg-white rounded-2xl w-full max-w-lg max-h-[92vh] overflow-y-auto shadow-2xl"
+      >
+        {/* Header */}
+        <div className="flex items-center justify-between px-6 py-4 border-b border-beige-100">
+          <h3 className="text-base font-extrabold text-olive-900 m-0">
             {isEdit ? "Edit Village" : "Adopt New Village"}
           </h3>
-          <button onClick={onClose} style={{ background: "#f1f5f9", border: "none", borderRadius: "8px", width: "32px", height: "32px", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
-            <X size={15} color="#64748b" />
+          <button
+            onClick={onClose}
+            className="w-8 h-8 flex items-center justify-center rounded-lg bg-beige-100 hover:bg-beige-200 text-olive-500 transition-colors border-0 cursor-pointer"
+          >
+            <X size={15} />
           </button>
         </div>
 
-        <form onSubmit={submit} style={{ padding: "24px", display: "grid", gap: "14px" }}>
+        {/* Form */}
+        <form onSubmit={submit} className="p-6 grid gap-4">
           {!isEdit && (
             <div>
-              <label style={lbl}>NGO *</label>
-              <select value={form.ngoId} onChange={e => set("ngoId", e.target.value)} style={inp} required>
+              <label className={labelCls}>NGO *</label>
+              <select
+                value={form.ngoId}
+                onChange={e => set("ngoId", e.target.value)}
+                className={inputCls}
+                required
+              >
                 <option value="">— Select NGO —</option>
                 {ngos.map(n => <option key={n._id} value={n._id}>{n.ngoName}</option>)}
               </select>
@@ -125,35 +154,69 @@ function VillageFormModal({ village, ngos, onClose, onSaved }) {
           )}
 
           <div>
-            <label style={lbl}>Village / Area Name *</label>
-            <input value={form.villageName} onChange={e => set("villageName", e.target.value)} style={inp} placeholder="e.g. Rampur Village" required />
+            <label className={labelCls}>Village / Area Name *</label>
+            <input
+              value={form.villageName}
+              onChange={e => set("villageName", e.target.value)}
+              className={inputCls}
+              placeholder="e.g. Rampur Village"
+              required
+            />
           </div>
 
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
+          <div className="grid grid-cols-2 gap-3">
             <div>
-              <label style={lbl}>District *</label>
-              <input value={form.district} onChange={e => set("district", e.target.value)} style={inp} placeholder="e.g. Varanasi" required />
+              <label className={labelCls}>District *</label>
+              <input
+                value={form.district}
+                onChange={e => set("district", e.target.value)}
+                className={inputCls}
+                placeholder="e.g. Varanasi"
+                required
+              />
             </div>
             <div>
-              <label style={lbl}>State *</label>
-              <input value={form.state} onChange={e => set("state", e.target.value)} style={inp} placeholder="e.g. Uttar Pradesh" required />
+              <label className={labelCls}>State *</label>
+              <input
+                value={form.state}
+                onChange={e => set("state", e.target.value)}
+                className={inputCls}
+                placeholder="e.g. Uttar Pradesh"
+                required
+              />
             </div>
           </div>
 
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
+          <div className="grid grid-cols-2 gap-3">
             <div>
-              <label style={lbl}>Pincode</label>
-              <input value={form.pincode} onChange={e => set("pincode", e.target.value)} style={inp} placeholder="6-digit pincode" maxLength={6} />
+              <label className={labelCls}>Pincode</label>
+              <input
+                value={form.pincode}
+                onChange={e => set("pincode", e.target.value)}
+                className={inputCls}
+                placeholder="6-digit pincode"
+                maxLength={6}
+              />
             </div>
             <div>
-              <label style={lbl}>Total Families</label>
-              <input type="number" value={form.totalFamilies} onChange={e => set("totalFamilies", e.target.value)} style={inp} min={0} />
+              <label className={labelCls}>Total Families</label>
+              <input
+                type="number"
+                value={form.totalFamilies}
+                onChange={e => set("totalFamilies", e.target.value)}
+                className={inputCls}
+                min={0}
+              />
             </div>
           </div>
 
           <div>
-            <label style={lbl}>Status</label>
-            <select value={form.status} onChange={e => set("status", e.target.value)} style={inp}>
+            <label className={labelCls}>Status</label>
+            <select
+              value={form.status}
+              onChange={e => set("status", e.target.value)}
+              className={inputCls}
+            >
               <option value="active">Active</option>
               <option value="paused">Paused</option>
               <option value="completed">Completed</option>
@@ -161,20 +224,38 @@ function VillageFormModal({ village, ngos, onClose, onSaved }) {
           </div>
 
           <div>
-            <label style={lbl}>Description</label>
-            <textarea value={form.description} onChange={e => set("description", e.target.value)} rows={3} style={{ ...inp, resize: "vertical" }} placeholder="Brief overview of adoption goals and current situation..." />
+            <label className={labelCls}>Description</label>
+            <textarea
+              value={form.description}
+              onChange={e => set("description", e.target.value)}
+              rows={3}
+              className={`${inputCls} resize-y`}
+              placeholder="Brief overview of adoption goals and current situation..."
+            />
           </div>
 
           {err && (
-            <div style={{ padding: "10px 14px", background: "#fef2f2", border: "1px solid #fecaca", borderRadius: "8px", color: "#dc2626", fontSize: "13px", fontWeight: "600" }}>
+            <div className="px-4 py-2.5 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm font-semibold">
               {err}
             </div>
           )}
 
-          <div style={{ display: "flex", gap: "10px", justifyContent: "flex-end", paddingTop: "4px" }}>
-            <button type="button" onClick={onClose} style={{ padding: "9px 20px", borderRadius: "8px", border: "1px solid #e2e8f0", background: "#fff", color: "#374151", fontWeight: "600", fontSize: "14px", cursor: "pointer" }}>Cancel</button>
-            <button type="submit" disabled={saving} style={{ padding: "9px 24px", borderRadius: "8px", border: "none", background: saving ? "#94a3b8" : "#2563eb", color: "#fff", fontWeight: "700", fontSize: "14px", cursor: saving ? "not-allowed" : "pointer", display: "flex", alignItems: "center", gap: "7px" }}>
-              {saving ? <><Loader2 size={14} style={{ animation: "spin 1s linear infinite" }} /> Saving…</> : isEdit ? "Save Changes" : "Adopt Village"}
+          <div className="flex gap-2.5 justify-end pt-1">
+            <button
+              type="button"
+              onClick={onClose}
+              className="px-5 py-2.5 rounded-lg border border-beige-200 bg-white text-olive-700 font-semibold text-sm hover:bg-beige-50 transition-colors cursor-pointer"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={saving}
+              className="px-6 py-2.5 rounded-lg bg-olive-900 hover:bg-olive-800 disabled:bg-olive-400 text-lime font-bold text-sm transition-colors cursor-pointer flex items-center gap-2 border-0"
+            >
+              {saving
+                ? <><Loader2 size={14} className="animate-spin" /> Saving…</>
+                : isEdit ? "Save Changes" : "Adopt Village"}
             </button>
           </div>
         </form>
@@ -185,11 +266,11 @@ function VillageFormModal({ village, ngos, onClose, onSaved }) {
 
 // ── Milestone Modal ───────────────────────────────────────────────────────────
 function MilestoneModal({ village, onClose, onSaved }) {
-  const [title, setTitle] = useState("");
+  const [title,       setTitle]       = useState("");
   const [description, setDescription] = useState("");
-  const [achievedAt, setAchievedAt] = useState(new Date().toISOString().slice(0, 10));
-  const [saving, setSaving] = useState(false);
-  const [err, setErr] = useState("");
+  const [achievedAt,  setAchievedAt]  = useState(new Date().toISOString().slice(0, 10));
+  const [saving,      setSaving]      = useState(false);
+  const [err,         setErr]         = useState("");
 
   const submit = async (e) => {
     e.preventDefault();
@@ -212,35 +293,81 @@ function MilestoneModal({ village, onClose, onSaved }) {
     }
   };
 
-  const inp = { width: "100%", padding: "9px 12px", border: "1.5px solid #e2e8f0", borderRadius: "8px", fontSize: "14px", outline: "none", boxSizing: "border-box", fontFamily: "inherit" };
-
   return (
-    <div onClick={onClose} style={{ position: "fixed", inset: 0, background: "rgba(15,23,42,0.6)", backdropFilter: "blur(4px)", zIndex: 1001, display: "flex", alignItems: "center", justifyContent: "center", padding: "20px" }}>
-      <div onClick={e => e.stopPropagation()} style={{ background: "#fff", borderRadius: "14px", width: "100%", maxWidth: "440px", boxShadow: "0 20px 50px rgba(0,0,0,0.2)", padding: "24px" }}>
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "18px" }}>
-          <h4 style={{ margin: 0, fontWeight: "800", color: "#0f172a" }}>Add Milestone — {village.villageName}</h4>
-          <button onClick={onClose} style={{ background: "#f1f5f9", border: "none", borderRadius: "8px", width: "30px", height: "30px", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
+    <div
+      onClick={onClose}
+      className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[1001] flex items-center justify-center p-5"
+    >
+      <div
+        onClick={e => e.stopPropagation()}
+        className="bg-white rounded-2xl w-full max-w-sm shadow-2xl p-6"
+      >
+        <div className="flex items-start justify-between mb-5">
+          <h4 className="font-extrabold text-olive-900 m-0 text-sm leading-snug">
+            Add Milestone
+            <br />
+            <span className="font-semibold text-olive-500">{village.villageName}</span>
+          </h4>
+          <button
+            onClick={onClose}
+            className="w-8 h-8 flex items-center justify-center rounded-lg bg-beige-100 hover:bg-beige-200 text-olive-500 transition-colors border-0 cursor-pointer flex-shrink-0"
+          >
             <X size={14} />
           </button>
         </div>
-        <form onSubmit={submit} style={{ display: "grid", gap: "12px" }}>
+
+        <form onSubmit={submit} className="grid gap-3">
           <div>
-            <label style={{ display: "block", marginBottom: "4px", fontSize: "12px", fontWeight: "600", color: "#374151" }}>Milestone Title *</label>
-            <input value={title} onChange={e => setTitle(e.target.value)} style={inp} placeholder="e.g. Clean water supply installed" required />
+            <label className={labelCls}>Milestone Title *</label>
+            <input
+              value={title}
+              onChange={e => setTitle(e.target.value)}
+              className={inputCls}
+              placeholder="e.g. Clean water supply installed"
+              required
+            />
           </div>
           <div>
-            <label style={{ display: "block", marginBottom: "4px", fontSize: "12px", fontWeight: "600", color: "#374151" }}>Achieved On</label>
-            <input type="date" value={achievedAt} onChange={e => setAchievedAt(e.target.value)} style={inp} />
+            <label className={labelCls}>Achieved On</label>
+            <input
+              type="date"
+              value={achievedAt}
+              onChange={e => setAchievedAt(e.target.value)}
+              className={inputCls}
+            />
           </div>
           <div>
-            <label style={{ display: "block", marginBottom: "4px", fontSize: "12px", fontWeight: "600", color: "#374151" }}>Details (optional)</label>
-            <textarea value={description} onChange={e => setDescription(e.target.value)} rows={2} style={{ ...inp, resize: "vertical" }} placeholder="What was achieved, how many people benefited..." />
+            <label className={labelCls}>Details (optional)</label>
+            <textarea
+              value={description}
+              onChange={e => setDescription(e.target.value)}
+              rows={2}
+              className={`${inputCls} resize-y`}
+              placeholder="What was achieved, how many people benefited..."
+            />
           </div>
-          {err && <div style={{ padding: "8px 12px", background: "#fef2f2", borderRadius: "7px", color: "#dc2626", fontSize: "13px" }}>{err}</div>}
-          <div style={{ display: "flex", gap: "8px", justifyContent: "flex-end" }}>
-            <button type="button" onClick={onClose} style={{ padding: "8px 18px", borderRadius: "8px", border: "1px solid #e2e8f0", background: "#fff", cursor: "pointer", fontWeight: "600", fontSize: "13px" }}>Cancel</button>
-            <button type="submit" disabled={saving} style={{ padding: "8px 20px", borderRadius: "8px", border: "none", background: "#2563eb", color: "#fff", cursor: "pointer", fontWeight: "700", fontSize: "13px", display: "flex", alignItems: "center", gap: "6px" }}>
-              {saving ? <Loader2 size={13} style={{ animation: "spin 1s linear infinite" }} /> : <Star size={13} />} Add
+
+          {err && (
+            <div className="px-3 py-2 bg-red-50 rounded-lg text-red-700 text-xs font-semibold border border-red-200">
+              {err}
+            </div>
+          )}
+
+          <div className="flex gap-2 justify-end">
+            <button
+              type="button"
+              onClick={onClose}
+              className="px-4 py-2 rounded-lg border border-beige-200 bg-white text-olive-700 font-semibold text-sm cursor-pointer hover:bg-beige-50 transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={saving}
+              className="px-5 py-2 rounded-lg bg-olive-900 hover:bg-olive-800 disabled:bg-olive-400 text-lime font-bold text-sm cursor-pointer flex items-center gap-1.5 border-0 transition-colors"
+            >
+              {saving ? <Loader2 size={13} className="animate-spin" /> : <Star size={13} />}
+              Add
             </button>
           </div>
         </form>
@@ -252,101 +379,131 @@ function MilestoneModal({ village, onClose, onSaved }) {
 // ── Village Card ──────────────────────────────────────────────────────────────
 function VillageCard({ village, onEdit, onDelete, onMilestone }) {
   const [expanded, setExpanded] = useState(false);
+  const ngoName = village.ngoId?.ngoName || "—";
 
   return (
-    <div style={{ background: "#fff", border: "1px solid #e2e8f0", borderRadius: "14px", overflow: "hidden", boxShadow: "0 1px 4px rgba(0,0,0,0.05)" }}>
-      {/* Header */}
-      <div style={{ padding: "16px 18px", borderBottom: "1px solid #f1f5f9" }}>
-        <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: "10px" }}>
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap", marginBottom: "4px" }}>
-              <span style={{ fontWeight: "800", color: "#0f172a", fontSize: "15px" }}>{village.villageName}</span>
-              <StatusBadge status={village.status} />
-            </div>
-            <div style={{ display: "flex", alignItems: "center", gap: "5px", color: "#64748b", fontSize: "12px" }}>
-              <MapPin size={11} /> {village.district}, {village.state}
-              {village.pincode && <span>· {village.pincode}</span>}
-            </div>
-            <div style={{ fontSize: "11px", color: "#94a3b8", marginTop: "3px" }}>
-              NGO: {village.ngoId?.ngoName || "—"} · Adopted {fmtDate(village.adoptedAt)}
-            </div>
-          </div>
-          <div style={{ display: "flex", gap: "6px", flexShrink: 0 }}>
-            <button onClick={() => onMilestone(village)} title="Add milestone" style={{ padding: "6px 10px", background: "#fef3c7", border: "1px solid #fde68a", borderRadius: "7px", cursor: "pointer", color: "#92400e", display: "flex", alignItems: "center", gap: "4px", fontSize: "12px", fontWeight: "600" }}>
-              <Star size={12} /> Milestone
-            </button>
-            <button onClick={() => onEdit(village)} style={{ padding: "6px 10px", background: "#eff6ff", border: "1px solid #bfdbfe", borderRadius: "7px", cursor: "pointer", color: "#1d4ed8", display: "flex", alignItems: "center", gap: "4px", fontSize: "12px", fontWeight: "600" }}>
-              <Pencil size={12} /> Edit
-            </button>
-            <button onClick={() => onDelete(village._id)} style={{ padding: "6px 10px", background: "#fef2f2", border: "1px solid #fecaca", borderRadius: "7px", cursor: "pointer", color: "#dc2626", display: "flex", alignItems: "center", gap: "4px", fontSize: "12px", fontWeight: "600" }}>
-              <Trash2 size={12} />
-            </button>
-          </div>
+    <div className="bg-white rounded-2xl border border-beige-200 overflow-hidden shadow-sm hover:shadow-md transition-shadow">
+
+      {/* Top image / placeholder */}
+      <div className="relative h-36 bg-gradient-to-br from-olive-100 to-beige-200 flex items-center justify-center">
+        <MapPin size={36} className="text-olive-300" />
+
+        {/* Status badge overlay */}
+        <div className="absolute top-3 left-3">
+          <StatusBadge status={village.status} />
         </div>
 
-        {/* Quick stats */}
-        <div style={{ display: "flex", gap: "16px", marginTop: "10px", flexWrap: "wrap" }}>
-          <span style={{ fontSize: "12px", color: "#64748b", display: "flex", alignItems: "center", gap: "4px" }}>
-            <Users size={11} /> {fmt(village.totalFamilies || 0)} families
-          </span>
-          <span style={{ fontSize: "12px", color: "#64748b", display: "flex", alignItems: "center", gap: "4px" }}>
-            <Star size={11} /> {village.milestones?.length || 0} milestones
-          </span>
+        {/* Action buttons overlay */}
+        <div className="absolute top-2 right-2 flex gap-1.5">
+          <button
+            onClick={() => onMilestone(village)}
+            title="Add milestone"
+            className="w-7 h-7 flex items-center justify-center rounded-lg bg-white/80 hover:bg-white text-amber-600 transition-colors border-0 cursor-pointer shadow-sm"
+          >
+            <Star size={13} />
+          </button>
+          <button
+            onClick={() => onEdit(village)}
+            className="w-7 h-7 flex items-center justify-center rounded-lg bg-white/80 hover:bg-white text-olive-700 transition-colors border-0 cursor-pointer shadow-sm"
+          >
+            <Pencil size={13} />
+          </button>
+          <button
+            onClick={() => onDelete(village._id)}
+            className="w-7 h-7 flex items-center justify-center rounded-lg bg-white/80 hover:bg-white text-red-600 transition-colors border-0 cursor-pointer shadow-sm"
+          >
+            <Trash2 size={13} />
+          </button>
         </div>
       </div>
 
-      {/* Basic needs */}
-      <div style={{ padding: "12px 18px" }}>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "4px 16px" }}>
+      {/* Card body */}
+      <div className="p-4">
+
+        {/* Village name + location */}
+        <div className="mb-3">
+          <h3 className="font-extrabold text-olive-900 text-base m-0 mb-0.5 leading-tight truncate">
+            {village.villageName}
+          </h3>
+          <div className="flex items-center gap-1 text-xs text-olive-500">
+            <MapPin size={10} />
+            <span className="truncate">{village.district}, {village.state}</span>
+            {village.pincode && <span>· {village.pincode}</span>}
+          </div>
+          <div className="text-xs text-olive-400 mt-0.5">Partner: {ngoName}</div>
+        </div>
+
+        {/* Quick stats */}
+        <div className="flex gap-3 mb-3">
+          <span className="flex items-center gap-1 text-xs text-olive-500">
+            <Users size={11} /> {fmt(village.totalFamilies || 0)} families
+          </span>
+          <span className="flex items-center gap-1 text-xs text-olive-500">
+            <Star size={11} /> {village.milestones?.length || 0} milestones
+          </span>
+        </div>
+
+        {/* Progress bars */}
+        <div>
           {["water", "electricity", "sanitation", "roads"].map(need => (
             <NeedBar
               key={need}
               need={need}
               value={village.basicNeeds?.[need]?.coveragePercent || 0}
-              status={village.basicNeeds?.[need]?.status}
             />
           ))}
         </div>
-      </div>
 
-      {/* Milestones toggle */}
-      {village.milestones?.length > 0 && (
-        <div style={{ borderTop: "1px solid #f1f5f9" }}>
-          <button onClick={() => setExpanded(e => !e)} style={{ width: "100%", padding: "10px 18px", background: "none", border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "space-between", fontSize: "12px", fontWeight: "600", color: "#6366f1" }}>
-            <span>Milestones ({village.milestones.length})</span>
-            {expanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
-          </button>
-          {expanded && (
-            <div style={{ padding: "0 18px 14px" }}>
-              {village.milestones.map((m, i) => (
-                <div key={m._id || i} style={{ display: "flex", gap: "10px", marginBottom: "8px", padding: "8px 10px", background: "#f8fafc", borderRadius: "8px" }}>
-                  <div style={{ width: "7px", height: "7px", borderRadius: "50%", background: "#6366f1", marginTop: "5px", flexShrink: 0 }} />
-                  <div>
-                    <p style={{ margin: 0, fontWeight: "600", fontSize: "13px", color: "#0f172a" }}>{m.title}</p>
-                    {m.description && <p style={{ margin: "2px 0 0", fontSize: "11px", color: "#64748b" }}>{m.description}</p>}
-                    <p style={{ margin: "2px 0 0", fontSize: "10px", color: "#94a3b8" }}>{fmtDate(m.achievedAt)}</p>
+        {/* View impact report button */}
+        <button
+          onClick={() => setExpanded(e => !e)}
+          className="mt-3 w-full py-2 rounded-xl border-2 border-olive-200 text-olive-700 text-xs font-bold hover:border-olive-400 hover:bg-beige-50 transition-colors cursor-pointer flex items-center justify-center gap-1.5 bg-transparent"
+        >
+          {expanded ? "Hide Details" : "View Full Impact Report"}
+          {expanded ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
+        </button>
+
+        {/* Milestones expanded */}
+        {expanded && (
+          <div className="mt-3 pt-3 border-t border-beige-100">
+            {village.milestones?.length > 0 ? (
+              <div className="flex flex-col gap-2">
+                {village.milestones.map((m, i) => (
+                  <div key={m._id || i} className="flex gap-2.5 p-2 bg-beige-50 rounded-xl">
+                    <div className="w-1.5 h-1.5 rounded-full bg-olive-500 mt-1.5 flex-shrink-0" />
+                    <div className="min-w-0">
+                      <p className="m-0 font-semibold text-xs text-olive-900 truncate">{m.title}</p>
+                      {m.description && (
+                        <p className="m-0 mt-0.5 text-xs text-olive-500">{m.description}</p>
+                      )}
+                      <p className="m-0 mt-0.5 text-[10px] text-olive-400">{fmtDate(m.achievedAt)}</p>
+                    </div>
                   </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      )}
+                ))}
+              </div>
+            ) : (
+              <p className="text-xs text-olive-400 text-center py-2 m-0">
+                No milestones yet. Add one using the ★ button.
+              </p>
+            )}
+          </div>
+        )}
+      </div>
     </div>
   );
 }
 
 // ── Main Page ─────────────────────────────────────────────────────────────────
 export default function AdminVillages() {
-  const [villages, setVillages] = useState([]);
-  const [ngos, setNgos] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [modal, setModal] = useState(null);  // null | { mode: "create"|"edit", village? }
+  const [villages,        setVillages]        = useState([]);
+  const [ngos,            setNgos]            = useState([]);
+  const [loading,         setLoading]         = useState(true);
+  const [modal,           setModal]           = useState(null);
   const [milestoneTarget, setMilestoneTarget] = useState(null);
-  const [statusFilter, setStatusFilter] = useState("all");
-  const [msg, setMsg] = useState({ type: "", text: "" });
-  const [page, setPage] = useState(1);
-  const [pagination, setPagination] = useState({ total: 0, pages: 1 });
+  const [statusFilter,    setStatusFilter]    = useState("all");
+  const [msg,             setMsg]             = useState({ type: "", text: "" });
+  const [page,            setPage]            = useState(1);
+  const [pagination,      setPagination]      = useState({ total: 0, pages: 1 });
 
   const showMsg = (type, text) => {
     setMsg({ type, text });
@@ -416,78 +573,129 @@ export default function AdminVillages() {
     setMilestoneTarget(null);
   };
 
-  const counts = { total: pagination.total, active: 0, paused: 0, completed: 0 };
-  villages.forEach(v => { if (counts[v.status] !== undefined) counts[v.status]++; });
+  // Collect recent milestones across all loaded villages for "Recent Updates" section
+  const recentUpdates = villages
+    .flatMap(v => (v.milestones || []).map(m => ({
+      ...m,
+      villageName: v.villageName,
+      district:    v.district,
+      state:       v.state,
+    })))
+    .sort((a, b) => new Date(b.achievedAt || b.createdAt) - new Date(a.achievedAt || a.createdAt))
+    .slice(0, 5);
 
   return (
-    <div>
-      <style>{`@keyframes spin { from { transform:rotate(0deg) } to { transform:rotate(360deg) } }`}</style>
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "12px", marginBottom: "20px" }}>
-        <h1 className="admin-page-title" style={{ margin: 0, display: "flex", alignItems: "center", gap: "8px" }}>
-          <MapPin size={22} /> Village Adoptions
-        </h1>
-        <div style={{ display: "flex", gap: "8px" }}>
-          <button onClick={() => load(page)} style={{ padding: "9px 14px", background: "#f1f5f9", border: "1px solid #e2e8f0", borderRadius: "8px", cursor: "pointer", display: "flex", alignItems: "center", gap: "6px", fontSize: "13px", fontWeight: "600", color: "#374151" }}>
-            <RefreshCw size={14} /> Refresh
+    <div className="min-h-screen">
+
+      {/* ── Breadcrumb ──────────────────────────────────────────────────────── */}
+      <div className="text-xs font-semibold text-olive-400 mb-3 flex items-center gap-1.5">
+        <span>Initiatives</span>
+        <span>/</span>
+        <span className="text-olive-600">Village Adoptions</span>
+      </div>
+
+      {/* ── Page Header ─────────────────────────────────────────────────────── */}
+      <div className="flex flex-col gap-4 mb-8 sm:flex-row sm:items-start sm:justify-between">
+        <div>
+          <h1 className="text-4xl sm:text-5xl font-extrabold leading-tight tracking-tight m-0 p-0">
+            <span className="text-olive-900">Village</span><br />
+            <span className="text-olive-600">Adoptions.</span>
+          </h1>
+          <p className="text-sm text-olive-500 mt-2 max-w-md m-0">
+            Managing infrastructure development and social welfare programs across our adopted rural communities.
+          </p>
+        </div>
+
+        {/* Right: action buttons */}
+        <div className="flex gap-2 flex-shrink-0">
+          <button
+            onClick={() => load(page)}
+            className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-beige-100 border border-beige-200 text-olive-700 text-sm font-semibold hover:bg-beige-200 transition-colors cursor-pointer"
+          >
+            <RefreshCw size={14} />
+            <span className="hidden sm:inline">Refresh</span>
           </button>
-          <button onClick={() => setModal({ mode: "create" })} style={{ padding: "9px 18px", background: "#2563eb", border: "none", borderRadius: "8px", cursor: "pointer", color: "#fff", display: "flex", alignItems: "center", gap: "6px", fontSize: "13px", fontWeight: "700" }}>
+          <button
+            onClick={() => setModal({ mode: "create" })}
+            className="hidden sm:flex items-center gap-2 px-5 py-2.5 rounded-xl bg-olive-900 text-lime text-sm font-bold hover:bg-olive-800 transition-colors cursor-pointer border-0"
+          >
             <Plus size={15} /> Adopt Village
           </button>
         </div>
       </div>
 
-      {/* Summary cards */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px,1fr))", gap: "14px", marginBottom: "20px" }}>
+      {/* ── Stat Cards ──────────────────────────────────────────────────────── */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 mb-8">
         {[
-          { label: "Total Villages", value: pagination.total, bg: "#f0f9ff", color: "#0369a1" },
-          { label: "Active", value: villages.filter(v => v.status === "active").length, bg: "#dcfce7", color: "#166534" },
-          { label: "Paused", value: villages.filter(v => v.status === "paused").length, bg: "#fef9c3", color: "#854d0e" },
-          { label: "Completed", value: villages.filter(v => v.status === "completed").length, bg: "#dbeafe", color: "#1e40af" },
-        ].map(({ label, value, bg, color }) => (
-          <div key={label} style={{ background: bg, borderRadius: "10px", padding: "14px 16px" }}>
-            <p style={{ margin: 0, fontSize: "11px", fontWeight: "600", color, textTransform: "uppercase", letterSpacing: "0.05em" }}>{label}</p>
-            <p style={{ margin: "4px 0 0", fontSize: "26px", fontWeight: "800", color }}>{value}</p>
+          { label: "Total Villages",   value: pagination.total,                                    isLime: false },
+          { label: "Active Adoptions", value: villages.filter(v => v.status === "active").length,    isLime: true  },
+          { label: "Paused",           value: villages.filter(v => v.status === "paused").length,    isLime: false },
+          { label: "Completed",        value: villages.filter(v => v.status === "completed").length, isLime: false },
+        ].map(({ label, value, isLime }) => (
+          <div
+            key={label}
+            className={`${isLime ? "bg-lime" : "bg-beige-100"} rounded-2xl px-5 py-4`}
+          >
+            <div className="text-2xl sm:text-3xl font-extrabold text-olive-900 leading-none">
+              {value}
+            </div>
+            <div className={`text-xs font-semibold mt-1 ${isLime ? "text-olive-700" : "text-olive-500"}`}>
+              {label}
+            </div>
           </div>
         ))}
       </div>
 
-      {/* Feedback */}
+      {/* ── Feedback message ────────────────────────────────────────────────── */}
       {msg.text && (
-        <div style={{ padding: "12px 16px", marginBottom: "16px", borderRadius: "8px", background: msg.type === "success" ? "#f0fdf4" : "#fef2f2", color: msg.type === "success" ? "#166534" : "#991b1b", fontWeight: "600", fontSize: "14px", border: `1px solid ${msg.type === "success" ? "#bbf7d0" : "#fecaca"}` }}>
+        <div className={`px-4 py-3 rounded-xl mb-5 text-sm font-semibold border ${
+          msg.type === "success"
+            ? "bg-emerald-50 border-emerald-200 text-emerald-800"
+            : "bg-red-50 border-red-200 text-red-700"
+        }`}>
           {msg.text}
         </div>
       )}
 
-      {/* Filter */}
-      <div style={{ display: "flex", gap: "8px", marginBottom: "16px", flexWrap: "wrap" }}>
+      {/* ── Status Filters ──────────────────────────────────────────────────── */}
+      <div className="flex gap-2 mb-6 flex-wrap">
         {["all", "active", "paused", "completed"].map(s => (
-          <button key={s} onClick={() => setStatusFilter(s)}
-            style={{ padding: "6px 14px", borderRadius: "20px", border: "1px solid", cursor: "pointer", fontSize: "13px", fontWeight: "600",
-              background: statusFilter === s ? "#2563eb" : "#fff",
-              color:      statusFilter === s ? "#fff"    : "#374151",
-              borderColor: statusFilter === s ? "#2563eb" : "#e2e8f0",
-            }}>
+          <button
+            key={s}
+            onClick={() => setStatusFilter(s)}
+            className={`px-4 py-1.5 rounded-full text-sm font-semibold border transition-colors cursor-pointer ${
+              statusFilter === s
+                ? "bg-olive-900 text-lime border-olive-900"
+                : "bg-white text-olive-600 border-beige-200 hover:border-olive-400"
+            }`}
+          >
             {s === "all" ? "All" : STATUS_META[s]?.label}
           </button>
         ))}
       </div>
 
-      {/* Grid */}
+      {/* ── Village Grid ────────────────────────────────────────────────────── */}
       {loading ? (
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "center", padding: "60px 0", gap: "10px", color: "#64748b" }}>
-          <Loader2 size={22} style={{ animation: "spin 1s linear infinite" }} /> Loading villages…
+        <div className="flex items-center justify-center py-16 gap-3 text-olive-400">
+          <Loader2 size={22} className="animate-spin" /> Loading villages…
         </div>
       ) : villages.length === 0 ? (
-        <div style={{ textAlign: "center", padding: "60px 20px", background: "#fff", borderRadius: "12px", border: "1px dashed #cbd5e1" }}>
-          <MapPin size={40} style={{ color: "#cbd5e1", marginBottom: "12px" }} />
-          <p style={{ color: "#94a3b8", margin: 0 }}>No villages adopted yet.</p>
-          <button onClick={() => setModal({ mode: "create" })} style={{ marginTop: "14px", padding: "9px 20px", borderRadius: "8px", background: "#2563eb", border: "none", color: "#fff", fontWeight: "600", cursor: "pointer" }}>Adopt First Village</button>
+        <div className="text-center py-16 bg-white rounded-2xl border-2 border-dashed border-beige-200">
+          <MapPin size={40} className="text-beige-300 mx-auto mb-3" />
+          <p className="text-olive-400 m-0 mb-4">No villages adopted yet.</p>
+          <button
+            onClick={() => setModal({ mode: "create" })}
+            className="px-5 py-2.5 rounded-xl bg-olive-900 text-lime font-semibold text-sm cursor-pointer border-0 hover:bg-olive-800 transition-colors"
+          >
+            Adopt First Village
+          </button>
         </div>
       ) : (
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(340px,1fr))", gap: "16px" }}>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
           {villages.map(v => (
             <VillageCard
-              key={v._id} village={v}
+              key={v._id}
+              village={v}
               onEdit={(v) => setModal({ mode: "edit", village: v })}
               onDelete={handleDelete}
               onMilestone={setMilestoneTarget}
@@ -496,16 +704,84 @@ export default function AdminVillages() {
         </div>
       )}
 
-      {/* Pagination */}
+      {/* ── Pagination ──────────────────────────────────────────────────────── */}
       {pagination.pages > 1 && (
-        <div style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: "14px", marginTop: "24px" }}>
-          <button disabled={page <= 1} onClick={() => setPage(p => p - 1)} style={{ padding: "7px 16px", borderRadius: "7px", border: "1px solid #e2e8f0", background: "#fff", cursor: page <= 1 ? "not-allowed" : "pointer", opacity: page <= 1 ? 0.5 : 1, fontWeight: "600", fontSize: "13px" }}>← Prev</button>
-          <span style={{ fontSize: "13px", color: "#64748b" }}>Page {page} of {pagination.pages}</span>
-          <button disabled={page >= pagination.pages} onClick={() => setPage(p => p + 1)} style={{ padding: "7px 16px", borderRadius: "7px", border: "1px solid #e2e8f0", background: "#fff", cursor: page >= pagination.pages ? "not-allowed" : "pointer", opacity: page >= pagination.pages ? 0.5 : 1, fontWeight: "600", fontSize: "13px" }}>Next →</button>
+        <div className="flex items-center justify-center gap-4 mt-8">
+          <button
+            disabled={page <= 1}
+            onClick={() => setPage(p => p - 1)}
+            className="px-4 py-2 rounded-xl border border-beige-200 bg-white text-olive-700 font-semibold text-sm disabled:opacity-40 disabled:cursor-not-allowed hover:bg-beige-50 transition-colors cursor-pointer"
+          >
+            ← Prev
+          </button>
+          <span className="text-sm text-olive-500">Page {page} of {pagination.pages}</span>
+          <button
+            disabled={page >= pagination.pages}
+            onClick={() => setPage(p => p + 1)}
+            className="px-4 py-2 rounded-xl border border-beige-200 bg-white text-olive-700 font-semibold text-sm disabled:opacity-40 disabled:cursor-not-allowed hover:bg-beige-50 transition-colors cursor-pointer"
+          >
+            Next →
+          </button>
         </div>
       )}
 
-      {/* Modals */}
+      {/* ── Recent Village Updates ───────────────────────────────────────────── */}
+      {recentUpdates.length > 0 && (
+        <div className="mt-10 bg-white rounded-2xl border border-beige-200 overflow-hidden">
+          <div className="px-5 sm:px-6 py-5 border-b border-beige-100">
+            <h2 className="text-lg sm:text-xl font-extrabold text-olive-900 m-0 p-0">
+              Recent Village Updates
+            </h2>
+            <p className="text-sm text-olive-400 mt-0.5 m-0">
+              Real-time field reports from project leads
+            </p>
+          </div>
+
+          <ul className="divide-y divide-beige-100 list-none m-0 p-0">
+            {recentUpdates.map((update, i) => (
+              <li
+                key={update._id || i}
+                className="flex items-start gap-3 px-5 sm:px-6 py-4 hover:bg-beige-50 transition-colors"
+              >
+                <div className="w-8 h-8 rounded-full bg-olive-100 flex items-center justify-center flex-shrink-0 mt-0.5">
+                  <Star size={14} className="text-olive-600" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="font-semibold text-sm text-olive-900 truncate">{update.title}</div>
+                  <div className="flex items-center gap-1.5 text-xs text-olive-400 mt-0.5">
+                    <MapPin size={10} />
+                    <span className="truncate">
+                      {update.villageName} · {update.district}, {update.state}
+                    </span>
+                  </div>
+                </div>
+                <div className="text-xs text-olive-400 flex-shrink-0 mt-0.5">
+                  {fmtDate(update.achievedAt)}
+                </div>
+              </li>
+            ))}
+          </ul>
+
+          <div className="px-5 sm:px-6 py-3 border-t border-beige-100">
+            <button
+              onClick={() => setStatusFilter("active")}
+              className="text-sm font-semibold text-olive-600 hover:text-olive-900 transition-colors flex items-center gap-1 bg-transparent border-0 cursor-pointer p-0"
+            >
+              See All Updates <ArrowRight size={14} />
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* ── Floating Add Button (mobile only) ───────────────────────────────── */}
+      <button
+        onClick={() => setModal({ mode: "create" })}
+        className="sm:hidden fixed bottom-6 right-6 z-30 flex items-center gap-2 px-5 py-3 rounded-full bg-olive-900 text-lime font-bold text-sm shadow-lg hover:bg-olive-800 transition-all cursor-pointer border-0"
+      >
+        <Plus size={16} /> Add Village
+      </button>
+
+      {/* ── Modals ──────────────────────────────────────────────────────────── */}
       {modal && (
         <VillageFormModal
           village={modal.village}

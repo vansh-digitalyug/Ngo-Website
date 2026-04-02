@@ -1,40 +1,70 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { useSearchParams } from "react-router-dom";
-import { IndianRupee, Search, CheckCircle, Clock, XCircle, Building2, User } from "lucide-react";
+import { TrendingUp, TrendingDown, ChevronLeft, ChevronRight } from "lucide-react";
 import { API_BASE_URL } from "./AdminLayout.jsx";
 
-const fmt = (n) =>
-  new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 0 }).format(n || 0);
+const LIMIT = 8;
+
+const AVATAR_HEX = [
+  "#6366f1","#0ea5e9","#10b981","#f59e0b","#ef4444",
+  "#8b5cf6","#ec4899","#14b8a6","#f97316","#84cc16",
+];
+const avatarColor = (name) =>
+  AVATAR_HEX[(name?.charCodeAt(0) || 0) % AVATAR_HEX.length];
+
+const fmtINR = (n) =>
+  new Intl.NumberFormat("en-IN", { maximumFractionDigits: 0 }).format(n || 0);
 
 const fmtDate = (d) =>
   d ? new Date(d).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" }) : "—";
 
-const STATUS_STYLE = {
-  paid:    { bg: "#d1fae5", color: "#065f46", Icon: CheckCircle, label: "Paid" },
-  created: { bg: "#fef3c7", color: "#92400e", Icon: Clock,       label: "Pending" },
-  failed:  { bg: "#fee2e2", color: "#991b1b", Icon: XCircle,     label: "Failed" },
+const initials = (name) => {
+  if (!name) return "?";
+  const parts = name.trim().split(/\s+/);
+  return parts.length > 1
+    ? (parts[0][0] + parts[1][0]).toUpperCase()
+    : name.slice(0, 2).toUpperCase();
 };
 
 export default function AdminPayments() {
   const [searchParams, setSearchParams] = useSearchParams();
-  const [donations, setDonations] = useState([]);
-  const [summary, setSummary]     = useState({ totalAmount: 0, totalCount: 0 });
-  const [pagination, setPagination] = useState({ total: 0, totalPages: 1, page: 1 });
-  const [loading, setLoading]     = useState(true);
-
-  const [statusFilter, setStatusFilter] = useState(searchParams.get("status") || "paid");
-  const [search, setSearch]         = useState(searchParams.get("search") || "");
-  const [page, setPage]             = useState(Number(searchParams.get("page")) || 1);
+  const [donations, setDonations]       = useState([]);
+  const [summary, setSummary]           = useState({ totalAmount: 0, totalCount: 0 });
+  const [pagination, setPagination]     = useState({ total: 0, totalPages: 1, page: 1 });
+  const [loading, setLoading]           = useState(true);
+  const [page, setPage]                 = useState(Number(searchParams.get("page")) || 1);
+  const [growth, setGrowth]             = useState(null); // null = loading, false = unavailable
 
   const token = localStorage.getItem("token");
+
+  // Fetch month-over-month growth: this month vs last month
+  useEffect(() => {
+    if (!token) return;
+    const now            = new Date();
+    const thisMonthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
+    const lastMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1).toISOString();
+    const lastMonthEnd   = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59).toISOString();
+    const hdrs           = { Authorization: `Bearer ${token}` };
+
+    Promise.all([
+      fetch(`${API_BASE_URL}/api/admin/donations?status=paid&startDate=${thisMonthStart}&limit=1`, { headers: hdrs, credentials: "include" }).then(r => r.json()),
+      fetch(`${API_BASE_URL}/api/admin/donations?status=paid&startDate=${lastMonthStart}&endDate=${lastMonthEnd}&limit=1`, { headers: hdrs, credentials: "include" }).then(r => r.json()),
+    ])
+      .then(([thisRes, lastRes]) => {
+        const curr = thisRes?.data?.summary?.totalAmount || 0;
+        const prev = lastRes?.data?.summary?.totalAmount || 0;
+        if (prev === 0) { setGrowth(false); return; }
+        setGrowth(((curr - prev) / prev) * 100);
+      })
+      .catch(() => setGrowth(false));
+  }, [token]);
 
   const fetchDonations = useCallback(() => {
     setLoading(true);
     const params = new URLSearchParams();
-    if (statusFilter) params.set("status", statusFilter);
-    if (search)       params.set("search", search);
+    params.set("status", "paid");
     params.set("page", page);
-    params.set("limit", 20);
+    params.set("limit", LIMIT);
 
     fetch(`${API_BASE_URL}/api/admin/donations?${params}`, {
       headers: { Authorization: `Bearer ${token}` },
@@ -44,157 +74,206 @@ export default function AdminPayments() {
       .then((d) => {
         if (d.success) {
           setDonations(d.data.donations || []);
-          setSummary(d.data.summary   || { totalAmount: 0, totalCount: 0 });
+          setSummary(d.data.summary    || { totalAmount: 0, totalCount: 0 });
           setPagination(d.data.pagination || {});
         }
       })
       .catch(() => {})
       .finally(() => setLoading(false));
-  }, [statusFilter, search, page, token]);
+  }, [page, token]);
 
   useEffect(() => { fetchDonations(); }, [fetchDonations]);
 
   useEffect(() => {
     const p = {};
-    if (statusFilter) p.status = statusFilter;
-    if (search)       p.search = search;
-    if (page > 1)     p.page   = page;
+    if (page > 1) p.page = page;
     setSearchParams(p, { replace: true });
-  }, [statusFilter, search, page, setSearchParams]);
+  }, [page, setSearchParams]);
 
-  const donorLabel = (d) => {
+  const donorName = (d) => {
     if (d.isAnonymous) return "Anonymous";
     return d.donorName || d.user?.name || d.user?.email || "Guest";
   };
 
+  const serviceLabel = (d) =>
+    !d.serviceTitle || d.serviceTitle === "General Donation"
+      ? "General Donation"
+      : d.serviceTitle;
+
+  const ngoLabel = (d) => d.ngoId?.ngoName || "Platform";
+
+  const currentYear = new Date().getFullYear();
+  const fiscalYear  = `${currentYear - 1}–${String(currentYear).slice(-2)}`;
+
   return (
-    <div>
-      <h1 className="admin-page-title">Payments & Donations</h1>
+    <div className="min-h-screen">
 
-      {/* Summary Cards */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(180px,1fr))", gap: "16px", marginBottom: "28px" }}>
-        {[
-          { label: "Total Collected",  value: fmt(summary.totalAmount), color: "#16a34a", bg: "#f0fdf4", border: "#bbf7d0" },
-          { label: "Paid Donations",   value: summary.totalCount,       color: "#1e40af", bg: "#eff6ff", border: "#bfdbfe" },
-          { label: "Showing",          value: pagination.total || 0,    color: "#6b7280", bg: "#f9fafb", border: "#e5e7eb" },
-        ].map(({ label, value, color, bg, border }) => (
-          <div key={label} style={{ background: bg, border: `1px solid ${border}`, borderRadius: "10px", padding: "18px 20px" }}>
-            <div style={{ fontSize: "22px", fontWeight: "800", color }}>{value}</div>
-            <div style={{ fontSize: "13px", color: "#6b7280", marginTop: "4px" }}>{label}</div>
-          </div>
-        ))}
-      </div>
+      {/* ── Page Header ───────────────────────────────── */}
+      <div className="flex flex-col gap-5 mb-8 sm:flex-row sm:items-start sm:justify-between">
 
-      {/* Filters */}
-      <div className="admin-filters">
-        <div style={{ position: "relative", flex: 1, minWidth: "220px" }}>
-          <Search size={16} style={{ position: "absolute", left: "12px", top: "50%", transform: "translateY(-50%)", color: "#94a3b8" }} />
-          <input
-            type="text"
-            placeholder="Search by donor name or service..."
-            value={search}
-            onChange={(e) => { setSearch(e.target.value); setPage(1); }}
-            className="admin-search-input"
-            style={{ paddingLeft: "36px" }}
-          />
+        {/* Left: heading */}
+        <div>
+          <h1 className="text-4xl sm:text-5xl font-extrabold leading-tight tracking-tight m-0 p-0">
+            <span className="text-olive-900">Financial</span><br />
+            <span className="text-olive-600">Momentum.</span>
+          </h1>
         </div>
-        <select value={statusFilter} onChange={(e) => { setStatusFilter(e.target.value); setPage(1); }} className="admin-filter-select">
-          <option value="">All Status</option>
-          <option value="paid">Paid</option>
-          <option value="created">Pending</option>
-          <option value="failed">Failed</option>
-        </select>
+
+        {/* Right: stat pill */}
+        <div className="flex gap-3">
+          {/* Lime pill: Paid Donations count */}
+          <div className="bg-lime rounded-2xl px-5 py-4 min-w-[120px]">
+            <div className="text-2xl font-extrabold text-olive-900 leading-none">
+              {summary.totalCount || 0}
+            </div>
+            <div className="text-xs font-semibold text-olive-700 mt-1">Paid Donations</div>
+          </div>
+        </div>
       </div>
 
-      {/* Table */}
-      <div className="admin-table-wrapper">
+      {/* ── Total Collected Banner ─────────────────────── */}
+      <div className="bg-beige-100 border border-beige-200 rounded-2xl p-6 sm:p-8 mb-8">
+        <div className="text-[10px] font-bold uppercase tracking-widest text-olive-400 mb-3">
+          Total Collected
+        </div>
+        <div className="flex flex-wrap items-end gap-2 mb-5">
+          <span className="text-5xl sm:text-6xl font-extrabold text-olive-900 leading-none">
+            ₹{fmtINR(summary.totalAmount)}
+          </span>
+          <span className="text-base font-bold text-olive-400 pb-1">INR</span>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          {growth !== null && growth !== false && (
+            <span className={`inline-flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-full ${growth >= 0 ? "bg-lime text-olive-800" : "bg-red-100 text-red-700"}`}>
+              {growth >= 0 ? <TrendingUp size={12} /> : <TrendingDown size={12} />}
+              {growth >= 0 ? "+" : ""}{growth.toFixed(1)}% vs last month
+            </span>
+          )}
+          <span className="inline-flex items-center gap-1.5 bg-beige-200 text-olive-700 text-xs font-semibold px-3 py-1.5 rounded-full">
+            Fiscal Year {fiscalYear}
+          </span>
+        </div>
+      </div>
+
+      {/* ── Donor Activity ─────────────────────────────── */}
+      <div className="bg-white rounded-2xl border border-beige-200 overflow-hidden">
+
+        {/* Section header */}
+        <div className="px-5 sm:px-6 py-5 border-b border-beige-100">
+          <h2 className="text-lg sm:text-xl font-extrabold text-olive-900 m-0 p-0">Donor Activity</h2>
+          <p className="text-sm text-olive-400 mt-0.5 m-0 p-0">
+            Real-time ledger of global contributions
+          </p>
+        </div>
+
         {loading ? (
-          <div className="admin-loading">Loading payments...</div>
+          <div className="py-16 text-center text-olive-400 text-sm">Loading payments…</div>
         ) : donations.length === 0 ? (
-          <div className="admin-empty-state">No payments found.</div>
+          <div className="py-16 text-center text-olive-400 text-sm">No payments found.</div>
         ) : (
           <>
-            <table className="admin-table">
-              <thead>
-                <tr>
-                  <th>Donor</th>
-                  <th>Service / NGO</th>
-                  <th>Amount</th>
-                  <th>Status</th>
-                  <th>Date</th>
-                </tr>
-              </thead>
-              <tbody>
-                {donations.map((d) => {
-                  const s = STATUS_STYLE[d.status] || STATUS_STYLE.created;
-                  const isGeneral = !d.serviceTitle || d.serviceTitle === "General Donation";
-                  return (
-                    <tr key={d._id}>
+            {/* Desktop column headers */}
+            <div className="hidden sm:grid grid-cols-[2fr_2fr_1fr_1fr] gap-4 px-6 py-3 bg-beige-50 border-b border-beige-100">
+              {["Donor", "Service / NGO", "Amount", "Status"].map((h) => (
+                <span key={h} className="text-[10px] font-bold uppercase tracking-widest text-olive-400">
+                  {h}
+                </span>
+              ))}
+            </div>
+
+            {/* Rows */}
+            <ul className="divide-y divide-beige-100 list-none m-0 p-0">
+              {donations.map((d) => {
+                const name = donorName(d);
+                const bg   = avatarColor(name);
+                return (
+                  <li
+                    key={d._id}
+                    className="flex items-center gap-4 px-5 sm:px-6 py-4 hover:bg-beige-50 transition-colors"
+                  >
+                    {/* Avatar */}
+                    <div
+                      className="w-10 h-10 rounded-full flex items-center justify-center text-white text-sm font-bold flex-shrink-0"
+                      style={{ background: bg }}
+                    >
+                      {initials(name)}
+                    </div>
+
+                    {/* Content grid */}
+                    <div className="flex-1 min-w-0 sm:grid sm:grid-cols-[2fr_2fr_1fr_1fr] sm:gap-4 sm:items-center">
+
                       {/* Donor */}
-                      <td>
-                        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                          <div style={{ width: "32px", height: "32px", borderRadius: "50%", background: "#e0e7ff", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                            <User size={15} color="#4f46e5" />
-                          </div>
-                          <div>
-                            <div style={{ fontWeight: "600", fontSize: "14px", color: "#0f172a" }}>{donorLabel(d)}</div>
-                            {d.user?.email && (
-                              <div style={{ fontSize: "12px", color: "#94a3b8" }}>{d.user.email}</div>
-                            )}
-                          </div>
-                        </div>
-                      </td>
+                      <div className="min-w-0">
+                        <div className="font-bold text-olive-900 text-sm truncate">{name}</div>
+                        {d.user?.email && (
+                          <div className="text-xs text-olive-400 truncate">{d.user.email}</div>
+                        )}
+                      </div>
 
-                      {/* Service / NGO */}
-                      <td>
-                        <div>
-                          <span style={{
-                            display: "inline-block", padding: "2px 8px", borderRadius: "6px", fontSize: "12px", fontWeight: "600",
-                            background: isGeneral ? "#f0fdf4" : "#eff6ff",
-                            color: isGeneral ? "#166534" : "#1e40af",
-                            marginBottom: "3px"
-                          }}>
-                            {isGeneral ? "General Donation" : d.serviceTitle}
-                          </span>
-                          {d.ngoId && (
-                            <div style={{ display: "flex", alignItems: "center", gap: "4px", fontSize: "12px", color: "#64748b" }}>
-                              <Building2 size={11} />
-                              {d.ngoId.ngoName}
-                              {d.ngoId.city && <span>· {d.ngoId.city}</span>}
-                            </div>
-                          )}
-                          {!d.ngoId && (
-                            <div style={{ fontSize: "12px", color: "#94a3b8" }}>Platform donation</div>
-                          )}
+                      {/* Service / NGO — hidden on mobile, shown on sm+ */}
+                      <div className="hidden sm:block min-w-0">
+                        <div className="text-sm text-olive-700 font-medium truncate">
+                          {serviceLabel(d)}
                         </div>
-                      </td>
+                        <div className="text-xs text-olive-400 truncate">{ngoLabel(d)}</div>
+                      </div>
 
-                      {/* Amount */}
-                      <td>
-                        <span style={{ fontWeight: "700", fontSize: "15px", color: "#16a34a" }}>{fmt(d.amount)}</span>
-                      </td>
+                      {/* Amount + mobile service */}
+                      <div>
+                        <div className="font-extrabold text-olive-900 text-sm whitespace-nowrap">
+                          ₹{fmtINR(d.amount)}
+                        </div>
+                        {/* Service shown below amount on mobile */}
+                        <div className="sm:hidden text-xs text-olive-400 mt-0.5 truncate">
+                          {serviceLabel(d)} · {ngoLabel(d)}
+                        </div>
+                      </div>
 
                       {/* Status */}
-                      <td>
-                        <span style={{ display: "inline-flex", alignItems: "center", gap: "4px", padding: "3px 10px", borderRadius: "20px", fontSize: "12px", fontWeight: "600", background: s.bg, color: s.color }}>
-                          <s.Icon size={12} /> {s.label}
+                      <div className="hidden sm:flex flex-col gap-0.5">
+                        <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-700">
+                          <span className="w-2 h-2 rounded-full bg-emerald-500 inline-block flex-shrink-0" />
+                          Paid
                         </span>
-                      </td>
+                        <span className="text-xs text-olive-400">{fmtDate(d.createdAt)}</span>
+                      </div>
+                    </div>
 
-                      {/* Date */}
-                      <td style={{ fontSize: "13px", color: "#64748b", whiteSpace: "nowrap" }}>{fmtDate(d.createdAt)}</td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+                    {/* Mobile: status dot on far right */}
+                    <div className="sm:hidden flex-shrink-0">
+                      <span className="inline-flex items-center gap-1 text-xs font-semibold text-emerald-700">
+                        <span className="w-2 h-2 rounded-full bg-emerald-500 inline-block" />
+                        Paid
+                      </span>
+                    </div>
+                  </li>
+                );
+              })}
+            </ul>
 
             {/* Pagination */}
             {pagination.totalPages > 1 && (
-              <div className="admin-pagination">
-                <button disabled={page <= 1} onClick={() => setPage(p => p - 1)}>← Prev</button>
-                <span>Page {page} of {pagination.totalPages} ({pagination.total} total)</span>
-                <button disabled={page >= pagination.totalPages} onClick={() => setPage(p => p + 1)}>Next →</button>
+              <div className="flex items-center justify-between px-5 sm:px-6 py-4 border-t border-beige-100">
+                <span className="text-sm text-olive-500">
+                  Page {page} of {pagination.totalPages}
+                  <span className="hidden sm:inline"> · {pagination.total} total</span>
+                </span>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => setPage((p) => p - 1)}
+                    disabled={page <= 1}
+                    className="w-9 h-9 rounded-full border-2 border-olive-300 flex items-center justify-center text-olive-600 hover:border-olive-500 disabled:opacity-30 disabled:cursor-not-allowed transition-colors bg-white cursor-pointer"
+                  >
+                    <ChevronLeft size={16} />
+                  </button>
+                  <button
+                    onClick={() => setPage((p) => p + 1)}
+                    disabled={page >= pagination.totalPages}
+                    className="w-9 h-9 rounded-full bg-olive-700 flex items-center justify-center text-white hover:bg-olive-800 disabled:opacity-30 disabled:cursor-not-allowed transition-colors cursor-pointer"
+                  >
+                    <ChevronRight size={16} />
+                  </button>
+                </div>
               </div>
             )}
           </>

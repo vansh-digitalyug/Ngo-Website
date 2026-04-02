@@ -446,7 +446,7 @@ export const updateFundRequestStatus = asyncHandler(async (req, res) => {
 
 // Admin: All donations with filters, pagination, and per-NGO breakdown
 export const getAllDonations = asyncHandler(async (req, res) => {
-    const { ngoId, status = "paid", search, page = 1, limit = 20 } = req.query;
+    const { ngoId, status = "paid", search, page = 1, limit = 20, startDate, endDate } = req.query;
 
     const filter = {};
     if (status && ["created", "paid", "failed"].includes(status)) filter.status = status;
@@ -457,8 +457,17 @@ export const getAllDonations = asyncHandler(async (req, res) => {
             { serviceTitle: { $regex: search, $options: "i" } }
         ];
     }
+    if (startDate || endDate) {
+        filter.createdAt = {};
+        if (startDate) filter.createdAt.$gte = new Date(startDate);
+        if (endDate)   filter.createdAt.$lte = new Date(endDate);
+    }
 
     const skip = (Number(page) - 1) * Number(limit);
+
+    // summaryFilter: same as filter but always scoped to paid status (for the total amount card)
+    const summaryFilter = { ...filter, status: "paid" };
+    delete summaryFilter.$or; // exclude text-search from summary count
 
     const [donations, total, summary] = await Promise.all([
         Payment.find(filter)
@@ -470,7 +479,7 @@ export const getAllDonations = asyncHandler(async (req, res) => {
             .lean(),
         Payment.countDocuments(filter),
         Payment.aggregate([
-            { $match: { status: "paid" } },
+            { $match: summaryFilter },
             { $group: { _id: null, totalAmount: { $sum: "$amount" }, totalCount: { $sum: 1 } } }
         ])
     ]);

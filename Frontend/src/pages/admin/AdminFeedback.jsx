@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { Star, Eye, Trash2, Send, X, ChevronLeft, ChevronRight, RefreshCw } from "lucide-react";
+import { Star, Eye, Trash2, Send, X, ChevronLeft, ChevronRight, RefreshCw, Loader2 } from "lucide-react";
 
 const API_BASE_URL = String(import.meta.env.VITE_API_BASE_URL || "http://localhost:5000").replace(/\/$/, "");
 
@@ -11,35 +11,35 @@ const fmt = (d) =>
   d ? new Date(d).toLocaleString("en-IN", { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" }) : "—";
 
 const TYPE_META = {
-  platform:  { label: "Platform",   bg: "#eef2ff", color: "#6366f1" },
-  ngo:       { label: "NGO",        bg: "#f0f9ff", color: "#0ea5e9" },
-  volunteer: { label: "Volunteer",  bg: "#f0fdf4", color: "#10b981" },
-  event:     { label: "Event",      bg: "#fffbeb", color: "#f59e0b" },
-  community: { label: "Community",  bg: "#f5f3ff", color: "#8b5cf6" },
-  service:   { label: "Service",    bg: "#fef2f2", color: "#ef4444" },
-  other:     { label: "Other",      bg: "#f9fafb", color: "#6b7280" },
+  platform:  { label: "Platform",   cls: "bg-indigo-50 text-indigo-700" },
+  ngo:       { label: "NGO",        cls: "bg-sky-50 text-sky-700" },
+  volunteer: { label: "Volunteer",  cls: "bg-emerald-50 text-emerald-700" },
+  event:     { label: "Event",      cls: "bg-amber-50 text-amber-700" },
+  community: { label: "Community",  cls: "bg-violet-50 text-violet-700" },
+  service:   { label: "Service",    cls: "bg-red-50 text-red-700" },
+  other:     { label: "Other",      cls: "bg-gray-100 text-gray-600" },
 };
 
 const STATUS_META = {
-  new:          { label: "New",          bg: "#fef2f2", color: "#dc2626" },
-  read:         { label: "Read",         bg: "#eff6ff", color: "#2563eb" },
-  acknowledged: { label: "Acknowledged", bg: "#fffbeb", color: "#d97706" },
-  resolved:     { label: "Resolved",     bg: "#f0fdf4", color: "#16a34a" },
+  new:          { label: "New",          cls: "bg-red-50 text-red-700 border-red-200" },
+  read:         { label: "Read",         cls: "bg-blue-50 text-blue-700 border-blue-200" },
+  acknowledged: { label: "Acknowledged", cls: "bg-amber-50 text-amber-700 border-amber-200" },
+  resolved:     { label: "Resolved",     cls: "bg-emerald-50 text-emerald-700 border-emerald-200" },
 };
 
 function Badge({ meta, value }) {
-  const m = meta[value] || { label: value, bg: "#f3f4f6", color: "#374151" };
+  const m = meta[value] || { label: value, cls: "bg-gray-100 text-gray-600" };
   return (
-    <span style={{ background: m.bg, color: m.color, padding: "3px 10px", borderRadius: 20, fontSize: 11, fontWeight: 700, whiteSpace: "nowrap" }}>
+    <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold whitespace-nowrap ${m.cls}`}>
       {m.label}
     </span>
   );
 }
 
 function Stars({ rating, size = 13 }) {
-  if (!rating) return <span style={{ color: "#9ca3af", fontSize: 12 }}>—</span>;
+  if (!rating) return <span className="text-gray-400 text-xs">—</span>;
   return (
-    <span style={{ display: "flex", alignItems: "center", gap: 2 }}>
+    <span className="flex items-center gap-0.5">
       {[1, 2, 3, 4, 5].map((s) => (
         <Star key={s} size={size} fill={s <= rating ? "#f59e0b" : "none"} stroke={s <= rating ? "#f59e0b" : "#d1d5db"} strokeWidth={1.5} />
       ))}
@@ -49,11 +49,19 @@ function Stars({ rating, size = 13 }) {
 
 // ── Stat Card ────────────────────────────────────────────────────────────────
 function StatCard({ label, value, sub, color, bg }) {
+  const colorMap = {
+    "indigo": { bg: "bg-indigo-50", text: "text-indigo-600" },
+    "red":    { bg: "bg-red-50", text: "text-red-600" },
+    "amber":  { bg: "bg-amber-50", text: "text-amber-600" },
+    "emerald": { bg: "bg-emerald-50", text: "text-emerald-600" },
+  };
+  const theme = colorMap[bg] || { bg: "bg-gray-100", text: "text-gray-600" };
+  
   return (
-    <div style={{ background: bg, border: `1.5px solid ${color}30`, borderRadius: 14, padding: "16px 20px", minWidth: 110, flex: 1 }}>
-      <p style={{ fontSize: 26, fontWeight: 800, color, margin: 0, lineHeight: 1 }}>{value ?? "—"}</p>
-      <p style={{ fontSize: 12, fontWeight: 600, color: "#374151", margin: "4px 0 0" }}>{label}</p>
-      {sub && <p style={{ fontSize: 11, color: "#9ca3af", margin: "2px 0 0" }}>{sub}</p>}
+    <div className={`${theme.bg} border border-gray-200 rounded-xl p-4 flex-1 min-w-[140px]`}>
+      <p className={`text-2xl font-black ${theme.text} m-0 leading-none`}>{value ?? "—"}</p>
+      <p className="text-xs font-semibold text-gray-600 m-0 mt-1">{label}</p>
+      {sub && <p className="text-xs text-gray-500 m-0 mt-1">{sub}</p>}
     </div>
   );
 }
@@ -105,91 +113,105 @@ function FeedbackModal({ item, onClose, onStatusUpdate, onReply, onDelete }) {
   const stat = STATUS_META[item.status]     || STATUS_META.new;
 
   return (
-    <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.55)", zIndex: 9999, display: "flex", alignItems: "center", justifyContent: "center", padding: "16px" }}
+    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[1000] flex items-center justify-center p-4"
       onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
 
-      <div style={{ background: "#fff", borderRadius: 20, width: "100%", maxWidth: 620, maxHeight: "90vh", overflowY: "auto", boxShadow: "0 24px 60px rgba(0,0,0,0.25)" }}>
+      <div className="bg-white rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl">
 
         {/* Header */}
-        <div style={{ background: "linear-gradient(135deg, #6366f1, #8b5cf6)", padding: "20px 24px", borderRadius: "20px 20px 0 0", display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+        <div className="bg-gradient-to-r from-indigo-600 to-purple-600 px-6 py-5 rounded-t-2xl flex justify-between items-start">
           <div>
-            <p style={{ color: "rgba(255,255,255,0.75)", fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: 1, margin: 0 }}>Feedback Detail</p>
-            <h3 style={{ color: "#fff", fontSize: 17, fontWeight: 800, margin: "4px 0 0", lineHeight: 1.3 }}>{item.subject}</h3>
+            <p className="text-white/75 text-xs font-bold uppercase tracking-wider m-0">Feedback Detail</p>
+            <h3 className="text-white text-lg font-extrabold m-0 mt-1 leading-tight">{item.subject}</h3>
           </div>
-          <button onClick={onClose} style={{ background: "rgba(255,255,255,0.2)", border: "none", borderRadius: 8, padding: "6px 8px", cursor: "pointer", color: "#fff", display: "flex", alignItems: "center" }}>
+          <button onClick={onClose} className="bg-white/20 hover:bg-white/30 border-0 rounded-lg p-1.5 cursor-pointer text-white flex items-center transition-colors">
             <X size={18} />
           </button>
         </div>
 
-        <div style={{ padding: "24px" }}>
+        <div className="p-6">
 
           {/* Flash */}
           {flash && (
-            <div style={{ background: flash.startsWith("Error") ? "#fef2f2" : "#f0fdf4", border: `1px solid ${flash.startsWith("Error") ? "#fca5a5" : "#86efac"}`, borderRadius: 10, padding: "10px 14px", marginBottom: 16, fontSize: 13, color: flash.startsWith("Error") ? "#dc2626" : "#16a34a", fontWeight: 600 }}>
+            <div className={`rounded-lg p-3 mb-4 text-sm font-semibold border ${
+              flash.startsWith("Error") 
+                ? "bg-red-50 text-red-700 border-red-200" 
+                : "bg-emerald-50 text-emerald-700 border-emerald-200"
+            }`}>
               {flash}
             </div>
           )}
 
           {/* Submitter info */}
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 20 }}>
+          <div className="grid grid-cols-2 gap-3 mb-6">
             {[
               ["Name", item.name],
               ["Email", item.email],
               ["Phone", item.phone || "—"],
               ["Submitted", fmt(item.createdAt)],
             ].map(([k, v]) => (
-              <div key={k} style={{ background: "#f9fafb", borderRadius: 10, padding: "10px 14px" }}>
-                <p style={{ fontSize: 10, fontWeight: 700, color: "#9ca3af", textTransform: "uppercase", letterSpacing: 0.8, margin: 0 }}>{k}</p>
-                <p style={{ fontSize: 13, fontWeight: 600, color: "#111827", margin: "3px 0 0", wordBreak: "break-all" }}>{v}</p>
+              <div key={k} className="bg-gray-50 rounded-lg p-3">
+                <p className="text-xs font-bold text-gray-500 uppercase tracking-wide m-0">{k}</p>
+                <p className="text-sm font-semibold text-gray-900 m-0 mt-1 break-words">{v}</p>
               </div>
             ))}
           </div>
 
           {/* Type / Status / Rating row */}
-          <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 20 }}>
-            <span style={{ background: type.bg, color: type.color, padding: "5px 12px", borderRadius: 20, fontSize: 12, fontWeight: 700 }}>{type.label}</span>
-            <span style={{ background: stat.bg, color: stat.color, padding: "5px 12px", borderRadius: 20, fontSize: 12, fontWeight: 700 }}>{stat.label}</span>
+          <div className="flex flex-wrap gap-2 mb-6">
+            <span className={`px-3 py-1 rounded-full text-xs font-bold ${TYPE_META[item.feedbackType]?.cls}`}>
+              {type.label}
+            </span>
+            <span className={`px-3 py-1 rounded-full text-xs font-bold ${stat.cls}`}>
+              {stat.label}
+            </span>
             {item.targetName && (
-              <span style={{ background: "#f3f4f6", color: "#374151", padding: "5px 12px", borderRadius: 20, fontSize: 12, fontWeight: 600 }}>📌 {item.targetName}</span>
+              <span className="bg-gray-100 text-gray-700 px-3 py-1 rounded-full text-xs font-semibold">
+                📌 {item.targetName}
+              </span>
             )}
             {item.rating && (
-              <span style={{ display: "flex", alignItems: "center", gap: 4, background: "#fffbeb", color: "#d97706", padding: "5px 12px", borderRadius: 20, fontSize: 12, fontWeight: 700 }}>
+              <span className="bg-amber-50 text-amber-700 px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1">
                 <Star size={12} fill="#f59e0b" stroke="#f59e0b" /> {item.rating}/5
               </span>
             )}
           </div>
 
           {/* Message */}
-          <div style={{ background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: 12, padding: "16px", marginBottom: 20 }}>
-            <p style={{ fontSize: 11, fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", letterSpacing: 0.8, margin: "0 0 8px" }}>Message</p>
-            <p style={{ fontSize: 14, color: "#1e293b", lineHeight: 1.7, margin: 0, whiteSpace: "pre-wrap" }}>{item.message}</p>
+          <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 mb-6">
+            <p className="text-xs font-bold text-slate-500 uppercase tracking-wide m-0 mb-2">Message</p>
+            <p className="text-sm text-slate-900 leading-relaxed m-0 whitespace-pre-wrap">{item.message}</p>
           </div>
 
           {/* Admin note if exists */}
           {item.adminNote && (
-            <div style={{ background: "#fefce8", border: "1px solid #fde68a", borderRadius: 12, padding: "12px 16px", marginBottom: 20 }}>
-              <p style={{ fontSize: 11, fontWeight: 700, color: "#92400e", textTransform: "uppercase", letterSpacing: 0.8, margin: "0 0 6px" }}>Admin Note</p>
-              <p style={{ fontSize: 13, color: "#78350f", margin: 0 }}>{item.adminNote}</p>
+            <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-6">
+              <p className="text-xs font-bold text-amber-900 uppercase tracking-wide m-0 mb-2">Admin Note</p>
+              <p className="text-sm text-amber-900 m-0">{item.adminNote}</p>
             </div>
           )}
 
           {/* Admin reply if exists */}
           {item.adminReply && (
-            <div style={{ background: "#f0fdf4", border: "1px solid #86efac", borderRadius: 12, padding: "12px 16px", marginBottom: 20 }}>
-              <p style={{ fontSize: 11, fontWeight: 700, color: "#166534", textTransform: "uppercase", letterSpacing: 0.8, margin: "0 0 6px" }}>Reply Sent • {fmt(item.repliedAt)}</p>
-              <p style={{ fontSize: 13, color: "#14532d", margin: 0 }}>{item.adminReply}</p>
+            <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-4 mb-6">
+              <p className="text-xs font-bold text-emerald-900 uppercase tracking-wide m-0 mb-2">Reply Sent • {fmt(item.repliedAt)}</p>
+              <p className="text-sm text-emerald-900 m-0">{item.adminReply}</p>
             </div>
           )}
 
           {/* ── Update Status ── */}
-          <div style={{ background: "#fff", border: "1.5px solid #e5e7eb", borderRadius: 14, padding: "16px", marginBottom: 16 }}>
-            <p style={{ fontSize: 12, fontWeight: 700, color: "#374151", margin: "0 0 12px", textTransform: "uppercase", letterSpacing: 0.6 }}>Update Status</p>
-            <div style={{ display: "flex", gap: 8, marginBottom: 10 }}>
+          <div className="bg-white border border-gray-200 rounded-xl p-5 mb-5">
+            <p className="text-xs font-bold text-gray-700 uppercase tracking-wide m-0 mb-3">Update Status</p>
+            <div className="grid grid-cols-2 gap-2 mb-3">
               {Object.entries(STATUS_META).map(([v, m]) => (
                 <button
                   key={v}
                   onClick={() => setStatus(v)}
-                  style={{ flex: 1, padding: "7px 0", borderRadius: 8, border: `1.5px solid ${status === v ? m.color : "#e5e7eb"}`, background: status === v ? m.bg : "#fff", color: status === v ? m.color : "#9ca3af", fontWeight: 700, fontSize: 11, cursor: "pointer", transition: "all 0.15s" }}
+                  className={`py-2 px-3 rounded-lg border-2 font-bold text-xs uppercase transition-all ${
+                    status === v 
+                      ? `${m.cls} border-current` 
+                      : "bg-white text-gray-600 border-gray-200 hover:border-gray-300"
+                  }`}
                 >
                   {m.label}
                 </button>
@@ -200,12 +222,12 @@ function FeedbackModal({ item, onClose, onStatusUpdate, onReply, onDelete }) {
               onChange={(e) => setNote(e.target.value)}
               rows={2}
               placeholder="Add an internal admin note (optional)..."
-              style={{ width: "100%", border: "1.5px solid #e5e7eb", borderRadius: 10, padding: "10px 12px", fontSize: 13, resize: "none", outline: "none", boxSizing: "border-box", marginBottom: 10 }}
+              className="w-full border border-gray-200 rounded-lg p-3 text-sm resize-none outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent mb-3"
             />
             <button
               onClick={handleStatusSave}
               disabled={saving}
-              style={{ background: "#6366f1", color: "#fff", border: "none", borderRadius: 10, padding: "10px 20px", fontWeight: 700, fontSize: 13, cursor: saving ? "not-allowed" : "pointer", opacity: saving ? 0.6 : 1, width: "100%" }}
+              className="w-full bg-indigo-600 hover:bg-indigo-700 disabled:opacity-60 text-white border-0 rounded-lg py-2.5 font-bold text-sm cursor-pointer transition-colors"
             >
               {saving ? "Saving…" : "Save Status"}
             </button>
@@ -213,23 +235,27 @@ function FeedbackModal({ item, onClose, onStatusUpdate, onReply, onDelete }) {
 
           {/* ── Reply ── */}
           {!item.adminReply && (
-            <div style={{ background: "#fff", border: "1.5px solid #e5e7eb", borderRadius: 14, padding: "16px", marginBottom: 16 }}>
-              <p style={{ fontSize: 12, fontWeight: 700, color: "#374151", margin: "0 0 10px", textTransform: "uppercase", letterSpacing: 0.6 }}>Send Reply</p>
+            <div className="bg-white border border-gray-200 rounded-xl p-5 mb-5">
+              <p className="text-xs font-bold text-gray-700 uppercase tracking-wide m-0 mb-3">Send Reply</p>
               <textarea
                 value={reply}
                 onChange={(e) => setReply(e.target.value)}
                 rows={3}
                 placeholder="Write your reply to the user... (min 5 characters)"
-                style={{ width: "100%", border: "1.5px solid #e5e7eb", borderRadius: 10, padding: "10px 12px", fontSize: 13, resize: "none", outline: "none", boxSizing: "border-box", marginBottom: 10 }}
+                className="w-full border border-gray-200 rounded-lg p-3 text-sm resize-none outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent mb-3"
               />
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                <span style={{ fontSize: 11, color: reply.length < 5 && reply.length > 0 ? "#ef4444" : "#9ca3af" }}>
+              <div className="flex justify-between items-center">
+                <span className={`text-xs ${reply.length < 5 && reply.length > 0 ? "text-red-600" : "text-gray-500"}`}>
                   {reply.length < 5 && reply.length > 0 ? `${5 - reply.length} more needed` : `${reply.length} chars`}
                 </span>
                 <button
                   onClick={handleReply}
                   disabled={replying || reply.trim().length < 5}
-                  style={{ display: "flex", alignItems: "center", gap: 6, background: "linear-gradient(135deg,#6366f1,#8b5cf6)", color: "#fff", border: "none", borderRadius: 10, padding: "10px 20px", fontWeight: 700, fontSize: 13, cursor: replying || reply.trim().length < 5 ? "not-allowed" : "pointer", opacity: replying || reply.trim().length < 5 ? 0.5 : 1 }}
+                  className={`flex items-center gap-2 border-0 rounded-lg py-2.5 px-5 font-bold text-sm text-white transition-all disabled:opacity-50 ${
+                    replying || reply.trim().length < 5
+                      ? "bg-gray-400 cursor-not-allowed"
+                      : "bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 cursor-pointer"
+                  }`}
                 >
                   <Send size={14} /> {replying ? "Sending…" : "Send Reply"}
                 </button>
@@ -240,7 +266,7 @@ function FeedbackModal({ item, onClose, onStatusUpdate, onReply, onDelete }) {
           {/* Delete */}
           <button
             onClick={() => { if (window.confirm("Permanently delete this feedback?")) onDelete(item._id); }}
-            style={{ width: "100%", background: "#fef2f2", color: "#dc2626", border: "1.5px solid #fca5a5", borderRadius: 10, padding: "10px 0", fontWeight: 700, fontSize: 13, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 6 }}
+            className="w-full bg-red-50 hover:bg-red-100 text-red-700 border border-red-200 rounded-lg py-2.5 font-bold text-sm cursor-pointer flex items-center justify-center gap-2 transition-colors"
           >
             <Trash2 size={14} /> Delete This Feedback
           </button>
@@ -349,156 +375,193 @@ export default function AdminFeedback() {
 
   // ── Render ───────────────────────────────────────────────────────────────
   return (
-    <div style={{ padding: "24px", fontFamily: "system-ui, -apple-system, sans-serif", background: "#f8fafc", minHeight: "100vh" }}>
+    <div className="min-h-screen p-4 sm:p-6 bg-gray-50">
 
-      {/* Page Title */}
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24 }}>
+      {/* Page Header */}
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between mb-6">
         <div>
-          <h1 style={{ fontSize: 24, fontWeight: 800, color: "#0f172a", margin: 0 }}>Feedback</h1>
-          <p style={{ fontSize: 13, color: "#64748b", margin: "4px 0 0" }}>Manage and respond to user feedback</p>
+          <h1 className="text-3xl sm:text-4xl font-extrabold text-gray-900 m-0">Feedback</h1>
+          <p className="text-sm text-gray-600 mt-1 m-0">Manage and respond to user feedback</p>
         </div>
         <button
           onClick={() => { fetchFeedbacks(page); fetchStats(); }}
-          style={{ display: "flex", alignItems: "center", gap: 6, background: "#fff", border: "1.5px solid #e5e7eb", borderRadius: 10, padding: "9px 16px", fontWeight: 600, fontSize: 13, cursor: "pointer", color: "#374151" }}
+          className="flex items-center gap-2 px-4 py-2.5 rounded-lg bg-white border border-gray-200 text-gray-700 text-sm font-semibold hover:bg-gray-50 transition-colors cursor-pointer"
         >
-          <RefreshCw size={14} /> Refresh
+          <RefreshCw size={14} /> <span className="hidden sm:inline">Refresh</span>
         </button>
       </div>
 
       {/* Flash */}
       {flash && (
-        <div style={{ background: flash.startsWith("Error") ? "#fef2f2" : "#f0fdf4", border: `1px solid ${flash.startsWith("Error") ? "#fca5a5" : "#86efac"}`, borderRadius: 12, padding: "12px 16px", marginBottom: 20, fontSize: 13, color: flash.startsWith("Error") ? "#dc2626" : "#16a34a", fontWeight: 600, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <div className={`rounded-lg p-4 mb-6 text-sm font-semibold border flex justify-between items-center ${
+          flash.startsWith("Error") 
+            ? "bg-red-50 text-red-700 border-red-200" 
+            : "bg-emerald-50 text-emerald-700 border-emerald-200"
+        }`}>
           {flash}
-          <button onClick={() => setFlash("")} style={{ background: "none", border: "none", cursor: "pointer", opacity: 0.6 }}><X size={14} /></button>
+          <button onClick={() => setFlash("")} className="bg-transparent border-0 cursor-pointer opacity-60 hover:opacity-100"><X size={14} /></button>
         </div>
       )}
 
       {/* ── Stats Cards ── */}
-      <div style={{ display: "flex", gap: 12, flexWrap: "wrap", marginBottom: 24 }}>
-        <StatCard label="Total"        value={statsLoading ? "…" : stats?.total}                 color="#6366f1" bg="#eef2ff" />
-        <StatCard label="New / Unread" value={statsLoading ? "…" : stats?.unread}                color="#dc2626" bg="#fef2f2" sub="Needs attention" />
-        <StatCard label="Acknowledged" value={statsLoading ? "…" : stats?.byStatus?.acknowledged} color="#d97706" bg="#fffbeb" />
-        <StatCard label="Resolved"     value={statsLoading ? "…" : stats?.byStatus?.resolved}     color="#16a34a" bg="#f0fdf4" />
+      <div className="flex flex-wrap gap-4 mb-6">
+        <StatCard label="Total"        value={statsLoading ? "…" : stats?.total}                 color="indigo" bg="indigo" />
+        <StatCard label="New / Unread" value={statsLoading ? "…" : stats?.unread}                color="red" bg="red" sub="Needs attention" />
+        <StatCard label="Acknowledged" value={statsLoading ? "…" : stats?.byStatus?.acknowledged} color="amber" bg="amber" />
+        <StatCard label="Resolved"     value={statsLoading ? "…" : stats?.byStatus?.resolved}     color="emerald" bg="emerald" />
         <StatCard
           label="Avg Rating"
           value={statsLoading ? "…" : stats?.ratings?.average ? `${stats.ratings.average}/5` : "—"}
-          color="#f59e0b" bg="#fffbeb"
+          color="amber" bg="amber"
           sub={stats?.ratings?.total ? `from ${stats.ratings.total} ratings` : ""}
         />
       </div>
 
       {/* ── Filters ── */}
-      <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginBottom: 20 }}>
+      <div className="flex flex-col sm:flex-row gap-3 mb-6">
         <input
           type="text"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="🔍  Search by name, email, subject..."
-          style={{ flex: 2, minWidth: 200, border: "1.5px solid #e5e7eb", borderRadius: 10, padding: "9px 14px", fontSize: 13, outline: "none" }}
+          className="flex-1 border border-gray-200 rounded-lg px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent"
         />
         <select value={statusFilter} onChange={(e) => setStatus(e.target.value)}
-          style={{ flex: 1, minWidth: 130, border: "1.5px solid #e5e7eb", borderRadius: 10, padding: "9px 12px", fontSize: 13, outline: "none", background: "#fff" }}>
+          className="border border-gray-200 rounded-lg px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-indigo-400 bg-white cursor-pointer">
           <option value="">All Statuses</option>
           {Object.entries(STATUS_META).map(([v, m]) => <option key={v} value={v}>{m.label}</option>)}
         </select>
         <select value={typeFilter} onChange={(e) => setType(e.target.value)}
-          style={{ flex: 1, minWidth: 130, border: "1.5px solid #e5e7eb", borderRadius: 10, padding: "9px 12px", fontSize: 13, outline: "none", background: "#fff" }}>
+          className="border border-gray-200 rounded-lg px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-indigo-400 bg-white cursor-pointer">
           <option value="">All Types</option>
           {Object.entries(TYPE_META).map(([v, m]) => <option key={v} value={v}>{m.label}</option>)}
         </select>
         <select value={ratingFilter} onChange={(e) => setRating(e.target.value)}
-          style={{ flex: 1, minWidth: 110, border: "1.5px solid #e5e7eb", borderRadius: 10, padding: "9px 12px", fontSize: 13, outline: "none", background: "#fff" }}>
+          className="border border-gray-200 rounded-lg px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-indigo-400 bg-white cursor-pointer">
           <option value="">All Ratings</option>
           {[5, 4, 3, 2, 1].map((r) => <option key={r} value={r}>{"★".repeat(r)} ({r})</option>)}
         </select>
       </div>
 
       {/* ── Table ── */}
-      <div style={{ background: "#fff", borderRadius: 16, border: "1.5px solid #e5e7eb", overflow: "hidden" }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "14px 20px", borderBottom: "1px solid #f1f5f9" }}>
-          <span style={{ fontSize: 14, fontWeight: 700, color: "#0f172a" }}>
-            Feedback Submissions <span style={{ fontSize: 12, color: "#94a3b8", fontWeight: 500 }}>({total} total)</span>
+      <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+        <div className="flex justify-between items-center p-5 border-b border-gray-200">
+          <span className="text-sm font-bold text-gray-900">
+            Feedback Submissions <span className="text-xs text-gray-500 font-normal">({total} total)</span>
           </span>
         </div>
 
         {loading ? (
-          <div style={{ textAlign: "center", padding: "60px 0", color: "#94a3b8" }}>
-            <RefreshCw size={28} style={{ animation: "spin 1s linear infinite", margin: "0 auto 10px", display: "block" }} />
-            <p style={{ margin: 0, fontSize: 14 }}>Loading feedback…</p>
-            <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+          <div className="flex flex-col items-center justify-center py-16 text-gray-500">
+            <Loader2 size={28} className="animate-spin mb-3" />
+            <p className="text-sm">Loading feedback…</p>
           </div>
         ) : feedbacks.length === 0 ? (
-          <div style={{ textAlign: "center", padding: "60px 0", color: "#94a3b8" }}>
-            <p style={{ fontSize: 15, margin: 0 }}>No feedback found</p>
-            <p style={{ fontSize: 13, margin: "6px 0 0" }}>Try adjusting your filters</p>
+          <div className="text-center py-16 text-gray-500">
+            <p className="text-sm">No feedback found</p>
+            <p className="text-xs mt-1">Try adjusting your filters</p>
           </div>
         ) : (
-          <div style={{ overflowX: "auto" }}>
-            <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
-              <thead>
-                <tr style={{ background: "#f8fafc" }}>
-                  {["Submitter", "Type", "Subject", "Rating", "Status", "Date", "Actions"].map((h) => (
-                    <th key={h} style={{ padding: "12px 16px", textAlign: "left", fontSize: 11, fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: 0.6, whiteSpace: "nowrap" }}>{h}</th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {feedbacks.map((f, i) => (
-                  <tr
-                    key={f._id}
-                    style={{ background: f.status === "new" ? "#fef7f7" : i % 2 === 0 ? "#fff" : "#fafafa", borderBottom: "1px solid #f1f5f9", transition: "background 0.15s" }}
-                    onMouseEnter={(e) => e.currentTarget.style.background = "#f0f9ff"}
-                    onMouseLeave={(e) => e.currentTarget.style.background = f.status === "new" ? "#fef7f7" : i % 2 === 0 ? "#fff" : "#fafafa"}
-                  >
-                    <td style={{ padding: "12px 16px" }}>
-                      <p style={{ fontWeight: 700, color: "#0f172a", margin: 0, fontSize: 13 }}>{f.name}</p>
-                      <p style={{ color: "#94a3b8", margin: "2px 0 0", fontSize: 11 }}>{f.email}</p>
-                    </td>
-                    <td style={{ padding: "12px 16px" }}><Badge meta={TYPE_META} value={f.feedbackType} /></td>
-                    <td style={{ padding: "12px 16px", maxWidth: 200 }}>
-                      <p style={{ margin: 0, fontWeight: 600, color: "#1e293b", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", maxWidth: 190 }}>{f.subject}</p>
-                      {f.targetName && <p style={{ margin: "2px 0 0", fontSize: 11, color: "#94a3b8" }}>📌 {f.targetName}</p>}
-                    </td>
-                    <td style={{ padding: "12px 16px" }}><Stars rating={f.rating} /></td>
-                    <td style={{ padding: "12px 16px" }}>
-                      <Badge meta={STATUS_META} value={f.status} />
-                      {f.adminReply && <p style={{ fontSize: 10, color: "#16a34a", margin: "3px 0 0", fontWeight: 600 }}>✓ Replied</p>}
-                    </td>
-                    <td style={{ padding: "12px 16px", whiteSpace: "nowrap", color: "#64748b", fontSize: 12 }}>{fmt(f.createdAt)}</td>
-                    <td style={{ padding: "12px 16px" }}>
-                      <div style={{ display: "flex", gap: 6 }}>
-                        <button
-                          onClick={() => handleView(f._id)}
-                          title="View & Reply"
-                          style={{ display: "flex", alignItems: "center", gap: 4, background: "#eff6ff", color: "#2563eb", border: "none", borderRadius: 8, padding: "6px 10px", fontWeight: 700, fontSize: 12, cursor: "pointer" }}
-                        >
-                          <Eye size={13} /> View
-                        </button>
-                        <button
-                          onClick={() => { if (window.confirm("Delete this feedback permanently?")) handleDelete(f._id); }}
-                          title="Delete"
-                          style={{ display: "flex", alignItems: "center", background: "#fef2f2", color: "#dc2626", border: "none", borderRadius: 8, padding: "6px 8px", cursor: "pointer" }}
-                        >
-                          <Trash2 size={13} />
-                        </button>
-                      </div>
-                    </td>
+          <>
+            {/* Mobile card list */}
+            <ul className="sm:hidden divide-y divide-gray-200 list-none m-0 p-0">
+              {feedbacks.map((f) => (
+                <li key={f._id} className="p-4 hover:bg-gray-50 transition-colors">
+                  <div className="flex justify-between items-start gap-2 mb-2">
+                    <div>
+                      <p className="font-semibold text-gray-900 m-0 text-sm">{f.name}</p>
+                      <p className="text-xs text-gray-600 m-0">{f.email}</p>
+                    </div>
+                    <Badge meta={STATUS_META} value={f.status} />
+                  </div>
+                  <p className="text-sm text-gray-700 m-0 mb-2 font-medium">{f.subject}</p>
+                  {f.targetName && <p className="text-xs text-gray-500 m-0 mb-2">📌 {f.targetName}</p>}
+                  <div className="flex items-center justify-between gap-2 text-xs">
+                    <Badge meta={TYPE_META} value={f.feedbackType} />
+                    <Stars rating={f.rating} size={11} />
+                  </div>
+                  <p className="text-xs text-gray-500 mt-2 m-0">{fmt(f.createdAt)}</p>
+                  <div className="flex gap-2 mt-3">
+                    <button
+                      onClick={() => handleView(f._id)}
+                      className="flex-1 bg-blue-50 hover:bg-blue-100 text-blue-700 border-0 rounded-lg py-2 text-xs font-bold cursor-pointer transition-colors flex items-center justify-center gap-1"
+                    >
+                      <Eye size={12} /> View
+                    </button>
+                    <button
+                      onClick={() => { if (window.confirm("Delete this feedback permanently?")) handleDelete(f._id); }}
+                      className="bg-red-50 hover:bg-red-100 text-red-600 border-0 rounded-lg px-3 py-2 cursor-pointer transition-colors"
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                  </div>
+                </li>
+              ))}
+            </ul>
+
+            {/* Desktop table */}
+            <div className="hidden sm:block overflow-x-auto">
+              <table className="w-full border-collapse">
+                <thead>
+                  <tr className="bg-gray-50 border-b border-gray-200">
+                    {["Submitter", "Type", "Subject", "Rating", "Status", "Date", "Actions"].map((h) => (
+                      <th key={h} className="px-4 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wide whitespace-nowrap">{h}</th>
+                    ))}
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody className="divide-y divide-gray-200">
+                  {feedbacks.map((f, i) => (
+                    <tr key={f._id} className="hover:bg-gray-50 transition-colors">
+                      <td className="px-4 py-3">
+                        <p className="text-sm font-semibold text-gray-900 m-0">{f.name}</p>
+                        <p className="text-xs text-gray-500 m-0">{f.email}</p>
+                      </td>
+                      <td className="px-4 py-3"><Badge meta={TYPE_META} value={f.feedbackType} /></td>
+                      <td className="px-4 py-3 max-w-sm">
+                        <p className="text-sm font-medium text-gray-900 m-0 truncate">{f.subject}</p>
+                        {f.targetName && <p className="text-xs text-gray-500 m-0 mt-1">📌 {f.targetName}</p>}
+                      </td>
+                      <td className="px-4 py-3"><Stars rating={f.rating} size={12} /></td>
+                      <td className="px-4 py-3">
+                        <Badge meta={STATUS_META} value={f.status} />
+                        {f.adminReply && <p className="text-xs text-emerald-700 m-0 mt-1 font-semibold">✓ Replied</p>}
+                      </td>
+                      <td className="px-4 py-3 text-xs text-gray-600 whitespace-nowrap">{fmt(f.createdAt)}</td>
+                      <td className="px-4 py-3">
+                        <div className="flex gap-1.5">
+                          <button
+                            onClick={() => handleView(f._id)}
+                            className="flex items-center gap-1 bg-blue-50 hover:bg-blue-100 text-blue-700 border-0 rounded-lg px-3 py-1.5 text-xs font-bold cursor-pointer transition-colors"
+                          >
+                            <Eye size={12} /> View
+                          </button>
+                          <button
+                            onClick={() => { if (window.confirm("Delete this feedback permanently?")) handleDelete(f._id); }}
+                            className="bg-red-50 hover:bg-red-100 text-red-700 border-0 rounded-lg px-2 py-1.5 cursor-pointer transition-colors"
+                          >
+                            <Trash2 size={12} />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </>
         )}
 
         {/* Pagination */}
         {totalPages > 1 && (
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "14px 20px", borderTop: "1px solid #f1f5f9" }}>
-            <span style={{ fontSize: 13, color: "#64748b" }}>
+          <div className="flex flex-col sm:flex-row gap-4 justify-between items-center p-5 border-t border-gray-200">
+            <span className="text-xs text-gray-600">
               Page {page} of {totalPages} ({total} records)
             </span>
-            <div style={{ display: "flex", gap: 6 }}>
+            <div className="flex gap-1.5">
               <button onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page === 1}
-                style={{ display: "flex", alignItems: "center", gap: 4, background: page === 1 ? "#f1f5f9" : "#fff", border: "1.5px solid #e5e7eb", borderRadius: 8, padding: "7px 12px", fontWeight: 600, fontSize: 13, cursor: page === 1 ? "not-allowed" : "pointer", color: page === 1 ? "#cbd5e1" : "#374151" }}>
+                className={`flex items-center gap-1 px-3 py-2 rounded-lg text-sm font-semibold border transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed ${
+                  page === 1 ? "bg-gray-100 border-gray-200 text-gray-500" : "bg-white border-gray-200 text-gray-700 hover:bg-gray-50"
+                }`}>
                 <ChevronLeft size={14} /> Prev
               </button>
               {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
@@ -506,13 +569,17 @@ export default function AdminFeedback() {
                 if (pg < 1 || pg > totalPages) return null;
                 return (
                   <button key={pg} onClick={() => setPage(pg)}
-                    style={{ background: page === pg ? "#6366f1" : "#fff", color: page === pg ? "#fff" : "#374151", border: `1.5px solid ${page === pg ? "#6366f1" : "#e5e7eb"}`, borderRadius: 8, padding: "7px 13px", fontWeight: 700, fontSize: 13, cursor: "pointer" }}>
+                    className={`w-8 h-8 rounded-lg text-sm font-bold transition-colors cursor-pointer border-0 ${
+                      page === pg ? "bg-indigo-600 text-white" : "bg-white border border-gray-200 text-gray-700 hover:bg-gray-50"
+                    }`}>
                     {pg}
                   </button>
                 );
               })}
               <button onClick={() => setPage((p) => Math.min(totalPages, p + 1))} disabled={page === totalPages}
-                style={{ display: "flex", alignItems: "center", gap: 4, background: page === totalPages ? "#f1f5f9" : "#fff", border: "1.5px solid #e5e7eb", borderRadius: 8, padding: "7px 12px", fontWeight: 600, fontSize: 13, cursor: page === totalPages ? "not-allowed" : "pointer", color: page === totalPages ? "#cbd5e1" : "#374151" }}>
+                className={`flex items-center gap-1 px-3 py-2 rounded-lg text-sm font-semibold border transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed ${
+                  page === totalPages ? "bg-gray-100 border-gray-200 text-gray-500" : "bg-white border-gray-200 text-gray-700 hover:bg-gray-50"
+                }`}>
                 Next <ChevronRight size={14} />
               </button>
             </div>

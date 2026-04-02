@@ -1,38 +1,86 @@
-import React, { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useSearchParams } from "react-router-dom";
 import { API_BASE_URL } from "./AdminLayout.jsx";
-import { ChevronDown, ChevronUp, FileText, CheckCircle, Clock, Trash2 } from "lucide-react";
+import {
+  ChevronDown, ChevronUp, FileText, CheckCircle, Clock,
+  Trash2, Search, MapPin, Phone, Globe, ExternalLink,
+  ChevronLeft, ChevronRight, Loader, Upload,
+} from "lucide-react";
 
+const LIMIT = 8;
+
+function pageRange(current, total) {
+  if (total <= 5) return Array.from({ length: total }, (_, i) => i + 1);
+  if (current <= 3) return [1, 2, 3, "...", total];
+  if (current >= total - 2) return [1, "...", total - 2, total - 1, total];
+  return [1, "...", current - 1, current, current + 1, "...", total];
+}
+
+const formatDate = (d) =>
+  d ? new Date(d).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" }) : "—";
+
+const timeAgo = (d) => {
+  if (!d) return "—";
+  const diff = Date.now() - new Date(d).getTime();
+  const mins = Math.floor(diff / 60000);
+  if (mins < 60) return `${mins} min${mins !== 1 ? "s" : ""} ago`;
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24) return `${hrs} hour${hrs !== 1 ? "s" : ""} ago`;
+  const days = Math.floor(hrs / 24);
+  return `${days} day${days !== 1 ? "s" : ""} ago`;
+};
+
+/* ── Info field ── */
+function InfoField({ label, value, green }) {
+  return (
+    <div>
+      <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-0.5 m-0">{label}</p>
+      <p className={`text-sm font-bold m-0 break-words ${green ? "text-[#2d5a1b]" : "text-gray-900"}`}>
+        {value || "—"}
+      </p>
+    </div>
+  );
+}
+
+/* ── NGO Avatar ── */
+const PALETTE = [
+  { bg: "#d8e8b8", text: "#3a5c1a" }, { bg: "#c7d9f0", text: "#1e40af" },
+  { bg: "#fde68a", text: "#92400e" }, { bg: "#fecaca", text: "#991b1b" },
+  { bg: "#e9d5ff", text: "#6d28d9" }, { bg: "#fed7aa", text: "#9a3412" },
+  { bg: "#d1fae5", text: "#065f46" }, { bg: "#c8f56a", text: "#2d5a1b" },
+];
+const avatarStyle = (name) => PALETTE[(name || " ").charCodeAt(0) % PALETTE.length];
+
+/* ════════════════════════════════════════════════════ */
 function AdminNgos() {
   const [searchParams, setSearchParams] = useSearchParams();
-  const [ngos, setNgos] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [search, setSearch] = useState(searchParams.get("search") || "");
-  const [statusFilter, setStatusFilter] = useState(searchParams.get("status") || "");
-  const [page, setPage] = useState(Number(searchParams.get("page")) || 1);
-  const [pagination, setPagination] = useState({ total: 0, pages: 1 });
+  const [ngos,          setNgos]          = useState([]);
+  const [loading,       setLoading]       = useState(true);
+  const [search,        setSearch]        = useState(searchParams.get("search") || "");
+  const [statusFilter,  setStatusFilter]  = useState(searchParams.get("status") || "");
+  const [page,          setPage]          = useState(Number(searchParams.get("page")) || 1);
+  const [pagination,    setPagination]    = useState({ total: 0, pages: 1 });
   const [actionLoading, setActionLoading] = useState(null);
-  const [expandedId, setExpandedId] = useState(null);
+  const [expandedId,    setExpandedId]    = useState(null);
 
   const token = localStorage.getItem("token");
 
   const fetchNgos = useCallback(() => {
     setLoading(true);
     const params = new URLSearchParams();
-    if (search) params.set("search", search);
+    if (search)       params.set("search", search);
     if (statusFilter) params.set("status", statusFilter);
-    params.set("page", page);
-    params.set("limit", 10);
-
+    params.set("page",  page);
+    params.set("limit", LIMIT);
     fetch(`${API_BASE_URL}/api/admin/ngos?${params}`, {
-      headers: { Authorization: `Bearer ${token}` },
-      credentials: "include"
+      headers: { Authorization: `Bearer ${token}` }, credentials: "include",
     })
-      .then(r => r.json())
-      .then(d => {
+      .then((r) => r.json())
+      .then((d) => {
         if (d.success) {
           setNgos(d.data);
-          setPagination(d.pagination);
+          const total = d.pagination?.total ?? d.data?.length ?? 0;
+          setPagination({ total, pages: Math.ceil(total / LIMIT) || 1 });
         }
       })
       .catch(() => {})
@@ -40,13 +88,12 @@ function AdminNgos() {
   }, [search, statusFilter, page, token]);
 
   useEffect(() => { fetchNgos(); }, [fetchNgos]);
-
   useEffect(() => {
-    const params = {};
-    if (search) params.search = search;
-    if (statusFilter) params.status = statusFilter;
-    if (page > 1) params.page = page;
-    setSearchParams(params, { replace: true });
+    const p = {};
+    if (search)       p.search = search;
+    if (statusFilter) p.status = statusFilter;
+    if (page > 1)     p.page   = page;
+    setSearchParams(p, { replace: true });
   }, [search, statusFilter, page, setSearchParams]);
 
   const updateStatus = async (id, isVerified) => {
@@ -56,13 +103,13 @@ function AdminNgos() {
         method: "PUT",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
         credentials: "include",
-        body: JSON.stringify({ isVerified })
+        body: JSON.stringify({ isVerified }),
       });
       const d = await res.json();
       if (d.success) fetchNgos();
       else alert(d.message || "Failed to update status");
     } catch { alert("Network error"); }
-    finally { setActionLoading(null); }
+    finally   { setActionLoading(null); }
   };
 
   const deleteNgo = async (id, name) => {
@@ -71,26 +118,21 @@ function AdminNgos() {
     try {
       const res = await fetch(`${API_BASE_URL}/api/admin/ngos/${id}`, {
         method: "DELETE",
-        headers: { Authorization: `Bearer ${token}` },
-        credentials: "include"
+        headers: { Authorization: `Bearer ${token}` }, credentials: "include",
       });
       const d = await res.json();
       if (d.success) fetchNgos();
       else alert(d.message || "Failed to delete");
     } catch { alert("Network error"); }
-    finally { setActionLoading(null); }
+    finally   { setActionLoading(null); }
   };
-
-  const formatDate = (d) => d ? new Date(d).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" }) : "—";
 
   const viewDocument = async (key) => {
     if (!key || key === "not found") return;
-    // If already a full URL, open directly
     if (key.startsWith("http")) { window.open(key, "_blank", "noopener"); return; }
     try {
       const res = await fetch(`${API_BASE_URL}/api/s3/get-url?key=${encodeURIComponent(key)}`, {
-        headers: { Authorization: `Bearer ${token}` },
-        credentials: "include"
+        headers: { Authorization: `Bearer ${token}` }, credentials: "include",
       });
       const d = await res.json();
       if (d.data?.Url) window.open(d.data.Url, "_blank", "noopener");
@@ -98,139 +140,314 @@ function AdminNgos() {
     } catch { alert("Failed to load document."); }
   };
 
+  const showFrom = pagination.total === 0 ? 0 : (page - 1) * LIMIT + 1;
+  const showTo   = Math.min(page * LIMIT, pagination.total);
+
   return (
-    <div>
-      <h1 className="admin-page-title">Manage NGOs</h1>
+    <div className="-m-4 sm:-m-6 lg:-m-8 min-h-screen bg-[#f5f0e8]">
+      <div className="p-4 sm:p-6 lg:p-8">
 
-      <div className="admin-filters">
-        <input
-          type="text"
-          placeholder="Search by name, email, city..."
-          value={search}
-          onChange={e => { setSearch(e.target.value); setPage(1); }}
-          className="admin-search-input"
-        />
-        <select value={statusFilter} onChange={e => { setStatusFilter(e.target.value); setPage(1); }} className="admin-filter-select">
-          <option value="">All Status</option>
-          <option value="verified">Verified</option>
-          <option value="pending">Pending</option>
-        </select>
-      </div>
+        {/* ══ HEADER ══ */}
+        <div className="mb-7">
+          <h1 className="text-[2rem] sm:text-[2.4rem] font-black text-gray-900 leading-tight m-0">
+            Manage NGOs
+          </h1>
+          <p className="text-sm text-gray-500 mt-1 m-0">
+            Review, verify and manage all registered NGOs on the platform.
+          </p>
+        </div>
 
-      <div className="admin-table-wrapper">
+        {/* ══ FILTERS ══ */}
+        <div className="flex flex-col sm:flex-row gap-3 mb-6">
+          <div className="relative flex-1">
+            <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+            <input
+              type="text"
+              placeholder="Search by name, email, city..."
+              value={search}
+              onChange={(e) => { setSearch(e.target.value); setPage(1); }}
+              className="w-full pl-9 pr-4 py-2.5 bg-white border border-gray-200 rounded-xl text-sm outline-none focus:border-[#2d5a1b] transition-colors shadow-sm"
+            />
+          </div>
+          <select
+            value={statusFilter}
+            onChange={(e) => { setStatusFilter(e.target.value); setPage(1); }}
+            className="px-4 py-2.5 bg-white border border-gray-200 rounded-xl text-sm outline-none cursor-pointer shadow-sm w-full sm:w-[160px]"
+          >
+            <option value="">All Status</option>
+            <option value="verified">Verified</option>
+            <option value="pending">Pending</option>
+          </select>
+        </div>
+
+        {/* ══ LIST ══ */}
         {loading ? (
-          <div className="admin-loading">Loading NGOs...</div>
+          <div className="flex flex-col items-center justify-center py-20 gap-3 text-gray-400">
+            <Loader size={28} className="animate-spin" />
+            <p className="text-sm m-0">Loading NGOs…</p>
+          </div>
         ) : ngos.length === 0 ? (
-          <div className="admin-empty-state">No NGOs found.</div>
+          <div className="text-center py-20 text-gray-400 text-sm">No NGOs found.</div>
         ) : (
-          <>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: "20px" }}>
-              {ngos.map(n => (
-                <div key={n._id} style={{
-                  border: "1px solid #e5e7eb",
-                  borderRadius: "8px",
-                  overflow: "hidden",
-                  backgroundColor: "#fff"
-                }}>
-                  {/* Header */}
-                  <div style={{
-                    padding: "16px",
-                    backgroundColor: "#f9fafb",
-                    borderBottom: "1px solid #e5e7eb",
-                    display: "flex",
-                    justifyContent: "space-between",
-                    alignItems: "center",
-                    cursor: "pointer"
-                  }} onClick={() => setExpandedId(expandedId === n._id ? null : n._id)}>
-                    <div style={{ flex: 1 }}>
-                      <h3 style={{ margin: "0 0 4px 0", fontSize: "16px", fontWeight: "600" }}>{n.ngoName}</h3>
-                      <p style={{ margin: "0", fontSize: "13px", color: "#6b7280" }}>{n.email} • {n.city}</p>
+          <div className="flex flex-col gap-4">
+            {ngos.map((n) => {
+              const isExpanded = expandedId === n._id;
+              const busy       = actionLoading === n._id;
+              const av         = avatarStyle(n.ngoName);
+              const fullAddress = [n.address, n.city, n.district, n.state, n.pincode].filter(Boolean).join(", ");
+              const mapQuery   = encodeURIComponent((fullAddress ? `${fullAddress}, India` : n.ngoName));
+
+              return (
+                <div key={n._id} className="bg-white rounded-2xl shadow-sm overflow-hidden">
+
+                  {/* ── Collapsed header (always visible) ── */}
+                  <div
+                    onClick={() => setExpandedId(isExpanded ? null : n._id)}
+                    className="flex items-center gap-4 px-5 py-4 cursor-pointer hover:bg-gray-50/50 transition-colors"
+                  >
+                    {/* Logo / Avatar */}
+                    {n.logo ? (
+                      <img src={n.logo} alt="" className="w-12 h-12 rounded-xl object-cover flex-shrink-0" />
+                    ) : (
+                      <div
+                        className="w-12 h-12 rounded-xl flex items-center justify-center font-black text-base flex-shrink-0"
+                        style={{ background: av.bg, color: av.text }}
+                      >
+                        {(n.ngoName || "N").charAt(0).toUpperCase()}
+                      </div>
+                    )}
+
+                    {/* Name + meta */}
+                    <div className="flex-1 min-w-0">
+                      <p className="font-black text-gray-900 text-sm m-0 truncate">{n.ngoName}</p>
+                      <p className="text-xs text-gray-400 m-0 mt-0.5 truncate">
+                        {n.email}{n.city ? ` • ${n.city}` : ""}
+                      </p>
                     </div>
-                    <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-                      <span style={{
-                        padding: "4px 12px",
-                        borderRadius: "20px",
-                        fontSize: "12px",
-                        fontWeight: "500",
-                        backgroundColor: n.isVerified ? "#d1fae5" : "#fef3c7",
-                        color: n.isVerified ? "#065f46" : "#92400e"
-                      }}>
-                        {n.isVerified ? <><CheckCircle size={14} style={{ marginRight: 4 }} /> Verified</> : <><Clock size={14} style={{ marginRight: 4 }} /> Pending</>}
-                      </span>
-                      {expandedId === n._id ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
+
+                    {/* Verified badge */}
+                    <span className={`inline-flex items-center gap-1.5 px-2 sm:px-3 py-1 rounded-full text-[11px] font-bold whitespace-nowrap flex-shrink-0 ${
+                      n.isVerified
+                        ? "bg-green-50 text-green-700 border border-green-200"
+                        : "bg-yellow-50 text-yellow-700 border border-yellow-200"
+                    }`}>
+                      {n.isVerified
+                        ? <><CheckCircle size={11} /><span className="hidden sm:inline">Verified</span></>
+                        : <><Clock size={11} /><span className="hidden sm:inline">Pending</span></>
+                      }
+                    </span>
+
+                    {/* Chevron */}
+                    <div className="text-gray-400 flex-shrink-0">
+                      {isExpanded ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
                     </div>
                   </div>
 
-                  {/* Expanded Details */}
-                  {expandedId === n._id && (
-                    <div style={{ padding: "20px" }}>
-                      {/* Registration Info */}
-                      <div style={{ marginBottom: "20px" }}>
-                        <h4 style={{ fontSize: "14px", fontWeight: "600", marginBottom: "12px", color: "#1f2937" }}>Registration Details</h4>
-                        <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: "12px", fontSize: "13px" }}>
-                          <div><strong>Reg Type:</strong> {n.regType}</div>
-                          <div><strong>Reg Number:</strong> {n.regNumber}</div>
-                          <div><strong>Est. Year:</strong> {n.estYear || "—"}</div>
-                          <div><strong>DARPAN ID:</strong> {n.darpanId || "—"}</div>
-                          <div><strong>PAN Number:</strong> {n.panNumber || "—"}</div>
-                          <div><strong>Description:</strong> {n.description || "—"}</div>
-                        </div>
-                      </div>
+                  {/* ── Expanded detail ── */}
+                  {isExpanded && (
+                    <div className="border-t border-gray-100 bg-[#faf9f6] px-4 sm:px-6 py-6">
 
-                      {/* Location */}
-                      <div style={{ marginBottom: "20px" }}>
-                        <h4 style={{ fontSize: "14px", fontWeight: "600", marginBottom: "12px", color: "#1f2937" }}>Location</h4>
-                        <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: "12px", fontSize: "13px" }}>
-                          <div><strong>State:</strong> {n.state}</div>
-                          <div><strong>District:</strong> {n.district}</div>
-                          <div><strong>City:</strong> {n.city}</div>
-                          <div><strong>Pincode:</strong> {n.pincode}</div>
-                          <div style={{ gridColumn: "1 / -1" }}><strong>Address:</strong> {n.address}</div>
-                        </div>
-                      </div>
+                      {/* ── Top: identity + dates + action buttons ── */}
+                      <div className="flex flex-col sm:flex-row gap-5 mb-6">
 
-                      {/* Contact Info */}
-                      <div style={{ marginBottom: "20px" }}>
-                        <h4 style={{ fontSize: "14px", fontWeight: "600", marginBottom: "12px", color: "#1f2937" }}>Contact Information</h4>
-                        <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: "12px", fontSize: "13px" }}>
-                          <div><strong>Contact Name:</strong> {n.contactName}</div>
-                          <div><strong>Role:</strong> {n.contactRole}</div>
-                          <div><strong>Phone:</strong> {n.phone}</div>
-                          <div><strong>WhatsApp:</strong> {n.whatsapp}</div>
-                          <div><strong>Email:</strong> {n.email}</div>
-                          <div><strong>Website:</strong> {n.website ? <a href={n.website} target="_blank" rel="noopener noreferrer" style={{ color: "#0ea5e9" }}>{n.website}</a> : "—"}</div>
-                        </div>
-                        {(n.socialMedia?.facebook || n.socialMedia?.instagram) && (
-                          <div style={{ marginTop: "8px", fontSize: "13px" }}>
-                            {n.socialMedia.facebook && <div><strong>Facebook:</strong> <a href={`https://facebook.com/${n.socialMedia.facebook}`} target="_blank" rel="noopener noreferrer" style={{ color: "#0ea5e9" }}>{n.socialMedia.facebook}</a></div>}
-                            {n.socialMedia.instagram && <div><strong>Instagram:</strong> <a href={`https://instagram.com/${n.socialMedia.instagram}`} target="_blank" rel="noopener noreferrer" style={{ color: "#0ea5e9" }}>{n.socialMedia.instagram}</a></div>}
+                        {/* Left: logo + name + desc + buttons */}
+                        <div className="flex-1">
+                          <div className="flex items-start gap-4 mb-3">
+                            {n.logo ? (
+                              <img src={n.logo} alt="" className="w-16 h-16 rounded-2xl object-cover flex-shrink-0" />
+                            ) : (
+                              <div
+                                className="w-16 h-16 rounded-2xl flex items-center justify-center font-black text-2xl flex-shrink-0"
+                                style={{ background: av.bg, color: av.text }}
+                              >
+                                {(n.ngoName || "N").charAt(0).toUpperCase()}
+                              </div>
+                            )}
+                            <div>
+                              <div className="flex items-center gap-2 flex-wrap mb-1">
+                                <h2 className="text-xl font-black text-gray-900 m-0 leading-tight">{n.ngoName}</h2>
+                                {n.isVerified && (
+                                  <span className="inline-flex items-center gap-1 px-2.5 py-0.5 bg-green-100 text-green-700 text-[11px] font-black rounded-full border border-green-200">
+                                    <CheckCircle size={10} /> VERIFIED
+                                  </span>
+                                )}
+                              </div>
+                              {n.description && (
+                                <p className="text-sm text-gray-500 m-0 leading-relaxed max-w-xl line-clamp-3">
+                                  {n.description}
+                                </p>
+                              )}
+                            </div>
                           </div>
-                        )}
+
+                          {/* Action buttons */}
+                          <div className="flex items-center gap-2 flex-wrap mt-4">
+                            {n.isVerified ? (
+                              <button
+                                onClick={() => updateStatus(n._id, false)}
+                                disabled={busy}
+                                className="px-4 py-2 rounded-full border border-red-300 text-red-600 text-xs font-bold hover:bg-red-50 transition-colors cursor-pointer bg-transparent disabled:opacity-40"
+                              >
+                                Revoke Access
+                              </button>
+                            ) : (
+                              <button
+                                onClick={() => updateStatus(n._id, true)}
+                                disabled={busy}
+                                className="px-4 py-2 rounded-full border border-green-300 text-green-700 text-xs font-bold hover:bg-green-50 transition-colors cursor-pointer bg-transparent disabled:opacity-40"
+                              >
+                                ✓ Approve
+                              </button>
+                            )}
+                            <button
+                              onClick={() => deleteNgo(n._id, n.ngoName)}
+                              disabled={busy}
+                              className="px-4 py-2 rounded-full border border-gray-300 text-gray-600 text-xs font-bold hover:bg-gray-100 transition-colors cursor-pointer bg-transparent disabled:opacity-40 flex items-center gap-1.5"
+                            >
+                              <Trash2 size={12} /> Delete NGO
+                            </button>
+                            {busy && <Loader size={16} className="animate-spin text-gray-400" />}
+                          </div>
+                        </div>
+
+                        {/* Right: date chips */}
+                        <div className="flex flex-row sm:flex-col gap-3">
+                          <div className="bg-[#f0ede8] rounded-2xl px-4 py-3 flex-1 sm:flex-none sm:min-w-[150px]">
+                            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest m-0 mb-1">Registration Date</p>
+                            <p className="text-sm font-bold text-gray-900 m-0">{formatDate(n.createdAt)}</p>
+                          </div>
+                          <div className="bg-[#f0ede8] rounded-2xl px-4 py-3 flex-1 sm:flex-none sm:min-w-[150px]">
+                            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest m-0 mb-1">Last Activity</p>
+                            <p className="text-sm font-bold text-gray-900 m-0">{timeAgo(n.updatedAt)}</p>
+                          </div>
+                        </div>
                       </div>
 
-                      {/* Services */}
-                      {n.services && n.services.length > 0 && (
-                        <div style={{ marginBottom: "20px" }}>
-                          <h4 style={{ fontSize: "14px", fontWeight: "600", marginBottom: "8px", color: "#1f2937" }}>Services</h4>
-                          <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
+                      {/* ── Registration & Contact (side by side) ── */}
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+
+                        {/* Registration & Impact */}
+                        <div className="bg-[#f0ede8] rounded-2xl p-5">
+                          <div className="flex items-center gap-2 mb-4">
+                            <FileText size={16} className="text-[#2d5a1b]" />
+                            <h3 className="text-sm font-black text-gray-900 m-0">Registration &amp; Impact</h3>
+                          </div>
+                          <div className="grid grid-cols-2 sm:grid-cols-3 gap-x-4 gap-y-4 mb-4">
+                            <InfoField label="Reg Type"   value={n.regType} />
+                            <InfoField label="Est. Year"  value={n.estYear} />
+                            <InfoField label="PAN Number" value={n.panNumber} />
+                          </div>
+                          <div className="grid grid-cols-2 gap-x-4 gap-y-4">
+                            <InfoField label="Reg Number" value={n.regNumber} />
+                            <InfoField label="DARPAN ID"  value={n.darpanId} />
+                          </div>
+                        </div>
+
+                        {/* Contact Details */}
+                        <div className="bg-[#f0ede8] rounded-2xl p-5">
+                          <div className="flex items-center gap-2 mb-4">
+                            <Phone size={16} className="text-[#2d5a1b]" />
+                            <h3 className="text-sm font-black text-gray-900 m-0">Contact Details</h3>
+                          </div>
+                          <div className="flex flex-col gap-3">
+                            {n.contactName && (
+                              <div>
+                                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-0.5 m-0">Executive Director</p>
+                                <p className="text-sm font-bold text-gray-900 m-0">{n.contactName}{n.contactRole ? ` · ${n.contactRole}` : ""}</p>
+                              </div>
+                            )}
+                            {n.phone && (
+                              <div>
+                                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-0.5 m-0">Phone</p>
+                                <p className="text-sm font-bold text-gray-900 m-0">+91 {n.phone}</p>
+                              </div>
+                            )}
+                            {n.email && (
+                              <div>
+                                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-0.5 m-0">Email</p>
+                                <p className="text-sm font-bold text-gray-900 m-0 break-all">{n.email}</p>
+                              </div>
+                            )}
+                            {n.website && (
+                              <div>
+                                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-0.5 m-0">Website</p>
+                                <a
+                                  href={n.website.startsWith("http") ? n.website : `https://${n.website}`}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="text-sm font-bold text-[#2d5a1b] hover:underline flex items-center gap-1 m-0"
+                                >
+                                  {n.website.replace(/^https?:\/\//, "")}
+                                  <Globe size={11} />
+                                </a>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* ── Location + Map ── */}
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
+
+                        {/* Address card */}
+                        <div className="bg-[#f0ede8] rounded-2xl p-5 flex flex-col justify-between">
+                          <div>
+                            <div className="flex items-center gap-2 mb-3">
+                              <MapPin size={16} className="text-[#2d5a1b]" />
+                              <h3 className="text-sm font-black text-gray-900 m-0">Location</h3>
+                            </div>
+                            <p className="text-sm text-gray-700 m-0 leading-relaxed">
+                              {n.address && <>{n.address},<br /></>}
+                              {n.district && <>{n.district},<br /></>}
+                              {n.city && n.state
+                                ? `${n.city}, ${n.state}${n.pincode ? ` - ${n.pincode}` : ""}`
+                                : (n.state || n.city || "—")}
+                            </p>
+                          </div>
+                          {fullAddress && (
+                            <a
+                              href={`https://www.google.com/maps/search/?api=1&query=${mapQuery}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center gap-1.5 text-xs font-bold text-[#2d5a1b] hover:underline mt-4"
+                            >
+                              <ExternalLink size={12} /> View on Map
+                            </a>
+                          )}
+                        </div>
+
+                        {/* Map embed */}
+                        <div className="sm:col-span-2 rounded-2xl overflow-hidden min-h-[240px] sm:min-h-[220px] bg-gray-100">
+                          <iframe
+                            title="NGO Location"
+                            width="100%"
+                            height="100%"
+                            style={{ minHeight: "240px", border: 0, display: "block" }}
+                            loading="lazy"
+                            src={`https://maps.google.com/maps?q=${mapQuery}&output=embed&z=15&iwloc=B`}
+                          />
+                        </div>
+                      </div>
+
+                      {/* ── Services ── */}
+                      {n.services?.length > 0 && (
+                        <div className="mb-4">
+                          <h3 className="text-sm font-black text-gray-900 m-0 mb-3">Services</h3>
+                          <div className="flex flex-wrap gap-2">
                             {n.services.map((s, i) => (
-                              <span key={i} style={{
-                                padding: "4px 12px",
-                                backgroundColor: "#e0e7ff",
-                                borderRadius: "20px",
-                                fontSize: "12px",
-                                color: "#4c1d95"
-                              }}>{s}</span>
+                              <span key={i} className="px-3 py-1 bg-[#eef8e4] text-[#2d5a1b] border border-green-200 rounded-full text-xs font-semibold">
+                                {s}
+                              </span>
                             ))}
                           </div>
                         </div>
                       )}
 
-                      {/* Certificates */}
+                      {/* ── Documents & Certification ── */}
                       {n.documents && (
-                        <div style={{ marginBottom: "20px" }}>
-                          <h4 style={{ fontSize: "14px", fontWeight: "600", marginBottom: "12px", color: "#1f2937" }}>Certificates & Documents</h4>
-                          <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "12px" }}>
+                        <div>
+                          <h3 className="text-sm font-black text-gray-900 m-0 mb-3">Documents &amp; Certification</h3>
+                          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                             {[
                               { label: "Registration Cert", key: n.documents.registrationCertificate },
                               { label: "12A Certificate",   key: n.documents.certificate12A },
@@ -238,16 +455,23 @@ function AdminNgos() {
                             ].map(({ label, key }) => {
                               const hasDoc = key && key !== "not found";
                               return (
-                                <div key={label} style={{ padding: "12px", backgroundColor: hasDoc ? "#f0f9ff" : "#f3f4f6", borderRadius: "6px", textAlign: "center", border: hasDoc ? "1px solid #bae6fd" : "1px solid #e5e7eb" }}>
-                                  <FileText size={20} style={{ margin: "0 auto 8px", color: hasDoc ? "#0284c7" : "#9ca3af" }} />
-                                  <div style={{ fontSize: "12px", fontWeight: "500", marginBottom: "4px" }}>{label}</div>
+                                <div
+                                  key={label}
+                                  className="bg-[#f0ede8] rounded-2xl p-5 flex flex-col items-center justify-center gap-2 text-center min-h-[110px]"
+                                >
+                                  <Upload size={22} className={hasDoc ? "text-[#2d5a1b]" : "text-gray-300"} />
+                                  <p className="text-xs font-bold text-gray-700 m-0">{label}</p>
                                   {hasDoc ? (
                                     <button
                                       onClick={() => viewDocument(key)}
-                                      style={{ color: "#0ea5e9", fontSize: "11px", background: "none", border: "none", cursor: "pointer", padding: 0, textDecoration: "underline" }}
-                                    >View →</button>
+                                      className="text-xs font-bold text-[#2d5a1b] hover:underline border-0 bg-transparent cursor-pointer flex items-center gap-1"
+                                    >
+                                      View <ExternalLink size={10} />
+                                    </button>
                                   ) : (
-                                    <div style={{ color: "#9ca3af", fontSize: "11px" }}>Not uploaded</div>
+                                    <p className="text-[10px] font-black text-red-400 uppercase tracking-widest m-0">
+                                      Not Uploaded
+                                    </p>
                                   )}
                                 </div>
                               );
@@ -255,86 +479,59 @@ function AdminNgos() {
                           </div>
                         </div>
                       )}
-
-                      {/* Actions */}
-                      <div style={{
-                        paddingTop: "16px",
-                        borderTop: "1px solid #e5e7eb",
-                        display: "flex",
-                        gap: "8px",
-                        flexWrap: "wrap"
-                      }}>
-                        {!n.isVerified && (
-                          <button
-                            style={{
-                              padding: "8px 16px",
-                              backgroundColor: "#10b981",
-                              color: "white",
-                              border: "none",
-                              borderRadius: "6px",
-                              cursor: actionLoading === n._id ? "not-allowed" : "pointer",
-                              fontSize: "13px",
-                              fontWeight: "500",
-                              opacity: actionLoading === n._id ? 0.6 : 1
-                            }}
-                            disabled={actionLoading === n._id}
-                            onClick={() => updateStatus(n._id, true)}
-                          >
-                            ✓ Approve
-                          </button>
-                        )}
-                        {n.isVerified && (
-                          <button
-                            style={{
-                              padding: "8px 16px",
-                              backgroundColor: "#ef4444",
-                              color: "white",
-                              border: "none",
-                              borderRadius: "6px",
-                              cursor: actionLoading === n._id ? "not-allowed" : "pointer",
-                              fontSize: "13px",
-                              fontWeight: "500",
-                              opacity: actionLoading === n._id ? 0.6 : 1
-                            }}
-                            disabled={actionLoading === n._id}
-                            onClick={() => updateStatus(n._id, false)}
-                          >
-                            ✗ Revoke
-                          </button>
-                        )}
-                        <button
-                          style={{
-                            padding: "8px 16px",
-                            backgroundColor: "#dc2626",
-                            color: "white",
-                            border: "none",
-                            borderRadius: "6px",
-                            cursor: actionLoading === n._id ? "not-allowed" : "pointer",
-                            fontSize: "13px",
-                            fontWeight: "500",
-                            opacity: actionLoading === n._id ? 0.6 : 1
-                          }}
-                          disabled={actionLoading === n._id}
-                          onClick={() => deleteNgo(n._id, n.ngoName)}
-                        >
-                          <Trash2 size={14} style={{ marginRight: 4 }} /> Delete
-                        </button>
-                      </div>
                     </div>
                   )}
                 </div>
-              ))}
-            </div>
-
-            {pagination.pages > 1 && (
-              <div className="admin-pagination">
-                <button disabled={page <= 1} onClick={() => setPage(p => p - 1)}>← Prev</button>
-                <span>Page {page} of {pagination.pages} ({pagination.total} total)</span>
-                <button disabled={page >= pagination.pages} onClick={() => setPage(p => p + 1)}>Next →</button>
-              </div>
-            )}
-          </>
+              );
+            })}
+          </div>
         )}
+
+        {/* ══ PAGINATION ══ */}
+        {!loading && ngos.length > 0 && (
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mt-6">
+            <p className="text-sm text-gray-500 m-0">
+              Showing{" "}
+              <strong className="text-gray-800">{showFrom}–{showTo}</strong>
+              {" "}of{" "}
+              <strong className="text-gray-800">{pagination.total}</strong> NGOs
+            </p>
+            <div className="flex items-center gap-1.5 flex-wrap justify-center">
+              <button
+                onClick={() => setPage((p) => p - 1)}
+                disabled={page <= 1}
+                className="w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center rounded-full border border-gray-300 bg-white text-gray-500 hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors cursor-pointer"
+              >
+                <ChevronLeft size={15} />
+              </button>
+              {pageRange(page, pagination.pages).map((n, i) =>
+                n === "..." ? (
+                  <span key={`e${i}`} className="w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center text-gray-400 text-sm">…</span>
+                ) : (
+                  <button
+                    key={n}
+                    onClick={() => setPage(n)}
+                    className={`w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center rounded-full text-sm font-semibold transition-colors cursor-pointer border-0 ${
+                      page === n
+                        ? "bg-[#2d5a1b] text-white shadow-sm"
+                        : "border border-gray-300 bg-white text-gray-600 hover:bg-gray-50"
+                    }`}
+                  >
+                    {n}
+                  </button>
+                )
+              )}
+              <button
+                onClick={() => setPage((p) => p + 1)}
+                disabled={page >= pagination.pages}
+                className="w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center rounded-full border border-gray-300 bg-white text-gray-500 hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors cursor-pointer"
+              >
+                <ChevronRight size={15} />
+              </button>
+            </div>
+          </div>
+        )}
+
       </div>
     </div>
   );
