@@ -4,7 +4,7 @@ import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell,
 } from "recharts";
 import { useInView } from "react-intersection-observer";
-import { motion, AnimatePresence } from "framer-motion";
+import { AnimatePresence } from "framer-motion";
 
 /* ── image imports ── */
 import imgEducation from "../../assets/images/orphanage/education.jpg";
@@ -63,6 +63,7 @@ function AnimCounter({ end, suffix = "", duration = 2200 }) {
   const [count, setCount] = useState(0);
   const started = useRef(false);
   useEffect(() => {
+
     if (!inView || started.current) return;
     started.current = true;
     const t0 = performance.now();
