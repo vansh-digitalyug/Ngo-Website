@@ -47,6 +47,10 @@ const contactSchema = new mongoose.Schema(
   }
 );
 
+// ✅ Added indexes
+contactSchema.index({ status: 1, createdAt: -1 });    // admin inbox: filter by status, newest first
+contactSchema.index({ createdAt: -1 });               // admin: all messages, newest first
+
 const Contact = mongoose.model('Contact', contactSchema);
 
 export default Contact;

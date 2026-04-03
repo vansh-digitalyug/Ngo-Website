@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
+import { fetchedPublicData, fetchPublicNgos } from "../services/api.js";
 import { Link } from "react-router-dom";
 import IndiaMap from "../components/IndiaMap.jsx";
 import {
@@ -66,7 +67,7 @@ export default function Home() {
 
   /* ── live NGO data from backend ── */
   const [liveNgos, setLiveNgos]   = useState([]);
-  const [ngoTotal, setNgoTotal]   = useState(500);
+  const [ngoTotal, setNgoTotal]   = useState(0);
   const [ngoLoading, setNgoLoading] = useState(true);
 
   /* ── live platform stats ── */
@@ -144,20 +145,16 @@ export default function Home() {
   }, [progPaused, progVisible]);
 
   useEffect(() => {
-    fetch(`${API}/api/ngo?limit=4&page=1`)
-      .then(r => {
-        if (!r.ok) throw new Error(`API returned ${r.status}`);
-        return r.json();
-      })
+    fetchPublicNgos(4, 1)
       .then(json => {
         if (typeof json.total === "number") setNgoTotal(json.total);
         if (Array.isArray(json.data) && json.data.length > 0) {
           setLiveNgos(json.data.map(n => ({
-            id:     n._id,
-            name:   n.ngoName,
-            city:   n.city  || n.state || "India",
-            cause:  Array.isArray(n.services) && n.services[0] ? n.services[0] : "General",
-            rating: n.rating ? Number(n.rating).toFixed(1) : "4.8",
+            id:    n._id,
+            name:  n.ngoName,
+            city:  n.city  || n.state || "India",
+            cause: Array.isArray(n.services) && n.services[0] ? n.services[0] : "General",
+            rating: n.rating != null ? Number(n.rating).toFixed(1) : null,
           })));
         }
       })
@@ -166,8 +163,7 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
-    fetch(`${API}/api/public/stats`)
-      .then(r => r.ok ? r.json() : null)
+    fetchedPublicData()
       .then(json => {
         if (json?.success && json.data) {
           setLiveStats(json.data.stats);
@@ -183,10 +179,10 @@ export default function Home() {
   }, []);
 
   const [statsRef, statsHit] = useInView(0.3);
-  const n1 = useCountUp(liveStats?.totalNgos       || ngoTotal, 2000, statsHit);
-  const n2 = useCountUp(liveStats?.totalDonations  || 0,        2200, statsHit);
-  const n3 = useCountUp(liveStats?.statesCovered   || 25,       1500, statsHit);
-  const n4 = useCountUp(liveStats?.totalVolunteers || 0,        2000, statsHit);
+  const n1 = useCountUp(liveStats?.totalNgos      ?? ngoTotal, 2000, statsHit);
+  const n2 = useCountUp(liveStats?.totalDonations ?? 0,        2200, statsHit);
+  const n3 = useCountUp(liveStats?.statesCovered  ?? 0,        1500, statsHit);
+  const n4 = useCountUp(liveStats?.totalVolunteers ?? 0,       2000, statsHit);
 
   const CAUSE_IMG_MAP = [
     { keywords: ["orphan", "child", "education", "school"],   img: orphanEducation, link: "/services/orphanage/education" },
@@ -264,15 +260,15 @@ export default function Home() {
 
   const totalRaisedCr = liveStats?.totalRaised ? (liveStats.totalRaised / 10000000).toFixed(1) : null;
   const marqueeItems = [
-    { Icon: FaStar,           text: <><strong>{liveStats?.totalNgos || ngoTotal}+</strong> Verified NGOs</> },
-    { Icon: FaHandHoldingUsd, text: <><strong>{totalRaisedCr ? `₹${totalRaisedCr} Cr+` : "₹2.4 Crore+"}</strong> Donated</> },
-    { Icon: FaMapMarkerAlt,   text: <><strong>{liveStats?.statesCovered || 25} States</strong> Covered</> },
-    { Icon: FaUsers,          text: <><strong>{(liveStats?.totalDonations || 3200).toLocaleString("en-IN")}+</strong> Donations Made</> },
+    { Icon: FaStar,           text: <><strong>{(liveStats?.totalNgos ?? ngoTotal) || "—"}+</strong> Verified NGOs</> },
+    { Icon: FaHandHoldingUsd, text: <><strong>{totalRaisedCr ? `₹${totalRaisedCr} Cr+` : "—"}</strong> Donated</> },
+    { Icon: FaMapMarkerAlt,   text: <><strong>{liveStats?.statesCovered ?? "—"} States</strong> Covered</> },
+    { Icon: FaUsers,          text: <><strong>{(liveStats?.totalDonations ?? 0).toLocaleString("en-IN")}+</strong> Donations Made</> },
     { Icon: FaCheckCircle,    text: <><strong>100%</strong> Transparent</> },
     { Icon: FaFileAlt,        text: <><strong>80G</strong> Tax Benefits</> },
     { Icon: FaHeart,          text: <><strong>10,000+</strong> Lives Changed</> },
     { Icon: FaShieldAlt,      text: <><strong>KYC-Verified</strong> Every NGO</> },
-    { Icon: FaHandshake,      text: <><strong>{(liveStats?.totalVolunteers || 1200).toLocaleString("en-IN")}+</strong> Volunteers</> },
+    { Icon: FaHandshake,      text: <><strong>{(liveStats?.totalVolunteers ?? 0).toLocaleString("en-IN")}+</strong> Volunteers</> },
   ];
 
   /* Shared Button Classes */
@@ -443,15 +439,19 @@ export default function Home() {
                     <span className="text-[0.92rem] font-extrabold text-[#1a2d5a]">
                       {c.raised >= 100000 ? `₹${(c.raised / 100000).toFixed(1)}L raised` : `₹${(c.raised / 1000).toFixed(0)}K raised`}
                     </span>
-                    <span className="text-[0.78rem] text-gray-400">
-                      of {c.goal >= 100000 ? `₹${(c.goal / 100000).toFixed(0)}L` : `₹${(c.goal / 1000).toFixed(0)}K`}
-                    </span>
+                    {c.goal && (
+                      <span className="text-[0.78rem] text-gray-400">
+                        of {c.goal >= 100000 ? `₹${(c.goal / 100000).toFixed(0)}L` : `₹${(c.goal / 1000).toFixed(0)}K`}
+                      </span>
+                    )}
                   </div>
-                  <div className="w-full h-[5px] bg-gray-200 rounded-full overflow-hidden mb-1.5">
-                    <div className="h-full rounded-full bg-gradient-to-r from-amber-600 to-amber-500 transition-all duration-1000" style={{ width: `${Math.min(Math.round((c.raised / c.goal) * 100), 100)}%` }} />
-                  </div>
+                  {c.goal && (
+                    <div className="w-full h-[5px] bg-gray-200 rounded-full overflow-hidden mb-1.5">
+                      <div className="h-full rounded-full bg-gradient-to-r from-amber-600 to-amber-500 transition-all duration-1000" style={{ width: `${Math.min(Math.round((c.raised / c.goal) * 100), 100)}%` }} />
+                    </div>
+                  )}
                   <div className="text-[0.75rem] text-amber-700 font-bold">
-                    {Math.min(Math.round((c.raised / c.goal) * 100), 100)}% funded
+                    {c.goal ? `${Math.min(Math.round((c.raised / c.goal) * 100), 100)}% funded` : ""}
                     {c.donors && <span className="ml-2 opacity-65 text-[0.78rem]">· {c.donors} donors</span>}
                   </div>
                   <Link to={c.link} className="flex items-center gap-1.5 mt-3.5 text-[0.85rem] font-bold text-[#1a2d5a] group-hover:gap-2.5 transition-all">Support This Cause →</Link>
@@ -719,7 +719,7 @@ export default function Home() {
                       {n.city} · {n.cause}
                     </p>
                   </div>
-                  <span className="ml-auto shrink-0 text-[0.68rem] font-bold text-green-700 bg-green-100 border border-green-200 px-2.5 py-1 rounded-full">★ {n.rating} Verified</span>
+                  <span className="ml-auto shrink-0 text-[0.68rem] font-bold text-green-700 bg-green-100 border border-green-200 px-2.5 py-1 rounded-full">{n.rating ? `★ ${n.rating} ` : ""}Verified</span>
                 </Link>
               ))}
             </div>

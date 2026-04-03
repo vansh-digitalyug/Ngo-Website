@@ -177,4 +177,11 @@ const ngoSchema = new mongoose.Schema({
   timestamps: true // Automatically adds createdAt and updatedAt
 });
 
+// ✅ Added indexes
+ngoSchema.index({ isVerified: 1, createdAt: -1 });   // public listing: verified NGOs sorted by newest
+ngoSchema.index({ ownerId: 1 });                      // find all NGOs owned by a user
+ngoSchema.index({ state: 1, isVerified: 1 });         // filter by state (public map/directory)
+ngoSchema.index({ services: 1 });                     // filter NGOs by service type (multikey)
+ngoSchema.index({ createdAt: -1 });                   // admin: recent registrations
+
 export default mongoose.model("Ngo", ngoSchema);

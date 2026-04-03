@@ -134,5 +134,10 @@ userSchema.index({ resetPasswordTokenHash: 1, resetPasswordExpiresAt: 1 });
 userSchema.index({ emailVerificationOtpHash: 1, emailVerificationOtpExpiresAt: 1 });
 // userSchema.index({ googleId: 1 }, { unique: true, sparse: true });
 
+// ✅ Added indexes
+userSchema.index({ role: 1 });                        // admin: find all admins quickly
+userSchema.index({ ngoId: 1 });                       // find all users belonging to an NGO
+userSchema.index({ createdAt: -1 });                  // admin: recent registrations
+
 const User = mongoose.model("User", userSchema);
 export default User;

@@ -19,11 +19,11 @@ export const getPublicStats = asyncHandler(async (req, res) => {
     recentPayments,
     causesAgg
   ] = await Promise.all([
-    // Verified NGOs count
-    Ngo.countDocuments({ isVerified: true }),
+    // Total registered NGOs (all are verified on this platform)
+    Ngo.countDocuments({}),
 
-    // Distinct states across verified NGOs
-    Ngo.distinct("state", { isVerified: true }),
+    // Distinct states across all NGOs
+    Ngo.distinct("state", {}),
 
     // Approved volunteers
     Volunteer.countDocuments({ status: "Approved" }),
@@ -41,7 +41,7 @@ export const getPublicStats = asyncHandler(async (req, res) => {
     Payment.find({ status: "paid" })
       .sort({ updatedAt: -1 })
       .limit(9)
-      .select("donorName isAnonymous serviceTitle amount updatedAt")
+      .select("donorName isAnonymous serviceTitle amount updatedAt createdAt")
       .lean(),
 
     // Top causes: total raised per serviceTitle (top 4)
@@ -73,13 +73,14 @@ export const getPublicStats = asyncHandler(async (req, res) => {
         : parts[0];
 
     const now = Date.now();
-    const diffMs = now - new Date(p.updatedAt).getTime();
+    const ts = new Date(p.updatedAt || p.createdAt).getTime();
+    const diffMs = isNaN(ts) ? 0 : now - ts;
     const diffMin = Math.floor(diffMs / 60000);
     let timeAgo;
-    if (diffMin < 1)        timeAgo = "just now";
-    else if (diffMin < 60)  timeAgo = `${diffMin} min ago`;
+    if (diffMin < 1)         timeAgo = "just now";
+    else if (diffMin < 60)   timeAgo = `${diffMin} min ago`;
     else if (diffMin < 1440) timeAgo = `${Math.floor(diffMin / 60)} hr ago`;
-    else                    timeAgo = `${Math.floor(diffMin / 1440)} days ago`;
+    else                     timeAgo = `${Math.floor(diffMin / 1440)} days ago`;
 
     return {
       initials,
@@ -91,36 +92,32 @@ export const getPublicStats = asyncHandler(async (req, res) => {
     };
   });
 
-  // Map cause titles to category labels for the frontend
+  // Map cause titles to display category labels
   const CATEGORY_MAP = [
-    { keywords: ["orphan", "child", "education", "school"],    cat: "Child Welfare",    goal: 250000 },
-    { keywords: ["elder", "senior", "medical", "health"],      cat: "Medical Aid",      goal: 150000 },
-    { keywords: ["meal", "food", "nutrition", "lunch"],        cat: "Nutrition",        goal: 120000 },
-    { keywords: ["kanya", "wedding", "marriage", "girl"],      cat: "Kanya Daan",       goal: 120000 },
-    { keywords: ["widow", "women", "woman", "empowerment"],    cat: "Women Welfare",    goal: 100000 },
-    { keywords: ["road", "infrastructure", "construction"],    cat: "Infrastructure",   goal: 200000 },
-    { keywords: ["cancer", "kidney", "camp", "treatment"],     cat: "Medical Aid",      goal: 150000 },
-    { keywords: ["helmet", "safety", "community"],             cat: "Community Safety", goal: 80000  },
+    { keywords: ["orphan", "child", "education", "school"],    cat: "Child Welfare"    },
+    { keywords: ["elder", "senior", "medical", "health"],      cat: "Medical Aid"      },
+    { keywords: ["meal", "food", "nutrition", "lunch"],        cat: "Nutrition"        },
+    { keywords: ["kanya", "wedding", "marriage", "girl"],      cat: "Kanya Daan"       },
+    { keywords: ["widow", "women", "woman", "empowerment"],    cat: "Women Welfare"    },
+    { keywords: ["road", "infrastructure", "construction"],    cat: "Infrastructure"   },
+    { keywords: ["cancer", "kidney", "camp", "treatment"],     cat: "Medical Aid"      },
+    { keywords: ["helmet", "safety", "community"],             cat: "Community Safety" },
   ];
 
   const getCategory = (title) => {
     const lower = (title || "").toLowerCase();
     for (const c of CATEGORY_MAP) {
-      if (c.keywords.some(k => lower.includes(k))) return { cat: c.cat, goal: c.goal };
+      if (c.keywords.some(k => lower.includes(k))) return c.cat;
     }
-    return { cat: "General", goal: 100000 };
+    return "General";
   };
 
-  const topCauses = causesAgg.map(c => {
-    const { cat, goal } = getCategory(c._id);
-    return {
-      title: c._id,
-      cat,
-      raised: c.raised,
-      donors: c.donors,
-      goal
-    };
-  });
+  const topCauses = causesAgg.map(c => ({
+    title: c._id,
+    cat: getCategory(c._id),
+    raised: c.raised,
+    donors: c.donors,
+  }));
 
   return res.status(200).json(
     new ApiResponse(200, "Public stats fetched successfully", {

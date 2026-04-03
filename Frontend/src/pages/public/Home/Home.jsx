@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
+import { fetchedPublicData, fetchPublicNgos } from "../../../services/api.js";
 import { Link } from "react-router-dom";
 import {
   FaBuilding, FaHeart, FaMapMarkerAlt, FaHandshake, FaChartBar,
@@ -101,11 +102,6 @@ function useInView(threshold = 0.18) {
   return [ref, hit];
 }
 
-// In dev: empty string → Vite proxies /api/* to localhost:5000 (no CORS issues)
-// In prod: uses the deployed backend URL from env
-const API = import.meta.env.PROD
-  ? String(import.meta.env.VITE_API_BASE_URL || "").replace(/\/$/, "")
-  : "";
 
 export default function Home() {
   const [slide, setSlide]     = useState(0);
@@ -114,7 +110,7 @@ export default function Home() {
 
   /* ── live NGO data from backend ── */
   const [liveNgos, setLiveNgos]   = useState([]);
-  const [ngoTotal, setNgoTotal]   = useState(500);
+  const [ngoTotal, setNgoTotal]   = useState(0);
   const [ngoLoading, setNgoLoading] = useState(true);
 
   /* ── live platform stats ── */
@@ -172,13 +168,9 @@ export default function Home() {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  /* ── fetch NGOs from backend (public endpoint) ── */
+  /* ── fetch NGOs from backend ── */
   useEffect(() => {
-    fetch(`${API}/api/ngo?limit=4&page=1`)
-      .then(r => {
-        if (!r.ok) throw new Error(`API returned ${r.status}`);
-        return r.json();
-      })
+    fetchPublicNgos(4, 1)
       .then(json => {
         if (typeof json.total === "number") setNgoTotal(json.total);
         if (Array.isArray(json.data) && json.data.length > 0) {
@@ -187,7 +179,7 @@ export default function Home() {
             name:   n.ngoName,
             city:   n.city  || n.state || "India",
             cause:  Array.isArray(n.services) && n.services[0] ? n.services[0] : "General",
-            rating: n.rating ? Number(n.rating).toFixed(1) : "4.8",
+            rating: n.rating != null ? Number(n.rating).toFixed(1) : null,
           })));
         }
       })
@@ -197,8 +189,7 @@ export default function Home() {
 
   /* ── fetch public platform stats (counters + causes) ── */
   useEffect(() => {
-    fetch(`${API}/api/public/stats`)
-      .then(r => r.ok ? r.json() : null)
+    fetchedPublicData()
       .then(json => {
         if (json?.success && json.data) {
           setLiveStats(json.data.stats);
@@ -210,14 +201,14 @@ export default function Home() {
           }
         }
       })
-      .catch(err => console.error("[Home] Stats fetch error:", err))
+      .catch(err => console.error("[Home] Stats fetch error:", err));
   }, []);
 
   /* animated counters — use live stats when available */
   const [statsRef, statsHit] = useInView(0.3);
   const n1 = useCountUp(liveStats?.totalNgos       || ngoTotal, 2000, statsHit);
   const n2 = useCountUp(liveStats?.totalDonations  || 0,        2200, statsHit);
-  const n3 = useCountUp(liveStats?.statesCovered   || 25,       1500, statsHit);
+  const n3 = useCountUp(liveStats?.statesCovered   || 0,        1500, statsHit);
   const n4 = useCountUp(liveStats?.totalVolunteers || 0,        2000, statsHit);
 
   /* ── causes — live data with image lookup, static fallback ── */
@@ -308,15 +299,15 @@ export default function Home() {
     ? (liveStats.totalRaised / 10000000).toFixed(1)
     : null;
   const marqueeItems = [
-    { Icon: FaStar,           text: <><strong>{liveStats?.totalNgos || ngoTotal}+</strong> Verified NGOs</> },
-    { Icon: FaHandHoldingUsd, text: <><strong>{totalRaisedCr ? `₹${totalRaisedCr} Cr+` : "₹2.4 Crore+"}</strong> Donated</> },
-    { Icon: FaMapMarkerAlt,   text: <><strong>{liveStats?.statesCovered || 25} States</strong> Covered</> },
-    { Icon: FaUsers,          text: <><strong>{(liveStats?.totalDonations || 3200).toLocaleString("en-IN")}+</strong> Donations Made</> },
+    { Icon: FaStar,           text: <><strong>{(liveStats?.totalNgos ?? ngoTotal)}+</strong> Verified NGOs</> },
+    { Icon: FaHandHoldingUsd, text: <><strong>{totalRaisedCr ? `₹${totalRaisedCr} Cr+` : "—"}</strong> Donated</> },
+    { Icon: FaMapMarkerAlt,   text: <><strong>{liveStats?.statesCovered ?? "--"} States</strong> Covered</> },
+    { Icon: FaUsers,          text: <><strong>{(liveStats?.totalDonations ?? 0).toLocaleString("en-IN")}+</strong> Donations Made</> },
     { Icon: FaCheckCircle,    text: <><strong>100%</strong> Transparent</> },
     { Icon: FaFileAlt,        text: <><strong>80G</strong> Tax Benefits</> },
     { Icon: FaHeart,          text: <><strong>10,000+</strong> Lives Changed</> },
     { Icon: FaShieldAlt,      text: <><strong>KYC-Verified</strong> Every NGO</> },
-    { Icon: FaHandshake,      text: <><strong>{(liveStats?.totalVolunteers || 1200).toLocaleString("en-IN")}+</strong> Volunteers</> },
+    { Icon: FaHandshake,      text: <><strong>{(liveStats?.totalVolunteers ?? 0).toLocaleString("en-IN")}+</strong> Volunteers</> },
   ];
 
   return (
@@ -485,20 +476,24 @@ export default function Home() {
                         ? `₹${(c.raised / 100000).toFixed(1)}L raised`
                         : `₹${(c.raised / 1000).toFixed(0)}K raised`}
                     </span>
-                    <span className="cause-goal">
-                      of {c.goal >= 100000
-                        ? `₹${(c.goal / 100000).toFixed(0)}L`
-                        : `₹${(c.goal / 1000).toFixed(0)}K`}
-                    </span>
+                    {c.goal != null && (
+                      <span className="cause-goal">
+                        of {c.goal >= 100000
+                          ? `₹${(c.goal / 100000).toFixed(0)}L`
+                          : `₹${(c.goal / 1000).toFixed(0)}K`}
+                      </span>
+                    )}
                   </div>
                   <div className="cause-bar">
                     <div
                       className="cause-bar-fill"
-                      style={{ width: `${Math.min(Math.round((c.raised / c.goal) * 100), 100)}%` }}
+                      style={{ width: c.goal ? `${Math.min(Math.round((c.raised / c.goal) * 100), 100)}%` : "100%" }}
                     />
                   </div>
                   <div className="cause-pct">
-                    {Math.min(Math.round((c.raised / c.goal) * 100), 100)}% funded
+                    {c.goal
+                      ? `${Math.min(Math.round((c.raised / c.goal) * 100), 100)}% funded`
+                      : `₹${c.raised >= 100000 ? `${(c.raised / 100000).toFixed(1)}L` : `${(c.raised / 1000).toFixed(0)}K`} raised`}
                     {c.donors ? <span style={{ marginLeft: 8, opacity: 0.65, fontSize: "0.78rem" }}>· {c.donors} donors</span> : null}
                   </div>
                   <Link to={c.link} className="cause-cta">Support This Cause →</Link>
@@ -699,9 +694,13 @@ export default function Home() {
 
               {/* Total NGOs */}
               <div style={{ background: "#1a2d5a", color: "#fff", borderRadius: 16, padding: "26px 20px", textAlign: "center" }}>
-                <div style={{ fontSize: "3rem", fontWeight: 900, color: "#f59e0b", lineHeight: 1 }}>{ngoTotal}+</div>
+                <div style={{ fontSize: "3rem", fontWeight: 900, color: "#f59e0b", lineHeight: 1 }}>
+                  {liveStats?.totalNgos ?? ngoTotal}{(liveStats?.totalNgos ?? ngoTotal) > 0 ? "+" : ""}
+                </div>
                 <div style={{ fontSize: ".9rem", opacity: .85, marginTop: 6 }}>Verified NGOs Across India</div>
-                <div style={{ marginTop: 10, fontSize: ".75rem", opacity: .6, letterSpacing: ".04em" }}>25+ STATES · 200+ DISTRICTS</div>
+                <div style={{ marginTop: 10, fontSize: ".75rem", opacity: .6, letterSpacing: ".04em" }}>
+                  {liveStats?.statesCovered ? `${liveStats.statesCovered}+ STATES` : "—"} · 200+ DISTRICTS
+                </div>
               </div>
 
               {/* Category Legend */}
@@ -779,7 +778,7 @@ export default function Home() {
                       {n.city} · {n.cause}
                     </p>
                   </div>
-                  <span className="ngo-chip-verified">★ {n.rating} Verified</span>
+                  <span className="ngo-chip-verified">{n.rating != null ? `★ ${n.rating} ` : ""}Verified</span>
                 </Link>
               ))}
 
@@ -788,7 +787,7 @@ export default function Home() {
                   to="/find-ngos"
                   style={{ color: "var(--navy)", fontWeight: 700, fontSize: ".85rem", textDecoration: "none" }}
                 >
-                  View all {ngoTotal}+ verified NGOs →
+                  View all {liveStats?.totalNgos ?? ngoTotal}+ verified NGOs →
                 </Link>
               </div>
             </div>
