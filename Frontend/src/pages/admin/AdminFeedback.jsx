@@ -1,36 +1,36 @@
 import { useState, useEffect, useCallback } from "react";
-import { Star, Eye, Trash2, Send, X, ChevronLeft, ChevronRight, RefreshCw, Loader2 } from "lucide-react";
+import { Star, Eye, Trash2, Send, X, ChevronLeft, ChevronRight, RefreshCw, MessageSquare } from "lucide-react";
 
 const API_BASE_URL = String(import.meta.env.VITE_API_BASE_URL || "http://localhost:5000").replace(/\/$/, "");
 
-// ── Helpers ──────────────────────────────────────────────────────────────────
-const token = () => localStorage.getItem("token");
+// ── Helpers ───────────────────────────────────────────────────────────────────
+const token       = () => localStorage.getItem("token");
 const authHeaders = () => ({ Authorization: `Bearer ${token()}`, "Content-Type": "application/json" });
 
 const fmt = (d) =>
   d ? new Date(d).toLocaleString("en-IN", { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" }) : "—";
 
 const TYPE_META = {
-  platform:  { label: "Platform",   cls: "bg-indigo-50 text-indigo-700" },
-  ngo:       { label: "NGO",        cls: "bg-sky-50 text-sky-700" },
-  volunteer: { label: "Volunteer",  cls: "bg-emerald-50 text-emerald-700" },
-  event:     { label: "Event",      cls: "bg-amber-50 text-amber-700" },
-  community: { label: "Community",  cls: "bg-violet-50 text-violet-700" },
-  service:   { label: "Service",    cls: "bg-red-50 text-red-700" },
-  other:     { label: "Other",      cls: "bg-gray-100 text-gray-600" },
+  platform:  { label: "Platform",  cls: "bg-olive-100 text-olive-700" },
+  ngo:       { label: "NGO",       cls: "bg-beige-300 text-gray-700" },
+  volunteer: { label: "Volunteer", cls: "bg-olive-50 text-olive-600" },
+  event:     { label: "Event",     cls: "bg-amber-50 text-amber-700" },
+  community: { label: "Community", cls: "bg-olive-200 text-olive-800" },
+  service:   { label: "Service",   cls: "bg-red-50 text-red-700" },
+  other:     { label: "Other",     cls: "bg-beige-200 text-gray-600" },
 };
 
 const STATUS_META = {
   new:          { label: "New",          cls: "bg-red-50 text-red-700 border-red-200" },
-  read:         { label: "Read",         cls: "bg-blue-50 text-blue-700 border-blue-200" },
-  acknowledged: { label: "Acknowledged", cls: "bg-amber-50 text-amber-700 border-amber-200" },
-  resolved:     { label: "Resolved",     cls: "bg-emerald-50 text-emerald-700 border-emerald-200" },
+  read:         { label: "Read",         cls: "bg-beige-200 text-gray-700 border-beige-300" },
+  acknowledged: { label: "Acknowledged", cls: "bg-olive-100 text-olive-700 border-olive-200" },
+  resolved:     { label: "Resolved",     cls: "bg-olive-200 text-olive-800 border-olive-300" },
 };
 
 function Badge({ meta, value }) {
-  const m = meta[value] || { label: value, cls: "bg-gray-100 text-gray-600" };
+  const m = meta[value] || { label: value, cls: "bg-beige-200 text-gray-600" };
   return (
-    <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold whitespace-nowrap ${m.cls}`}>
+    <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold whitespace-nowrap border ${m.cls}`}>
       {m.label}
     </span>
   );
@@ -47,27 +47,9 @@ function Stars({ rating, size = 13 }) {
   );
 }
 
-// ── Stat Card ────────────────────────────────────────────────────────────────
-function StatCard({ label, value, sub, color, bg }) {
-  const colorMap = {
-    "indigo": { bg: "bg-indigo-50", text: "text-indigo-600" },
-    "red":    { bg: "bg-red-50", text: "text-red-600" },
-    "amber":  { bg: "bg-amber-50", text: "text-amber-600" },
-    "emerald": { bg: "bg-emerald-50", text: "text-emerald-600" },
-  };
-  const theme = colorMap[bg] || { bg: "bg-gray-100", text: "text-gray-600" };
-  
-  return (
-    <div className={`${theme.bg} border border-gray-200 rounded-xl p-4 flex-1 min-w-[140px]`}>
-      <p className={`text-2xl font-black ${theme.text} m-0 leading-none`}>{value ?? "—"}</p>
-      <p className="text-xs font-semibold text-gray-600 m-0 mt-1">{label}</p>
-      {sub && <p className="text-xs text-gray-500 m-0 mt-1">{sub}</p>}
-    </div>
-  );
-}
-
-// ── View / Reply Modal ────────────────────────────────────────────────────────
+// ── Feedback Detail Modal ─────────────────────────────────────────────────────
 function FeedbackModal({ item, onClose, onStatusUpdate, onReply, onDelete }) {
+  const [visible, setVisible]   = useState(false);
   const [reply, setReply]       = useState("");
   const [status, setStatus]     = useState(item.status);
   const [note, setNote]         = useState(item.adminNote || "");
@@ -75,12 +57,17 @@ function FeedbackModal({ item, onClose, onStatusUpdate, onReply, onDelete }) {
   const [replying, setReplying] = useState(false);
   const [flash, setFlash]       = useState("");
 
+  useEffect(() => {
+    const id = requestAnimationFrame(() => setVisible(true));
+    return () => cancelAnimationFrame(id);
+  }, []);
+
   const showFlash = (msg) => { setFlash(msg); setTimeout(() => setFlash(""), 3000); };
 
   const handleStatusSave = async () => {
     setSaving(true);
     try {
-      const res = await fetch(`${API_BASE_URL}/api/admin/feedback/${item._id}/status`, {
+      const res  = await fetch(`${API_BASE_URL}/api/admin/feedback/${item._id}/status`, {
         method: "PUT", headers: authHeaders(),
         body: JSON.stringify({ status, adminNote: note }),
       });
@@ -96,7 +83,7 @@ function FeedbackModal({ item, onClose, onStatusUpdate, onReply, onDelete }) {
     if (reply.trim().length < 5) { showFlash("Reply must be at least 5 characters."); return; }
     setReplying(true);
     try {
-      const res = await fetch(`${API_BASE_URL}/api/admin/feedback/${item._id}/reply`, {
+      const res  = await fetch(`${API_BASE_URL}/api/admin/feedback/${item._id}/reply`, {
         method: "PUT", headers: authHeaders(),
         body: JSON.stringify({ adminReply: reply.trim() }),
       });
@@ -109,108 +96,117 @@ function FeedbackModal({ item, onClose, onStatusUpdate, onReply, onDelete }) {
     finally { setReplying(false); }
   };
 
-  const type = TYPE_META[item.feedbackType] || TYPE_META.other;
-  const stat = STATUS_META[item.status]     || STATUS_META.new;
-
   return (
-    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[1000] flex items-center justify-center p-4"
-      onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
+    <div
+      className={`fixed inset-0 z-[1000] flex items-end sm:items-center justify-center p-0 sm:p-6 transition-all duration-300 ${
+        visible ? "bg-black/50 backdrop-blur-sm" : "bg-black/0"
+      }`}
+      onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
+    >
+      <div className={`bg-beige-100 rounded-t-[2rem] sm:rounded-[2rem] w-full sm:max-w-xl max-h-[95vh] sm:max-h-[90vh] flex flex-col overflow-hidden shadow-2xl transition-all duration-300 ease-out ${
+        visible
+          ? "translate-y-0 opacity-100 sm:scale-100"
+          : "translate-y-full opacity-0 sm:scale-95 sm:translate-y-6"
+      }`}>
 
-      <div className="bg-white rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl">
+        {/* Mobile drag handle */}
+        <div className="sm:hidden w-10 h-1 bg-beige-300 rounded-full mx-auto mt-3 shrink-0" />
 
         {/* Header */}
-        <div className="bg-gradient-to-r from-indigo-600 to-purple-600 px-6 py-5 rounded-t-2xl flex justify-between items-start">
-          <div>
-            <p className="text-white/75 text-xs font-bold uppercase tracking-wider m-0">Feedback Detail</p>
-            <h3 className="text-white text-lg font-extrabold m-0 mt-1 leading-tight">{item.subject}</h3>
+        <div className="px-6 pt-5 pb-4 border-b border-beige-300 shrink-0">
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <p className="text-xs font-bold text-olive-600 uppercase tracking-widest mb-1">Feedback Detail</p>
+              <h3 className="text-lg sm:text-xl font-extrabold text-gray-900 leading-tight m-0">{item.subject}</h3>
+            </div>
+            <button
+              onClick={onClose}
+              className="w-9 h-9 rounded-full bg-beige-200 hover:bg-beige-300 flex items-center justify-center border-0 cursor-pointer text-gray-500 transition-colors shrink-0"
+            >
+              <X size={16} />
+            </button>
           </div>
-          <button onClick={onClose} className="bg-white/20 hover:bg-white/30 border-0 rounded-lg p-1.5 cursor-pointer text-white flex items-center transition-colors">
-            <X size={18} />
-          </button>
         </div>
 
-        <div className="p-6">
+        {/* Scrollable body */}
+        <div className="flex-1 overflow-y-auto px-6 py-5 space-y-4">
 
           {/* Flash */}
           {flash && (
-            <div className={`rounded-lg p-3 mb-4 text-sm font-semibold border ${
-              flash.startsWith("Error") 
-                ? "bg-red-50 text-red-700 border-red-200" 
-                : "bg-emerald-50 text-emerald-700 border-emerald-200"
+            <div className={`rounded-2xl px-4 py-3 text-sm font-semibold border ${
+              flash.startsWith("Error")
+                ? "bg-red-50 text-red-700 border-red-200"
+                : "bg-olive-100 text-olive-800 border-olive-200"
             }`}>
               {flash}
             </div>
           )}
 
-          {/* Submitter info */}
-          <div className="grid grid-cols-2 gap-3 mb-6">
+          {/* Submitter info grid */}
+          <div className="grid grid-cols-2 gap-2">
             {[
-              ["Name", item.name],
-              ["Email", item.email],
-              ["Phone", item.phone || "—"],
+              ["Name",      item.name],
+              ["Email",     item.email],
+              ["Phone",     item.phone || "—"],
               ["Submitted", fmt(item.createdAt)],
             ].map(([k, v]) => (
-              <div key={k} className="bg-gray-50 rounded-lg p-3">
-                <p className="text-xs font-bold text-gray-500 uppercase tracking-wide m-0">{k}</p>
-                <p className="text-sm font-semibold text-gray-900 m-0 mt-1 break-words">{v}</p>
+              <div key={k} className="bg-beige-200 rounded-2xl p-3">
+                <p className="text-[10px] font-bold text-olive-600 uppercase tracking-widest mb-1">{k}</p>
+                <p className="text-sm font-semibold text-gray-900 break-words leading-tight">{v}</p>
               </div>
             ))}
           </div>
 
           {/* Type / Status / Rating row */}
-          <div className="flex flex-wrap gap-2 mb-6">
-            <span className={`px-3 py-1 rounded-full text-xs font-bold ${TYPE_META[item.feedbackType]?.cls}`}>
-              {type.label}
-            </span>
-            <span className={`px-3 py-1 rounded-full text-xs font-bold ${stat.cls}`}>
-              {stat.label}
-            </span>
+          <div className="flex flex-wrap gap-2">
+            <Badge meta={TYPE_META} value={item.feedbackType} />
+            <Badge meta={STATUS_META} value={item.status} />
             {item.targetName && (
-              <span className="bg-gray-100 text-gray-700 px-3 py-1 rounded-full text-xs font-semibold">
+              <span className="bg-beige-200 text-gray-700 px-3 py-1 rounded-full text-xs font-semibold border border-beige-300">
                 📌 {item.targetName}
               </span>
             )}
             {item.rating && (
-              <span className="bg-amber-50 text-amber-700 px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1">
-                <Star size={12} fill="#f59e0b" stroke="#f59e0b" /> {item.rating}/5
+              <span className="bg-amber-50 text-amber-700 px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1 border border-amber-200">
+                <Star size={11} fill="#f59e0b" stroke="#f59e0b" /> {item.rating}/5
               </span>
             )}
           </div>
 
           {/* Message */}
-          <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 mb-6">
-            <p className="text-xs font-bold text-slate-500 uppercase tracking-wide m-0 mb-2">Message</p>
-            <p className="text-sm text-slate-900 leading-relaxed m-0 whitespace-pre-wrap">{item.message}</p>
+          <div className="bg-beige-200 border border-beige-300 rounded-2xl p-4">
+            <p className="text-[10px] font-bold text-olive-600 uppercase tracking-widest mb-2">Message</p>
+            <p className="text-sm text-gray-800 leading-relaxed whitespace-pre-wrap">{item.message}</p>
           </div>
 
-          {/* Admin note if exists */}
+          {/* Admin note */}
           {item.adminNote && (
-            <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-6">
-              <p className="text-xs font-bold text-amber-900 uppercase tracking-wide m-0 mb-2">Admin Note</p>
-              <p className="text-sm text-amber-900 m-0">{item.adminNote}</p>
+            <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4">
+              <p className="text-[10px] font-bold text-amber-800 uppercase tracking-widest mb-2">Admin Note</p>
+              <p className="text-sm text-amber-900">{item.adminNote}</p>
             </div>
           )}
 
-          {/* Admin reply if exists */}
+          {/* Admin reply */}
           {item.adminReply && (
-            <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-4 mb-6">
-              <p className="text-xs font-bold text-emerald-900 uppercase tracking-wide m-0 mb-2">Reply Sent • {fmt(item.repliedAt)}</p>
-              <p className="text-sm text-emerald-900 m-0">{item.adminReply}</p>
+            <div className="bg-olive-100 border border-olive-200 rounded-2xl p-4">
+              <p className="text-[10px] font-bold text-olive-800 uppercase tracking-widest mb-2">
+                Reply Sent · {fmt(item.repliedAt)}
+              </p>
+              <p className="text-sm text-olive-900">{item.adminReply}</p>
             </div>
           )}
 
-          {/* ── Update Status ── */}
-          <div className="bg-white border border-gray-200 rounded-xl p-5 mb-5">
-            <p className="text-xs font-bold text-gray-700 uppercase tracking-wide m-0 mb-3">Update Status</p>
-            <div className="grid grid-cols-2 gap-2 mb-3">
+          {/* Update Status */}
+          <div className="bg-beige-200 border border-beige-300 rounded-2xl p-4 space-y-3">
+            <p className="text-[10px] font-bold text-olive-600 uppercase tracking-widest">Update Status</p>
+            <div className="grid grid-cols-2 gap-2">
               {Object.entries(STATUS_META).map(([v, m]) => (
                 <button
                   key={v}
                   onClick={() => setStatus(v)}
-                  className={`py-2 px-3 rounded-lg border-2 font-bold text-xs uppercase transition-all ${
-                    status === v 
-                      ? `${m.cls} border-current` 
-                      : "bg-white text-gray-600 border-gray-200 hover:border-gray-300"
+                  className={`py-2 px-3 rounded-xl border-2 font-bold text-xs uppercase transition-all cursor-pointer ${
+                    status === v ? `${m.cls} border-current` : "bg-beige-100 text-gray-600 border-beige-300 hover:border-beige-400"
                   }`}
                 >
                   {m.label}
@@ -222,42 +218,42 @@ function FeedbackModal({ item, onClose, onStatusUpdate, onReply, onDelete }) {
               onChange={(e) => setNote(e.target.value)}
               rows={2}
               placeholder="Add an internal admin note (optional)..."
-              className="w-full border border-gray-200 rounded-lg p-3 text-sm resize-none outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent mb-3"
+              className="w-full bg-beige-100 border border-beige-300 rounded-xl p-3 text-sm resize-none outline-none focus:ring-2 focus:ring-olive-400 transition-all placeholder-gray-400"
             />
             <button
               onClick={handleStatusSave}
               disabled={saving}
-              className="w-full bg-indigo-600 hover:bg-indigo-700 disabled:opacity-60 text-white border-0 rounded-lg py-2.5 font-bold text-sm cursor-pointer transition-colors"
+              className="w-full bg-olive-700 hover:bg-olive-800 disabled:opacity-60 text-white border-0 rounded-full py-2.5 font-bold text-sm cursor-pointer transition-colors"
             >
               {saving ? "Saving…" : "Save Status"}
             </button>
           </div>
 
-          {/* ── Reply ── */}
+          {/* Send Reply */}
           {!item.adminReply && (
-            <div className="bg-white border border-gray-200 rounded-xl p-5 mb-5">
-              <p className="text-xs font-bold text-gray-700 uppercase tracking-wide m-0 mb-3">Send Reply</p>
+            <div className="bg-beige-200 border border-beige-300 rounded-2xl p-4 space-y-3">
+              <p className="text-[10px] font-bold text-olive-600 uppercase tracking-widest">Send Reply to User</p>
               <textarea
                 value={reply}
                 onChange={(e) => setReply(e.target.value)}
                 rows={3}
-                placeholder="Write your reply to the user... (min 5 characters)"
-                className="w-full border border-gray-200 rounded-lg p-3 text-sm resize-none outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent mb-3"
+                placeholder="Write your reply… (min 5 characters)"
+                className="w-full bg-beige-100 border border-beige-300 rounded-xl p-3 text-sm resize-none outline-none focus:ring-2 focus:ring-olive-400 transition-all placeholder-gray-400"
               />
-              <div className="flex justify-between items-center">
-                <span className={`text-xs ${reply.length < 5 && reply.length > 0 ? "text-red-600" : "text-gray-500"}`}>
-                  {reply.length < 5 && reply.length > 0 ? `${5 - reply.length} more needed` : `${reply.length} chars`}
+              <div className="flex items-center justify-between">
+                <span className={`text-xs font-medium ${reply.length > 0 && reply.length < 5 ? "text-red-500" : "text-gray-400"}`}>
+                  {reply.length > 0 && reply.length < 5 ? `${5 - reply.length} more chars needed` : `${reply.length} chars`}
                 </span>
                 <button
                   onClick={handleReply}
                   disabled={replying || reply.trim().length < 5}
-                  className={`flex items-center gap-2 border-0 rounded-lg py-2.5 px-5 font-bold text-sm text-white transition-all disabled:opacity-50 ${
+                  className={`flex items-center gap-2 border-0 rounded-full py-2.5 px-5 font-bold text-sm transition-all ${
                     replying || reply.trim().length < 5
-                      ? "bg-gray-400 cursor-not-allowed"
-                      : "bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 cursor-pointer"
+                      ? "bg-beige-300 text-gray-400 cursor-not-allowed"
+                      : "bg-olive-700 hover:bg-olive-800 text-white cursor-pointer"
                   }`}
                 >
-                  <Send size={14} /> {replying ? "Sending…" : "Send Reply"}
+                  <Send size={13} /> {replying ? "Sending…" : "Send Reply"}
                 </button>
               </div>
             </div>
@@ -266,7 +262,7 @@ function FeedbackModal({ item, onClose, onStatusUpdate, onReply, onDelete }) {
           {/* Delete */}
           <button
             onClick={() => { if (window.confirm("Permanently delete this feedback?")) onDelete(item._id); }}
-            className="w-full bg-red-50 hover:bg-red-100 text-red-700 border border-red-200 rounded-lg py-2.5 font-bold text-sm cursor-pointer flex items-center justify-center gap-2 transition-colors"
+            className="w-full bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 rounded-full py-2.5 font-bold text-sm cursor-pointer flex items-center justify-center gap-2 transition-colors"
           >
             <Trash2 size={14} /> Delete This Feedback
           </button>
@@ -278,9 +274,9 @@ function FeedbackModal({ item, onClose, onStatusUpdate, onReply, onDelete }) {
 
 // ── Main Page ─────────────────────────────────────────────────────────────────
 export default function AdminFeedback() {
-  const [feedbacks, setFeedbacks]   = useState([]);
-  const [stats, setStats]           = useState(null);
-  const [loading, setLoading]       = useState(true);
+  const [feedbacks, setFeedbacks]       = useState([]);
+  const [stats, setStats]               = useState(null);
+  const [loading, setLoading]           = useState(true);
   const [statsLoading, setStatsLoading] = useState(true);
 
   const [search, setSearch]         = useState("");
@@ -292,23 +288,21 @@ export default function AdminFeedback() {
   const [totalPages, setTotalPages] = useState(1);
   const [total, setTotal]           = useState(0);
 
-  const [selected, setSelected]     = useState(null);
-  const [flash, setFlash]           = useState("");
+  const [selected, setSelected] = useState(null);
+  const [flash, setFlash]       = useState("");
 
   const showFlash = (msg) => { setFlash(msg); setTimeout(() => setFlash(""), 4000); };
 
-  // ── Fetch Stats ──────────────────────────────────────────────────────────
   const fetchStats = useCallback(async () => {
     setStatsLoading(true);
     try {
-      const res = await fetch(`${API_BASE_URL}/api/admin/feedback/stats`, { headers: authHeaders() });
+      const res  = await fetch(`${API_BASE_URL}/api/admin/feedback/stats`, { headers: authHeaders() });
       const data = await res.json();
       if (data.success) setStats(data.data);
     } catch { /* silent */ }
     finally { setStatsLoading(false); }
   }, []);
 
-  // ── Fetch List ───────────────────────────────────────────────────────────
   const fetchFeedbacks = useCallback(async (pg = 1) => {
     setLoading(true);
     try {
@@ -334,14 +328,12 @@ export default function AdminFeedback() {
   useEffect(() => { setPage(1); fetchFeedbacks(1); }, [search, statusFilter, typeFilter, ratingFilter]);
   useEffect(() => { fetchFeedbacks(page); }, [page]);
 
-  // ── Handlers ────────────────────────────────────────────────────────────
   const handleView = async (id) => {
     try {
       const res  = await fetch(`${API_BASE_URL}/api/admin/feedback/${id}`, { headers: authHeaders() });
       const data = await res.json();
       if (data.success) {
         setSelected(data.data.feedback);
-        // Update status in list (new → read)
         setFeedbacks((prev) => prev.map((f) => f._id === id && f.status === "new" ? { ...f, status: "read" } : f));
       }
     } catch { /* silent */ }
@@ -363,7 +355,7 @@ export default function AdminFeedback() {
 
   const handleDelete = async (id) => {
     try {
-      const res = await fetch(`${API_BASE_URL}/api/admin/feedback/${id}`, { method: "DELETE", headers: authHeaders() });
+      const res  = await fetch(`${API_BASE_URL}/api/admin/feedback/${id}`, { method: "DELETE", headers: authHeaders() });
       const data = await res.json();
       if (!res.ok) throw new Error(data.message);
       setFeedbacks((prev) => prev.filter((f) => f._id !== id));
@@ -373,171 +365,218 @@ export default function AdminFeedback() {
     } catch (e) { showFlash(`Error: ${e.message}`); }
   };
 
-  // ── Render ───────────────────────────────────────────────────────────────
-  return (
-    <div className="min-h-screen p-4 sm:p-6 bg-gray-50">
+  const STAT_CARDS = [
+    { label: "Total",        value: statsLoading ? "…" : stats?.total },
+    { label: "New / Unread", value: statsLoading ? "…" : stats?.unread,                   sub: "Needs attention" },
+    { label: "Acknowledged", value: statsLoading ? "…" : stats?.byStatus?.acknowledged },
+    { label: "Resolved",     value: statsLoading ? "…" : stats?.byStatus?.resolved },
+    {
+      label: "Avg Rating",
+      value: statsLoading ? "…" : stats?.ratings?.avgRating ? `${Number(stats.ratings.avgRating).toFixed(1)}/5` : "—",
+      sub: stats?.ratings?.totalRated ? `from ${stats.ratings.totalRated} ratings` : "",
+    },
+  ];
 
-      {/* Page Header */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between mb-6">
+  return (
+    <div className="min-h-screen bg-beige-300 p-4 sm:p-6 lg:p-8">
+
+      {/* ── Page Header ── */}
+      <div className="flex flex-col xs:flex-row xs:items-start xs:justify-between gap-4 mb-6 sm:mb-8">
         <div>
-          <h1 className="text-3xl sm:text-4xl font-extrabold text-gray-900 m-0">Feedback</h1>
-          <p className="text-sm text-gray-600 mt-1 m-0">Manage and respond to user feedback</p>
+          <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-gray-900 leading-tight mb-1">
+            Feedback <span className="text-olive-700">&amp; Reviews</span>
+          </h1>
+          <p className="text-sm sm:text-base text-gray-500 max-w-md leading-relaxed">
+            Manage, respond to, and track all user feedback submissions in one place.
+          </p>
         </div>
         <button
           onClick={() => { fetchFeedbacks(page); fetchStats(); }}
-          className="flex items-center gap-2 px-4 py-2.5 rounded-lg bg-white border border-gray-200 text-gray-700 text-sm font-semibold hover:bg-gray-50 transition-colors cursor-pointer"
+          className="flex items-center gap-2 px-4 py-2.5 rounded-full bg-beige-100 border border-beige-300 text-gray-700 text-sm font-semibold hover:border-beige-400 transition-colors cursor-pointer shrink-0 self-start"
         >
-          <RefreshCw size={14} /> <span className="hidden sm:inline">Refresh</span>
+          <RefreshCw size={14} /> Refresh
         </button>
       </div>
 
-      {/* Flash */}
+      {/* ── Flash ── */}
       {flash && (
-        <div className={`rounded-lg p-4 mb-6 text-sm font-semibold border flex justify-between items-center ${
-          flash.startsWith("Error") 
-            ? "bg-red-50 text-red-700 border-red-200" 
-            : "bg-emerald-50 text-emerald-700 border-emerald-200"
+        <div className={`flex items-center justify-between gap-3 rounded-2xl px-4 py-3 mb-5 text-sm font-semibold border ${
+          flash.startsWith("Error")
+            ? "bg-red-50 text-red-700 border-red-200"
+            : "bg-olive-100 text-olive-800 border-olive-200"
         }`}>
-          {flash}
-          <button onClick={() => setFlash("")} className="bg-transparent border-0 cursor-pointer opacity-60 hover:opacity-100"><X size={14} /></button>
+          <span>{flash}</span>
+          <button onClick={() => setFlash("")} className="bg-transparent border-0 cursor-pointer opacity-60 hover:opacity-100 shrink-0">
+            <X size={14} />
+          </button>
         </div>
       )}
 
-      {/* ── Stats Cards ── */}
-      <div className="flex flex-wrap gap-4 mb-6">
-        <StatCard label="Total"        value={statsLoading ? "…" : stats?.total}                 color="indigo" bg="indigo" />
-        <StatCard label="New / Unread" value={statsLoading ? "…" : stats?.unread}                color="red" bg="red" sub="Needs attention" />
-        <StatCard label="Acknowledged" value={statsLoading ? "…" : stats?.byStatus?.acknowledged} color="amber" bg="amber" />
-        <StatCard label="Resolved"     value={statsLoading ? "…" : stats?.byStatus?.resolved}     color="emerald" bg="emerald" />
-        <StatCard
-          label="Avg Rating"
-          value={statsLoading ? "…" : stats?.ratings?.average ? `${stats.ratings.average}/5` : "—"}
-          color="amber" bg="amber"
-          sub={stats?.ratings?.total ? `from ${stats.ratings.total} ratings` : ""}
-        />
+      {/* ── Stat Cards ── */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4 mb-6 sm:mb-8">
+        {STAT_CARDS.map((s) => (
+          <div key={s.label} className="bg-beige-100 rounded-2xl border border-beige-300 p-4 sm:p-5">
+            <p className="text-[10px] sm:text-xs font-extrabold text-olive-600 uppercase tracking-widest mb-2">{s.label}</p>
+            <p className="text-2xl sm:text-3xl font-extrabold text-gray-900 leading-none mb-1">{s.value ?? "—"}</p>
+            {s.sub && <p className="text-[11px] text-gray-400 font-medium">{s.sub}</p>}
+          </div>
+        ))}
       </div>
 
-      {/* ── Filters ── */}
-      <div className="flex flex-col sm:flex-row gap-3 mb-6">
-        <input
-          type="text"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          placeholder="🔍  Search by name, email, subject..."
-          className="flex-1 border border-gray-200 rounded-lg px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent"
-        />
-        <select value={statusFilter} onChange={(e) => setStatus(e.target.value)}
-          className="border border-gray-200 rounded-lg px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-indigo-400 bg-white cursor-pointer">
-          <option value="">All Statuses</option>
-          {Object.entries(STATUS_META).map(([v, m]) => <option key={v} value={v}>{m.label}</option>)}
-        </select>
-        <select value={typeFilter} onChange={(e) => setType(e.target.value)}
-          className="border border-gray-200 rounded-lg px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-indigo-400 bg-white cursor-pointer">
-          <option value="">All Types</option>
-          {Object.entries(TYPE_META).map(([v, m]) => <option key={v} value={v}>{m.label}</option>)}
-        </select>
-        <select value={ratingFilter} onChange={(e) => setRating(e.target.value)}
-          className="border border-gray-200 rounded-lg px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-indigo-400 bg-white cursor-pointer">
-          <option value="">All Ratings</option>
-          {[5, 4, 3, 2, 1].map((r) => <option key={r} value={r}>{"★".repeat(r)} ({r})</option>)}
-        </select>
-      </div>
+      {/* ── Main Card ── */}
+      <div className="bg-beige-100 rounded-2xl sm:rounded-3xl border border-beige-300 overflow-hidden">
 
-      {/* ── Table ── */}
-      <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-        <div className="flex justify-between items-center p-5 border-b border-gray-200">
-          <span className="text-sm font-bold text-gray-900">
-            Feedback Submissions <span className="text-xs text-gray-500 font-normal">({total} total)</span>
-          </span>
+        {/* Card header + filters */}
+        <div className="bg-beige-200 px-4 sm:px-6 pt-4 sm:pt-5 pb-4 sm:pb-5 border-b border-beige-300">
+          {/* Title row */}
+          <div className="flex items-center justify-between mb-3 sm:mb-4">
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 rounded-xl bg-olive-700 flex items-center justify-center shrink-0">
+                <MessageSquare size={15} className="text-white" />
+              </div>
+              <div>
+                <h2 className="text-sm sm:text-base font-extrabold text-gray-900 leading-tight">
+                  Feedback Submissions
+                </h2>
+                <p className="text-[11px] text-gray-500 leading-none mt-0.5">{total} total records</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Search — full width */}
+          <input
+            type="text"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search by name, email, subject…"
+            className="w-full bg-beige-100 border border-beige-300 rounded-xl sm:rounded-2xl px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-olive-400 transition-all placeholder-gray-400 mb-2"
+          />
+
+          {/* Dropdowns — 3-col grid on mobile, row on desktop */}
+          <div className="grid grid-cols-3 sm:flex gap-2">
+            <select
+              value={statusFilter} onChange={(e) => setStatus(e.target.value)}
+              className="bg-beige-100 border border-beige-300 rounded-xl sm:rounded-2xl px-2 sm:px-3 py-2.5 text-xs sm:text-sm outline-none focus:ring-2 focus:ring-olive-400 cursor-pointer text-gray-700 w-full"
+            >
+              <option value="">All Statuses</option>
+              {Object.entries(STATUS_META).map(([v, m]) => <option key={v} value={v}>{m.label}</option>)}
+            </select>
+            <select
+              value={typeFilter} onChange={(e) => setType(e.target.value)}
+              className="bg-beige-100 border border-beige-300 rounded-xl sm:rounded-2xl px-2 sm:px-3 py-2.5 text-xs sm:text-sm outline-none focus:ring-2 focus:ring-olive-400 cursor-pointer text-gray-700 w-full"
+            >
+              <option value="">All Types</option>
+              {Object.entries(TYPE_META).map(([v, m]) => <option key={v} value={v}>{m.label}</option>)}
+            </select>
+            <select
+              value={ratingFilter} onChange={(e) => setRating(e.target.value)}
+              className="bg-beige-100 border border-beige-300 rounded-xl sm:rounded-2xl px-2 sm:px-3 py-2.5 text-xs sm:text-sm outline-none focus:ring-2 focus:ring-olive-400 cursor-pointer text-gray-700 w-full"
+            >
+              <option value="">All Ratings</option>
+              {[5, 4, 3, 2, 1].map((r) => <option key={r} value={r}>{"★".repeat(r)} ({r})</option>)}
+            </select>
+          </div>
         </div>
 
+        {/* ── Content ── */}
         {loading ? (
-          <div className="flex flex-col items-center justify-center py-16 text-gray-500">
-            <Loader2 size={28} className="animate-spin mb-3" />
+          <div className="flex flex-col items-center justify-center py-20 text-gray-400 gap-3">
+            <RefreshCw size={24} className="animate-spin" />
             <p className="text-sm">Loading feedback…</p>
           </div>
         ) : feedbacks.length === 0 ? (
-          <div className="text-center py-16 text-gray-500">
-            <p className="text-sm">No feedback found</p>
+          <div className="text-center py-20 text-gray-400">
+            <MessageSquare size={36} className="mx-auto mb-3 opacity-30" />
+            <p className="text-sm font-semibold">No feedback found</p>
             <p className="text-xs mt-1">Try adjusting your filters</p>
           </div>
         ) : (
           <>
-            {/* Mobile card list */}
-            <ul className="sm:hidden divide-y divide-gray-200 list-none m-0 p-0">
-              {feedbacks.map((f) => (
-                <li key={f._id} className="p-4 hover:bg-gray-50 transition-colors">
+            {/* ── Mobile cards ── */}
+            <div className="sm:hidden divide-y divide-beige-300">
+              {feedbacks.map((f) => {
+                return (
+                <div key={f._id} className="p-4 hover:bg-beige-200 transition-colors">
                   <div className="flex justify-between items-start gap-2 mb-2">
-                    <div>
-                      <p className="font-semibold text-gray-900 m-0 text-sm">{f.name}</p>
-                      <p className="text-xs text-gray-600 m-0">{f.email}</p>
+                    <div className="min-w-0">
+                      <p className="font-bold text-gray-900 text-sm truncate">{f.name}</p>
+                      <p className="text-xs text-gray-500 truncate">{f.email}</p>
                     </div>
                     <Badge meta={STATUS_META} value={f.status} />
                   </div>
-                  <p className="text-sm text-gray-700 m-0 mb-2 font-medium">{f.subject}</p>
-                  {f.targetName && <p className="text-xs text-gray-500 m-0 mb-2">📌 {f.targetName}</p>}
-                  <div className="flex items-center justify-between gap-2 text-xs">
+                  <p className="text-sm text-gray-700 font-semibold mb-2 leading-tight">{f.subject}</p>
+                  {f.targetName && <p className="text-xs text-gray-400 mb-2">📌 {f.targetName}</p>}
+                  <div className="flex items-center justify-between mb-2">
                     <Badge meta={TYPE_META} value={f.feedbackType} />
                     <Stars rating={f.rating} size={11} />
                   </div>
-                  <p className="text-xs text-gray-500 mt-2 m-0">{fmt(f.createdAt)}</p>
-                  <div className="flex gap-2 mt-3">
+                  <p className="text-xs text-gray-400 mb-3">{fmt(f.createdAt)}</p>
+                  <div className="flex gap-2">
                     <button
                       onClick={() => handleView(f._id)}
-                      className="flex-1 bg-blue-50 hover:bg-blue-100 text-blue-700 border-0 rounded-lg py-2 text-xs font-bold cursor-pointer transition-colors flex items-center justify-center gap-1"
+                      className="flex-1 bg-olive-700 hover:bg-olive-800 text-white border-0 rounded-full py-2 text-xs font-bold cursor-pointer transition-colors flex items-center justify-center gap-1.5"
                     >
                       <Eye size={12} /> View
                     </button>
                     <button
                       onClick={() => { if (window.confirm("Delete this feedback permanently?")) handleDelete(f._id); }}
-                      className="bg-red-50 hover:bg-red-100 text-red-600 border-0 rounded-lg px-3 py-2 cursor-pointer transition-colors"
+                      className="bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 rounded-full px-3 py-2 cursor-pointer transition-colors"
                     >
                       <Trash2 size={14} />
                     </button>
                   </div>
-                </li>
-              ))}
-            </ul>
+                </div>
+              );
+              })}
+            </div>
 
-            {/* Desktop table */}
+            {/* ── Desktop table ── */}
             <div className="hidden sm:block overflow-x-auto">
               <table className="w-full border-collapse">
                 <thead>
-                  <tr className="bg-gray-50 border-b border-gray-200">
+                  <tr className="bg-beige-200 border-b border-beige-300">
                     {["Submitter", "Type", "Subject", "Rating", "Status", "Date", "Actions"].map((h) => (
-                      <th key={h} className="px-4 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wide whitespace-nowrap">{h}</th>
+                      <th key={h} className="px-4 py-3 text-left text-[10px] font-extrabold text-olive-600 uppercase tracking-widest whitespace-nowrap">
+                        {h}
+                      </th>
                     ))}
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-200">
-                  {feedbacks.map((f, i) => (
-                    <tr key={f._id} className="hover:bg-gray-50 transition-colors">
-                      <td className="px-4 py-3">
-                        <p className="text-sm font-semibold text-gray-900 m-0">{f.name}</p>
-                        <p className="text-xs text-gray-500 m-0">{f.email}</p>
+                <tbody className="divide-y divide-beige-300">
+                  {feedbacks.map((f) => (
+                    <tr key={f._id} className="hover:bg-beige-200 transition-colors">
+                      <td className="px-4 py-3.5">
+                        <p className="text-sm font-bold text-gray-900">{f.name}</p>
+                        <p className="text-xs text-gray-400 mt-0.5">{f.email}</p>
                       </td>
-                      <td className="px-4 py-3"><Badge meta={TYPE_META} value={f.feedbackType} /></td>
-                      <td className="px-4 py-3 max-w-sm">
-                        <p className="text-sm font-medium text-gray-900 m-0 truncate">{f.subject}</p>
-                        {f.targetName && <p className="text-xs text-gray-500 m-0 mt-1">📌 {f.targetName}</p>}
+                      <td className="px-4 py-3.5">
+                        <Badge meta={TYPE_META} value={f.feedbackType} />
                       </td>
-                      <td className="px-4 py-3"><Stars rating={f.rating} size={12} /></td>
-                      <td className="px-4 py-3">
+                      <td className="px-4 py-3.5 max-w-xs">
+                        <p className="text-sm font-semibold text-gray-800 truncate">{f.subject}</p>
+                        {f.targetName && <p className="text-xs text-gray-400 mt-0.5">📌 {f.targetName}</p>}
+                      </td>
+                      <td className="px-4 py-3.5">
+                        <Stars rating={f.rating} size={12} />
+                      </td>
+                      <td className="px-4 py-3.5">
                         <Badge meta={STATUS_META} value={f.status} />
-                        {f.adminReply && <p className="text-xs text-emerald-700 m-0 mt-1 font-semibold">✓ Replied</p>}
+                        {f.adminReply && (
+                          <p className="text-[11px] text-olive-700 mt-1 font-bold">✓ Replied</p>
+                        )}
                       </td>
-                      <td className="px-4 py-3 text-xs text-gray-600 whitespace-nowrap">{fmt(f.createdAt)}</td>
-                      <td className="px-4 py-3">
+                      <td className="px-4 py-3.5 text-xs text-gray-400 whitespace-nowrap">{fmt(f.createdAt)}</td>
+                      <td className="px-4 py-3.5">
                         <div className="flex gap-1.5">
                           <button
                             onClick={() => handleView(f._id)}
-                            className="flex items-center gap-1 bg-blue-50 hover:bg-blue-100 text-blue-700 border-0 rounded-lg px-3 py-1.5 text-xs font-bold cursor-pointer transition-colors"
+                            className="flex items-center gap-1 bg-olive-700 hover:bg-olive-800 text-white border-0 rounded-full px-3 py-1.5 text-xs font-bold cursor-pointer transition-colors"
                           >
                             <Eye size={12} /> View
                           </button>
                           <button
                             onClick={() => { if (window.confirm("Delete this feedback permanently?")) handleDelete(f._id); }}
-                            className="bg-red-50 hover:bg-red-100 text-red-700 border-0 rounded-lg px-2 py-1.5 cursor-pointer transition-colors"
+                            className="bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 rounded-full px-2.5 py-1.5 cursor-pointer transition-colors"
                           >
                             <Trash2 size={12} />
                           </button>
@@ -551,35 +590,41 @@ export default function AdminFeedback() {
           </>
         )}
 
-        {/* Pagination */}
+        {/* ── Pagination ── */}
         {totalPages > 1 && (
-          <div className="flex flex-col sm:flex-row gap-4 justify-between items-center p-5 border-t border-gray-200">
-            <span className="text-xs text-gray-600">
-              Page {page} of {totalPages} ({total} records)
+          <div className="flex flex-col sm:flex-row gap-3 justify-between items-center px-5 py-4 border-t border-beige-300">
+            <span className="text-xs text-gray-400 font-medium">
+              Page {page} of {totalPages} · {total} records
             </span>
-            <div className="flex gap-1.5">
-              <button onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page === 1}
-                className={`flex items-center gap-1 px-3 py-2 rounded-lg text-sm font-semibold border transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed ${
-                  page === 1 ? "bg-gray-100 border-gray-200 text-gray-500" : "bg-white border-gray-200 text-gray-700 hover:bg-gray-50"
-                }`}>
+            <div className="flex items-center gap-1.5">
+              <button
+                onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page === 1}
+                className="flex items-center gap-1 px-3 py-2 rounded-xl border border-beige-300 bg-beige-200 text-sm font-semibold text-gray-600 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer hover:border-beige-400 transition-colors"
+              >
                 <ChevronLeft size={14} /> Prev
               </button>
+
               {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
                 const pg = page <= 3 ? i + 1 : page - 2 + i;
                 if (pg < 1 || pg > totalPages) return null;
                 return (
-                  <button key={pg} onClick={() => setPage(pg)}
-                    className={`w-8 h-8 rounded-lg text-sm font-bold transition-colors cursor-pointer border-0 ${
-                      page === pg ? "bg-indigo-600 text-white" : "bg-white border border-gray-200 text-gray-700 hover:bg-gray-50"
-                    }`}>
+                  <button
+                    key={pg} onClick={() => setPage(pg)}
+                    className={`w-8 h-8 rounded-xl text-sm font-bold transition-colors cursor-pointer border ${
+                      page === pg
+                        ? "bg-olive-700 text-white border-olive-700"
+                        : "bg-beige-200 border-beige-300 text-gray-600 hover:border-beige-400"
+                    }`}
+                  >
                     {pg}
                   </button>
                 );
               })}
-              <button onClick={() => setPage((p) => Math.min(totalPages, p + 1))} disabled={page === totalPages}
-                className={`flex items-center gap-1 px-3 py-2 rounded-lg text-sm font-semibold border transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed ${
-                  page === totalPages ? "bg-gray-100 border-gray-200 text-gray-500" : "bg-white border-gray-200 text-gray-700 hover:bg-gray-50"
-                }`}>
+
+              <button
+                onClick={() => setPage((p) => Math.min(totalPages, p + 1))} disabled={page === totalPages}
+                className="flex items-center gap-1 px-3 py-2 rounded-xl border border-beige-300 bg-beige-200 text-sm font-semibold text-gray-600 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer hover:border-beige-400 transition-colors"
+              >
                 Next <ChevronRight size={14} />
               </button>
             </div>
@@ -587,7 +632,7 @@ export default function AdminFeedback() {
         )}
       </div>
 
-      {/* Modal */}
+      {/* ── Modal ── */}
       {selected && (
         <FeedbackModal
           item={selected}

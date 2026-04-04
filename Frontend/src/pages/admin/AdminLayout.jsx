@@ -4,7 +4,7 @@ import {
   Menu, X,
   LayoutDashboard, Building2, Users, Mail, Image, UserCircle, Heart,
   ClipboardList, Wallet, IndianRupee, CheckCircle2, Coins, BookOpenText,
-  CalendarDays, Settings, Briefcase, MapPin, BookMarked, Globe,
+  CalendarDays, Settings, Briefcase, MapPin, BookMarked,
   MessageSquare, UserCog, AlertCircle, BarChart2,
 } from "lucide-react";
 
@@ -27,7 +27,6 @@ const NAV_ITEMS = [
   { path: "/admin/completed-tasks",   label: "Completed Tasks",  icon: CheckCircle2 },
   { path: "/admin/services/add",      label: "Add Services",     icon: Briefcase },
   { path: "/admin/services/manage",   label: "Manage Services",  icon: Settings },
-  { path: "/admin/communities",       label: "Communities",      icon: Globe },
   { path: "/admin/villages",          label: "Villages",         icon: MapPin },
   { path: "/admin/fund-ledger",       label: "Fund Ledger",      icon: BookMarked },
   { path: "/admin/feedback",          label: "Feedback",         icon: MessageSquare },
@@ -43,11 +42,25 @@ function AdminLayout() {
   const navigate  = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [pendingCounts, setPendingCounts] = useState({
-    ngos: 0, volunteers: 0, contacts: 0, kanyadan: 0, funds: 0, communities: 0, feedback: 0,
+    ngos: 0, volunteers: 0, contacts: 0, kanyadan: 0, funds: 0, feedback: 0,
   });
 
   /* Close sidebar whenever the route changes */
   useEffect(() => { setSidebarOpen(false); }, [location.pathname]);
+
+  /* Set beige background + disable overscroll bounce in admin panel */
+  useEffect(() => {
+    document.documentElement.style.backgroundColor = "#eae6de";
+    document.documentElement.style.overscrollBehavior = "none";
+    document.body.style.backgroundColor = "#eae6de";
+    document.body.style.overscrollBehavior = "none";
+    return () => {
+      document.documentElement.style.backgroundColor = "";
+      document.documentElement.style.overscrollBehavior = "";
+      document.body.style.backgroundColor = "";
+      document.body.style.overscrollBehavior = "";
+    };
+  }, []);
 
   /* Prevent body scroll when mobile sidebar is open */
   useEffect(() => {
@@ -96,13 +109,6 @@ function AdminLayout() {
       .then(r => r?.json?.())
       .then(d => {
         if (d?.success) setPendingCounts(prev => ({ ...prev, funds: d.data?.pagination?.total || 0 }));
-        return fetch(`${API_BASE_URL}/api/admin/communities/stats`, {
-          headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }, credentials: "include",
-        });
-      })
-      .then(r => r?.json?.())
-      .then(d => {
-        if (d?.success) setPendingCounts(prev => ({ ...prev, communities: d.data?.communities?.pending || 0 }));
         return fetch(`${API_BASE_URL}/api/admin/feedback/stats`, {
           headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }, credentials: "include",
         });
@@ -124,7 +130,6 @@ function AdminLayout() {
       "Contacts":      pendingCounts.contacts,
       "Kanyadan":      pendingCounts.kanyadan,
       "Fund Requests": pendingCounts.funds,
-      "Communities":   pendingCounts.communities,
       "Feedback":      pendingCounts.feedback,
     };
     return map[label] > 0 ? map[label] : null;
@@ -138,7 +143,7 @@ function AdminLayout() {
   };
 
   return (
-    <div className="flex min-h-screen bg-gray-100">
+    <div className="flex min-h-screen bg-beige-300">
 
       {/* ══ Mobile backdrop ══ */}
       {sidebarOpen && (
@@ -153,22 +158,24 @@ function AdminLayout() {
         className={`
           fixed lg:sticky top-0 left-0 z-50
           h-screen w-[260px] lg:w-[250px]
-          bg-[#1e293b] flex flex-col flex-shrink-0
+          flex flex-col flex-shrink-0
           transition-transform duration-300 ease-in-out
+          border-r border-olive-200
           ${sidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}
         `}
+        style={{ background: "linear-gradient(180deg, #ffffff 0%, #f4f8ed 55%, #faf7f2 100%)" }}
       >
         {/* Sidebar header */}
-        <div className="flex items-center justify-between px-4 py-4 border-b border-slate-700 flex-shrink-0">
+        <div className="flex items-center justify-between px-4 py-4 border-b border-olive-200 bg-olive-100/60 flex-shrink-0">
           <div>
-            <h2 className="text-[1.15rem] font-bold text-white m-0 leading-tight">Admin Panel</h2>
-            <p className="text-xs text-slate-400 mt-0.5 m-0 truncate max-w-[160px]">
+            <h2 className="text-[1.15rem] font-extrabold text-olive-800 m-0 leading-tight">Admin Panel</h2>
+            <p className="text-xs text-olive-600 mt-0.5 m-0 truncate max-w-[160px]">
               {user?.name || "Administrator"}
             </p>
           </div>
           {/* Close button — mobile only */}
           <button
-            className="lg:hidden p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-700 transition-colors flex-shrink-0"
+            className="lg:hidden p-1.5 rounded-lg text-olive-600 hover:text-olive-900 hover:bg-olive-100 transition-colors flex-shrink-0 border-0 bg-transparent cursor-pointer"
             onClick={() => setSidebarOpen(false)}
             aria-label="Close menu"
           >
@@ -190,8 +197,8 @@ function AdminLayout() {
                       flex items-center gap-3 px-3 py-2.5 rounded-lg text-[0.875rem]
                       no-underline transition-all duration-150 w-full
                       ${active
-                        ? "bg-blue-600 text-white font-semibold"
-                        : "text-slate-300 hover:bg-slate-700 hover:text-white"}
+                        ? "bg-olive-700 text-white font-semibold shadow-sm"
+                        : "text-gray-700 hover:bg-olive-100 hover:text-olive-900"}
                     `}
                   >
                     <item.icon size={17} className="flex-shrink-0" />
@@ -209,7 +216,7 @@ function AdminLayout() {
         </nav>
 
         {/* Logout */}
-        <div className="p-4 border-t border-slate-700 flex-shrink-0">
+        <div className="p-4 border-t border-olive-200 flex-shrink-0">
           <button
             onClick={handleLogout}
             className="w-full py-2.5 bg-red-500 hover:bg-red-600 active:bg-red-700 text-white rounded-lg font-semibold text-sm transition-colors cursor-pointer border-0"
@@ -223,7 +230,7 @@ function AdminLayout() {
       <div className="flex-1 min-w-0 flex flex-col">
 
         {/* Mobile top bar */}
-        <header className="lg:hidden sticky top-0 z-30 flex items-center gap-3 px-4 py-3 bg-white border-b border-gray-200 shadow-sm flex-shrink-0">
+        <header className="lg:hidden sticky top-0 z-30 flex items-center gap-3 px-4 py-3 bg-beige-200 border-b border-beige-300 shadow-sm flex-shrink-0">
           <button
             onClick={() => setSidebarOpen(true)}
             className="p-2 rounded-lg text-gray-600 hover:bg-gray-100 transition-colors border-0 bg-transparent cursor-pointer"

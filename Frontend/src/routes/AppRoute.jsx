@@ -42,7 +42,6 @@ const AdminPayments           = lazy(() => import("../pages/admin/AdminPayments.
 const AdminCompletedTasks     = lazy(() => import("../pages/admin/AdminCompletedTasks.jsx"));
 const AddServices             = lazy(() => import("../pages/admin/AddServices.jsx"));
 const ManageServices          = lazy(() => import("../pages/admin/ManageServices.jsx"));
-const AdminCommunityPosts     = lazy(() => import("../pages/admin/AdminCommunityPosts.jsx"));
 const AdminFeedback           = lazy(() => import("../pages/admin/AdminFeedback.jsx"));
 const AdminVillages           = lazy(() => import("../pages/admin/AdminVillages.jsx"));
 const AdminFundLedger         = lazy(() => import("../pages/admin/AdminFundLedger.jsx"));
@@ -288,7 +287,6 @@ function AppRoutes() {
             <Route path="services/manage" element={<ManageServices />} />
             <Route path="villages"        element={<AdminVillages />} />
             <Route path="fund-ledger"     element={<AdminFundLedger />} />
-            <Route path="communities"     element={<AdminCommunityPosts />} />
             <Route path="feedback"        element={<AdminFeedback />} />
             <Route path="problems"        element={<AdminProblems />} />
             <Route path="employment"      element={<AdminEmployment />} />

@@ -1,32 +1,57 @@
 import { useState, useEffect } from "react";
-import { BarChart2, Loader2, TrendingUp, TrendingDown, Minus, FileText, CheckCircle, Trash2, Zap, X, RefreshCw } from "lucide-react";
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell, PieChart, Pie, Legend } from "recharts";
+import {
+  BarChart2, RefreshCw, ChevronLeft, ChevronRight, ChevronDown, ChevronUp,
+  TrendingUp, TrendingDown, Minus, FileText, CheckCircle, Trash2, Zap, X, Building2, MapPin,
+} from "lucide-react";
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell, PieChart, Pie } from "recharts";
 import { API_BASE_URL } from "./AdminLayout.jsx";
 
+// ── Meta ──────────────────────────────────────────────────────────────────────
 const STATUS_META = {
-  draft:     { label: "Draft",     bg: "#f1f5f9", color: "#475569", Icon: FileText },
-  published: { label: "Published", bg: "#dcfce7", color: "#166534", Icon: CheckCircle },
+  draft:     { label: "Draft",     cls: "bg-beige-200 text-gray-600 border-beige-300",  Icon: FileText },
+  published: { label: "Published", cls: "bg-olive-100 text-olive-700 border-olive-200", Icon: CheckCircle },
 };
 
 const PERIOD_LABELS = { monthly: "Monthly", quarterly: "Quarterly", annual: "Annual", custom: "Custom" };
 
-const fmtDate = (d) => d ? new Date(d).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" }) : "—";
+const CAT_CLS = {
+  beneficiaries: "bg-blue-50 text-blue-700",
+  health:        "bg-olive-100 text-olive-700",
+  education:     "bg-purple-50 text-purple-700",
+  employment:    "bg-amber-50 text-amber-700",
+  infrastructure:"bg-cyan-50 text-cyan-700",
+  environment:   "bg-emerald-50 text-emerald-700",
+  other:         "bg-beige-200 text-gray-600",
+};
 
-const CAT_COLORS = {
+// kept as hex — recharts requires hex colors
+const CHART_COLORS = {
   beneficiaries: "#2563eb", health: "#16a34a", education: "#7c3aed",
   employment: "#d97706", infrastructure: "#0891b2", environment: "#059669", other: "#64748b",
 };
 
+const fmtDate = (d) =>
+  d ? new Date(d).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" }) : "—";
+
+// ── MetricChip ────────────────────────────────────────────────────────────────
 function MetricChip({ m }) {
-  const color = CAT_COLORS[m.category] || CAT_COLORS.other;
-  const Icon = m.changeType === "increase" ? TrendingUp : m.changeType === "decrease" ? TrendingDown : Minus;
+  const catCls  = CAT_CLS[m.category] || CAT_CLS.other;
+  const catHex  = CHART_COLORS[m.category] || CHART_COLORS.other;
+  const Icon    = m.changeType === "increase" ? TrendingUp : m.changeType === "decrease" ? TrendingDown : Minus;
+  const changeCls = m.changeType === "increase" ? "text-olive-700" : m.changeType === "decrease" ? "text-red-600" : "text-gray-400";
+
   return (
-    <div style={{ background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: "8px", padding: "8px 12px", minWidth: "120px" }}>
-      <p style={{ margin: "0 0 2px", fontSize: "11px", color: "#94a3b8", textTransform: "capitalize" }}>{m.category}</p>
-      <p style={{ margin: "0 0 4px", fontWeight: "800", fontSize: "18px", color }}>{m.value}<span style={{ fontSize: "11px", fontWeight: "400", color: "#94a3b8", marginLeft: "3px" }}>{m.unit}</span></p>
-      <p style={{ margin: 0, fontSize: "11px", color: "#374151", fontWeight: "600" }}>{m.label}</p>
+    <div className="bg-beige-200 border border-beige-300 rounded-xl p-3 min-w-[120px]">
+      <p className={`text-[10px] font-bold capitalize mb-0.5 ${catCls} px-1.5 py-0.5 rounded-full w-fit`}>
+        {m.category}
+      </p>
+      <p className="font-extrabold text-lg mt-1 mb-0.5" style={{ color: catHex }}>
+        {m.value}
+        <span className="text-[11px] font-normal text-gray-400 ml-1">{m.unit}</span>
+      </p>
+      <p className="text-xs font-semibold text-gray-700 mb-0.5">{m.label}</p>
       {m.change != null && (
-        <p style={{ margin: "3px 0 0", fontSize: "10px", color: m.changeType === "increase" ? "#16a34a" : m.changeType === "decrease" ? "#dc2626" : "#64748b", display: "flex", alignItems: "center", gap: "2px" }}>
+        <p className={`flex items-center gap-0.5 text-[10px] font-semibold ${changeCls}`}>
           <Icon size={10} /> {m.change}%
         </p>
       )}
@@ -34,45 +59,44 @@ function MetricChip({ m }) {
   );
 }
 
-// ── Recharts ──────────────────────────────────────────────────────────────
-
-const CHART_COLORS = { beneficiaries:"#16a34a", health:"#dc2626", education:"#2563eb", employment:"#d97706", infrastructure:"#7c3aed", environment:"#0891b2", other:"#64748b" };
-
+// ── ReportCharts ──────────────────────────────────────────────────────────────
 function ReportCharts({ metrics }) {
   if (!metrics || metrics.length === 0) return null;
 
-  // Bar chart data
-  const barData = metrics.filter(m => m.value > 0).map(m => ({
-    name: m.label.length > 16 ? m.label.slice(0,14) + "…" : m.label,
+  const barData = metrics.filter((m) => m.value > 0).map((m) => ({
+    name: m.label.length > 16 ? m.label.slice(0, 14) + "…" : m.label,
     value: m.value, category: m.category, unit: m.unit,
   }));
 
-  // Pie chart: count per category
   const catCount = metrics.reduce((acc, m) => { acc[m.category] = (acc[m.category] || 0) + 1; return acc; }, {});
-  const pieData = Object.entries(catCount).map(([cat, count]) => ({ name: cat, value: count, fill: CHART_COLORS[cat] || "#64748b" }));
+  const pieData  = Object.entries(catCount).map(([cat, count]) => ({ name: cat, value: count, fill: CHART_COLORS[cat] || "#64748b" }));
 
   return (
-    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "20px", marginTop: "14px" }}>
+    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-3">
       {barData.length > 0 && (
         <div>
-          <p style={{ margin: "0 0 8px", fontSize: "11px", fontWeight: "700", color: "#64748b", textTransform: "uppercase" }}>Metric Values</p>
+          <p className="text-[10px] font-extrabold text-olive-600 uppercase tracking-widest mb-2">Metric Values</p>
           <ResponsiveContainer width="100%" height={160}>
             <BarChart data={barData} margin={{ top: 4, right: 8, left: 0, bottom: 36 }}>
               <XAxis dataKey="name" tick={{ fontSize: 9, fill: "#94a3b8" }} angle={-30} textAnchor="end" interval={0} />
               <YAxis tick={{ fontSize: 9, fill: "#94a3b8" }} width={36} />
               <Tooltip formatter={(v, n, p) => [`${v} ${p.payload.unit || ""}`, p.payload.name]} contentStyle={{ fontSize: 11, borderRadius: 6 }} />
-              <Bar dataKey="value" radius={[3,3,0,0]}>{barData.map((d,i) => <Cell key={i} fill={CHART_COLORS[d.category] || "#64748b"} />)}</Bar>
+              <Bar dataKey="value" radius={[3, 3, 0, 0]}>
+                {barData.map((d, i) => <Cell key={i} fill={CHART_COLORS[d.category] || "#64748b"} />)}
+              </Bar>
             </BarChart>
           </ResponsiveContainer>
         </div>
       )}
       {pieData.length > 1 && (
         <div>
-          <p style={{ margin: "0 0 8px", fontSize: "11px", fontWeight: "700", color: "#64748b", textTransform: "uppercase" }}>Category Breakdown</p>
+          <p className="text-[10px] font-extrabold text-olive-600 uppercase tracking-widest mb-2">Category Breakdown</p>
           <ResponsiveContainer width="100%" height={160}>
             <PieChart>
-              <Pie data={pieData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={55} label={({ name, percent }) => `${name} ${(percent*100).toFixed(0)}%`} labelLine={false} style={{ fontSize: 9 }}>
-                {pieData.map((d,i) => <Cell key={i} fill={d.fill} />)}
+              <Pie data={pieData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={55}
+                label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                labelLine={false} style={{ fontSize: 9 }}>
+                {pieData.map((d, i) => <Cell key={i} fill={d.fill} />)}
               </Pie>
               <Tooltip contentStyle={{ fontSize: 11, borderRadius: 6 }} />
             </PieChart>
@@ -83,36 +107,263 @@ function ReportCharts({ metrics }) {
   );
 }
 
-// ── Admin Auto-Generate Modal ─────────────────────────────────────────────
+// ── Expanded Detail ───────────────────────────────────────────────────────────
+function ReportDetail({ r }) {
+  return (
+    <div className="px-4 py-4 sm:px-5 bg-beige-200 border-t border-beige-300">
+      {r.summary && (
+        <p className="text-xs sm:text-sm text-gray-600 leading-relaxed mb-3">{r.summary}</p>
+      )}
+      {r.metrics?.length > 0 && (
+        <>
+          <div className="flex flex-wrap gap-2 mb-3">
+            {r.metrics.map((m, i) => <MetricChip key={i} m={m} />)}
+          </div>
+          <ReportCharts metrics={r.metrics} />
+        </>
+      )}
+      {r.highlights?.length > 0 && (
+        <div className="mt-3">
+          <p className="text-[10px] font-extrabold text-olive-700 uppercase tracking-widest mb-1">Highlights</p>
+          <ul className="list-disc pl-4 space-y-0.5">
+            {r.highlights.map((h, i) => <li key={i} className="text-xs text-gray-600">{h}</li>)}
+          </ul>
+        </div>
+      )}
+      {r.challenges?.length > 0 && (
+        <div className="mt-3">
+          <p className="text-[10px] font-extrabold text-red-600 uppercase tracking-widest mb-1">Challenges</p>
+          <ul className="list-disc pl-4 space-y-0.5">
+            {r.challenges.map((c, i) => <li key={i} className="text-xs text-gray-600">{c}</li>)}
+          </ul>
+        </div>
+      )}
+    </div>
+  );
+}
 
+// ── Mobile Card ───────────────────────────────────────────────────────────────
+function ReportCard({ r, onDelete, onAutoUpdate }) {
+  const [open, setOpen]       = useState(false);
+  const [updating, setUpdating] = useState(false);
+  const sm = STATUS_META[r.status] || STATUS_META.draft;
+
+  const handleAutoUpdate = async (e) => {
+    e.stopPropagation();
+    if (!confirm("Re-pull live data for this report? Metrics, highlights, and summary will be overwritten.")) return;
+    setUpdating(true);
+    try {
+      const token = localStorage.getItem("token");
+      const res   = await fetch(`${API_BASE_URL}/api/impact-reports/admin/auto-update/${r._id}`, {
+        method: "PUT", headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = await res.json();
+      if (data.success) onAutoUpdate(data.data.report);
+      else alert(data.message || "Update failed");
+    } catch { alert("Network error"); }
+    finally { setUpdating(false); }
+  };
+
+  return (
+    <div className="border-b border-beige-300 last:border-b-0">
+      <div
+        className="p-4 hover:bg-beige-200 transition-colors cursor-pointer"
+        onClick={() => setOpen((o) => !o)}
+      >
+        {/* Title + actions */}
+        <div className="flex items-start justify-between gap-2 mb-1.5">
+          <p className="font-bold text-gray-900 text-sm leading-tight flex-1">{r.title}</p>
+          <div className="flex items-center gap-1.5 shrink-0" onClick={(e) => e.stopPropagation()}>
+            <button
+              onClick={handleAutoUpdate}
+              disabled={updating}
+              title="Re-pull live data"
+              className={`w-7 h-7 flex items-center justify-center rounded-lg border transition-colors cursor-pointer ${updating ? "bg-beige-200 text-gray-400 border-beige-300 cursor-not-allowed" : "bg-blue-50 hover:bg-blue-100 text-blue-600 border-blue-200"}`}
+            >
+              <RefreshCw size={11} className={updating ? "animate-spin" : ""} />
+            </button>
+            <button
+              onClick={() => onDelete(r._id)}
+              className="w-7 h-7 flex items-center justify-center rounded-lg bg-red-50 hover:bg-red-100 text-red-500 border border-red-200 cursor-pointer transition-colors"
+            >
+              <Trash2 size={12} />
+            </button>
+          </div>
+        </div>
+
+        <p className="text-xs text-gray-400 mb-2">{PERIOD_LABELS[r.reportPeriod] || r.reportPeriod}</p>
+
+        {/* Status badge */}
+        <div className="flex flex-wrap gap-1.5 mb-3">
+          <span className={`inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full border ${sm.cls}`}>
+            <sm.Icon size={9} /> {sm.label}
+          </span>
+        </div>
+
+        {/* Meta */}
+        <div className="grid grid-cols-2 gap-x-4 gap-y-1">
+          <span className="flex items-center gap-1 text-xs text-gray-500">
+            <Building2 size={10} className="text-gray-400 shrink-0" />
+            <span className="truncate">{r.ngoId?.ngoName || "—"}</span>
+          </span>
+          <span className="flex items-center gap-1 text-xs text-gray-500">
+            <MapPin size={10} className="text-gray-400 shrink-0" />
+            <span className="truncate">{r.villageId?.villageName || "—"}</span>
+          </span>
+          <span className="text-xs text-gray-500">{r.metrics?.length || 0} metrics</span>
+          <span className="text-xs text-gray-400">
+            {r.periodStart && r.periodEnd
+              ? `${fmtDate(r.periodStart)} – ${fmtDate(r.periodEnd)}`
+              : fmtDate(r.createdAt)}
+          </span>
+        </div>
+
+        {/* Expand indicator */}
+        <div className="flex justify-center mt-2">
+          {open ? <ChevronUp size={14} className="text-gray-400" /> : <ChevronDown size={14} className="text-gray-400" />}
+        </div>
+      </div>
+
+      {open && <ReportDetail r={r} />}
+    </div>
+  );
+}
+
+// ── Desktop Row ───────────────────────────────────────────────────────────────
+function ReportRow({ r, onDelete, onAutoUpdate }) {
+  const [open, setOpen]         = useState(false);
+  const [updating, setUpdating] = useState(false);
+  const sm = STATUS_META[r.status] || STATUS_META.draft;
+
+  const handleAutoUpdate = async (e) => {
+    e.stopPropagation();
+    if (!confirm("Re-pull live data for this report? Metrics, highlights, and summary will be overwritten.")) return;
+    setUpdating(true);
+    try {
+      const token = localStorage.getItem("token");
+      const res   = await fetch(`${API_BASE_URL}/api/impact-reports/admin/auto-update/${r._id}`, {
+        method: "PUT", headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = await res.json();
+      if (data.success) onAutoUpdate(data.data.report);
+      else alert(data.message || "Update failed");
+    } catch { alert("Network error"); }
+    finally { setUpdating(false); }
+  };
+
+  return (
+    <>
+      <tr
+        className="hover:bg-beige-200 transition-colors cursor-pointer border-b border-beige-200"
+        onClick={() => setOpen((o) => !o)}
+      >
+        {/* Report */}
+        <td className="px-4 py-3.5 max-w-[220px]">
+          <p className="font-bold text-sm text-gray-900 truncate">{r.title}</p>
+          <p className="text-xs text-gray-400 mt-0.5">{PERIOD_LABELS[r.reportPeriod] || r.reportPeriod}</p>
+        </td>
+
+        {/* NGO */}
+        <td className="px-4 py-3.5">
+          <span className="flex items-center gap-1 text-xs text-gray-600">
+            <Building2 size={11} className="text-gray-400 shrink-0" />
+            {r.ngoId?.ngoName || "—"}
+          </span>
+        </td>
+
+        {/* Village */}
+        <td className="px-4 py-3.5">
+          <span className="text-xs text-gray-500">{r.villageId?.villageName || "—"}</span>
+        </td>
+
+        {/* Status */}
+        <td className="px-4 py-3.5">
+          <span className={`inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-0.5 rounded-full border ${sm.cls}`}>
+            <sm.Icon size={10} /> {sm.label}
+          </span>
+        </td>
+
+        {/* Metrics */}
+        <td className="px-4 py-3.5">
+          <span className="text-xs text-gray-600">{r.metrics?.length || 0} metrics</span>
+        </td>
+
+        {/* Period */}
+        <td className="px-4 py-3.5">
+          <span className="text-xs text-gray-400 whitespace-nowrap">
+            {r.periodStart && r.periodEnd
+              ? `${fmtDate(r.periodStart)} – ${fmtDate(r.periodEnd)}`
+              : fmtDate(r.createdAt)}
+          </span>
+        </td>
+
+        {/* Actions */}
+        <td className="px-4 py-3.5" onClick={(e) => e.stopPropagation()}>
+          <div className="flex items-center gap-1.5">
+            <button
+              onClick={handleAutoUpdate}
+              disabled={updating}
+              title="Re-pull live data"
+              className={`w-8 h-8 flex items-center justify-center rounded-xl border transition-colors cursor-pointer ${updating ? "bg-beige-200 text-gray-400 border-beige-300 cursor-not-allowed" : "bg-blue-50 hover:bg-blue-100 text-blue-600 border-blue-200"}`}
+            >
+              <RefreshCw size={13} className={updating ? "animate-spin" : ""} />
+            </button>
+            <button
+              onClick={() => onDelete(r._id)}
+              className="w-8 h-8 flex items-center justify-center rounded-xl bg-red-50 hover:bg-red-100 text-red-500 border border-red-200 cursor-pointer transition-colors"
+            >
+              <Trash2 size={13} />
+            </button>
+          </div>
+        </td>
+      </tr>
+
+      {open && (
+        <tr>
+          <td colSpan={7} className="p-0">
+            <ReportDetail r={r} />
+          </td>
+        </tr>
+      )}
+    </>
+  );
+}
+
+// ── Auto-Generate Modal ───────────────────────────────────────────────────────
 function AdminAutoGenModal({ onClose, onGenerated }) {
-  const today = new Date();
-  const firstOfMonth = new Date(today.getFullYear(), today.getMonth(), 1).toISOString().slice(0,10);
-  const lastOfMonth  = new Date(today.getFullYear(), today.getMonth()+1, 0).toISOString().slice(0,10);
+  const today        = new Date();
+  const firstOfMonth = new Date(today.getFullYear(), today.getMonth(), 1).toISOString().slice(0, 10);
+  const lastOfMonth  = new Date(today.getFullYear(), today.getMonth() + 1, 0).toISOString().slice(0, 10);
 
-  const [form, setForm]       = useState({ reportPeriod: "monthly", periodStart: firstOfMonth, periodEnd: lastOfMonth });
+  const [form, setForm]           = useState({ reportPeriod: "monthly", periodStart: firstOfMonth, periodEnd: lastOfMonth });
   const [generating, setGenerating] = useState(false);
-  const [error, setError]     = useState("");
+  const [error, setError]         = useState("");
+  const [visible, setVisible]     = useState(false);
   const token = localStorage.getItem("token");
+
+  useEffect(() => {
+    const id = requestAnimationFrame(() => setVisible(true));
+    return () => cancelAnimationFrame(id);
+  }, []);
 
   const handlePeriodChange = (period) => {
     const now = new Date();
     let start, end;
     if (period === "monthly") {
       start = new Date(now.getFullYear(), now.getMonth(), 1);
-      end   = new Date(now.getFullYear(), now.getMonth()+1, 0);
+      end   = new Date(now.getFullYear(), now.getMonth() + 1, 0);
     } else if (period === "quarterly") {
       const q = Math.floor(now.getMonth() / 3);
-      start = new Date(now.getFullYear(), q*3, 1);
-      end   = new Date(now.getFullYear(), q*3+3, 0);
+      start = new Date(now.getFullYear(), q * 3, 1);
+      end   = new Date(now.getFullYear(), q * 3 + 3, 0);
     } else if (period === "annual") {
       start = new Date(now.getFullYear(), 0, 1);
       end   = new Date(now.getFullYear(), 11, 31);
     } else {
       start = new Date(now.getFullYear(), now.getMonth(), 1);
-      end   = new Date(now.getFullYear(), now.getMonth()+1, 0);
+      end   = new Date(now.getFullYear(), now.getMonth() + 1, 0);
     }
-    setForm(f => ({ ...f, reportPeriod: period, periodStart: start.toISOString().slice(0,10), periodEnd: end.toISOString().slice(0,10) }));
+    setForm((f) => ({ ...f, reportPeriod: period, periodStart: start.toISOString().slice(0, 10), periodEnd: end.toISOString().slice(0, 10) }));
   };
 
   const generate = async () => {
@@ -130,70 +381,114 @@ function AdminAutoGenModal({ onClose, onGenerated }) {
     finally { setGenerating(false); }
   };
 
-  const inp = { padding: "9px 12px", border: "1px solid #e2e8f0", borderRadius: "8px", fontSize: "14px", width: "100%", boxSizing: "border-box", fontFamily: "inherit" };
-
   return (
-    <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.55)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000, padding: "20px" }}>
-      <div style={{ background: "#fff", borderRadius: "18px", width: "100%", maxWidth: "500px", overflow: "hidden", boxShadow: "0 24px 80px rgba(0,0,0,0.2)" }}>
-        <div style={{ background: "linear-gradient(135deg,#0f172a,#1e3a5f)", padding: "22px 24px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+    <div
+      className={`fixed inset-0 z-[1000] flex items-end sm:items-center justify-center p-0 sm:p-6 transition-all duration-300 ${visible ? "bg-black/50 backdrop-blur-sm" : "bg-black/0"}`}
+      onClick={onClose}
+    >
+      <div
+        className={`bg-beige-100 rounded-t-[2rem] sm:rounded-[2rem] w-full sm:max-w-lg overflow-hidden shadow-2xl transition-all duration-300 ease-out ${visible ? "translate-y-0 opacity-100 sm:scale-100" : "translate-y-full opacity-0 sm:scale-95 sm:translate-y-6"}`}
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Modal header */}
+        <div className="bg-gray-900 px-5 py-4 flex items-center justify-between">
           <div>
-            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
-              <Zap size={18} color="#fbbf24" />
-              <h2 style={{ margin: 0, fontWeight: "800", fontSize: "18px", color: "#fff" }}>Auto-Generate Report</h2>
+            <div className="flex items-center gap-2 mb-1">
+              <Zap size={18} className="text-amber-400" />
+              <h2 className="text-lg font-extrabold text-white m-0">Auto-Generate Report</h2>
             </div>
-            <p style={{ margin: 0, color: "rgba(255,255,255,0.6)", fontSize: "13px" }}>Aggregates live data across all NGOs on the platform</p>
+            <p className="text-xs text-white/60">Aggregates live data across all NGOs on the platform</p>
           </div>
-          <button onClick={onClose} style={{ background: "rgba(255,255,255,0.12)", border: "none", borderRadius: "50%", width: 32, height: 32, color: "#fff", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}><X size={16} /></button>
+          <button
+            onClick={onClose}
+            className="w-8 h-8 flex items-center justify-center rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors cursor-pointer border-0"
+          >
+            <X size={16} />
+          </button>
         </div>
 
-        <div style={{ padding: "24px", display: "flex", flexDirection: "column", gap: "16px" }}>
-          {error && <div style={{ background: "#fef2f2", border: "1px solid #fecaca", color: "#dc2626", padding: "10px 14px", borderRadius: "8px", fontSize: "13px" }}>{error}</div>}
+        {/* Modal body */}
+        <div className="p-5 flex flex-col gap-4">
+          {error && (
+            <div className="bg-red-50 border border-red-200 text-red-600 text-sm px-4 py-2.5 rounded-xl">
+              {error}
+            </div>
+          )}
 
           {/* Info box */}
-          <div style={{ background: "#eff6ff", border: "1px solid #bfdbfe", borderRadius: "10px", padding: "12px 14px" }}>
-            <p style={{ margin: "0 0 6px", fontSize: "12px", fontWeight: "700", color: "#1e40af" }}>📊 Auto-pulls from:</p>
-            <div style={{ display: "flex", flexWrap: "wrap", gap: "6px" }}>
-              {["Volunteers","Events","Villages","Fund Ledger","Employment","Surveys","Problems"].map(t => (
-                <span key={t} style={{ background: "#dbeafe", color: "#1d4ed8", fontSize: "11px", fontWeight: "600", padding: "2px 8px", borderRadius: "99px" }}>{t}</span>
+          <div className="bg-blue-50 border border-blue-200 rounded-xl px-4 py-3">
+            <p className="text-xs font-extrabold text-blue-700 mb-2">Auto-pulls from:</p>
+            <div className="flex flex-wrap gap-1.5">
+              {["Volunteers", "Events", "Villages", "Fund Ledger", "Employment", "Surveys", "Problems"].map((t) => (
+                <span key={t} className="bg-blue-100 text-blue-700 text-[10px] font-bold px-2 py-0.5 rounded-full border border-blue-200">
+                  {t}
+                </span>
               ))}
             </div>
           </div>
 
-          {/* Period */}
+          {/* Period type */}
           <div>
-            <label style={{ fontSize: "12px", fontWeight: "700", color: "#374151", display: "block", marginBottom: "6px" }}>Period Type</label>
-            <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
-              {["monthly","quarterly","annual","custom"].map(p => (
-                <button key={p} onClick={() => handlePeriodChange(p)}
-                  style={{ padding: "7px 14px", borderRadius: "20px", border: "1px solid", cursor: "pointer", fontSize: "12px", fontWeight: "600",
-                    background: form.reportPeriod === p ? "#0f172a" : "#fff",
-                    color: form.reportPeriod === p ? "#fff" : "#374151",
-                    borderColor: form.reportPeriod === p ? "#0f172a" : "#e2e8f0" }}>
+            <label className="text-xs font-extrabold text-gray-700 uppercase tracking-wide block mb-2">Period Type</label>
+            <div className="flex flex-wrap gap-1.5">
+              {["monthly", "quarterly", "annual", "custom"].map((p) => (
+                <button
+                  key={p}
+                  onClick={() => handlePeriodChange(p)}
+                  className={`px-3 py-1.5 rounded-full text-xs font-bold cursor-pointer transition-all border ${
+                    form.reportPeriod === p
+                      ? "bg-gray-900 text-white border-gray-900"
+                      : "bg-beige-200 text-gray-600 border-beige-300 hover:border-beige-400"
+                  }`}
+                >
                   {p.charAt(0).toUpperCase() + p.slice(1)}
                 </button>
               ))}
             </div>
           </div>
 
-          {/* Dates */}
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
+          {/* Date range */}
+          <div className="grid grid-cols-2 gap-3">
             <div>
-              <label style={{ fontSize: "12px", fontWeight: "600", color: "#64748b", display: "block", marginBottom: "4px" }}>From</label>
-              <input type="date" style={inp} value={form.periodStart} onChange={e => setForm(f => ({ ...f, periodStart: e.target.value }))} />
+              <label className="text-xs font-semibold text-gray-500 block mb-1.5">From</label>
+              <input
+                type="date"
+                value={form.periodStart}
+                onChange={(e) => setForm((f) => ({ ...f, periodStart: e.target.value }))}
+                className="w-full bg-beige-200 border border-beige-300 rounded-xl px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-olive-400 text-gray-700"
+              />
             </div>
             <div>
-              <label style={{ fontSize: "12px", fontWeight: "600", color: "#64748b", display: "block", marginBottom: "4px" }}>To</label>
-              <input type="date" style={inp} value={form.periodEnd} onChange={e => setForm(f => ({ ...f, periodEnd: e.target.value }))} />
+              <label className="text-xs font-semibold text-gray-500 block mb-1.5">To</label>
+              <input
+                type="date"
+                value={form.periodEnd}
+                onChange={(e) => setForm((f) => ({ ...f, periodEnd: e.target.value }))}
+                className="w-full bg-beige-200 border border-beige-300 rounded-xl px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-olive-400 text-gray-700"
+              />
             </div>
           </div>
 
-          <p style={{ margin: 0, fontSize: "12px", color: "#94a3b8" }}>✅ Report will be <strong>published publicly</strong> immediately and visible on the Our Impact page.</p>
+          <p className="text-xs text-gray-400">
+            Report will be <strong className="text-gray-600">published publicly</strong> immediately and visible on the Our Impact page.
+          </p>
 
-          <div style={{ display: "flex", gap: "10px", justifyContent: "flex-end" }}>
-            <button onClick={onClose} style={{ padding: "10px 20px", borderRadius: "8px", border: "1px solid #e2e8f0", background: "#fff", fontWeight: "600", cursor: "pointer" }}>Cancel</button>
-            <button onClick={generate} disabled={generating}
-              style={{ display: "flex", alignItems: "center", gap: "7px", padding: "10px 22px", borderRadius: "8px", border: "none", background: generating ? "#94a3b8" : "#0f172a", color: "#fff", fontWeight: "700", cursor: generating ? "not-allowed" : "pointer" }}>
-              {generating ? <><Loader2 size={14} style={{ animation: "spin 1s linear infinite" }} /> Generating…</> : <><Zap size={14} /> Generate Report</>}
+          {/* Footer buttons */}
+          <div className="flex gap-2.5 justify-end pt-1">
+            <button
+              onClick={onClose}
+              className="px-5 py-2.5 rounded-xl border border-beige-300 bg-beige-200 text-gray-700 text-sm font-semibold hover:border-beige-400 transition-colors cursor-pointer"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={generate}
+              disabled={generating}
+              className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold text-white transition-colors cursor-pointer border-0 ${generating ? "bg-gray-400 cursor-not-allowed" : "bg-olive-700 hover:bg-olive-800"}`}
+            >
+              {generating
+                ? <><RefreshCw size={14} className="animate-spin" /> Generating…</>
+                : <><Zap size={14} /> Generate Report</>}
             </button>
           </div>
         </div>
@@ -202,99 +497,12 @@ function AdminAutoGenModal({ onClose, onGenerated }) {
   );
 }
 
-function ReportRow({ r, onDelete, onAutoUpdate }) {
-  const [open, setOpen] = useState(false);
-  const [updating, setUpdating] = useState(false);
-  const sm = STATUS_META[r.status] || STATUS_META.draft;
-
-  const handleAutoUpdate = async (e) => {
-    e.stopPropagation();
-    if (!confirm("Re-pull live data for this report? Metrics, highlights, and summary will be overwritten.")) return;
-    setUpdating(true);
-    try {
-      const token = localStorage.getItem("token");
-      const res  = await fetch(`${API_BASE_URL}/api/impact-reports/admin/auto-update/${r._id}`, {
-        method: "PUT",
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      const data = await res.json();
-      if (data.success) onAutoUpdate(data.data.report);
-      else alert(data.message || "Update failed");
-    } catch { alert("Network error"); }
-    finally { setUpdating(false); }
-  };
-
-  return (
-    <>
-      <tr style={{ borderBottom: "1px solid #f1f5f9", cursor: "pointer" }} onClick={() => setOpen(o => !o)}>
-        <td style={{ padding: "12px 14px", maxWidth: "220px" }}>
-          <p style={{ margin: "0 0 2px", fontWeight: "700", fontSize: "13px", color: "#0f172a", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{r.title}</p>
-          <p style={{ margin: 0, fontSize: "11px", color: "#94a3b8" }}>{PERIOD_LABELS[r.reportPeriod] || r.reportPeriod}</p>
-        </td>
-        <td style={{ padding: "12px 14px", fontSize: "12px", color: "#374151" }}>{r.ngoId?.ngoName || "—"}</td>
-        <td style={{ padding: "12px 14px", fontSize: "12px", color: "#64748b" }}>{r.villageId?.villageName || "—"}</td>
-        <td style={{ padding: "12px 14px" }}>
-          <span style={{ background: sm.bg, color: sm.color, padding: "2px 9px", borderRadius: "20px", fontSize: "11px", fontWeight: "600", display: "flex", alignItems: "center", gap: "3px", width: "fit-content" }}>
-            <sm.Icon size={10} /> {sm.label}
-          </span>
-        </td>
-        <td style={{ padding: "12px 14px", fontSize: "12px", color: "#374151" }}>{r.metrics?.length || 0} metrics</td>
-        <td style={{ padding: "12px 14px", fontSize: "11px", color: "#94a3b8", whiteSpace: "nowrap" }}>
-          {r.periodStart && r.periodEnd ? `${fmtDate(r.periodStart)} – ${fmtDate(r.periodEnd)}` : fmtDate(r.createdAt)}
-        </td>
-        <td style={{ padding: "12px 14px" }} onClick={e => e.stopPropagation()}>
-          <div style={{ display: "flex", gap: "5px" }}>
-            <button onClick={handleAutoUpdate} disabled={updating} title="Re-pull live data"
-              style={{ background: updating ? "#f1f5f9" : "#eff6ff", border: "none", color: updating ? "#94a3b8" : "#2563eb", borderRadius: "6px", padding: "5px 8px", cursor: updating ? "not-allowed" : "pointer", display: "flex", alignItems: "center" }}>
-              <RefreshCw size={13} style={updating ? { animation: "spin 1s linear infinite" } : {}} />
-            </button>
-            <button onClick={() => onDelete(r._id)}
-              style={{ background: "#fef2f2", border: "none", color: "#dc2626", borderRadius: "6px", padding: "5px 8px", cursor: "pointer" }}>
-              <Trash2 size={13} />
-            </button>
-          </div>
-        </td>
-      </tr>
-      {open && (
-        <tr style={{ background: "#f8fafc" }}>
-          <td colSpan={7} style={{ padding: "16px 20px" }}>
-            {r.summary && <p style={{ margin: "0 0 12px", fontSize: "13px", color: "#374151", lineHeight: 1.6 }}>{r.summary}</p>}
-            {r.metrics?.length > 0 && (
-              <>
-                <div style={{ display: "flex", flexWrap: "wrap", gap: "8px", marginBottom: "12px" }}>
-                  {r.metrics.map((m, i) => <MetricChip key={i} m={m} />)}
-                </div>
-                <ReportCharts metrics={r.metrics} />
-              </>
-            )}
-            {r.highlights?.length > 0 && (
-              <div style={{ marginBottom: "8px" }}>
-                <p style={{ margin: "0 0 4px", fontSize: "11px", fontWeight: "700", color: "#16a34a", textTransform: "uppercase" }}>Highlights</p>
-                <ul style={{ margin: 0, paddingLeft: "16px" }}>
-                  {r.highlights.map((h, i) => <li key={i} style={{ fontSize: "12px", color: "#374151", marginBottom: "2px" }}>{h}</li>)}
-                </ul>
-              </div>
-            )}
-            {r.challenges?.length > 0 && (
-              <div>
-                <p style={{ margin: "0 0 4px", fontSize: "11px", fontWeight: "700", color: "#dc2626", textTransform: "uppercase" }}>Challenges</p>
-                <ul style={{ margin: 0, paddingLeft: "16px" }}>
-                  {r.challenges.map((c, i) => <li key={i} style={{ fontSize: "12px", color: "#374151", marginBottom: "2px" }}>{c}</li>)}
-                </ul>
-              </div>
-            )}
-          </td>
-        </tr>
-      )}
-    </>
-  );
-}
-
+// ── Main Page ─────────────────────────────────────────────────────────────────
 export default function AdminImpactReports() {
-  const [reports, setReports]   = useState([]);
-  const [loading, setLoading]   = useState(true);
-  const [page, setPage]         = useState(1);
-  const [pagination, setPagination] = useState({ total: 0, pages: 1 });
+  const [reports, setReports]         = useState([]);
+  const [loading, setLoading]         = useState(true);
+  const [page, setPage]               = useState(1);
+  const [pagination, setPagination]   = useState({ total: 0, pages: 1 });
   const [statusFilter, setStatusFilter] = useState("all");
   const [autoGenModal, setAutoGenModal] = useState(false);
   const token = localStorage.getItem("token");
@@ -303,9 +511,13 @@ export default function AdminImpactReports() {
     setLoading(true);
     const params = new URLSearchParams({ page: p, limit: 25 });
     if (statusFilter !== "all") params.set("status", statusFilter);
-    fetch(`${API_BASE_URL}/api/impact-reports/admin/all?${params}`, { headers: { Authorization: `Bearer ${token}` } })
-      .then(r => r.json())
-      .then(d => { if (d.success) { setReports(d.data.reports); setPagination(d.data.pagination); } })
+    fetch(`${API_BASE_URL}/api/impact-reports/admin/all?${params}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+      .then((r) => r.json())
+      .then((d) => {
+        if (d.success) { setReports(d.data.reports); setPagination(d.data.pagination); }
+      })
       .catch(() => {})
       .finally(() => setLoading(false));
   };
@@ -315,85 +527,134 @@ export default function AdminImpactReports() {
 
   const deleteReport = (id) => {
     if (!confirm("Delete this impact report?")) return;
-    fetch(`${API_BASE_URL}/api/impact-reports/${id}`, { method: "DELETE", headers: { Authorization: `Bearer ${token}` } })
-      .then(r => r.json())
-      .then(d => { if (d.success) setReports(rs => rs.filter(r => r._id !== id)); })
+    fetch(`${API_BASE_URL}/api/impact-reports/${id}`, {
+      method: "DELETE", headers: { Authorization: `Bearer ${token}` },
+    })
+      .then((r) => r.json())
+      .then((d) => { if (d.success) setReports((rs) => rs.filter((r) => r._id !== id)); })
       .catch(() => {});
   };
 
   const onAutoUpdate = (updated) => {
-    setReports(rs => rs.map(r => r._id === updated._id ? updated : r));
+    setReports((rs) => rs.map((r) => r._id === updated._id ? updated : r));
   };
 
   return (
-    <div style={{ padding: "28px", fontFamily: "system-ui, -apple-system, sans-serif" }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "24px", flexWrap: "wrap", gap: "12px" }}>
+    <div className="min-h-screen bg-beige-300 p-4 sm:p-6 lg:p-8">
+
+      {/* ── Header ── */}
+      <div className="flex flex-col xs:flex-row xs:items-start xs:justify-between gap-3 mb-6 sm:mb-8">
         <div>
-          <h1 style={{ margin: "0 0 4px", fontWeight: "800", fontSize: "22px", color: "#0f172a" }}>Impact Reports</h1>
-          <p style={{ margin: 0, color: "#64748b", fontSize: "14px" }}>{pagination.total} report{pagination.total !== 1 ? "s" : ""} across all NGOs</p>
+          <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-gray-900 leading-tight mb-1">
+            Impact <span className="text-olive-700">Reports</span>
+          </h1>
+          <p className="text-sm sm:text-base text-gray-500 leading-relaxed">
+            {pagination.total} report{pagination.total !== 1 ? "s" : ""} across all NGOs
+          </p>
         </div>
-        <button onClick={() => setAutoGenModal(true)}
-          style={{ display: "flex", alignItems: "center", gap: "7px", padding: "10px 20px", borderRadius: "10px", border: "none", background: "linear-gradient(135deg,#1e40af,#7c3aed)", color: "#fff", fontWeight: "700", fontSize: "14px", cursor: "pointer", boxShadow: "0 4px 14px rgba(124,58,237,0.3)" }}>
-          <Zap size={15} /> Auto Generate
+        <button
+          onClick={() => setAutoGenModal(true)}
+          className="flex items-center gap-2 px-4 py-2.5 rounded-full bg-olive-700 hover:bg-olive-800 text-white text-sm font-bold transition-colors cursor-pointer border-0 shrink-0 self-start"
+        >
+          <Zap size={14} /> Auto Generate
         </button>
       </div>
 
-      <div style={{ display: "flex", gap: "8px", marginBottom: "20px" }}>
-        {["all", "draft", "published"].map(s => (
-          <button key={s} onClick={() => setStatusFilter(s)}
-            style={{ padding: "6px 16px", borderRadius: "20px", border: "1px solid", cursor: "pointer", fontSize: "12px", fontWeight: "600",
-              background: statusFilter === s ? "#0f172a" : "#fff",
-              color: statusFilter === s ? "#fff" : "#374151",
-              borderColor: statusFilter === s ? "#0f172a" : "#e2e8f0" }}>
-            {s === "all" ? "All" : STATUS_META[s]?.label || s}
+      {/* ── Status Filter Pills ── */}
+      <div className="flex items-center gap-1.5 flex-wrap mb-5 sm:mb-6">
+        {["all", "draft", "published"].map((s) => (
+          <button
+            key={s}
+            onClick={() => setStatusFilter(s)}
+            className={`px-3 sm:px-4 py-1.5 sm:py-2 rounded-full text-xs sm:text-sm font-bold cursor-pointer transition-all border whitespace-nowrap ${
+              statusFilter === s
+                ? "bg-gray-900 text-white border-gray-900"
+                : "bg-beige-100 text-gray-600 border-beige-300 hover:border-beige-400"
+            }`}
+          >
+            {s === "all" ? "All Status" : STATUS_META[s]?.label || s}
           </button>
         ))}
       </div>
 
+      {/* ── Content ── */}
       {loading ? (
-        <div style={{ display: "flex", justifyContent: "center", padding: "60px", gap: "10px", color: "#64748b" }}>
-          <Loader2 size={20} style={{ animation: "spin 1s linear infinite" }} /> Loading…
+        <div className="flex items-center justify-center py-24 text-gray-400 gap-2">
+          <RefreshCw size={20} className="animate-spin" />
+          <span className="text-sm">Loading reports…</span>
         </div>
       ) : reports.length === 0 ? (
-        <div style={{ textAlign: "center", padding: "60px", color: "#94a3b8" }}>
-          <BarChart2 size={40} style={{ color: "#cbd5e1", marginBottom: "12px" }} />
-          <p style={{ fontSize: "15px" }}>No impact reports found.</p>
+        <div className="text-center py-24 text-gray-400">
+          <BarChart2 size={40} className="mx-auto mb-3 opacity-30" />
+          <p className="text-sm font-semibold">No impact reports found.</p>
+          <p className="text-xs mt-1 text-gray-400">Try adjusting your filters or generate a new report</p>
         </div>
       ) : (
-        <div style={{ background: "#fff", border: "1px solid #e2e8f0", borderRadius: "14px", overflow: "hidden" }}>
-          <div style={{ overflowX: "auto" }}>
-            <table style={{ width: "100%", borderCollapse: "collapse", minWidth: "680px" }}>
+        <div className="bg-beige-100 rounded-2xl sm:rounded-3xl border border-beige-300 overflow-hidden">
+
+          {/* ── Mobile cards ── */}
+          <div className="sm:hidden">
+            {reports.map((r) => (
+              <ReportCard key={r._id} r={r} onDelete={deleteReport} onAutoUpdate={onAutoUpdate} />
+            ))}
+          </div>
+
+          {/* ── Desktop table ── */}
+          <div className="hidden sm:block overflow-x-auto">
+            <table className="w-full border-collapse">
               <thead>
-                <tr style={{ background: "#f8fafc" }}>
-                  {["Report", "NGO", "Village", "Status", "Metrics", "Period", "Actions"].map(h => (
-                    <th key={h} style={{ padding: "11px 14px", fontSize: "11px", fontWeight: "700", color: "#64748b", textAlign: "left", textTransform: "uppercase", letterSpacing: "0.05em", borderBottom: "1px solid #e2e8f0", whiteSpace: "nowrap" }}>{h}</th>
+                <tr className="bg-beige-200 border-b border-beige-300">
+                  {["Report", "NGO", "Village", "Status", "Metrics", "Period", "Actions"].map((h) => (
+                    <th key={h} className="px-4 py-3 text-left text-[10px] font-extrabold text-olive-600 uppercase tracking-widest whitespace-nowrap">
+                      {h}
+                    </th>
                   ))}
                 </tr>
               </thead>
               <tbody>
-                {reports.map(r => <ReportRow key={r._id} r={r} onDelete={deleteReport} onAutoUpdate={onAutoUpdate} />)}
+                {reports.map((r) => (
+                  <ReportRow key={r._id} r={r} onDelete={deleteReport} onAutoUpdate={onAutoUpdate} />
+                ))}
               </tbody>
             </table>
           </div>
         </div>
       )}
 
+      {/* ── Pagination ── */}
       {pagination.pages > 1 && (
-        <div style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: "14px", marginTop: "24px" }}>
-          <button disabled={page <= 1} onClick={() => setPage(p => p - 1)}
-            style={{ padding: "8px 18px", borderRadius: "8px", border: "1px solid #e2e8f0", background: "#fff", cursor: page <= 1 ? "not-allowed" : "pointer", opacity: page <= 1 ? 0.5 : 1, fontWeight: "600" }}>← Prev</button>
-          <span style={{ color: "#64748b", fontSize: "13px" }}>Page {page} of {pagination.pages}</span>
-          <button disabled={page >= pagination.pages} onClick={() => setPage(p => p + 1)}
-            style={{ padding: "8px 18px", borderRadius: "8px", border: "1px solid #e2e8f0", background: "#fff", cursor: page >= pagination.pages ? "not-allowed" : "pointer", opacity: page >= pagination.pages ? 0.5 : 1, fontWeight: "600" }}>Next →</button>
+        <div className="flex items-center justify-between mt-6 sm:mt-8 pt-5 border-t border-beige-300">
+          <button
+            disabled={page <= 1}
+            onClick={() => setPage((p) => p - 1)}
+            className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl border border-beige-300 bg-beige-100 text-sm font-semibold text-gray-600 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer hover:border-beige-400 transition-colors"
+          >
+            <ChevronLeft size={15} /> Prev
+          </button>
+          <span className="text-sm text-gray-500 font-medium">
+            Page {page} of {pagination.pages}
+            <span className="hidden sm:inline"> · {pagination.total} total</span>
+          </span>
+          <button
+            disabled={page >= pagination.pages}
+            onClick={() => setPage((p) => p + 1)}
+            className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl border border-beige-300 bg-beige-100 text-sm font-semibold text-gray-600 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer hover:border-beige-400 transition-colors"
+          >
+            Next <ChevronRight size={15} />
+          </button>
         </div>
       )}
+
+      {/* ── Auto-Generate Modal ── */}
       {autoGenModal && (
         <AdminAutoGenModal
           onClose={() => setAutoGenModal(false)}
-          onGenerated={(r) => { setReports(prev => [r, ...prev]); setPagination(p => ({ ...p, total: p.total + 1 })); }}
+          onGenerated={(r) => {
+            setReports((prev) => [r, ...prev]);
+            setPagination((p) => ({ ...p, total: p.total + 1 }));
+          }}
         />
       )}
-      <style>{`@keyframes spin { from { transform:rotate(0deg) } to { transform:rotate(360deg) } }`}</style>
     </div>
   );
 }
