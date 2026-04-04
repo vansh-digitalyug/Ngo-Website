@@ -1,4 +1,7 @@
 import { useEffect, useRef, useState } from "react";
+import { gsap } from "gsap";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
+gsap.registerPlugin(ScrollTrigger);
 
 // ── Local image imports ──────────────────────────────────────────────────────
 import heroImg          from "../../assets/images/service/hero.png";
@@ -91,36 +94,383 @@ function StatCard({ value, suffix = "", label, delay }) {
   );
 }
 
-/* ── Timeline item ──────────────────────────────────────────────────────────── */
-function TimelineItem({ year, title, body, img, reverse, delay }) {
-  const [ref, inView] = useInView(0.12);
+/* ── Vine cluster — decorative organic vines that grow next to the trunk ─────── */
+function VineCluster({ side, offsetX, topPct }) {
+  const ref = useRef(null);
+  useEffect(() => {
+    if (!ref.current) return;
+    const el = ref.current;
+    const ctx = gsap.context(() => {
+      ScrollTrigger.create({
+        trigger: el,
+        start: "top 88%",
+        onEnter: () => {
+          gsap.to(el.querySelectorAll(".v-line"), {
+            strokeDashoffset: 0, duration: 0.7, stagger: 0.15, ease: "power2.out",
+          });
+          gsap.to(el.querySelectorAll(".v-leaf"), {
+            scale: 1, opacity: 0.85, duration: 0.35, stagger: 0.1, delay: 0.55,
+            ease: "back.out(2)",
+          });
+          gsap.to(el, {
+            rotate: side === "right" ? 5 : -5,
+            duration: 2.5, repeat: -1, yoyo: true, ease: "sine.inOut", delay: 0.9,
+          });
+        },
+      });
+    }, el);
+    return () => ctx.revert();
+  }, [side]);
+
+  const isRight = side === "right";
+  const lines = isRight
+    ? ["M 4,0 C 10,7 15,18 11,30 C 7,42 3,46 6,56", "M 6,18 C 14,15 18,7 15,1"]
+    : ["M 16,0 C 10,7 5,18 9,30 C 13,42 17,46 14,56", "M 14,18 C 6,15 2,7 5,1"];
+  const leaves = isRight
+    ? [{ cx: 6, cy: 56, rot: -35 }, { cx: 15, cy: 1, rot: 28 }]
+    : [{ cx: 14, cy: 56, rot: 35 }, { cx: 5, cy: 1, rot: -28 }];
+
   return (
-    <div
-      ref={ref}
-      className={`flex flex-col ${reverse ? "md:flex-row-reverse" : "md:flex-row"} gap-12 items-center relative`}
-      style={{ opacity: inView ? 1 : 0, transform: inView ? "translateY(0)" : "translateY(40px)", transition: `all 0.75s ease ${delay}s` }}
+    <div ref={ref} className="absolute pointer-events-none hidden md:block"
+      style={{
+        top: topPct, width: 22, height: 60, zIndex: 2, transformOrigin: "top center",
+        ...(isRight
+          ? { left: `calc(50% + ${offsetX}px)` }
+          : { right: `calc(50% + ${offsetX}px)` }),
+      }}
     >
-      {/* Timeline dot */}
-      <div className="hidden md:flex absolute left-1/2 -translate-x-1/2 w-6 h-6 z-20">
-        <div className="w-full h-full rounded-full bg-white border-4 border-green-400 shadow-lg" />
+      <svg viewBox="0 0 22 60" width="22" height="60" overflow="visible">
+        {lines.map((d, i) => (
+          <path key={i} d={d} stroke={i === 0 ? "#2d6a0a" : "#3d8a14"}
+            strokeWidth={i === 0 ? 1.5 : 1} fill="none" strokeLinecap="round"
+            className="v-line" pathLength="1" strokeDasharray="1" strokeDashoffset="1"
+            opacity={i === 0 ? 0.8 : 0.6} />
+        ))}
+        {leaves.map((l, i) => (
+          <ellipse key={i} cx={l.cx} cy={l.cy} rx="6.5" ry="3.5"
+            transform={`rotate(${l.rot}, ${l.cx}, ${l.cy})`}
+            fill={i === 0 ? "#22c55e" : "#15803d"} className="v-leaf"
+            style={{ opacity: 0, transformBox: "fill-box", transformOrigin: "center" }} />
+        ))}
+      </svg>
+    </div>
+  );
+}
+
+/* ── Tree node — GSAP animated branch + hanging content ──────────────────────── */
+function TreeNode({ year, title, body, img, reverse, index }) {
+  const nodeRef     = useRef(null);
+  const dotRef      = useRef(null);
+  // Image-side branch refs
+  const branchRef   = useRef(null);
+  const twig1Ref    = useRef(null);
+  const twig2Ref    = useRef(null);
+  // Text-side branch refs
+  const txtBrRef    = useRef(null);
+  const txtTw1Ref   = useRef(null);
+  const txtTw2Ref   = useRef(null);
+  // Card refs
+  const textRef     = useRef(null);
+  const imgRef      = useRef(null);
+
+  useEffect(() => {
+    if (!nodeRef.current) return;
+    const ctx = gsap.context(() => {
+      const tl = gsap.timeline({
+        scrollTrigger: {
+          trigger: nodeRef.current,
+          start: "top 76%",
+          toggleActions: "play none none none",
+        },
+      });
+      // Phase 1 — trunk dot pops in
+      tl.fromTo(dotRef.current,
+        { scale: 0, opacity: 0 },
+        { scale: 1, opacity: 1, duration: 0.4, ease: "back.out(2.5)" }, 0);
+      // Phase 2 — both branches draw simultaneously from the dot
+      tl.fromTo(branchRef.current,
+        { strokeDashoffset: 1 },
+        { strokeDashoffset: 0, duration: 1.0, ease: "power2.inOut" }, 0.15);
+      tl.fromTo(txtBrRef.current,
+        { strokeDashoffset: 1 },
+        { strokeDashoffset: 0, duration: 0.95, ease: "power2.inOut" }, 0.18);
+      // Phase 3 — twigs burst out on both sides
+      tl.fromTo(twig1Ref.current,
+        { strokeDashoffset: 1, opacity: 0 },
+        { strokeDashoffset: 0, opacity: 1, duration: 0.45, ease: "power3.out" }, 0.72);
+      tl.fromTo(twig2Ref.current,
+        { strokeDashoffset: 1, opacity: 0 },
+        { strokeDashoffset: 0, opacity: 1, duration: 0.4, ease: "power3.out" }, 0.84);
+      tl.fromTo(txtTw1Ref.current,
+        { strokeDashoffset: 1, opacity: 0 },
+        { strokeDashoffset: 0, opacity: 1, duration: 0.42, ease: "power3.out" }, 0.76);
+      tl.fromTo(txtTw2Ref.current,
+        { strokeDashoffset: 1, opacity: 0 },
+        { strokeDashoffset: 0, opacity: 1, duration: 0.38, ease: "power3.out" }, 0.88);
+      // Phase 4 — cards drop in
+      tl.fromTo(textRef.current,
+        { opacity: 0, y: 28 },
+        { opacity: 1, y: 0, duration: 0.8, ease: "power3.out" }, 0.5);
+      tl.fromTo(imgRef.current,
+        { opacity: 0, y: 28 },
+        { opacity: 1, y: 0, duration: 0.85, ease: "power3.out" }, 0.58);
+      // Phase 5 — leaves pop
+      nodeRef.current.querySelectorAll(".n-leaf").forEach((el, i) => {
+        tl.fromTo(el,
+          { scale: 0, opacity: 0 },
+          { scale: 1, opacity: 1, duration: 0.32, ease: "back.out(2.2)" },
+          0.9 + i * 0.08);
+      });
+      // Gentle perpetual sway — both hanging cards rock from their rope pivot
+      gsap.to(imgRef.current, {
+        rotate: 1.6, duration: 3.4 + index * 0.4,
+        repeat: -1, yoyo: true, ease: "sine.inOut",
+        delay: 1.6 + index * 0.35, transformOrigin: "top center",
+      });
+      gsap.to(textRef.current, {
+        rotate: reverse ? 1.4 : -1.4, duration: 3.8 + index * 0.35,
+        repeat: -1, yoyo: true, ease: "sine.inOut",
+        delay: 1.9 + index * 0.3, transformOrigin: "top center",
+      });
+    }, nodeRef);
+    return () => ctx.revert();
+  }, [reverse, index]);
+
+  // ── Branch path math ──────────────────────────────────────────────────────
+  // ViewBox "0 0 100 60", SVG rendered height = 120px
+  // Tip at viewBox y=40 → pixel = 40/60 × 120 = 80px below SVG top
+  // Dot top = 56px → branch tip absolute from row top = 56 + 80 = 136px
+  // Both cards: marginTop = 136 so the rope pivot sits exactly at tip ✓
+  //
+  // Image branch: trunk at the SVG edge nearest the trunk centre-line,
+  //               tip at the far edge (toward image column).
+  // Text branch:  mirror — trunk same, tip toward text column.
+
+  // Image-side branch (grows away from trunk toward image column)
+  const imgBv = {
+    main: reverse
+      ? "M 100,0 C 78,5 56,16 40,26 C 24,36 8,40 0,40"
+      : "M 0,0 C 22,5 44,16 60,26 C 76,36 92,40 100,40",
+    t1: reverse ? "M 55,22 C 50,13 52,4 57,-1"    : "M 45,22 C 50,13 48,4 43,-1",
+    t2: reverse ? "M 25,11 C 19,3 21,-6 26,-11"   : "M 75,11 C 81,3 79,-6 74,-11",
+  };
+  // Text-side branch (grows opposite direction toward text column)
+  const txtBv = {
+    main: reverse
+      ? "M 0,0 C 22,5 44,16 60,26 C 76,36 92,40 100,40"
+      : "M 100,0 C 78,5 56,16 40,26 C 24,36 8,40 0,40",
+    t1: reverse ? "M 45,22 C 50,13 48,4 43,-1"    : "M 55,22 C 50,13 52,4 57,-1",
+    t2: reverse ? "M 75,11 C 81,3 79,-6 74,-11"   : "M 25,11 C 19,3 21,-6 26,-11",
+  };
+
+  const imgTipX = reverse ? 0 : 100;
+  const txtTipX = reverse ? 100 : 0;
+  const tipY    = 40;
+
+  // Leaf clusters — all leaves within ±8 viewbox units of the tip so they
+  // visually sit right at the branch end, not floating away.
+  const leafColors = ["#15803d", "#22c55e", "#16a34a", "#4ade80"];
+  const mkLeaves = (tx, sign) => [
+    { dx: 0,       dy: 0,  rx: 7.5, ry: 4,   rot: sign * 42 },
+    { dx: sign * 5, dy: -3, rx: 6,   ry: 3.2, rot: sign * -18 },
+    { dx: sign * 3, dy: -7, rx: 5,   ry: 2.8, rot: sign * 55 },
+    { dx: sign *-3, dy: -5, rx: 4.5, ry: 2.5, rot: sign * 12 },
+  ].map((l) => ({ ...l, cx: tx + l.dx, cy: tipY + l.dy }));
+
+  const imgSign  = reverse ? -1 : 1;
+  const txtSign  = reverse ?  1 : -1;
+  const imgLeaves = mkLeaves(imgTipX, imgSign);
+  const txtLeaves = mkLeaves(txtTipX, txtSign);
+
+  // Shared rope SVG helper
+  const RopeSVG = ({ h = 80 }) => (
+    <svg width="14" height={h} viewBox={`0 0 14 ${h}`} style={{ marginTop: -1 }}>
+      <path d={`M 7,0 C 3,${h*0.11} 11,${h*0.22} 7,${h*0.34} C 3,${h*0.45} 11,${h*0.56} 7,${h*0.67} C 3,${h*0.78} 11,${h*0.89} 7,${h}`}
+        stroke="#92400e" strokeWidth="2" fill="none" strokeLinecap="round" opacity="0.9" />
+      <path d={`M 7,0 C 11,${h*0.11} 3,${h*0.22} 7,${h*0.34} C 11,${h*0.45} 3,${h*0.56} 7,${h*0.67} C 11,${h*0.78} 3,${h*0.89} 7,${h}`}
+        stroke="#b45309" strokeWidth="1" fill="none" strokeLinecap="round" opacity="0.5" />
+      <ellipse cx="7" cy={h - 3} rx="3.5" ry="2.2" fill="#78350f" opacity="0.9" />
+    </svg>
+  );
+
+  const HookDot = () => (
+    <div style={{
+      width: 11, height: 11, borderRadius: "50%", flexShrink: 0,
+      background: "radial-gradient(circle at 35% 35%, #d97706, #78350f)",
+      border: "2.5px solid #451a03", boxShadow: "0 2px 8px rgba(0,0,0,0.3)",
+    }} />
+  );
+
+  return (
+    <div ref={nodeRef}
+      className={`relative flex flex-col ${reverse ? "md:flex-row-reverse" : "md:flex-row"} items-start gap-6 md:gap-0 py-10 md:py-14`}
+    >
+      {/* ── Trunk dot — top:56 matches py-14 (56px) ── */}
+      <div ref={dotRef}
+        className="hidden md:flex absolute left-1/2 z-20 w-5 h-5 rounded-full items-center justify-center shadow-xl"
+        style={{
+          top: 56, transform: "translate(-50%, -50%)",
+          background: "radial-gradient(circle at 35% 35%, #c47a1a, #78350f)",
+          border: "3px solid #451a03", opacity: 0,
+        }}
+      >
+        <div className="w-2 h-2 rounded-full bg-amber-200/80" />
       </div>
 
-      <div className="flex-1 min-w-0">
-        <div className="inline-flex items-center gap-2 bg-gradient-to-r from-green-50 to-green-100 px-3 py-1 rounded-full border border-green-200 mb-4">
-          <span className="text-green-700 text-[10px] font-bold tracking-widest uppercase">{year}</span>
+      {/* ── Image-side branch SVG ── */}
+      {/* Positioned: left/right of trunk, extends toward image column */}
+      {/* SVG top=56 aligns with dot; height=120 → tip at 80px below = 136px absolute */}
+      <svg className="hidden md:block absolute pointer-events-none"
+        style={{
+          top: 56, zIndex: 5, height: 120, overflow: "visible",
+          ...(reverse
+            ? { right: "calc(50% + 10px)", width: "44%" }
+            : { left:  "calc(50% + 10px)", width: "44%" }),
+        }}
+        viewBox="0 0 100 60" preserveAspectRatio="none"
+      >
+        <defs>
+          <linearGradient id={`ibG${index}`} x1={reverse?"1":"0"} y1="0" x2={reverse?"0":"1"} y2="0">
+            <stop offset="0%"   stopColor="#3b1202" />
+            <stop offset="35%"  stopColor="#78350f" />
+            <stop offset="70%"  stopColor="#a16207" />
+            <stop offset="100%" stopColor="#854d0e" />
+          </linearGradient>
+        </defs>
+        {/* shadow */}
+        <path d={imgBv.main} stroke="rgba(0,0,0,0.09)" strokeWidth="5" fill="none" strokeLinecap="round" transform="translate(1.5,2)" />
+        {/* main branch */}
+        <path ref={branchRef} d={imgBv.main} stroke={`url(#ibG${index})`} strokeWidth="3.5" fill="none" strokeLinecap="round"
+          pathLength="1" strokeDasharray="1" strokeDashoffset="1" />
+        {/* twigs */}
+        <path ref={twig1Ref} d={imgBv.t1} stroke="#92400e" strokeWidth="1.8" fill="none" strokeLinecap="round"
+          pathLength="1" strokeDasharray="1" strokeDashoffset="1" opacity="0" />
+        <path ref={twig2Ref} d={imgBv.t2} stroke="#a16207" strokeWidth="1.4" fill="none" strokeLinecap="round"
+          pathLength="1" strokeDasharray="1" strokeDashoffset="1" opacity="0" />
+        {/* rope stub from tip to SVG bottom edge */}
+        <line x1={imgTipX} y1={tipY} x2={imgTipX} y2="60"
+          stroke="#92400e" strokeWidth="1.8" strokeLinecap="round" opacity="0.85" strokeDasharray="2.5 3" />
+        {/* hook ring at tip */}
+        <circle cx={imgTipX} cy={tipY} r="4" fill="#a16207" stroke="#451a03" strokeWidth="1.4" />
+        {/* leaf cluster — tightly packed at tip */}
+        {imgLeaves.map((l, i) => (
+          <ellipse key={i} cx={l.cx} cy={l.cy} rx={l.rx} ry={l.ry}
+            transform={`rotate(${l.rot}, ${l.cx}, ${l.cy})`}
+            fill={leafColors[i]} className="n-leaf"
+            style={{ opacity: 0, transformBox: "fill-box", transformOrigin: "center" }} />
+        ))}
+      </svg>
+
+      {/* ── Text-side branch SVG — mirror of image branch ── */}
+      {/* Positioned on the OPPOSITE side: extends toward text column */}
+      <svg className="hidden md:block absolute pointer-events-none"
+        style={{
+          top: 56, zIndex: 5, height: 120, overflow: "visible",
+          ...(reverse
+            ? { left: "calc(50% + 10px)", width: "44%" }
+            : { right: "calc(50% + 10px)", width: "44%" }),
+        }}
+        viewBox="0 0 100 60" preserveAspectRatio="none"
+      >
+        <defs>
+          <linearGradient id={`tbG${index}`} x1={reverse?"0":"1"} y1="0" x2={reverse?"1":"0"} y2="0">
+            <stop offset="0%"   stopColor="#3b1202" />
+            <stop offset="35%"  stopColor="#78350f" />
+            <stop offset="70%"  stopColor="#a16207" />
+            <stop offset="100%" stopColor="#854d0e" />
+          </linearGradient>
+        </defs>
+        {/* shadow */}
+        <path d={txtBv.main} stroke="rgba(0,0,0,0.09)" strokeWidth="5" fill="none" strokeLinecap="round" transform="translate(1.5,2)" />
+        {/* main branch */}
+        <path ref={txtBrRef} d={txtBv.main} stroke={`url(#tbG${index})`} strokeWidth="3.5" fill="none" strokeLinecap="round"
+          pathLength="1" strokeDasharray="1" strokeDashoffset="1" />
+        {/* twigs */}
+        <path ref={txtTw1Ref} d={txtBv.t1} stroke="#92400e" strokeWidth="1.8" fill="none" strokeLinecap="round"
+          pathLength="1" strokeDasharray="1" strokeDashoffset="1" opacity="0" />
+        <path ref={txtTw2Ref} d={txtBv.t2} stroke="#a16207" strokeWidth="1.4" fill="none" strokeLinecap="round"
+          pathLength="1" strokeDasharray="1" strokeDashoffset="1" opacity="0" />
+        {/* rope stub from tip to SVG bottom edge */}
+        <line x1={txtTipX} y1={tipY} x2={txtTipX} y2="60"
+          stroke="#92400e" strokeWidth="1.8" strokeLinecap="round" opacity="0.85" strokeDasharray="2.5 3" />
+        {/* hook ring at tip */}
+        <circle cx={txtTipX} cy={tipY} r="4" fill="#a16207" stroke="#451a03" strokeWidth="1.4" />
+        {/* leaf cluster — tightly packed at tip */}
+        {txtLeaves.map((l, i) => (
+          <ellipse key={i} cx={l.cx} cy={l.cy} rx={l.rx} ry={l.ry}
+            transform={`rotate(${l.rot}, ${l.cx}, ${l.cy})`}
+            fill={leafColors[i]} className="n-leaf"
+            style={{ opacity: 0, transformBox: "fill-box", transformOrigin: "center" }} />
+        ))}
+      </svg>
+
+      {/* ── Text card — hangs from text-branch tip via rope ── */}
+      {/* marginTop:136 on desktop places the rope pivot exactly at the branch tip */}
+      <div ref={textRef}
+        className={`flex-1 ${reverse ? "md:pr-[4.5rem]" : "md:pl-[4.5rem]"} px-4 w-full z-10`}
+        style={{ opacity: 0 }}
+      >
+        {/* Mobile: flat card */}
+        <div className="block md:hidden bg-white rounded-3xl p-6"
+          style={{ boxShadow: "0 8px 40px rgba(120,53,15,0.08)", border: "1.5px solid rgba(251,191,36,0.2)" }}>
+          <div className="inline-flex items-center gap-2 bg-gradient-to-r from-amber-50 to-green-50 border border-amber-200/60 px-3 py-1.5 rounded-full mb-4">
+            <div className="w-1.5 h-1.5 rounded-full bg-amber-600 shrink-0" />
+            <span className="text-amber-800 text-[10px] font-bold tracking-widest uppercase">{year}</span>
+          </div>
+          <h3 className="text-xl font-black text-slate-900 mb-3 leading-snug">{title}</h3>
+          <p className="text-slate-600 text-sm leading-[1.75] font-light">{body}</p>
         </div>
-        <h3 className="text-2xl md:text-3xl font-black text-slate-900 mb-4 leading-snug">{title}</h3>
-        <p className="text-slate-600 leading-relaxed text-[15px] md:text-base font-light">{body}</p>
+        {/* Desktop: hanging from rope */}
+        <div className="hidden md:block" style={{ marginTop: 136, transformOrigin: "top center" }}>
+          <div className="flex flex-col items-center">
+            <HookDot />
+            <RopeSVG h={60} />
+          </div>
+          <div className="bg-white rounded-3xl p-6 md:p-7"
+            style={{
+              boxShadow: "0 8px 40px rgba(120,53,15,0.08), 0 2px 8px rgba(0,0,0,0.04)",
+              border: "1.5px solid rgba(251,191,36,0.2)",
+            }}
+          >
+            <div className="inline-flex items-center gap-2 bg-gradient-to-r from-amber-50 to-green-50 border border-amber-200/60 px-3 py-1.5 rounded-full mb-4">
+              <div className="w-1.5 h-1.5 rounded-full bg-amber-600 shrink-0" />
+              <span className="text-amber-800 text-[10px] font-bold tracking-widest uppercase">{year}</span>
+            </div>
+            <h3 className="text-xl md:text-2xl font-black text-slate-900 mb-3 leading-snug">{title}</h3>
+            <p className="text-slate-600 text-sm md:text-[15px] leading-[1.75] font-light">{body}</p>
+          </div>
+        </div>
       </div>
-      <div className="flex-1 w-full">
-        <div className="rounded-2xl overflow-hidden shadow-2xl hover:shadow-3xl transition-shadow duration-300 group" style={{ aspectRatio: "4/3" }}>
-          <img 
-            src={img} 
-            alt={title} 
-            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" 
-            loading="lazy" 
-          />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+
+      {/* ── Image card — hangs from image-branch tip via rope ── */}
+      <div ref={imgRef}
+        className={`flex-1 ${reverse ? "md:pl-[4.5rem]" : "md:pr-[4.5rem]"} px-4 w-full z-10`}
+        style={{ opacity: 0 }}
+      >
+        {/* Mobile: flat */}
+        <div className="block md:hidden relative rounded-3xl overflow-hidden"
+          style={{ aspectRatio: "4/3", boxShadow: "0 16px 48px rgba(0,0,0,0.15)" }}>
+          <img src={img} alt={title} className="w-full h-full object-cover" loading="lazy" />
+        </div>
+        {/* Desktop: rope + hanging image */}
+        <div className="hidden md:block" style={{ marginTop: 136, transformOrigin: "top center" }}>
+          <div className="flex flex-col items-center">
+            <HookDot />
+            <RopeSVG h={80} />
+          </div>
+          <div className="relative rounded-3xl overflow-hidden group"
+            style={{
+              aspectRatio: "4/3",
+              boxShadow: "0 20px 56px rgba(0,0,0,0.16), 0 0 0 2px rgba(134,239,172,0.22)",
+            }}
+          >
+            <img src={img} alt={title}
+              className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+              loading="lazy" />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/15 to-transparent pointer-events-none" />
+            <span className="n-leaf absolute top-4 right-4 text-xl select-none drop-shadow-lg"
+              style={{ opacity: 0 }}>🍃</span>
+          </div>
         </div>
       </div>
     </div>
@@ -129,6 +479,26 @@ function TimelineItem({ year, title, body, img, reverse, delay }) {
 
 /* ── Main export ─────────────────────────────────────────────────────────────── */
 export default function OurStory() {
+  const trunkRef     = useRef(null);
+  const timelineRef  = useRef(null);
+
+  useEffect(() => {
+    if (!trunkRef.current || !timelineRef.current) return;
+    const ctx = gsap.context(() => {
+      gsap.to(trunkRef.current, {
+        strokeDashoffset: 0,
+        ease: "none",
+        scrollTrigger: {
+          trigger: timelineRef.current,
+          start: "top 65%",
+          end: "bottom 25%",
+          scrub: 2,
+        },
+      });
+    });
+    return () => ctx.revert();
+  }, []);
+
   return (
     <div className="bg-white font-sans overflow-x-hidden">
 
@@ -234,7 +604,7 @@ export default function OurStory() {
       </section>
 
       {/* ╔══════════════════════════════════════════════════╗
-          ║  FULL-WIDTH QUOTE - Enhanced Design             ║
+          ║  FULL-WIDTH QUOTE - Enhanced Design              ║
           ╚══════════════════════════════════════════════════╝ */}
       <section className="relative h-80 md:h-[500px] overflow-hidden group">
         <img src={mealImg} alt="Meal distribution — community care" className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
@@ -259,17 +629,16 @@ export default function OurStory() {
       </section>
 
       {/* ╔══════════════════════════════════════════════════╗
-          ║  TIMELINE - Modern Design                        ║
+          ║  LIVING TREE TIMELINE                            ║
           ╚══════════════════════════════════════════════════╝ */}
-      <section className="relative max-w-7xl mx-auto px-6 py-32">
-        {/* Background decoration */}
-        <div className="absolute -top-20 left-1/2 -translate-x-1/2 w-96 h-96 bg-green-100/20 rounded-full blur-3xl" />
-        
+      <section ref={timelineRef} className="relative max-w-7xl mx-auto px-6 py-32">
+        <div className="absolute -top-20 left-1/2 -translate-x-1/2 w-96 h-96 bg-green-100/20 rounded-full blur-3xl pointer-events-none" />
+
         <div className="relative z-10">
           <FadeIn>
             <div className="text-center mb-24">
               <div className="inline-flex items-center gap-2 bg-green-50 px-4 py-2 rounded-full border border-green-200 mb-6">
-                <span className="text-2xl">📈</span>
+                <span className="text-2xl">🌳</span>
                 <span className="text-green-700 text-[11px] font-bold tracking-widest uppercase">Our journey</span>
               </div>
               <h2 className="text-4xl md:text-5xl font-black text-slate-900 mb-4">Milestones that shaped us</h2>
@@ -277,63 +646,78 @@ export default function OurStory() {
             </div>
           </FadeIn>
 
-          {/* Vertical timeline connector line */}
-          <div className="absolute left-1/2 -translate-x-1/2 top-32 bottom-0 w-1 bg-gradient-to-b from-green-200 via-green-300 to-green-200 hidden md:block" />
+          {/* ── Tree nodes + Trunk container ── */}
+          <div className="relative flex flex-col">
+            {/* ── Organic trunk SVG ── */}
+            {/* Positioned behind nodes; width=64px centred on 50%; top=56px to match first dot! */}
+            <div className="absolute left-1/2 -translate-x-1/2 top-[56px] bottom-0 hidden md:block pointer-events-none"
+              style={{ width: 64, zIndex: 1 }}>
+              <svg width="100%" height="100%" viewBox="0 0 64 100"
+                preserveAspectRatio="none" className="absolute inset-0 overflow-visible">
+                <defs>
+                  <linearGradient id="trunkGrad" x1="0" y1="0" x2="1" y2="0">
+                    <stop offset="0%"   stopColor="#120500" />
+                    <stop offset="20%"  stopColor="#3b1202" />
+                    <stop offset="45%"  stopColor="#78350f" />
+                    <stop offset="65%"  stopColor="#c47a1a" />
+                    <stop offset="82%"  stopColor="#92400e" />
+                    <stop offset="100%" stopColor="#2c0f02" />
+                  </linearGradient>
+                  <linearGradient id="trunkHL" x1="0" y1="0" x2="1" y2="0">
+                    <stop offset="0%"   stopColor="transparent" />
+                    <stop offset="42%"  stopColor="rgba(196,118,42,0.28)" />
+                    <stop offset="60%"  stopColor="rgba(230,160,60,0.46)" />
+                    <stop offset="100%" stopColor="transparent" />
+                  </linearGradient>
+                </defs>
+                {/* Glow halo */}
+                <path d="M 30,0 C 33,10 27,20 31,30 C 35,40 25,50 30,60 C 35,70 26,80 31,90 C 34,96 30,100 30,100"
+                  stroke="rgba(180,90,0,0.15)" strokeWidth="24" fill="none"
+                  strokeLinecap="round" transform="translate(2,0)" />
+                {/* Drop shadow */}
+                <path d="M 30,0 C 33,10 27,20 31,30 C 35,40 25,50 30,60 C 35,70 26,80 31,90 C 34,96 30,100 30,100"
+                  stroke="rgba(0,0,0,0.18)" strokeWidth="18" fill="none"
+                  strokeLinecap="round" transform="translate(2.5,1.5)" />
+                {/* Main bark — GSAP scrub animates strokeDashoffset */}
+                <path ref={trunkRef}
+                  d="M 30,0 C 33,10 27,20 31,30 C 35,40 25,50 30,60 C 35,70 26,80 31,90 C 34,96 30,100 30,100"
+                  stroke="url(#trunkGrad)" strokeWidth="16" fill="none"
+                  strokeLinecap="round"
+                  pathLength="1" strokeDasharray="1" strokeDashoffset="1" />
+                {/* Highlight stripe */}
+                <path d="M 30,0 C 33,10 27,20 31,30 C 35,40 25,50 30,60 C 35,70 26,80 31,90 C 34,96 30,100 30,100"
+                  stroke="url(#trunkHL)" strokeWidth="5" fill="none" strokeLinecap="round" />
+                {/* Bark grain marks */}
+                {[14, 28, 42, 56, 70, 84].map((y) => (
+                  <line key={y} x1={22} y1={y} x2={39} y2={y - 2}
+                    stroke="rgba(0,0,0,0.12)" strokeWidth="0.8" />
+                ))}
+              </svg>
+            </div>
 
-          <div className="flex flex-col gap-24">
-            <TimelineItem
-              year="2016 — The Beginning"
-              title="12 NGOs. One spreadsheet."
-              body="Arjun's spreadsheet goes online. Twelve NGOs from Uttar Pradesh join. The first coordination — ₹5,000 worth of stationery for a school in Barabanki — takes three days and three phone calls, but it works. Every child in that classroom got a notebook and a pencil. The platform was born."
-              img={edu2Img}
-              reverse={false}
-              delay={0.1}
-            />
+            {/* ── Vine decorations scattered along the trunk ── */}
+            <VineCluster side="right" offsetX={26} topPct="16%" />
+            <VineCluster side="left"  offsetX={26} topPct="32%" />
+            <VineCluster side="right" offsetX={22} topPct="49%" />
+            <VineCluster side="left"  offsetX={24} topPct="65%" />
+            <VineCluster side="right" offsetX={26} topPct="81%" />
 
-            <TimelineItem
-              year="2018 — Expanding the mission"
-              title="When giving goes beyond money"
-              body="We launch volunteer matching — connecting skilled professionals (doctors, lawyers, teachers, engineers) with NGOs that need their expertise on weekends. Over 800 professionals sign up in the first two months. Women's empowerment groups across UP and Bihar are among the first beneficiaries."
-              img={empowerImg1}
-              reverse={true}
-              delay={0.1}
-            />
-
-            <TimelineItem
-              year="2020 — The COVID response"
-              title="₹2.4 Cr in 90 days"
-              body="When the pandemic hit, SevaIndia became the nerve centre for rural relief. We onboarded 340 new NGOs in 30 days, coordinated 1,200 volunteer deployments, set up mobile medical camps in 6 states, and facilitated ₹2.4 crore in emergency relief — food, medicine, and protective gear for the most vulnerable."
-              img={campImg}
-              reverse={false}
-              delay={0.1}
-            />
-
-            <TimelineItem
-              year="2022 — Kanyadan Yojana"
-              title="Celebrating 4,000 families"
-              body="We partner with state governments to roll out our flagship welfare programme — subsidising weddings for economically marginalised families and ensuring every bride has the dignity her day deserves. In year one, 1,400 families benefit. By 2024, the number crosses 4,000 across 9 states."
-              img={kanayadanHero}
-              reverse={true}
-              delay={0.1}
-            />
-
-            <TimelineItem
-              year="2023 — Elder care & animal welfare"
-              title="No one left behind"
-              body="We launch dedicated elder care programmes — nutrition support, emotional companionship, and medical access for India's forgotten elderly population. Simultaneously, our Gau Seva programme extends our reach to animal welfare, because compassion has no boundaries."
-              img={elderFoodImg}
-              reverse={false}
-              delay={0.1}
-            />
-
-            <TimelineItem
-              year="2024 — Rojgar Yojana & village tech"
-              title="Building rural livelihoods"
-              body="We launch our employment platform connecting rural youth to skill training, apprenticeships, and job placements — giving young people a path forward. Our village portal gives every partner village a digital home: health data, problem reports, event calendars, and real-time impact tracking."
-              img={roadImg}
-              reverse={true}
-              delay={0.1}
-            />
+            {[
+              { year: "2016 — The Beginning",            title: "12 NGOs. One spreadsheet.",       img: edu2Img,      reverse: false,
+                body: "Arjun's spreadsheet goes online. Twelve NGOs from Uttar Pradesh join. The first coordination — ₹5,000 worth of stationery for a school in Barabanki — takes three days and three phone calls, but it works. Every child in that classroom got a notebook and a pencil. The platform was born." },
+              { year: "2018 — Expanding the mission",    title: "When giving goes beyond money",   img: empowerImg1,  reverse: true,
+                body: "We launch volunteer matching — connecting skilled professionals (doctors, lawyers, teachers, engineers) with NGOs that need their expertise on weekends. Over 800 professionals sign up in the first two months. Women's empowerment groups across UP and Bihar are among the first beneficiaries." },
+              { year: "2020 — The COVID response",       title: "₹2.4 Cr in 90 days",             img: campImg,      reverse: false,
+                body: "When the pandemic hit, SevaIndia became the nerve centre for rural relief. We onboarded 340 new NGOs in 30 days, coordinated 1,200 volunteer deployments, set up mobile medical camps in 6 states, and facilitated ₹2.4 crore in emergency relief — food, medicine, and protective gear for the most vulnerable." },
+              { year: "2022 — Kanyadan Yojana",          title: "Celebrating 4,000 families",      img: kanayadanHero, reverse: true,
+                body: "We partner with state governments to roll out our flagship welfare programme — subsidising weddings for economically marginalised families and ensuring every bride has the dignity her day deserves. In year one, 1,400 families benefit. By 2024, the number crosses 4,000 across 9 states." },
+              { year: "2023 — Elder care & animal welfare", title: "No one left behind",           img: elderFoodImg, reverse: false,
+                body: "We launch dedicated elder care programmes — nutrition support, emotional companionship, and medical access for India's forgotten elderly population. Simultaneously, our Gau Seva programme extends our reach to animal welfare, because compassion has no boundaries." },
+              { year: "2024 — Rojgar Yojana & village tech", title: "Building rural livelihoods", img: roadImg,      reverse: true,
+                body: "We launch our employment platform connecting rural youth to skill training, apprenticeships, and job placements — giving young people a path forward. Our village portal gives every partner village a digital home: health data, problem reports, event calendars, and real-time impact tracking." },
+            ].map((item, i) => (
+              <TreeNode key={i} {...item} index={i} />
+            ))}
           </div>
         </div>
       </section>
@@ -412,7 +796,7 @@ export default function OurStory() {
       </section>
 
       {/* ╔══════════════════════════════════════════════════╗
-          ║  PHOTO MOSAIC - Premium Gallery                 ║
+          ║  PHOTO MOSAIC - Premium Gallery                  ║
           ╚══════════════════════════════════════════════════╝ */}
       <section className="relative max-w-7xl mx-auto px-6 pb-32">
         <FadeIn>
@@ -541,7 +925,7 @@ export default function OurStory() {
       </section>
 
       {/* ╔══════════════════════════════════════════════════╗
-          ║  TESTIMONIALS - Enhanced Design                 ║
+          ║  TESTIMONIALS - Enhanced Design                  ║
           ╚══════════════════════════════════════════════════╝ */}
       <section className="relative py-32 overflow-hidden" style={{ background: "linear-gradient(135deg, #0f172a 0%, #1e3a5f 100%)" }}>
         {/* Animated background elements */}
