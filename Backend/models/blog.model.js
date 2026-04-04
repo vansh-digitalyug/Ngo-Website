@@ -44,6 +44,11 @@ const blogSchema = new mongoose.Schema({
     },
 });
 
+// ✅ Added indexes
+blogSchema.index({ createdAt: -1 });                  // public blog list: most recent first
+blogSchema.index({ category: 1, createdAt: -1 });     // filter by category, sorted by newest
+blogSchema.index({ title: "text", excerpt: "text" }); // full-text search on title & excerpt
+
 const Blog = mongoose.model('Blog', blogSchema);
 
 export default Blog;

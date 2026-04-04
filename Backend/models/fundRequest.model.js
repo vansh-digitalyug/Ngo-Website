@@ -53,4 +53,8 @@ const fundRequestSchema = new mongoose.Schema(
     { timestamps: true }
 );
 
+// ✅ Added indexes
+fundRequestSchema.index({ ngoId: 1, status: 1 });     // NGO dashboard: requests by status
+fundRequestSchema.index({ status: 1, createdAt: -1 }); // admin queue: pending requests first
+
 export default mongoose.model("FundRequest", fundRequestSchema);

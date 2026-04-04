@@ -64,4 +64,9 @@ const paymentSchema = new mongoose.Schema({
   }
 }, { timestamps: true });
 
+// ✅ Added indexes
+paymentSchema.index({ user: 1, status: 1 });          // user's donation history filtered by status
+paymentSchema.index({ status: 1, createdAt: -1 });    // admin dashboard: recent paid/failed payments
+paymentSchema.index({ createdAt: -1 });               // public stats: recent donations feed
+
 export default mongoose.model("Payment", paymentSchema);

@@ -1,6 +1,8 @@
+import mongoose from "mongoose";
 import Ngo from "../models/ngo.model.js";
 import FundRequest from "../models/fundRequest.model.js";
 import Gallery from "../models/gallery.model.js";
+import Feedback from "../models/feedback.model.js";
 import ApiResponse from "../utils/ApiResponse.js";
 import ApiError from "../utils/ApiError.js";
 import asyncHandler from "../utils/asyncHandler.js";
@@ -78,12 +80,25 @@ export const getAllNgos = async (req, res) => {
     // Get total count for pagination
     const total = await Ngo.countDocuments(filter);
 
+    // Fetch real average ratings from Feedback in one query
+    const ngoIds = ngos.map(n => n._id);
+    const ratingsAgg = await Feedback.aggregate([
+      { $match: { feedbackType: "ngo", targetId: { $in: ngoIds }, rating: { $exists: true, $ne: null } } },
+      { $group: { _id: "$targetId", avgRating: { $avg: "$rating" }, count: { $sum: 1 } } }
+    ]);
+    const ratingMap = {};
+    ratingsAgg.forEach(r => { ratingMap[String(r._id)] = r; });
+
     // Map isVerified to verified for frontend compatibility
-    const mappedNgos = ngos.map(ngo => ({
-      ...ngo.toObject(),
-      verified: ngo.isVerified,
-      rating: 4.8 // Default rating
-    }));
+    const mappedNgos = ngos.map(ngo => {
+      const r = ratingMap[String(ngo._id)];
+      return {
+        ...ngo.toObject(),
+        verified: ngo.isVerified,
+        rating: r ? Math.round(r.avgRating * 10) / 10 : null,
+        ratingCount: r ? r.count : 0,
+      };
+    });
 
     return res.status(200).json({
       success: true,
@@ -104,14 +119,22 @@ export const getAllNgos = async (req, res) => {
 // GET single NGO by ID
 export const getNgoById = asyncHandler(async (req, res) => {
   const { id } = req.params;
-  const ngo = await Ngo.findById(id);
+  const [ngo, ratingAgg] = await Promise.all([
+    Ngo.findById(id),
+    Feedback.aggregate([
+      { $match: { feedbackType: "ngo", targetId: new mongoose.Types.ObjectId(id), rating: { $exists: true, $ne: null } } },
+      { $group: { _id: null, avgRating: { $avg: "$rating" }, count: { $sum: 1 } } }
+    ])
+  ]);
 
   if (!ngo) throw new ApiError(404, "NGO not found");
 
+  const r = ratingAgg[0];
   const ngoData = {
     ...ngo.toObject(),
     verified: ngo.isVerified,
-    rating: 4.8,
+    rating: r ? Math.round(r.avgRating * 10) / 10 : null,
+    ratingCount: r ? r.count : 0,
   };
 
   return res.status(200).json(new ApiResponse(200, "NGO fetched successfully", ngoData));

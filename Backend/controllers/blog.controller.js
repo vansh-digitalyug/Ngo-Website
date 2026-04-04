@@ -45,7 +45,7 @@ export const createBlog = asyncHandler(async (req, res) => {
         S3Imagekey,
         excerpt: excerpt || "",
         category: category || "General",
-        author: author || "Admin Team",
+        author: author || req.user?.name || "SevaIndia Team",
     });
     res.status(201).json(new ApiResponse(201, "Blog created successfully", await serializeBlog(blog)));
 });
