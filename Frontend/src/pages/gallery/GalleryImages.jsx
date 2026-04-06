@@ -1,5 +1,13 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { Camera, X, ChevronLeft, ChevronRight, Filter, Calendar, Tag, Image as ImageIcon, Search } from "lucide-react";
+import { useDispatch, useSelector } from "react-redux";
+import {
+  fetchGalleryImages,
+  fetchGalleryCategories,
+  selectGalleryImages,
+  selectGalleryCategories,
+  selectGalleryImagesStatus,
+} from "../../store/slices/gallerySlice";
 
 const API_BASE_URL = String(import.meta.env.VITE_API_BASE_URL || "http://localhost:5000").replace(/\/$/, "");
 
@@ -9,92 +17,97 @@ const resolveUrl = (url) => {
   return `${API_BASE_URL}${url}`;
 };
 
+const PAGE_SIZE = 24;
+
 const GalleryImages = () => {
-  const [images, setImages]           = useState([]);
-  const [loading, setLoading]         = useState(true);
-  const [error, setError]             = useState("");
-  const [categories, setCategories]   = useState([]);
+  const dispatch = useDispatch();
+  const allImages = useSelector(selectGalleryImages);
+  const allCategories = useSelector(selectGalleryCategories);
+  const imagesStatus = useSelector(selectGalleryImagesStatus);
+
   const [category, setCategory]       = useState("All");
   const [searchQuery, setSearchQuery] = useState("");
   const [searchInput, setSearchInput] = useState("");
-  const [pagination, setPagination]   = useState({ page: 1, pages: 1, total: 0 });
+  const [searchResults, setSearchResults] = useState(null); // null = not searching
+  const [searchLoading, setSearchLoading] = useState(false);
+  const [error, setError]             = useState("");
+  const [page, setPage]               = useState(1);
   const [selectedImage, setSelectedImage] = useState(null);
   const [currentIndex, setCurrentIndex]   = useState(0);
   const [hoveredCard, setHoveredCard]     = useState(null);
 
-  // Load dynamic categories from backend
+  // Dispatch Redux thunks if idle
   useEffect(() => {
-    fetch(`${API_BASE_URL}/api/gallery/categories?type=image`)
-      .then(r => r.json())
-      .then(d => {
-        if (d.success) {
-          setCategories(d.categories.map(c => c.name));
-        }
-      })
-      .catch(() => {});
-  }, []);
+    if (imagesStatus === "idle") dispatch(fetchGalleryImages());
+    dispatch(fetchGalleryCategories());
+  }, [imagesStatus, dispatch]);
 
-  // Fetch images whenever category, searchQuery, or page changes
-  const fetchImages = useCallback(async (page = 1, cat = category, q = searchQuery) => {
-    setLoading(true);
+  // Build category list from Redux data
+  const categoryNames = useMemo(() => {
+    const names = allCategories
+      .map(c => (typeof c === "string" ? c : c?.name))
+      .filter(Boolean);
+    return ["All", ...names];
+  }, [allCategories]);
+
+  // Client-side filtering on Redux images data (when not searching)
+  const filteredImages = useMemo(() => {
+    if (searchResults !== null) return searchResults;
+    if (category === "All") return allImages;
+    return allImages.filter(img => img.category === category);
+  }, [allImages, category, searchResults]);
+
+  // Client-side pagination
+  const totalPages = Math.max(1, Math.ceil(filteredImages.length / PAGE_SIZE));
+  const currentPage = Math.min(page, totalPages);
+  const images = filteredImages.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
+
+  const loading = imagesStatus === "loading" || imagesStatus === "idle";
+
+  // Search via direct API call (ephemeral, not cached in Redux)
+  const runSearch = useCallback(async (q) => {
+    if (!q.trim()) { setSearchResults(null); return; }
+    setSearchLoading(true);
     setError("");
     try {
-      let url;
-      const params = new URLSearchParams();
-      params.set("page", page);
-      params.set("limit", 24);
-
-      if (q.trim()) {
-        // Use search API
-        params.set("q", q.trim());
-        params.set("type", "image");
-        if (cat && cat !== "All") params.set("category", cat);
-        url = `${API_BASE_URL}/api/gallery/search?${params}`;
-      } else {
-        // Use regular images API
-        if (cat && cat !== "All") params.set("category", cat);
-        url = `${API_BASE_URL}/api/gallery/images?${params}`;
-      }
-
-      const res  = await fetch(url);
+      const params = new URLSearchParams({ q: q.trim(), type: "image" });
+      const res = await fetch(`${API_BASE_URL}/api/gallery/search?${params}`);
       const data = await res.json();
-
-      if (!res.ok || !data.success) throw new Error(data.message || "Failed to load images");
-
-      // search API returns `items`, images API returns `images`
-      setImages(data.items ?? data.images ?? []);
-      setPagination(data.pagination);
+      if (!res.ok || !data.success) throw new Error(data.message || "Search failed");
+      setSearchResults(data.items ?? data.images ?? []);
     } catch (err) {
-      setError(err.message || "Failed to load images");
-      setImages([]);
+      setError(err.message || "Search failed");
+      setSearchResults([]);
     } finally {
-      setLoading(false);
+      setSearchLoading(false);
     }
-  }, [category, searchQuery]);
-
-  useEffect(() => {
-    fetchImages(1, category, searchQuery);
-  }, [category, searchQuery]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleCategoryChange = (cat) => {
     setCategory(cat);
     setSearchQuery("");
     setSearchInput("");
-    setPagination(p => ({ ...p, page: 1 }));
+    setSearchResults(null);
+    setPage(1);
   };
 
   const handleSearch = (e) => {
     e.preventDefault();
     setCategory("All");
     setSearchQuery(searchInput);
-    setPagination(p => ({ ...p, page: 1 }));
+    setPage(1);
+    runSearch(searchInput);
   };
 
   const clearSearch = () => {
     setSearchInput("");
     setSearchQuery("");
-    setPagination(p => ({ ...p, page: 1 }));
+    setSearchResults(null);
+    setPage(1);
   };
+
+  // Reset page when filters change
+  useEffect(() => { setPage(1); }, [category, searchQuery]);
 
   // Lightbox
   const openLightbox = (image, index) => {
@@ -136,7 +149,7 @@ const GalleryImages = () => {
   const formatDate = (d) =>
     new Date(d).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" });
 
-  const allCategories = ["All", ...categories];
+  const isLoading = loading || searchLoading;
 
   return (
     <div style={{ minHeight: "100vh", backgroundColor: "#f8fafc", fontFamily: "system-ui, -apple-system, sans-serif" }}>
@@ -206,7 +219,7 @@ const GalleryImages = () => {
             <span>Filter by Initiative</span>
           </div>
           <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "center", gap: "10px" }}>
-            {allCategories.map((cat) => (
+            {categoryNames.map((cat) => (
               <button
                 key={cat}
                 onClick={() => handleCategoryChange(cat)}
@@ -239,11 +252,11 @@ const GalleryImages = () => {
         )}
 
         {/* Stats */}
-        {!loading && images.length > 0 && (
+        {!isLoading && images.length > 0 && (
           <div style={{ color: "#64748b", marginBottom: "24px", fontWeight: "500", fontSize: "15px" }}>
             {searchQuery
-              ? `Found ${pagination.total} result${pagination.total !== 1 ? "s" : ""} for "${searchQuery}"`
-              : `Showing ${images.length} of ${pagination.total} images${category !== "All" ? ` in "${category}"` : ""}`}
+              ? `Found ${filteredImages.length} result${filteredImages.length !== 1 ? "s" : ""} for "${searchQuery}"`
+              : `Showing ${images.length} of ${filteredImages.length} images${category !== "All" ? ` in "${category}"` : ""}`}
           </div>
         )}
 
@@ -255,7 +268,7 @@ const GalleryImages = () => {
         )}
 
         {/* Grid */}
-        {loading ? (
+        {isLoading ? (
           <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "80px 0" }}>
             <div className="loader" />
             <p style={{ color: "#64748b", marginTop: "16px", fontWeight: "500" }}>Loading gallery...</p>
@@ -309,22 +322,22 @@ const GalleryImages = () => {
             </div>
 
             {/* Pagination */}
-            {pagination.pages > 1 && (
+            {totalPages > 1 && (
               <div style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: "20px", marginTop: "48px" }}>
                 <button
-                  disabled={pagination.page <= 1}
-                  onClick={() => fetchImages(pagination.page - 1)}
-                  style={pagination.page <= 1 ? styles.pageBtnDisabled : styles.pageBtn}
+                  disabled={currentPage <= 1}
+                  onClick={() => setPage(p => p - 1)}
+                  style={currentPage <= 1 ? styles.pageBtnDisabled : styles.pageBtn}
                 >
                   <ChevronLeft size={18} /> Previous
                 </button>
                 <span style={{ fontSize: "15px", fontWeight: "600", color: "#334155" }}>
-                  Page {pagination.page} of {pagination.pages}
+                  Page {currentPage} of {totalPages}
                 </span>
                 <button
-                  disabled={pagination.page >= pagination.pages}
-                  onClick={() => fetchImages(pagination.page + 1)}
-                  style={pagination.page >= pagination.pages ? styles.pageBtnDisabled : styles.pageBtn}
+                  disabled={currentPage >= totalPages}
+                  onClick={() => setPage(p => p + 1)}
+                  style={currentPage >= totalPages ? styles.pageBtnDisabled : styles.pageBtn}
                 >
                   Next <ChevronRight size={18} />
                 </button>

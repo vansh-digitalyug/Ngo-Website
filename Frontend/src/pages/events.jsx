@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { Calendar, Clock, MapPin, Users, Facebook, Twitter, Linkedin, CalendarDays, AlertCircle, Loader2 } from "lucide-react";
-import { fetchPublicEvents } from "../utils/eventStore";
+import { useDispatch, useSelector } from "react-redux";
+import { fetchEvents, selectEvents, selectEventsStatus, selectEventsError } from "../store/slices/eventsSlice";
 
 // ─── Countdown Hook ───────────────────────────────────────────────────────────
 function useCountdown(targetDate) {
@@ -242,17 +243,16 @@ function EventCard({ event }) {
 const CATEGORIES = ["All", "Education", "Health", "Environment", "Community", "Cultural", "Sports", "General"];
 
 export default function EventsPage() {
-  const [events, setEvents] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const dispatch = useDispatch();
+  const events = useSelector(selectEvents);
+  const status = useSelector(selectEventsStatus);
+  const error = useSelector(selectEventsError);
+  const loading = status === "loading" || status === "idle";
   const [filterCat, setFilterCat] = useState("All");
 
   useEffect(() => {
-    fetchPublicEvents()
-      .then(setEvents)
-      .catch((e) => setError(e.message))
-      .finally(() => setLoading(false));
-  }, []);
+    if (status === "idle") dispatch(fetchEvents());
+  }, [status, dispatch]);
 
   const filtered = filterCat === "All" ? events : events.filter((e) => e.category === filterCat);
   const featured = filtered[0] || null;

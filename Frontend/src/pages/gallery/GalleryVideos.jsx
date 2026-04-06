@@ -1,8 +1,15 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { Video, X, Play, Filter, Calendar, Tag, Film } from "lucide-react";
+import { useDispatch, useSelector } from "react-redux";
+import {
+  fetchGalleryVideos,
+  selectGalleryVideos,
+  selectGalleryVideosStatus,
+} from "../../store/slices/gallerySlice";
 
-// Make sure to adjust this to your actual production URL when deploying
-const API_BASE_URL = "http://localhost:5000";
+const API_BASE_URL = String(import.meta.env.VITE_API_BASE_URL || "http://localhost:5000").replace(/\/$/, "");
+
+const PAGE_SIZE = 12;
 
 const CATEGORIES = [
   "All",
@@ -16,46 +23,40 @@ const CATEGORIES = [
 ];
 
 const GalleryVideos = () => {
-  // --- State ---
-  const [videos, setVideos] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const dispatch = useDispatch();
+  const allVideos = useSelector(selectGalleryVideos);
+  const videosStatus = useSelector(selectGalleryVideosStatus);
+
   const [selectedVideo, setSelectedVideo] = useState(null);
   const [category, setCategory] = useState("All");
-  const [pagination, setPagination] = useState({ page: 1, pages: 1, total: 0 });
+  const [page, setPage] = useState(1);
   const [hoveredCard, setHoveredCard] = useState(null);
 
-  // --- Effects ---
+  // Dispatch Redux thunk if idle
   useEffect(() => {
-    fetchVideos();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [category]);
+    if (videosStatus === "idle") dispatch(fetchGalleryVideos());
+  }, [videosStatus, dispatch]);
 
-  const fetchVideos = async (page = 1) => {
-    setLoading(true);
-    try {
-      const params = new URLSearchParams();
-      if (category && category !== "All") params.set("category", category);
-      params.set("page", page);
-      params.set("limit", 12);
+  const loading = videosStatus === "loading" || videosStatus === "idle";
 
-      const res = await fetch(`${API_BASE_URL}/api/gallery/videos?${params}`);
-      const data = await res.json();
-      
-      if (data.success) {
-        setVideos(data.videos);
-        setPagination(data.pagination);
-      }
-    } catch (error) {
-      console.error("Error fetching videos:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
+  // Client-side category filtering
+  const filteredVideos = useMemo(() => {
+    if (category === "All") return allVideos;
+    return allVideos.filter(v => v.category === category);
+  }, [allVideos, category]);
 
-  // --- Modal & Video Logic ---
+  // Client-side pagination
+  const totalPages = Math.max(1, Math.ceil(filteredVideos.length / PAGE_SIZE));
+  const currentPage = Math.min(page, totalPages);
+  const videos = filteredVideos.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
+
+  // Reset to page 1 when filter changes
+  useEffect(() => { setPage(1); }, [category]);
+
+  // Modal & Video Logic
   const openVideoModal = (video) => {
     setSelectedVideo(video);
-    document.body.style.overflow = "hidden"; // Prevent background scrolling
+    document.body.style.overflow = "hidden";
   };
 
   const closeVideoModal = () => {
@@ -113,7 +114,7 @@ const GalleryVideos = () => {
   // --- UI Components ---
   return (
     <div style={{ minHeight: "100vh", backgroundColor: "#f8fafc", fontFamily: "system-ui, -apple-system, sans-serif" }}>
-      
+
       {/* Dynamic Style Block - Teal theme */}
       <style>{`
         .video-card {
@@ -148,11 +149,11 @@ const GalleryVideos = () => {
       `}</style>
 
       {/* Hero Section */}
-      <div style={{ 
-        background: "linear-gradient(135deg, #134e4a 0%, #115e59 50%, #0d9488 100%)", 
-        padding: "80px 20px", 
-        textAlign: "center", 
-        color: "white" 
+      <div style={{
+        background: "linear-gradient(135deg, #134e4a 0%, #115e59 50%, #0d9488 100%)",
+        padding: "80px 20px",
+        textAlign: "center",
+        color: "white"
       }}>
         <div style={{ maxWidth: "800px", margin: "0 auto" }}>
           <div style={{ display: "inline-flex", padding: "12px", background: "rgba(255,255,255,0.1)", borderRadius: "50%", marginBottom: "20px" }}>
@@ -169,22 +170,19 @@ const GalleryVideos = () => {
 
       {/* Main Content Area */}
       <div style={{ maxWidth: "1280px", margin: "0 auto", padding: "40px 20px" }}>
-        
+
         {/* Filters */}
         <div style={{ marginBottom: "40px", display: "flex", flexDirection: "column", gap: "16px", alignItems: "center" }}>
           <div style={{ display: "flex", alignItems: "center", gap: "8px", color: "#475569", fontWeight: "600" }}>
             <Filter size={20} />
             <span>Filter by Initiative</span>
           </div>
-          
+
           <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "center", gap: "10px" }}>
             {CATEGORIES.map((cat) => (
               <button
                 key={cat}
-                onClick={() => {
-                  setCategory(cat);
-                  setPagination({ ...pagination, page: 1 }); // Reset page on filter
-                }}
+                onClick={() => setCategory(cat)}
                 style={{
                   padding: "10px 20px",
                   borderRadius: "999px",
@@ -207,7 +205,7 @@ const GalleryVideos = () => {
         {/* Stats Summary */}
         {!loading && videos.length > 0 && (
           <div style={{ color: "#64748b", marginBottom: "24px", fontWeight: "500", fontSize: "15px" }}>
-            Showing {videos.length} of {pagination.total} videos for "{category}"
+            Showing {videos.length} of {filteredVideos.length} videos for "{category}"
           </div>
         )}
 
@@ -225,10 +223,10 @@ const GalleryVideos = () => {
           </div>
         ) : (
           <>
-            <div style={{ 
-              display: "grid", 
-              gridTemplateColumns: "repeat(auto-fill, minmax(320px, 1fr))", 
-              gap: "28px" 
+            <div style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fill, minmax(320px, 1fr))",
+              gap: "28px"
             }}>
               {videos.map((video) => (
                 <div
@@ -252,10 +250,10 @@ const GalleryVideos = () => {
                     loading="lazy"
                     style={{ width: "100%", height: "100%", objectFit: "cover", opacity: hoveredCard === video._id ? 0.7 : 0.9, transition: "opacity 0.3s, transform 0.5s" }}
                   />
-                  
+
                   {/* Centered Play Button */}
-                  <div 
-                    className="play-button" 
+                  <div
+                    className="play-button"
                     style={{
                       position: "absolute",
                       top: "50%",
@@ -263,10 +261,10 @@ const GalleryVideos = () => {
                       transform: "translate(-50%, -50%)",
                       background: "rgba(15, 23, 42, 0.75)",
                       backdropFilter: "blur(4px)",
-                      padding: "16px", 
+                      padding: "16px",
                       borderRadius: "50%",
-                      display: "flex", 
-                      alignItems: "center", 
+                      display: "flex",
+                      alignItems: "center",
                       justifyContent: "center",
                       boxShadow: "0 8px 16px rgba(0,0,0,0.4)",
                       zIndex: 2
@@ -289,13 +287,13 @@ const GalleryVideos = () => {
                     transition: "all 0.3s ease",
                     zIndex: 1
                   }}>
-                    <span style={{ 
-                      display: "inline-block", 
-                      background: "#0d9488", 
-                      color: "white", 
-                      padding: "4px 10px", 
-                      borderRadius: "6px", 
-                      fontSize: "12px", 
+                    <span style={{
+                      display: "inline-block",
+                      background: "#0d9488",
+                      color: "white",
+                      padding: "4px 10px",
+                      borderRadius: "6px",
+                      fontSize: "12px",
                       fontWeight: "700",
                       marginBottom: "8px",
                       width: "fit-content",
@@ -312,22 +310,22 @@ const GalleryVideos = () => {
             </div>
 
             {/* Pagination Controls */}
-            {pagination.pages > 1 && (
+            {totalPages > 1 && (
               <div style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: "20px", marginTop: "48px" }}>
                 <button
-                  disabled={pagination.page <= 1}
-                  onClick={() => fetchVideos(pagination.page - 1)}
-                  style={pagination.page <= 1 ? styles.pageBtnDisabled : styles.pageBtn}
+                  disabled={currentPage <= 1}
+                  onClick={() => setPage(p => p - 1)}
+                  style={currentPage <= 1 ? styles.pageBtnDisabled : styles.pageBtn}
                 >
                   Previous
                 </button>
                 <span style={{ fontSize: "15px", fontWeight: "600", color: "#334155" }}>
-                  Page {pagination.page} of {pagination.pages}
+                  Page {currentPage} of {totalPages}
                 </span>
                 <button
-                  disabled={pagination.page >= pagination.pages}
-                  onClick={() => fetchVideos(pagination.page + 1)}
-                  style={pagination.page >= pagination.pages ? styles.pageBtnDisabled : styles.pageBtn}
+                  disabled={currentPage >= totalPages}
+                  onClick={() => setPage(p => p + 1)}
+                  style={currentPage >= totalPages ? styles.pageBtnDisabled : styles.pageBtn}
                 >
                   Next
                 </button>
@@ -339,25 +337,25 @@ const GalleryVideos = () => {
 
       {/* Cinematic Video Modal - Fixed for Proper Spacing */}
       {selectedVideo && (
-        <div 
+        <div
           onClick={closeVideoModal}
           style={{
             position: "fixed", top: 0, left: 0, right: 0, bottom: 0,
             background: "rgba(15, 23, 42, 0.95)", backdropFilter: "blur(8px)",
-            zIndex: 9999, 
-            overflowY: "auto", // Allows scrolling if content is taller than screen
+            zIndex: 9999,
+            overflowY: "auto",
             display: "flex",
-            padding: "60px 20px" // Adds solid top and bottom spacing
+            padding: "60px 20px"
           }}
         >
-          {/* Close Button - Stays fixed in the top right corner */}
-          <button 
-            onClick={closeVideoModal} 
-            style={{ 
-              position: "fixed", top: "24px", right: "24px", 
-              background: "rgba(255,255,255,0.1)", border: "none", color: "white", 
-              padding: "12px", borderRadius: "50%", cursor: "pointer", 
-              transition: "background 0.2s", zIndex: 10000 
+          {/* Close Button */}
+          <button
+            onClick={closeVideoModal}
+            style={{
+              position: "fixed", top: "24px", right: "24px",
+              background: "rgba(255,255,255,0.1)", border: "none", color: "white",
+              padding: "12px", borderRadius: "50%", cursor: "pointer",
+              transition: "background 0.2s", zIndex: 10000
             }}
             onMouseOver={(e) => e.currentTarget.style.background = "rgba(255,255,255,0.2)"}
             onMouseOut={(e) => e.currentTarget.style.background = "rgba(255,255,255,0.1)"}
@@ -365,13 +363,13 @@ const GalleryVideos = () => {
             <X size={24} />
           </button>
 
-          {/* Modal Content - Automatically centers itself vertically & horizontally */}
-          <div 
-            onClick={(e) => e.stopPropagation()} 
-            style={{ 
-              margin: "auto", // Magic centering trick combined with the flex overlay
-              width: "100%", maxWidth: "1000px", 
-              display: "flex", flexDirection: "column", gap: "24px" 
+          {/* Modal Content */}
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              margin: "auto",
+              width: "100%", maxWidth: "1000px",
+              display: "flex", flexDirection: "column", gap: "24px"
             }}
           >
             {/* 16:9 Responsive Iframe Container */}
@@ -384,14 +382,14 @@ const GalleryVideos = () => {
                 allowFullScreen
               />
             </div>
-            
+
             {/* Video Info Box */}
             <div style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "12px", padding: "32px", color: "white" }}>
               <h3 style={{ margin: "0 0 16px 0", fontSize: "28px", fontWeight: "600" }}>{selectedVideo.title}</h3>
               {selectedVideo.description && (
                 <p style={{ margin: "0 0 24px 0", color: "#cbd5e1", lineHeight: "1.7", fontSize: "16px" }}>{selectedVideo.description}</p>
               )}
-              
+
               <div style={{ display: "flex", flexWrap: "wrap", gap: "16px", color: "#94a3b8", fontSize: "14px" }}>
                 <div style={{ display: "flex", alignItems: "center", gap: "6px", background: "rgba(13, 148, 136, 0.2)", color: "#5eead4", padding: "6px 12px", borderRadius: "8px" }}>
                   <Tag size={16} /> {selectedVideo.category}
@@ -411,12 +409,12 @@ const GalleryVideos = () => {
 // --- Reusable Static Styles ---
 const styles = {
   pageBtn: {
-    padding: "10px 24px", background: "#0d9488", color: "white", 
+    padding: "10px 24px", background: "#0d9488", color: "white",
     border: "none", borderRadius: "8px", cursor: "pointer", fontWeight: "600", fontSize: "15px",
     boxShadow: "0 4px 6px rgba(13, 148, 136, 0.2)", transition: "background 0.2s"
   },
   pageBtnDisabled: {
-    padding: "10px 24px", background: "#f1f5f9", color: "#94a3b8", 
+    padding: "10px 24px", background: "#f1f5f9", color: "#94a3b8",
     border: "1px solid #e2e8f0", borderRadius: "8px", cursor: "not-allowed", fontWeight: "600", fontSize: "15px"
   }
 };

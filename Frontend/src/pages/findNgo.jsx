@@ -1,6 +1,12 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Link, useSearchParams } from "react-router-dom";
-import axios from "axios";
+import { useDispatch, useSelector } from "react-redux";
+import {
+  fetchNgosFiltered,
+  selectFilteredNgos,
+  selectFilteredNgosTotal,
+  selectFilteredNgosStatus,
+} from "../store/slices/ngosSlice";
 import elderCare from "../assets/images/elderly/elder.png"
 import { 
   FaSearch, 
@@ -26,11 +32,19 @@ const STATES     = [
 ];
 
 const FindNGO = () => {
+  const dispatch = useDispatch();
   const [searchParams] = useSearchParams();
   const didMount = useRef(false);
 
-  // --- STATE MANAGEMENT ---
-  // Lazy initialisers read URL params ONCE at mount — no double-fetch race condition
+  // --- REDUX STATE ---
+  const filteredNGOs  = useSelector(selectFilteredNgos);
+  const totalNGOs     = useSelector(selectFilteredNgosTotal);
+  const fetchStatus   = useSelector(selectFilteredNgosStatus);
+
+  const loading = fetchStatus === "idle" || fetchStatus === "loading";
+  const error   = fetchStatus === "failed" ? "Failed to fetch NGO data" : null;
+
+  // --- LOCAL FILTER STATE ---
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [selectedCity, setSelectedCity] = useState(() => {
@@ -41,17 +55,13 @@ const FindNGO = () => {
     const p = searchParams.get("state");
     return p ? (STATES.find(s => s.toLowerCase() === p.toLowerCase()) || "All") : "All";
   });
-  const [filteredNGOs, setFilteredNGOs] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
   const [page, setPage] = useState(1);
 
   const categories = CATEGORIES;
   const cities     = CITIES;
   const states     = STATES;
 
-  // Sync filters when user navigates to a different state/city via the map
-  // (searchParams changes after mount — skip the first run to avoid double-fetch)
+  // Sync filters when user navigates via the map
   useEffect(() => {
     if (!didMount.current) { didMount.current = true; return; }
     const cityParam  = searchParams.get("city");
@@ -61,72 +71,31 @@ const FindNGO = () => {
     setPage(1);
   }, [searchParams]);
 
-  // --- FETCH NGO DATA FROM BACKEND ---
+  // --- DISPATCH REDUX FETCH on filter / page change ---
   useEffect(() => {
-    fetchNGOs();
-  }, [page, selectedCategory, selectedCity, selectedState]);
-
-  const fetchNGOs = async () => {
-    try {
-      setLoading(true);
-      setError(null);
-      
-      const params = new URLSearchParams();
-      params.append('page', page);
-      params.append('limit', 12);
-      
-      if (selectedCategory !== 'All') {
-        params.append('category', selectedCategory);
-      }
-      
-      if (selectedCity !== 'All') {
-        params.append('city', selectedCity);
-      }
-
-      if (selectedState !== 'All') {
-        params.append('state', selectedState);
-      }
-
-      if (searchTerm) {
-        params.append('search', searchTerm);
-      }
-
-      const response = await axios.get(
-        `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000'}/api/ngo?${params.toString()}`
-      );
-
-      if (response.data.success) {
-        const ngoData = response.data.data.map((ngo, index) => ({
-          id: ngo._id,
-          name: ngo.ngoName,
-          category: ngo.services?.[0] || 'General Welfare',
-          city: ngo.city || 'India',
-          rating: ngo.rating || 4.8,
-          verified: ngo.verified !== false,
-          supporters: `${Math.floor(Math.random() * 50)}K+`,
-          image: index % 3 === 0 ? elderCare : (index % 3 === 1 ? "https://images.unsplash.com/photo-1488521787991-ed7bbaae773c?auto=format&fit=crop&q=80&w=800" : "https://images.pexels.com/photos/1181216/pexels-photo-1181216.jpeg?auto=compress&cs=tinysrgb&w=1600"),
-          description: ngo.description || 'Making a difference in communities across India',
-          state: ngo.state
-        }));
-
-        setFilteredNGOs(ngoData);
-      } else {
-        setError('Failed to load NGO data');
-      }
-    } catch (err) {
-      console.error('Error fetching NGOs:', err);
-      setError(err.response?.data?.message || 'Failed to fetch NGO data');
-      setFilteredNGOs([]);
-    } finally {
-      setLoading(false);
-    }
-  };
+    dispatch(fetchNgosFiltered({
+      page,
+      limit: 12,
+      category: selectedCategory,
+      city:     selectedCity,
+      state:    selectedState,
+      search:   searchTerm,
+    }));
+  }, [page, selectedCategory, selectedCity, selectedState, dispatch]);
 
   // --- SEARCH FUNCTIONALITY ---
   const handleSearch = () => {
     setPage(1);
-    fetchNGOs();
+    dispatch(fetchNgosFiltered({
+      page: 1,
+      limit: 12,
+      category: selectedCategory,
+      city:     selectedCity,
+      state:    selectedState,
+      search:   searchTerm,
+    }));
   };
+
 
   const handleSearchChange = (e) => {
     setSearchTerm(e.target.value);
@@ -461,7 +430,7 @@ const FindNGO = () => {
             <h3>Error loading NGOs</h3>
             <p>{error}</p>
             <button 
-              onClick={() => {setSearchTerm(""); setSelectedCategory("All"); setSelectedCity("All"); setSelectedState("All"); setPage(1); fetchNGOs();}}
+              onClick={() => { setSearchTerm(""); setSelectedCategory("All"); setSelectedCity("All"); setSelectedState("All"); setPage(1); dispatch(fetchNgosFiltered({ page: 1, limit: 12 })); }}
               style={{ marginTop: '15px', padding: '10px 20px', border: '1px solid #ccc', background: 'white', cursor: 'pointer', borderRadius: '5px' }}
             >
               Try Again
@@ -491,39 +460,43 @@ const FindNGO = () => {
 
             <div className="ngo-grid">
               {filteredNGOs.length > 0 ? (
-                filteredNGOs.map((ngo) => (
-                  <div className="ngo-card" key={ngo.id}>
+                filteredNGOs.map((ngo, index) => (
+                  <div className="ngo-card" key={ngo._id || ngo.id}>
                     {/* Image & Badges */}
                     <div className="card-img-wrapper">
-                      <img src={ngo.image} alt={ngo.name} className="card-img" />
-                      {ngo.verified && (
+                      <img
+                        src={index % 3 === 0 ? elderCare : (index % 3 === 1 ? "https://images.unsplash.com/photo-1488521787991-ed7bbaae773c?auto=format&fit=crop&q=80&w=800" : "https://images.pexels.com/photos/1181216/pexels-photo-1181216.jpeg?auto=compress&cs=tinysrgb&w=1600")}
+                        alt={ngo.ngoName || ngo.name}
+                        className="card-img"
+                      />
+                      {ngo.verified !== false && (
                         <div className="verified-badge">
                           <FaCheckCircle /> Verified
                         </div>
                       )}
-                      <div className="category-tag">{ngo.category}</div>
+                      <div className="category-tag">{ngo.services?.[0] || ngo.category || 'General Welfare'}</div>
                     </div>
 
                     {/* Content */}
                     <div className="card-body">
                       <div className="card-header">
-                        <h3 className="ngo-name">{ngo.name}</h3>
+                        <h3 className="ngo-name">{ngo.ngoName || ngo.name}</h3>
                         <div className="rating-box">
-                          <FaStar /> {ngo.rating}
+                          <FaStar /> {ngo.rating || 4.8}
                         </div>
                       </div>
                       
                       <div className="ngo-location">
-                        <FaMapMarkerAlt size={12} /> {ngo.city}, {ngo.state || 'India'}
+                        <FaMapMarkerAlt size={12} /> {ngo.city || 'India'}, {ngo.state || 'India'}
                       </div>
 
-                      <p className="ngo-desc">{ngo.description}</p>
+                      <p className="ngo-desc">{ngo.description || 'Making a difference in communities across India'}</p>
 
                       <div className="card-footer">
                         <div className="supporter-count">
-                          <FaHeart color="#FF6B6B" /> {ngo.supporters} Supporters
+                          <FaHeart color="#FF6B6B" /> {ngo.supporters || '10K+'} Supporters
                         </div>
-                        <Link to={`/ngo-profile/${ngo.id}`} className="view-btn">
+                        <Link to={`/ngo-profile/${ngo._id || ngo.id}`} className="view-btn">
                           View Profile <FaArrowRight size={12} />
                         </Link>
                       </div>
@@ -536,7 +509,7 @@ const FindNGO = () => {
                   <h3>No NGOs found matching your criteria.</h3>
                   <p>Try adjusting your filters or search for a broader category.</p>
                   <button 
-                    onClick={() => {setSearchTerm(""); setSelectedCategory("All"); setSelectedCity("All"); setSelectedState("All"); setPage(1); fetchNGOs();}}
+                    onClick={() => { setSearchTerm(""); setSelectedCategory("All"); setSelectedCity("All"); setSelectedState("All"); setPage(1); dispatch(fetchNgosFiltered({ page: 1, limit: 12 })); }}
                     style={{ marginTop: '15px', padding: '10px 20px', border: '1px solid #ccc', background: 'white', cursor: 'pointer', borderRadius: '5px' }}
                   >
                     Clear All Filters

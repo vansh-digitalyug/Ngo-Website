@@ -1,5 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
+import { useDispatch, useSelector } from "react-redux";
+import { fetchPublicSurveys, selectSurveysStatus } from "../store/slices/surveysSlice";
 
 const API = String(import.meta.env.VITE_API_BASE_URL || "http://localhost:5000").replace(/\/$/, "");
 
@@ -248,6 +250,9 @@ function SurveyCard({ survey, delay, onParticipate }) {
 /* ── Main Page ── */
 export default function PublicSurveys() {
   const navigate = useNavigate();
+  const dispatch = useDispatch();
+  const surveysStatus = useSelector(selectSurveysStatus);
+
   const [surveys,  setSurveys]  = useState([]);
   const [loading,  setLoading]  = useState(true);
   const [search,   setSearch]   = useState("");
@@ -264,6 +269,11 @@ export default function PublicSurveys() {
     document.head.appendChild(el);
     return () => el.remove();
   }, []);
+
+  /* hydrate Redux store on idle */
+  useEffect(() => {
+    if (surveysStatus === "idle") dispatch(fetchPublicSurveys());
+  }, [surveysStatus, dispatch]);
 
   /* debounce search */
   useEffect(() => {

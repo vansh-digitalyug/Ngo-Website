@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+import { useDispatch, useSelector } from "react-redux";
+import { fetchServices, selectServices, selectServicesStatus } from "../store/slices/servicesSlice";
 import {
   FaBuilding,
   FaChevronUp,
@@ -13,7 +15,6 @@ import {
 } from "react-icons/fa";
 import { FaChildren } from "react-icons/fa6";
 import { MdElderly } from "react-icons/md";
-import { API } from "../utils/S3.js";
 import heroImg from "../assets/images/service/hero.png";
 
 const STYLES = `
@@ -81,11 +82,14 @@ function CardCarousel({ images, alt }) {
 }
 
 function ServicePage() {
+  const dispatch = useDispatch();
   const navigate = useNavigate();
   const { category } = useParams();
-  const [serviceData, setServiceData] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [fetchError, setFetchError] = useState(null);
+
+  // Redux state
+  const rawCategories = useSelector(selectServices);
+  const servicesStatus = useSelector(selectServicesStatus);
+
   const [activeServiceId, setActiveServiceId] = useState(ALL_CAUSES_ID);
   const [query, setQuery] = useState("");
   const [mobileFilterOpen, setMobileFilterOpen] = useState(false);
@@ -93,6 +97,9 @@ function ServicePage() {
   const [selectedProgram, setSelectedProgram] = useState(null);
   const categoryScrollerRef = useRef(null);
   const categoryItemRefs = useRef({});
+
+  const loading = servicesStatus === "idle" || servicesStatus === "loading";
+  const fetchError = servicesStatus === "failed" ? "Failed to load services. Please try again." : null;
 
   // Inject styles for pseudo-elements, animations and carousel
   useEffect(() => {
@@ -103,45 +110,42 @@ function ServicePage() {
     return () => el.remove();
   }, []);
 
-  // Fetch services from backend on mount
+  // Trigger Redux fetch on idle
   useEffect(() => {
-    fetch(`${API}/api/services`)
-      .then((r) => {
-        if (!r.ok) throw new Error(`Server error: ${r.status}`);
-        return r.json();
-      })
-      .then((json) => {
-        const raw = Array.isArray(json.data) ? json.data : [];
-        const mapped = raw.map((cat) => {
-          const meta = metaFor(cat.name);
-          return {
-            id: meta.id,
-            label: cat.name,
-            icon: meta.icon,
-            programs: (cat.programs || []).map((p) => ({
-              title: p.title,
-              description: p.description,
-              fullDescription: p.fullDescription || p.description,
-              image: p.imagekeys || "",
-              images: p.galleryImageKeys?.length ? p.galleryImageKeys : undefined,
-              cta: p.cta || "Help Now",
-              href: p.href || null,
-              donationTitle: p.donationTitle || p.title,
-            })),
-          };
-        });
-        setServiceData(mapped);
-        const fromUrl = category ? mapped.find((s) => s.id === category) : null;
-        const defaultId = fromUrl ? fromUrl.id : (mapped.length > 0 ? mapped[0].id : ALL_CAUSES_ID);
-        setActiveServiceId(defaultId);
-        setMobileQuickCauseId(defaultId !== ALL_CAUSES_ID ? defaultId : (mapped.length > 0 ? mapped[0].id : ALL_CAUSES_ID));
-      })
-      .catch((err) => {
-        console.error("[ServicePage] Failed to load services:", err.message);
-        setFetchError(err.message);
-      })
-      .finally(() => setLoading(false));
-  }, []);
+    if (servicesStatus === "idle") dispatch(fetchServices());
+  }, [servicesStatus, dispatch]);
+
+  // Map raw backend categories → enriched serviceData with icons
+  const serviceData = useMemo(() => {
+    const raw = Array.isArray(rawCategories) ? rawCategories : [];
+    return raw.map((cat) => {
+      const meta = metaFor(cat.name);
+      return {
+        id: meta.id,
+        label: cat.name,
+        icon: meta.icon,
+        programs: (cat.programs || []).map((p) => ({
+          title: p.title,
+          description: p.description,
+          fullDescription: p.fullDescription || p.description,
+          image: p.imagekeys || "",
+          images: p.galleryImageKeys?.length ? p.galleryImageKeys : undefined,
+          cta: p.cta || "Help Now",
+          href: p.href || null,
+          donationTitle: p.donationTitle || p.title,
+        })),
+      };
+    });
+  }, [rawCategories]);
+
+  // Set initial active category once data loads
+  useEffect(() => {
+    if (serviceData.length === 0) return;
+    const fromUrl = category ? serviceData.find((s) => s.id === category) : null;
+    const defaultId = fromUrl ? fromUrl.id : serviceData[0].id;
+    setActiveServiceId(defaultId);
+    setMobileQuickCauseId(defaultId !== ALL_CAUSES_ID ? defaultId : serviceData[0].id);
+  }, [serviceData, category]);
 
   const categoryOptions = useMemo(
     () => [

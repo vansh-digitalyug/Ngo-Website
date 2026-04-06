@@ -1,5 +1,14 @@
 import { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
+import { useDispatch, useSelector } from "react-redux";
+import {
+  fetchVillageById,
+  fetchVillageProblems,
+  selectSelectedVillage,
+  selectVillageStatus,
+  selectVillageProblems,
+  selectVillageProblemsStatus,
+} from "../../store/slices/villagesSlice";
 import {
   MapPin, Users, Star, CheckCircle, Clock, AlertCircle,
   Droplets, Zap, Trash2, Route, ArrowLeft, Flag, Loader2,
@@ -85,10 +94,13 @@ function ProblemForm({ villageId, onSubmitted }) {
 
 export default function VillageDetail() {
   const { id } = useParams();
-  const [village, setVillage] = useState(null);
-  const [problems, setProblems] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [probLoading, setProbLoading] = useState(false);
+  const dispatch = useDispatch();
+
+  const village = useSelector(selectSelectedVillage);
+  const villageStatus = useSelector(selectVillageStatus);
+  const problems = useSelector(selectVillageProblems);
+  const problemsStatus = useSelector(selectVillageProblemsStatus);
+
   const [activeTab, setActiveTab] = useState("overview");
   const [catFilter, setCatFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
@@ -96,28 +108,18 @@ export default function VillageDetail() {
   const [milestonesOpen, setMilestonesOpen] = useState(true);
   const token = localStorage.getItem("token");
 
+  // Fetch village detail on mount / id change
+  useEffect(() => { dispatch(fetchVillageById(id)); }, [id, dispatch]);
+
+  // Fetch problems when problems tab is active
   useEffect(() => {
-    fetch(`${API_BASE_URL}/api/villages/${id}`)
-      .then(r => r.json())
-      .then(d => { if (d.success) setVillage(d.data.village); })
-      .catch(() => {})
-      .finally(() => setLoading(false));
-  }, [id]);
+    if (activeTab === "problems") {
+      dispatch(fetchVillageProblems({ id }));
+    }
+  }, [id, activeTab, dispatch]);
 
-  const loadProblems = () => {
-    setProbLoading(true);
-    const params = new URLSearchParams({ limit: 30 });
-    if (statusFilter !== "all") params.set("status", statusFilter);
-    if (catFilter !== "all") params.set("category", catFilter);
-
-    fetch(`${API_BASE_URL}/api/villages/${id}/problems?${params}`)
-      .then(r => r.json())
-      .then(d => { if (d.success) setProblems(d.data.problems); })
-      .catch(() => {})
-      .finally(() => setProbLoading(false));
-  };
-
-  useEffect(() => { if (activeTab === "problems") loadProblems(); }, [activeTab, catFilter, statusFilter]);
+  const loading = villageStatus === "loading" || villageStatus === "idle";
+  const probLoading = problemsStatus === "loading";
 
   const handleUpvote = async (problemId) => {
     if (!token) { alert("Please login to upvote"); return; }
@@ -127,7 +129,8 @@ export default function VillageDetail() {
         headers: { Authorization: `Bearer ${token}` },
         credentials: "include",
       });
-      loadProblems();
+      // Refresh problems from server via Redux
+      dispatch(fetchVillageProblems({ id }));
     } catch {}
   };
 
@@ -148,6 +151,13 @@ export default function VillageDetail() {
       </div>
     );
   }
+
+  // Client-side filter for displayed problems
+  const displayedProblems = problems.filter(p => {
+    if (statusFilter !== "all" && p.status !== statusFilter) return false;
+    if (catFilter !== "all" && p.category !== catFilter) return false;
+    return true;
+  });
 
   const TABS = ["overview", "problems", "impact"];
 
@@ -297,7 +307,15 @@ export default function VillageDetail() {
               </button>
             </div>
 
-            {showForm && <ProblemForm villageId={id} onSubmitted={() => { loadProblems(); setShowForm(false); }} />}
+            {showForm && (
+              <ProblemForm
+                villageId={id}
+                onSubmitted={() => {
+                  dispatch(fetchVillageProblems({ id }));
+                  setShowForm(false);
+                }}
+              />
+            )}
 
             {/* Filters */}
             <div style={{ display: "flex", gap: "8px", marginBottom: "14px", flexWrap: "wrap", marginTop: "14px" }}>
@@ -317,11 +335,11 @@ export default function VillageDetail() {
               <div style={{ display: "flex", justifyContent: "center", padding: "40px", gap: "8px", color: "#64748b" }}>
                 <Loader2 size={18} style={{ animation: "spin 1s linear infinite" }} /> Loading...
               </div>
-            ) : problems.length === 0 ? (
+            ) : displayedProblems.length === 0 ? (
               <div style={{ textAlign: "center", padding: "40px", color: "#94a3b8" }}>No problems found.</div>
             ) : (
               <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
-                {problems.map(p => {
+                {displayedProblems.map(p => {
                   const SIcon = STATUS_ICONS[p.status] || AlertCircle;
                   const sColor = STATUS_COLORS[p.status] || "#64748b";
                   return (

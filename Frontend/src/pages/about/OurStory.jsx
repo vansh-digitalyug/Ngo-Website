@@ -1,6 +1,13 @@
 import { useEffect, useRef, useState } from "react";
+import { useSelector } from "react-redux";
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
+import {
+  selectStats,
+  selectValues,
+  selectTestimonials,
+  selectGallery,
+} from "../../store/slices/ourStorySlice";
 gsap.registerPlugin(ScrollTrigger);
 
 // ── Local image imports ──────────────────────────────────────────────────────
@@ -157,6 +164,29 @@ function VineCluster({ side, offsetX, topPct }) {
   );
 }
 
+/* ── Rope + hook helpers — defined outside TreeNode so React doesn't recreate ── */
+function RopeSVG({ h = 80 }) {
+  return (
+    <svg width="14" height={h} viewBox={`0 0 14 ${h}`} style={{ marginTop: -1 }}>
+      <path d={`M 7,0 C 3,${h*0.11} 11,${h*0.22} 7,${h*0.34} C 3,${h*0.45} 11,${h*0.56} 7,${h*0.67} C 3,${h*0.78} 11,${h*0.89} 7,${h}`}
+        stroke="#92400e" strokeWidth="2" fill="none" strokeLinecap="round" opacity="0.9" />
+      <path d={`M 7,0 C 11,${h*0.11} 3,${h*0.22} 7,${h*0.34} C 11,${h*0.45} 3,${h*0.56} 7,${h*0.67} C 11,${h*0.78} 3,${h*0.89} 7,${h}`}
+        stroke="#b45309" strokeWidth="1" fill="none" strokeLinecap="round" opacity="0.5" />
+      <ellipse cx="7" cy={h - 3} rx="3.5" ry="2.2" fill="#78350f" opacity="0.9" />
+    </svg>
+  );
+}
+
+function HookDot() {
+  return (
+    <div style={{
+      width: 11, height: 11, borderRadius: "50%", flexShrink: 0,
+      background: "radial-gradient(circle at 35% 35%, #d97706, #78350f)",
+      border: "2.5px solid #451a03", boxShadow: "0 2px 8px rgba(0,0,0,0.3)",
+    }} />
+  );
+}
+
 /* ── Tree node — GSAP animated branch + hanging content ──────────────────────── */
 function TreeNode({ year, title, body, img, reverse, index }) {
   const nodeRef     = useRef(null);
@@ -282,25 +312,6 @@ function TreeNode({ year, title, body, img, reverse, index }) {
   const imgLeaves = mkLeaves(imgTipX, imgSign);
   const txtLeaves = mkLeaves(txtTipX, txtSign);
 
-  // Shared rope SVG helper
-  const RopeSVG = ({ h = 80 }) => (
-    <svg width="14" height={h} viewBox={`0 0 14 ${h}`} style={{ marginTop: -1 }}>
-      <path d={`M 7,0 C 3,${h*0.11} 11,${h*0.22} 7,${h*0.34} C 3,${h*0.45} 11,${h*0.56} 7,${h*0.67} C 3,${h*0.78} 11,${h*0.89} 7,${h}`}
-        stroke="#92400e" strokeWidth="2" fill="none" strokeLinecap="round" opacity="0.9" />
-      <path d={`M 7,0 C 11,${h*0.11} 3,${h*0.22} 7,${h*0.34} C 11,${h*0.45} 3,${h*0.56} 7,${h*0.67} C 11,${h*0.78} 3,${h*0.89} 7,${h}`}
-        stroke="#b45309" strokeWidth="1" fill="none" strokeLinecap="round" opacity="0.5" />
-      <ellipse cx="7" cy={h - 3} rx="3.5" ry="2.2" fill="#78350f" opacity="0.9" />
-    </svg>
-  );
-
-  const HookDot = () => (
-    <div style={{
-      width: 11, height: 11, borderRadius: "50%", flexShrink: 0,
-      background: "radial-gradient(circle at 35% 35%, #d97706, #78350f)",
-      border: "2.5px solid #451a03", boxShadow: "0 2px 8px rgba(0,0,0,0.3)",
-    }} />
-  );
-
   return (
     <div ref={nodeRef}
       className={`relative flex flex-col ${reverse ? "md:flex-row-reverse" : "md:flex-row"} items-start gap-6 md:gap-0 py-10 md:py-14`}
@@ -421,7 +432,10 @@ function TreeNode({ year, title, body, img, reverse, index }) {
           <p className="text-slate-600 text-sm leading-[1.75] font-light">{body}</p>
         </div>
         {/* Desktop: hanging from rope */}
-        <div className="hidden md:block" style={{ marginTop: 136, transformOrigin: "top center" }}>
+        {/* marginTop:80 = tipY/viewBoxH × svgHeight = 40/60 × 120 = 80px          */}
+        {/* flex child starts at row padding-top (56px), so hook lands at            */}
+        {/* 56+80=136px from row outer top = exactly the branch tip pixel position   */}
+        <div className="hidden md:block" style={{ marginTop: 80, transformOrigin: "top center" }}>
           <div className="flex flex-col items-center">
             <HookDot />
             <RopeSVG h={60} />
@@ -453,7 +467,7 @@ function TreeNode({ year, title, body, img, reverse, index }) {
           <img src={img} alt={title} className="w-full h-full object-cover" loading="lazy" />
         </div>
         {/* Desktop: rope + hanging image */}
-        <div className="hidden md:block" style={{ marginTop: 136, transformOrigin: "top center" }}>
+        <div className="hidden md:block" style={{ marginTop: 80, transformOrigin: "top center" }}>
           <div className="flex flex-col items-center">
             <HookDot />
             <RopeSVG h={80} />
@@ -479,6 +493,23 @@ function TreeNode({ year, title, body, img, reverse, index }) {
 
 /* ── Main export ─────────────────────────────────────────────────────────────── */
 export default function OurStory() {
+  // ── Redux store data ────────────────────────────────────────────────────
+  const stats        = useSelector(selectStats);
+  const values       = useSelector(selectValues);
+  const testimonials = useSelector(selectTestimonials);
+  const gallery      = useSelector(selectGallery);
+
+  // ── Image key → imported module map ─────────────────────────────────────
+  // Images cannot live in Redux (ES-module objects), so we resolve imgKey
+  // strings here and keep the imports at the top of the file.
+  const imageMap = {
+    heroImg, educationImg, edu1Img, edu2Img,
+    empowerImg1, empowerImg2, empowerImg3,
+    medicalImg, campImg, kanayadanHero, kanayadanFuture, kanayadanSupport,
+    roadImg, elderFoodImg, elderEmotional,
+    healthImg, widowImg, mealImg, donateImg, cowImg, ritesImg,
+  };
+
   const trunkRef     = useRef(null);
   const timelineRef  = useRef(null);
 
@@ -629,9 +660,9 @@ export default function OurStory() {
       </section>
 
       {/* ╔══════════════════════════════════════════════════╗
-          ║  LIVING TREE TIMELINE                            ║
+          ║  LIVING TREE TIMELINE  (commented out)           ║
           ╚══════════════════════════════════════════════════╝ */}
-      <section ref={timelineRef} className="relative max-w-7xl mx-auto px-6 py-32">
+      {/* <section ref={timelineRef} className="relative max-w-7xl mx-auto px-6 py-32">
         <div className="absolute -top-20 left-1/2 -translate-x-1/2 w-96 h-96 bg-green-100/20 rounded-full blur-3xl pointer-events-none" />
 
         <div className="relative z-10">
@@ -646,10 +677,7 @@ export default function OurStory() {
             </div>
           </FadeIn>
 
-          {/* ── Tree nodes + Trunk container ── */}
           <div className="relative flex flex-col">
-            {/* ── Organic trunk SVG ── */}
-            {/* Positioned behind nodes; width=64px centred on 50%; top=56px to match first dot! */}
             <div className="absolute left-1/2 -translate-x-1/2 top-[56px] bottom-0 hidden md:block pointer-events-none"
               style={{ width: 64, zIndex: 1 }}>
               <svg width="100%" height="100%" viewBox="0 0 64 100"
@@ -670,24 +698,19 @@ export default function OurStory() {
                     <stop offset="100%" stopColor="transparent" />
                   </linearGradient>
                 </defs>
-                {/* Glow halo */}
                 <path d="M 30,0 C 33,10 27,20 31,30 C 35,40 25,50 30,60 C 35,70 26,80 31,90 C 34,96 30,100 30,100"
                   stroke="rgba(180,90,0,0.15)" strokeWidth="24" fill="none"
                   strokeLinecap="round" transform="translate(2,0)" />
-                {/* Drop shadow */}
                 <path d="M 30,0 C 33,10 27,20 31,30 C 35,40 25,50 30,60 C 35,70 26,80 31,90 C 34,96 30,100 30,100"
                   stroke="rgba(0,0,0,0.18)" strokeWidth="18" fill="none"
                   strokeLinecap="round" transform="translate(2.5,1.5)" />
-                {/* Main bark — GSAP scrub animates strokeDashoffset */}
                 <path ref={trunkRef}
                   d="M 30,0 C 33,10 27,20 31,30 C 35,40 25,50 30,60 C 35,70 26,80 31,90 C 34,96 30,100 30,100"
                   stroke="url(#trunkGrad)" strokeWidth="16" fill="none"
                   strokeLinecap="round"
                   pathLength="1" strokeDasharray="1" strokeDashoffset="1" />
-                {/* Highlight stripe */}
                 <path d="M 30,0 C 33,10 27,20 31,30 C 35,40 25,50 30,60 C 35,70 26,80 31,90 C 34,96 30,100 30,100"
                   stroke="url(#trunkHL)" strokeWidth="5" fill="none" strokeLinecap="round" />
-                {/* Bark grain marks */}
                 {[14, 28, 42, 56, 70, 84].map((y) => (
                   <line key={y} x1={22} y1={y} x2={39} y2={y - 2}
                     stroke="rgba(0,0,0,0.12)" strokeWidth="0.8" />
@@ -695,7 +718,6 @@ export default function OurStory() {
               </svg>
             </div>
 
-            {/* ── Vine decorations scattered along the trunk ── */}
             <VineCluster side="right" offsetX={26} topPct="16%" />
             <VineCluster side="left"  offsetX={26} topPct="32%" />
             <VineCluster side="right" offsetX={22} topPct="49%" />
@@ -720,7 +742,7 @@ export default function OurStory() {
             ))}
           </div>
         </div>
-      </section>
+      </section> */}
 
       {/* ╔══════════════════════════════════════════════════╗
           ║  IMPACT STATS - Premium Style                    ║
@@ -747,10 +769,9 @@ export default function OurStory() {
           </FadeIn>
           
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8 md:gap-10">
-            <StatCard value={1200}  suffix="+"  label="Partner NGOs"         delay={0}    />
-            <StatCard value={84000} suffix="+"  label="Beneficiaries"        delay={0.12} />
-            <StatCard value={9400}  suffix="+"  label="Volunteers"           delay={0.24} />
-            <StatCard value={22}    suffix=""   label="States"               delay={0.36} />
+            {stats.map(({ value, suffix, label, delay }) => (
+              <StatCard key={label} value={value} suffix={suffix} label={label} delay={delay} />
+            ))}
           </div>
         </div>
       </section>
@@ -775,14 +796,7 @@ export default function OurStory() {
           </FadeIn>
           
           <div className="grid md:grid-cols-3 gap-6">
-            {[
-              { emoji: "🔍", title: "Radical Transparency", body: "Every rupee tracked. Every programme audited. We publish quarterly impact reports — warts and all — because the people we serve and the donors who fund us deserve the truth.", color: "from-blue-50 to-blue-100", borderColor: "border-blue-200", textColor: "text-blue-700", delay: 0 },
-              { emoji: "🌱", title: "Grassroots First", body: "We don't parachute solutions into communities. We listen, learn, and build alongside the people we serve. Local knowledge is always the most important knowledge.", color: "from-green-50 to-green-100", borderColor: "border-green-200", textColor: "text-green-700", delay: 0.1 },
-              { emoji: "⚡", title: "Technology as a Tool", body: "Tech should amplify human compassion, not replace it. Every feature we build must make it easier to give, to volunteer, or to get help — never harder.", color: "from-yellow-50 to-yellow-100", borderColor: "border-yellow-200", textColor: "text-yellow-700", delay: 0.2 },
-              { emoji: "🔁", title: "Long-Term Commitment", body: "We don't show up for photo-ops. Our village partners have had the same field officer for years. Continuity builds trust, and trust is what makes real change possible.", color: "from-red-50 to-red-100", borderColor: "border-red-200", textColor: "text-red-700", delay: 0 },
-              { emoji: "🧭", title: "Dignity Above All", body: "Aid that humiliates is no aid at all. Every programme is designed to preserve and strengthen the dignity and agency of the people we work with.", color: "from-purple-50 to-purple-100", borderColor: "border-purple-200", textColor: "text-purple-700", delay: 0.1 },
-              { emoji: "📢", title: "Amplifying Voices", body: "The communities we serve know what they need. Our job is to give them the platform, the resources, and the tools — then step back and let them lead.", color: "from-indigo-50 to-indigo-100", borderColor: "border-indigo-200", textColor: "text-indigo-700", delay: 0.2 },
-            ].map(({ emoji, title, body, color, borderColor, textColor, delay }) => (
+            {values.map(({ emoji, title, body, color, borderColor, textColor, delay }) => (
               <FadeIn key={title} delay={delay}>
                 <div className={`bg-gradient-to-br ${color} rounded-2xl p-7 border ${borderColor} hover:shadow-xl hover:-translate-y-2 transition-all duration-300 h-full group`}>
                   <div className="text-4xl mb-4 group-hover:scale-110 transition-transform duration-300">{emoji}</div>
@@ -811,116 +825,36 @@ export default function OurStory() {
         </FadeIn>
         
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          {/* Large cell top-left spanning 2 cols + 2 rows */}
-          <FadeIn delay={0} className="col-span-2 row-span-2">
-            <div className="rounded-2xl overflow-hidden group" style={{ height: "100%", minHeight: "320px" }}>
-              <img 
-                src={healthImg} 
-                alt="Orphan health programme" 
-                className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" 
-                style={{ minHeight: "320px" }} 
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-            </div>
-          </FadeIn>
-
-          <FadeIn delay={0.1}>
-            <div className="rounded-2xl overflow-hidden group" style={{ aspectRatio: "4/3" }}>
-              <img 
-                src={empowerImg2} 
-                alt="Women empowerment" 
-                className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" 
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-            </div>
-          </FadeIn>
-
-          <FadeIn delay={0.15}>
-            <div className="rounded-2xl overflow-hidden group" style={{ aspectRatio: "4/3" }}>
-              <img 
-                src={kanayadanSupport} 
-                alt="Kanyadan support" 
-                className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" 
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-            </div>
-          </FadeIn>
-
-          <FadeIn delay={0.2}>
-            <div className="rounded-2xl overflow-hidden group" style={{ aspectRatio: "4/3" }}>
-              <img 
-                src={elderEmotional} 
-                alt="Elder care — emotional support" 
-                className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" 
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-            </div>
-          </FadeIn>
-
-          <FadeIn delay={0.25}>
-            <div className="rounded-2xl overflow-hidden group" style={{ aspectRatio: "4/3" }}>
-              <img 
-                src={empowerImg3} 
-                alt="Rural women's group" 
-                className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" 
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-            </div>
-          </FadeIn>
+          {gallery.row1.map(({ imgKey, alt, delay, span2 }) => (
+            <FadeIn key={imgKey} delay={delay} className={span2 ? "col-span-2 row-span-2" : ""}>
+              <div className="rounded-2xl overflow-hidden group"
+                style={span2 ? { height: "100%", minHeight: "320px" } : { aspectRatio: "4/3" }}>
+                <img
+                  src={imageMap[imgKey]}
+                  alt={alt}
+                  className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
+                  style={span2 ? { minHeight: "320px" } : undefined}
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+              </div>
+            </FadeIn>
+          ))}
         </div>
 
         {/* Second row mosaic */}
         <div className="grid grid-cols-3 md:grid-cols-5 gap-4 mt-4">
-          <FadeIn delay={0.1}>
-            <div className="rounded-2xl overflow-hidden group" style={{ aspectRatio: "1/1" }}>
-              <img 
-                src={medicalImg} 
-                alt="Medical camp" 
-                className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" 
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-            </div>
-          </FadeIn>
-          <FadeIn delay={0.15}>
-            <div className="rounded-2xl overflow-hidden group" style={{ aspectRatio: "1/1" }}>
-              <img 
-                src={cowImg} 
-                alt="Gau Seva programme" 
-                className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" 
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-            </div>
-          </FadeIn>
-          <FadeIn delay={0.2}>
-            <div className="rounded-2xl overflow-hidden group" style={{ aspectRatio: "1/1" }}>
-              <img 
-                src={widowImg} 
-                alt="Widow support programme" 
-                className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" 
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-            </div>
-          </FadeIn>
-          <FadeIn delay={0.25}>
-            <div className="rounded-2xl overflow-hidden group" style={{ aspectRatio: "1/1" }}>
-              <img 
-                src={ritesImg} 
-                alt="Last rites support" 
-                className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" 
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-            </div>
-          </FadeIn>
-          <FadeIn delay={0.3}>
-            <div className="rounded-2xl overflow-hidden group" style={{ aspectRatio: "1/1" }}>
-              <img 
-                src={mealImg} 
-                alt="Meal programme" 
-                className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" 
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-            </div>
-          </FadeIn>
+          {gallery.row2.map(({ imgKey, alt, delay }) => (
+            <FadeIn key={imgKey} delay={delay}>
+              <div className="rounded-2xl overflow-hidden group" style={{ aspectRatio: "1/1" }}>
+                <img
+                  src={imageMap[imgKey]}
+                  alt={alt}
+                  className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+              </div>
+            </FadeIn>
+          ))}
         </div>
       </section>
 
@@ -944,37 +878,11 @@ export default function OurStory() {
             </div>
           </FadeIn>
           <div className="grid md:grid-cols-3 gap-8">
-            {[
-              {
-                quote: "Before SevaIndia, I spent 40% of my time fundraising. Now I spend 90% doing actual work. The platform genuinely changed how we operate as an NGO.",
-                name: "Priya Sharma",
-                role: "Director, Asha Kiran NGO — Patna",
-                img: empowerImg2,
-                icon: "🎯",
-                delay: 0,
-              },
-              {
-                quote: "My daughter's wedding happened with full dignity because of the Kanyadan Yojana. I cannot put into words what that meant for our family.",
-                name: "Ramesh Kumar",
-                role: "Beneficiary, Allahabad",
-                img: kanayadanSupport,
-                icon: "💍",
-                delay: 0.1,
-              },
-              {
-                quote: "I'm a software engineer in Pune. Every weekend I mentor rural students through SevaIndia. It is the most meaningful thing I do with my time.",
-                name: "Ananya Joshi",
-                role: "Volunteer, Pune",
-                img: edu1Img,
-                icon: "🤝",
-                delay: 0.2,
-              },
-            ].map(({ quote, name, role, img, icon, delay }) => (
+            {testimonials.map(({ quote, name, role, imgKey, icon, delay }) => (
               <FadeIn key={name} delay={delay}>
                 <div className="bg-gradient-to-br from-slate-800/60 to-slate-800/40 backdrop-blur-md rounded-2xl overflow-hidden border border-slate-700/50 flex flex-col h-full hover:shadow-2xl hover:border-green-400/30 transition-all duration-300 group">
-                  {/* Image strip with overlay */}
                   <div className="h-40 overflow-hidden relative">
-                    <img src={img} alt={name} className="w-full h-full object-cover opacity-70 group-hover:opacity-100 group-hover:scale-105 transition-all duration-500" />
+                    <img src={imageMap[imgKey]} alt={name} className="w-full h-full object-cover opacity-70 group-hover:opacity-100 group-hover:scale-105 transition-all duration-500" />
                     <div className="absolute inset-0 bg-gradient-to-t from-slate-900 to-transparent" />
                   </div>
                   <div className="p-7 flex flex-col flex-1">
