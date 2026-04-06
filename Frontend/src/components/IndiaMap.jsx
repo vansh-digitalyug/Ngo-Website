@@ -49,9 +49,9 @@ export default function IndiaMap() {
   const [geoData, setGeoData] = useState(null);
   const navigate = useNavigate();
 
-  // Fetch GeoJSON from public/ — never bundled, browser-cached after first load
+  // Fetch GeoJSON from assets/ — latest updated data with district-level details
   useEffect(() => {
-    fetch("/india-states.json")
+    fetch("/india_states.geojson")
       .then((r) => r.json())
       .then(setGeoData);
   }, []);
@@ -78,7 +78,7 @@ export default function IndiaMap() {
           <Geographies geography={geoData}>
             {({ geographies }) =>
               geographies.map((geo) => {
-                const stateName = geo.properties.NAME_1;
+                const stateName = geo.properties.st_nm;
                 const isActive  = ACTIVE_STATES.has(stateName);
                 const isHovered = hoveredState === stateName;
 
