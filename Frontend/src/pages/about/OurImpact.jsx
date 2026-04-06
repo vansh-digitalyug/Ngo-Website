@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
-import { API } from "../../utils/S3.js";
+import { useDispatch, useSelector } from "react-redux";
+import { fetchAllImpactReports, selectAllImpactReports, selectAllImpactReportsStatus } from "../../store/slices/impactReportsSlice";
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell,
 } from "recharts";
@@ -191,27 +192,21 @@ function ReportModal({ report, onClose }) {
    MAIN PAGE
 ══════════════════════════════════════════════════ */
 export default function OurImpact() {
-  const [loading, setLoading]             = useState(true);
+  const dispatch  = useDispatch();
+  const allReports    = useSelector(selectAllImpactReports);
+  const reportsStatus = useSelector(selectAllImpactReportsStatus);
+
+  const loading = reportsStatus === "idle" || reportsStatus === "loading";
+
   const [selected, setSelected]           = useState(null);
-  const [allReports, setAllReports]       = useState([]);
   const [archiveFilter, setArchiveFilter] = useState("all");
   const [archivePage, setArchivePage]     = useState(0);
   const heroRef = useRef(null);
 
+  // Fetch all reports via Redux (only once — idle guard prevents re-fetch)
   useEffect(() => {
-    let active = true;
-    (async () => {
-      setLoading(true);
-      try {
-        const r = await fetch(`${API}/api/impact-reports/public?page=1&limit=1000`);
-        const d = await r.json();
-        if (active) setAllReports(d.data?.reports || []);
-      } catch { /* silent */ } finally {
-        if (active) setLoading(false);
-      }
-    })();
-    return () => { active = false; };
-  }, []);
+    if (reportsStatus === "idle") dispatch(fetchAllImpactReports());
+  }, [reportsStatus, dispatch]);
 
   const liveStats = (() => {
     let volunteers=0, villages=0, beneficiaries=0, fundsIn=0;

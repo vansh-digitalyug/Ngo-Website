@@ -1,8 +1,9 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Link } from "react-router-dom";
+import { useDispatch, useSelector } from "react-redux";
+import { fetchVillages, selectVillages, selectVillagesStatus } from "../../store/slices/villagesSlice";
 import { MapPin, Users, Star, CheckCircle, PauseCircle, Flag, Droplets, Zap, Trash2, Route, Loader2, Search } from "lucide-react";
 
-const API_BASE_URL = String(import.meta.env.VITE_API_BASE_URL || "http://localhost:5000").replace(/\/$/, "");
 const fmtDate = (d) => d ? new Date(d).toLocaleDateString("en-IN", { month: "short", year: "numeric" }) : "—";
 
 const STATUS_META = {
@@ -13,6 +14,8 @@ const STATUS_META = {
 
 const NEED_ICONS = { water: Droplets, electricity: Zap, sanitation: Trash2, roads: Route };
 const NEED_COLORS = { water: "#0ea5e9", electricity: "#eab308", sanitation: "#10b981", roads: "#8b5cf6" };
+
+const PAGE_SIZE = 12;
 
 function NeedBadge({ need, pct }) {
   const Icon = NEED_ICONS[need];
@@ -87,32 +90,40 @@ function VillageCard({ village }) {
 }
 
 export default function VillageList() {
-  const [villages, setVillages] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const dispatch = useDispatch();
+  const allVillages = useSelector(selectVillages);
+  const status = useSelector(selectVillagesStatus);
+
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("active");
   const [page, setPage] = useState(1);
-  const [pagination, setPagination] = useState({ total: 0, pages: 1 });
 
-  const load = (p = 1) => {
-    setLoading(true);
-    const params = new URLSearchParams({ page: p, limit: 12, status: statusFilter });
-    if (search) params.set("state", search);
+  useEffect(() => {
+    if (status === "idle") dispatch(fetchVillages());
+  }, [status, dispatch]);
 
-    fetch(`${API_BASE_URL}/api/villages?${params}`)
-      .then(r => r.json())
-      .then(d => {
-        if (d.success) {
-          setVillages(d.data.villages);
-          setPagination(d.data.pagination);
-        }
-      })
-      .catch(() => {})
-      .finally(() => setLoading(false));
-  };
+  const loading = status === "loading" || status === "idle";
 
-  useEffect(() => { load(1); setPage(1); }, [statusFilter, search]);
-  useEffect(() => { load(page); }, [page]);
+  // Client-side filtering
+  const filtered = useMemo(() => {
+    let result = allVillages;
+    if (statusFilter && statusFilter !== "all") {
+      result = result.filter(v => v.status === statusFilter);
+    }
+    if (search.trim()) {
+      const q = search.trim().toLowerCase();
+      result = result.filter(v => v.state?.toLowerCase().includes(q));
+    }
+    return result;
+  }, [allVillages, statusFilter, search]);
+
+  // Client-side pagination
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  const currentPage = Math.min(page, totalPages);
+  const pageVillages = filtered.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
+
+  // Reset to page 1 when filter/search changes
+  useEffect(() => { setPage(1); }, [statusFilter, search]);
 
   return (
     <div style={{ minHeight: "100vh", background: "#f8fafc", fontFamily: "system-ui, -apple-system, sans-serif" }}>
@@ -139,7 +150,7 @@ export default function VillageList() {
         {/* Stats row */}
         <div style={{ display: "flex", gap: "20px", flexWrap: "wrap", marginBottom: "24px" }}>
           <div style={{ padding: "12px 20px", background: "#fff", borderRadius: "10px", border: "1px solid #e2e8f0" }}>
-            <span style={{ fontSize: "24px", fontWeight: "800", color: "#0f172a" }}>{pagination.total}</span>
+            <span style={{ fontSize: "24px", fontWeight: "800", color: "#0f172a" }}>{filtered.length}</span>
             <span style={{ fontSize: "13px", color: "#64748b", marginLeft: "8px" }}>Villages Adopted</span>
           </div>
         </div>
@@ -163,23 +174,23 @@ export default function VillageList() {
           <div style={{ display: "flex", justifyContent: "center", padding: "80px 0", gap: "10px", color: "#64748b" }}>
             <Loader2 size={22} style={{ animation: "spin 1s linear infinite" }} /> Loading villages…
           </div>
-        ) : villages.length === 0 ? (
+        ) : pageVillages.length === 0 ? (
           <div style={{ textAlign: "center", padding: "80px 20px" }}>
             <MapPin size={48} style={{ color: "#cbd5e1", marginBottom: "16px" }} />
             <p style={{ color: "#94a3b8", fontSize: "16px" }}>No villages found.</p>
           </div>
         ) : (
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(300px,1fr))", gap: "18px" }}>
-            {villages.map(v => <VillageCard key={v._id} village={v} />)}
+            {pageVillages.map(v => <VillageCard key={v._id} village={v} />)}
           </div>
         )}
 
         {/* Pagination */}
-        {pagination.pages > 1 && (
+        {totalPages > 1 && (
           <div style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: "14px", marginTop: "32px" }}>
-            <button disabled={page <= 1} onClick={() => setPage(p => p - 1)} style={{ padding: "8px 18px", borderRadius: "8px", border: "1px solid #e2e8f0", background: "#fff", cursor: page <= 1 ? "not-allowed" : "pointer", opacity: page <= 1 ? 0.5 : 1, fontWeight: "600" }}>← Prev</button>
-            <span style={{ color: "#64748b" }}>Page {page} of {pagination.pages}</span>
-            <button disabled={page >= pagination.pages} onClick={() => setPage(p => p + 1)} style={{ padding: "8px 18px", borderRadius: "8px", border: "1px solid #e2e8f0", background: "#fff", cursor: page >= pagination.pages ? "not-allowed" : "pointer", opacity: page >= pagination.pages ? 0.5 : 1, fontWeight: "600" }}>Next →</button>
+            <button disabled={currentPage <= 1} onClick={() => setPage(p => p - 1)} style={{ padding: "8px 18px", borderRadius: "8px", border: "1px solid #e2e8f0", background: "#fff", cursor: currentPage <= 1 ? "not-allowed" : "pointer", opacity: currentPage <= 1 ? 0.5 : 1, fontWeight: "600" }}>← Prev</button>
+            <span style={{ color: "#64748b" }}>Page {currentPage} of {totalPages}</span>
+            <button disabled={currentPage >= totalPages} onClick={() => setPage(p => p + 1)} style={{ padding: "8px 18px", borderRadius: "8px", border: "1px solid #e2e8f0", background: "#fff", cursor: currentPage >= totalPages ? "not-allowed" : "pointer", opacity: currentPage >= totalPages ? 0.5 : 1, fontWeight: "600" }}>Next →</button>
           </div>
         )}
       </div>

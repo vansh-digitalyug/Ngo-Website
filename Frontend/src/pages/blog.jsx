@@ -1,7 +1,8 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { CalendarDays, Clock, Loader2, UserRound } from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
-import { fetchBlogs } from "../utils/blogStore.js";
+import { useDispatch, useSelector } from "react-redux";
+import { fetchBlogs, selectBlogs, selectBlogsStatus } from "../store/slices/blogsSlice";
 
 const blogText = (blog) => {
   if (Array.isArray(blog?.sections) && blog.sections.length > 0)
@@ -461,17 +462,16 @@ function ArticleDetail({ blog }) {
 export default function BlogPage() {
   const navigate = useNavigate();
   const { id } = useParams();
+  const dispatch = useDispatch();
 
-  const [blogs, setBlogs] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const blogs = useSelector(selectBlogs);
+  const status = useSelector(selectBlogsStatus);
+  const loading = status === "loading" || status === "idle";
   const [activeCat, setActiveCat] = useState("All");
 
   useEffect(() => {
-    fetchBlogs()
-      .then(setBlogs)
-      .catch(console.error)
-      .finally(() => setLoading(false));
-  }, []);
+    if (status === "idle") dispatch(fetchBlogs());
+  }, [status, dispatch]);
 
   const openBlog = (blog) => {
     const blogId = blog?._id || blog?.id;

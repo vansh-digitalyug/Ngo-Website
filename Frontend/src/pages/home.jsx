@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
-import { fetchedPublicData, fetchPublicNgos } from "../services/api.js";
+import { useSelector, useDispatch } from "react-redux";
+import { fetchPublicStats, selectPublicStats, selectPublicStatsStatus } from "../store/slices/publicStatsSlice";
+import { fetchNgos, selectNgos, selectNgosStatus } from "../store/slices/ngosSlice";
 import { Link } from "react-router-dom";
 import IndiaMap from "../components/IndiaMap.jsx";
 import {
@@ -57,23 +59,16 @@ function useInView(threshold = 0.18) {
   return [ref, hit];
 }
 
-const API = import.meta.env.PROD
-  ? String(import.meta.env.VITE_API_BASE_URL || "").replace(/\/$/, "")
-  : "";
-
 export default function Home() {
   const [slide, setSlide]     = useState(0);
   const [openFaq, setOpenFaq] = useState(null);
 
-  /* ── live NGO data from backend ── */
-  const [liveNgos, setLiveNgos]   = useState([]);
-  const [ngoTotal, setNgoTotal]   = useState(0);
-  const [ngoLoading, setNgoLoading] = useState(true);
-
-  /* ── live platform stats ── */
-  const [liveStats, setLiveStats] = useState(null);
-  const [liveRecentDonations, setLiveRecentDonations] = useState([]);
-  const [liveCauses, setLiveCauses] = useState([]);
+  /* ── Redux store ── */
+  const dispatch          = useDispatch();
+  const publicData        = useSelector(selectPublicStats);
+  const statsStatus       = useSelector(selectPublicStatsStatus);
+  const allNgos           = useSelector(selectNgos);
+  const ngosStatus        = useSelector(selectNgosStatus);
 
   /* ── programmes carousel ── */
   const [progSlide, setProgSlide] = useState(0);
@@ -144,39 +139,24 @@ export default function Home() {
     return () => clearInterval(id);
   }, [progPaused, progVisible]);
 
-  useEffect(() => {
-    fetchPublicNgos(4, 1)
-      .then(json => {
-        if (typeof json.total === "number") setNgoTotal(json.total);
-        if (Array.isArray(json.data) && json.data.length > 0) {
-          setLiveNgos(json.data.map(n => ({
-            id:    n._id,
-            name:  n.ngoName,
-            city:  n.city  || n.state || "India",
-            cause: Array.isArray(n.services) && n.services[0] ? n.services[0] : "General",
-            rating: n.rating != null ? Number(n.rating).toFixed(1) : null,
-          })));
-        }
-      })
-      .catch(err => console.error("[Home] NGO fetch error:", err))
-      .finally(() => setNgoLoading(false));
-  }, []);
+  /* ── fetch from Redux store once (idle guard) ── */
+  useEffect(() => { if (statsStatus === "idle") dispatch(fetchPublicStats()); }, [statsStatus, dispatch]);
+  useEffect(() => { if (ngosStatus  === "idle") dispatch(fetchNgos());        }, [ngosStatus,  dispatch]);
 
-  useEffect(() => {
-    fetchedPublicData()
-      .then(json => {
-        if (json?.success && json.data) {
-          setLiveStats(json.data.stats);
-          if (Array.isArray(json.data.topCauses) && json.data.topCauses.length > 0) {
-            setLiveCauses(json.data.topCauses);
-          }
-          if (Array.isArray(json.data.recentDonations) && json.data.recentDonations.length > 0) {
-            setLiveRecentDonations(json.data.recentDonations);
-          }
-        }
-      })
-      .catch(err => console.error("[Home] Stats fetch error:", err));
-  }, []);
+  /* ── derive variables from the store ── */
+  const liveStats           = publicData?.stats          ?? null;
+  const liveCauses          = publicData?.topCauses      ?? [];
+  const liveRecentDonations = publicData?.recentDonations ?? [];
+
+  const ngoLoading = ngosStatus === "idle" || ngosStatus === "loading";
+  const ngoTotal   = liveStats?.totalNgos ?? allNgos.length;
+  const liveNgos   = allNgos.slice(0, 4).map(n => ({
+    id:    n._id,
+    name:  n.ngoName,
+    city:  n.city  || n.state || "India",
+    cause: Array.isArray(n.services) && n.services[0] ? n.services[0] : "General",
+    rating: n.rating != null ? Number(n.rating).toFixed(1) : null,
+  }));
 
   const [statsRef, statsHit] = useInView(0.3);
   const n1 = useCountUp(liveStats?.totalNgos      ?? ngoTotal, 2000, statsHit);

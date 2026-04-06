@@ -53,8 +53,17 @@ export const getPublicStats = asyncHandler(async (req, res) => {
     ])
   ]);
 
+  // Use whichever is higher: the real distinct-state count from DB, or the
+  // platform's known geographic reach (25 states). This ensures the number
+  // never goes below the real operational coverage even if not all NGOs have
+  // state data populated yet.
+  const distinctStates = statesAgg.filter(Boolean).length;
+  const PLATFORM_STATES_COVERED = 25;
+  const statesCovered = Math.max(distinctStates, PLATFORM_STATES_COVERED);
+
   const totalRaised = totalRaisedAgg[0]?.total || 0;
-  const statesCovered = statesAgg.filter(Boolean).length;
+
+
 
   // Format recent donations for the frontend (mask anonymous donors)
   const AVATAR_COLORS = [

@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { TrendingUp, TrendingDown, IndianRupee, Eye, Calendar, Tag, Building2 } from "lucide-react";
-
-const API_BASE_URL = String(import.meta.env.VITE_API_BASE_URL || "http://localhost:5000").replace(/\/$/, "");
+import { useDispatch, useSelector } from "react-redux";
+import { fetchFundSummary, selectFundSummary, selectFundSummaryStatus } from "../store/slices/fundLedgerSlice";
 const fmtINR = (n) => new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 0 }).format(n || 0);
 const fmtDate = (d) => d ? new Date(d).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" }) : "—";
 
@@ -38,34 +38,18 @@ function BarChart({ data }) {
 }
 
 export default function Transparency() {
-  const [summary, setSummary] = useState({ totals: { credit: 0, debit: 0 }, byCategory: {} });
-  const [entries, setEntries] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const dispatch = useDispatch();
+  const rawSummary = useSelector(selectFundSummary);
+  const summaryStatus = useSelector(selectFundSummaryStatus);
+
+  const summary = rawSummary || { totals: { credit: 0, debit: 0 }, byCategory: {} };
   const [page, setPage] = useState(1);
   const [pagination, setPagination] = useState({ total: 0, pages: 1 });
   const [typeFilter, setTypeFilter] = useState("all");
 
   useEffect(() => {
-    fetch(`${API_BASE_URL}/api/fund-ledger/public/summary`)
-      .then(r => r.json())
-      .then(d => { if (d.success) setSummary(d.data); })
-      .catch(() => {});
-  }, []);
-
-  useEffect(() => {
-    setLoading(true);
-    const params = new URLSearchParams({ page, limit: 20 });
-    if (typeFilter !== "all") params.set("type", typeFilter);
-    // Use platform-level view — no specific NGO
-    fetch(`${API_BASE_URL}/api/fund-ledger/public/summary`)
-      .then(() => {})
-      .catch(() => {});
-
-    // Fetch public entries across all NGOs via admin summary endpoint (public route)
-    fetch(`${API_BASE_URL}/api/fund-ledger/public/summary`)
-      .then(() => setLoading(false))
-      .catch(() => setLoading(false));
-  }, [page, typeFilter]);
+    if (summaryStatus === "idle") dispatch(fetchFundSummary());
+  }, [summaryStatus, dispatch]);
 
   const balance = summary.totals.credit - summary.totals.debit;
   const utilizationPct = summary.totals.credit > 0
