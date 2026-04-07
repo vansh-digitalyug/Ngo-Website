@@ -30,7 +30,7 @@
     "react-leaflet": "^4.2.1",
     "react-redux": "^9.2.0",
     "react-router-dom": "^7.13.0",
-    "react-simple-maps": "^1.0.0",
+    "react-simple-maps": "^3.0.0",
     "recharts": "^3.8.0",
     "swiper": "^12.1.0"
   },

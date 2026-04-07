@@ -47,20 +47,101 @@ export default function IndiaMap() {
   const [hoveredCity, setHoveredCity] = useState(null);
   const [hoveredState, setHoveredState] = useState(null);
   const [geoData, setGeoData] = useState(null);
+  const [cleanedGeoData, setCleanedGeoData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const navigate = useNavigate();
 
-  // Fetch GeoJSON from assets/ — latest updated data with district-level details
+  // Fetch GeoJSON from assets/ — latest updated data
   useEffect(() => {
-    fetch("/india_states.geojson")
-      .then((r) => r.json())
-      .then(setGeoData);
+    const loadData = async () => {
+      try {
+        const response = await fetch("/india_states.geojson");
+        const data = await response.json();
+        
+        // Validate basic structure
+        if (!data || !data.features || !Array.isArray(data.features)) {
+          throw new Error("Invalid GeoJSON structure");
+        }
+        
+        setGeoData(data);
+      } catch (err) {
+        console.error("[IndiaMap] Fetch error:", err);
+        setError(err.message);
+      }
+    };
+
+    loadData();
   }, []);
 
-  if (!geoData) {
+  // Clean GeoJSON data
+  useEffect(() => {
+    if (!geoData) {
+      setLoading(true);
+      return;
+    }
+
+    try {
+      const validFeatures = geoData.features.filter(feature => {
+        // Strict validation
+        if (!feature || feature.type !== "Feature") return false;
+        if (!feature.properties || !feature.properties.st_nm) return false;
+        if (!feature.geometry) return false;
+        if (feature.geometry.type !== "Polygon") return false;
+        if (!Array.isArray(feature.geometry.coordinates) || feature.geometry.coordinates.length === 0) return false;
+        if (!Array.isArray(feature.geometry.coordinates[0]) || feature.geometry.coordinates[0].length === 0) return false;
+        
+        return true;
+      });
+
+      if (validFeatures.length === 0) {
+        setError("No valid features in GeoJSON");
+        setLoading(false);
+        return;
+      }
+
+      setCleanedGeoData({
+        type: "FeatureCollection",
+        features: validFeatures,
+      });
+
+      console.log(`[IndiaMap] Cleaned: ${validFeatures.length}/${geoData.features.length} features`);
+      setError(null);
+      setLoading(false);
+    } catch (err) {
+      console.error("[IndiaMap] Cleaning error:", err);
+      setError(err.message);
+      setLoading(false);
+    }
+  }, [geoData]);
+
+  if (loading) {
     return (
       <div className="w-full flex items-center justify-center" style={{ minHeight: 320 }}>
         <div style={{ width: 40, height: 40, border: "4px solid #e5e7eb", borderTopColor: "#10b981", borderRadius: "50%", animation: "spin 0.7s linear infinite" }} />
         <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
+      </div>
+    );
+  }
+
+  if (error || !cleanedGeoData) {
+    return (
+      <div className="w-full">
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-8 text-center">
+          <p className="text-blue-900 font-bold text-lg mb-4">🗺️ Find NGOs By City</p>
+          <p className="text-blue-700 text-sm mb-6">Select a city to explore local NGO partnerships</p>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 max-w-2xl mx-auto">
+            {NGO_HUBS.map((hub) => (
+              <button
+                key={hub.name}
+                onClick={() => navigate(hub.path)}
+                className="bg-white hover:bg-blue-50 border border-blue-200 rounded-lg px-4 py-3 text-blue-900 text-sm font-semibold transition"
+              >
+                {hub.name}
+              </button>
+            ))}
+          </div>
+        </div>
       </div>
     );
   }
@@ -75,36 +156,45 @@ export default function IndiaMap() {
           height={1100}
           style={{ width: "100%", height: "auto" }}
         >
-          <Geographies geography={geoData}>
-            {({ geographies }) =>
-              geographies.map((geo) => {
-                const stateName = geo.properties.st_nm;
-                const isActive  = ACTIVE_STATES.has(stateName);
-                const isHovered = hoveredState === stateName;
+          <Geographies geography={cleanedGeoData}>
+            {({ geographies }) => {
+              if (!geographies || !Array.isArray(geographies)) return null;
+              
+              return geographies.map((geo, idx) => {
+                try {
+                  if (!geo || !geo.properties) return null;
+                  
+                  const stateName = geo.properties.st_nm || `State-${idx}`;
+                  const isActive = ACTIVE_STATES.has(stateName);
+                  const isHovered = hoveredState === stateName;
 
-                return (
-                  <Geography
-                    key={geo.rsmKey}
-                    geography={geo}
-                    onMouseEnter={() => setHoveredState(stateName)}
-                    onMouseLeave={() => setHoveredState(null)}
-                    onClick={() => isActive && navigate(`/find-ngos?state=${encodeURIComponent(stateName)}`)}
-                    style={{
-                      default: { outline: "none", cursor: isActive ? "pointer" : "default" },
-                      hover:   { outline: "none", cursor: isActive ? "pointer" : "default" },
-                      pressed: { outline: "none" },
-                    }}
-                    fill={
-                      isHovered
-                        ? (isActive ? "#2E7D32" : "#9E9E9E")
-                        : (isActive ? "#4CAF50" : "#C8C8C8")
-                    }
-                    stroke="#FFFFFF"
-                    strokeWidth={0.9}
-                  />
-                );
-              })
-            }
+                  return (
+                    <Geography
+                      key={`${stateName}-${idx}`}
+                      geography={geo}
+                      onMouseEnter={() => setHoveredState(stateName)}
+                      onMouseLeave={() => setHoveredState(null)}
+                      onClick={() => isActive && navigate(`/find-ngos?state=${encodeURIComponent(stateName)}`)}
+                      style={{
+                        default: { outline: "none", cursor: isActive ? "pointer" : "default" },
+                        hover:   { outline: "none", cursor: isActive ? "pointer" : "default" },
+                        pressed: { outline: "none" },
+                      }}
+                      fill={
+                        isHovered
+                          ? (isActive ? "#2E7D32" : "#9E9E9E")
+                          : (isActive ? "#4CAF50" : "#C8C8C8")
+                      }
+                      stroke="#FFFFFF"
+                      strokeWidth={0.9}
+                    />
+                  );
+                } catch (err) {
+                  console.warn(`[IndiaMap] Error rendering geo ${idx}:`, err);
+                  return null;
+                }
+              });
+            }}
           </Geographies>
 
           {/* City pin markers */}

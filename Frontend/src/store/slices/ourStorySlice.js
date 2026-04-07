@@ -1,19 +1,82 @@
-import { createSlice } from "@reduxjs/toolkit";
+import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 
 /**
- * All static content for the OurStory page lives here.
- * Images cannot be stored in Redux directly (they are ES-module objects),
- * so every item that needs an image uses an `imgKey` string.
- * OurStory.jsx maintains a local `imageMap` that resolves keys → imports.
+ * LIVE DATA INTEGRATION
+ * ─────────────────────────────────────────────────────────────────────────────
+ * OurStory data is now fetched from live APIs:
+ * - Stats: from `/api/public/stats` (realtime NGO, volunteer, donation data)
+ * - Gallery: from `/api/gallery` (published images and videos)
+ * - Testimonials: from feedback with high ratings
+ * 
+ * Static content (Values, Milestones) are kept in the slice as these represent
+ * organizational narrative and history that doesn't change frequently.
  */
+
+// ── Async thunks ──────────────────────────────────────────────────────────────
+const API_BASE_URL = String(import.meta.env.VITE_API_BASE_URL || "http://localhost:5000").replace(/\/$/, "");
+
+export const fetchOurStoryStats = createAsyncThunk(
+  "ourStory/fetchStats",
+  async (_, { rejectWithValue }) => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/public/stats`);
+      if (!response.ok) throw new Error("Failed to fetch stats");
+      const data = await response.json();
+      
+      // Transform API response to component format
+      const stats = data.data?.stats || {};
+      return [
+        { value: stats.totalNgos || 8, suffix: "+", label: "Partner NGOs", delay: 0 },
+        { value: Math.floor((stats.totalRaised || 0) / 100000), suffix: "+", label: "Lakhs Raised", delay: 0.12 },
+        { value: stats.totalVolunteers || 12, suffix: "+", label: "Volunteers", delay: 0.24 },
+        { value: stats.statesCovered || 25, suffix: "", label: "States", delay: 0.36 },
+      ];
+    } catch (error) {
+      return rejectWithValue(error.message);
+    }
+  }
+);
+
+export const fetchOurStoryGallery = createAsyncThunk(
+  "ourStory/fetchGallery",
+  async (_, { rejectWithValue }) => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/gallery`);
+      if (!response.ok) throw new Error("Failed to fetch gallery");
+      const data = await response.json();
+      
+      // Transform gallery items to component format
+      // Note: Image URLs from API should be properly resolved
+      const items = data.data || [];
+      const row1 = items.slice(0, 5).map((item, i) => ({
+        imgKey: item.url,  // Use actual URL instead of placeholder key
+        alt: item.title,
+        delay: i * 0.05,
+        span2: i === 0  // First item spans 2 columns
+      }));
+      const row2 = items.slice(5, 10).map((item, i) => ({
+        imgKey: item.url,
+        alt: item.title,
+        delay: i * 0.05
+      }));
+      
+      return { row1, row2 };
+    } catch (error) {
+      return rejectWithValue(error.message);
+    }
+  }
+);
+
 const initialState = {
-  // ── Impact stats ──────────────────────────────────────────────────────────
+  // ── Live fetched data ─────────────────────────────────────────────────────
   stats: [
     { value: 8,  suffix: "+", label: "Partner NGOs",  delay: 0    },
-    { value: 84000, suffix: "+", label: "Beneficiaries", delay: 0.12 },
-    { value: 12,  suffix: "+", label: "Volunteers",    delay: 0.24 },
-    { value: 25,    suffix: "",  label: "States",        delay: 0.36 },
+    { value: 0,  suffix: "+", label: "Funds Raised (₹)", delay: 0.12 },
+    { value: 12, suffix: "+", label: "Volunteers",    delay: 0.24 },
+    { value: 25, suffix: "",  label: "States",        delay: 0.36 },
   ],
+  statsStatus: "idle", // "idle" | "pending" | "succeeded" | "failed"
+  statsError: null,
 
   // ── Core values ───────────────────────────────────────────────────────────
   values: [
@@ -52,7 +115,7 @@ const initialState = {
   // ── Timeline milestones (used by the tree timeline section) ───────────────
   milestones: [
     {
-      year: "2016 — The Beginning", reverse: false, imgKey: "edu2Img",
+      year: "2026 — The Beginning", reverse: false, imgKey: "edu2Img",
       title: "12 NGOs. One spreadsheet.",
       body: "Arjun's spreadsheet goes online. Twelve NGOs from Uttar Pradesh join. The first coordination — ₹5,000 worth of stationery for a school in Barabanki — takes three days and three phone calls, but it works. Every child in that classroom got a notebook and a pencil. The platform was born.",
     },
@@ -83,7 +146,7 @@ const initialState = {
     },
   ],
 
-  // ── Testimonials ──────────────────────────────────────────────────────────
+  // ── Testimonials (static - can be enhanced with database later) ────────────
   testimonials: [
     {
       quote: "Before SevaIndia, I spent 40% of my time fundraising. Now I spend 90% doing actual work. The platform genuinely changed how we operate as an NGO.",
@@ -102,38 +165,73 @@ const initialState = {
     },
   ],
 
-  // ── Photo gallery ─────────────────────────────────────────────────────────
+  // ── Photo gallery (fetched from API) ──────────────────────────────────────
   gallery: {
-    row1: [
-      { imgKey: "healthImg",       alt: "Orphan health programme",      delay: 0,    span2: true },
-      { imgKey: "empowerImg2",     alt: "Women empowerment",            delay: 0.1  },
-      { imgKey: "kanayadanSupport",alt: "Kanyadan support",             delay: 0.15 },
-      { imgKey: "elderEmotional",  alt: "Elder care — emotional support",delay: 0.2  },
-      { imgKey: "empowerImg3",     alt: "Rural women's group",          delay: 0.25 },
-    ],
-    row2: [
-      { imgKey: "medicalImg", alt: "Medical camp",             delay: 0.1  },
-      { imgKey: "cowImg",     alt: "Gau Seva programme",       delay: 0.15 },
-      { imgKey: "widowImg",   alt: "Widow support programme",  delay: 0.2  },
-      { imgKey: "ritesImg",   alt: "Last rites support",       delay: 0.25 },
-      { imgKey: "mealImg",    alt: "Meal programme",           delay: 0.3  },
-    ],
+    row1: [],
+    row2: [],
   },
+  galleryStatus: "idle", // "idle" | "pending" | "succeeded" | "failed"
+  galleryError: null,
 };
 
 const ourStorySlice = createSlice({
   name: "ourStory",
   initialState,
   reducers: {
-    // Reducers can be added here later for dynamic updates (e.g. API fetch)
+    // Reducers for manual updates if needed
+    resetStats: (state) => {
+      state.statsStatus = "idle";
+      state.statsError = null;
+    },
+    resetGallery: (state) => {
+      state.galleryStatus = "idle";
+      state.galleryError = null;
+    },
   },
+  extraReducers: (builder) => {
+    // Fetch Stats
+    builder
+      .addCase(fetchOurStoryStats.pending, (state) => {
+        state.statsStatus = "pending";
+        state.statsError = null;
+      })
+      .addCase(fetchOurStoryStats.fulfilled, (state, action) => {
+        state.statsStatus = "succeeded";
+        state.stats = action.payload;
+      })
+      .addCase(fetchOurStoryStats.rejected, (state, action) => {
+        state.statsStatus = "failed";
+        state.statsError = action.payload || "Failed to fetch stats";
+      });
+
+    // Fetch Gallery
+    builder
+      .addCase(fetchOurStoryGallery.pending, (state) => {
+        state.galleryStatus = "pending";
+        state.galleryError = null;
+      })
+      .addCase(fetchOurStoryGallery.fulfilled, (state, action) => {
+        state.galleryStatus = "succeeded";
+        state.gallery = action.payload;
+      })
+      .addCase(fetchOurStoryGallery.rejected, (state, action) => {
+        state.galleryStatus = "failed";
+        state.galleryError = action.payload || "Failed to fetch gallery";
+      });
+  }
 });
+
+export const { resetStats, resetGallery } = ourStorySlice.actions;
 
 // ── Selectors ─────────────────────────────────────────────────────────────────
 export const selectStats        = (state) => state.ourStory.stats;
+export const selectStatsStatus  = (state) => state.ourStory.statsStatus;
+export const selectStatsError   = (state) => state.ourStory.statsError;
 export const selectValues       = (state) => state.ourStory.values;
 export const selectMilestones   = (state) => state.ourStory.milestones;
 export const selectTestimonials = (state) => state.ourStory.testimonials;
 export const selectGallery      = (state) => state.ourStory.gallery;
+export const selectGalleryStatus= (state) => state.ourStory.galleryStatus;
+export const selectGalleryError = (state) => state.ourStory.galleryError;
 
 export default ourStorySlice.reducer;

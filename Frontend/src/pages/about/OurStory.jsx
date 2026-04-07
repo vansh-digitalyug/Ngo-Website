@@ -1,12 +1,16 @@
 import { useEffect, useRef, useState } from "react";
-import { useSelector } from "react-redux";
+import { useSelector, useDispatch } from "react-redux";
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import {
   selectStats,
+  selectStatsStatus,
   selectValues,
   selectTestimonials,
   selectGallery,
+  selectGalleryStatus,
+  fetchOurStoryStats,
+  fetchOurStoryGallery,
 } from "../../store/slices/ourStorySlice";
 gsap.registerPlugin(ScrollTrigger);
 
@@ -493,21 +497,40 @@ function TreeNode({ year, title, body, img, reverse, index }) {
 
 /* ── Main export ─────────────────────────────────────────────────────────────── */
 export default function OurStory() {
-  // ── Redux store data ────────────────────────────────────────────────────
+  // ── Redux dispatch and selectors ────────────────────────────────────────
+  const dispatch = useDispatch();
   const stats        = useSelector(selectStats);
+  const statsStatus  = useSelector(selectStatsStatus);
   const values       = useSelector(selectValues);
   const testimonials = useSelector(selectTestimonials);
   const gallery      = useSelector(selectGallery);
+  const galleryStatus= useSelector(selectGalleryStatus);
+
+  // ── Fetch live data on mount ────────────────────────────────────────────
+  useEffect(() => {
+    dispatch(fetchOurStoryStats());
+    dispatch(fetchOurStoryGallery());
+  }, [dispatch]);
 
   // ── Image key → imported module map ─────────────────────────────────────
-  // Images cannot live in Redux (ES-module objects), so we resolve imgKey
-  // strings here and keep the imports at the top of the file.
+  // For backward compatibility, we keep the imported images for testimonials
+  // and static content, but also support direct URLs from the API.
   const imageMap = {
     heroImg, educationImg, edu1Img, edu2Img,
     empowerImg1, empowerImg2, empowerImg3,
     medicalImg, campImg, kanayadanHero, kanayadanFuture, kanayadanSupport,
     roadImg, elderFoodImg, elderEmotional,
     healthImg, widowImg, mealImg, donateImg, cowImg, ritesImg,
+  };
+
+  // ── Helper to get image src (supports both imgKey and direct URLs) ──────
+  const getImageSrc = (imgKey) => {
+    // If imgKey looks like a URL (starts with http or /uploads), use it directly
+    if (typeof imgKey === "string" && (imgKey.startsWith("http") || imgKey.startsWith("/"))) {
+      return imgKey;
+    }
+    // Otherwise, look it up in the imageMap
+    return imageMap[imgKey] || imgKey;
   };
 
   const trunkRef     = useRef(null);
@@ -549,7 +572,7 @@ export default function OurStory() {
         <div className="relative z-10 max-w-5xl mx-auto px-6 w-full">
           <div className="max-w-2xl" style={{ animation: "fadeUp 0.9s ease both" }}>
             <span className="inline-flex items-center gap-2 bg-gradient-to-r from-green-500/30 to-green-400/20 border border-green-400/60 text-green-200 text-[11px] font-bold px-4 py-2 rounded-full mb-8 tracking-widest uppercase shadow-lg shadow-green-500/10 backdrop-blur-sm">
-              ✨ Founded 2016 · Serving India · 22 States
+              ✨ Founded 2026 · Serving India · 22 States
             </span>
             <h1 className="text-5xl md:text-7xl lg:text-8xl font-black text-white leading-[1.05] mb-6 tracking-tight">
               One spark.<br />
@@ -591,7 +614,7 @@ export default function OurStory() {
                 A problem we couldn't ignore
               </h2>
               <p className="text-slate-600 leading-relaxed mb-6 text-[15px] md:text-lg font-light">
-                In 2016, our founder Arjun Mehta was volunteering at a small orphanage in Lucknow when he realised the NGO was turning away food donations simply because they had no way to announce a surplus. Meanwhile, donors across the city had resources they were willing to give — but no trusted way to find the right NGO.
+                In 2026, our founder Arjun Mehta was volunteering at a small orphanage in Lucknow when he realised the NGO was turning away food donations simply because they had no way to announce a surplus. Meanwhile, donors across the city had resources they were willing to give — but no trusted way to find the right NGO.
               </p>
               <p className="text-slate-600 leading-relaxed mb-6 text-[15px] md:text-lg font-light">
                 He started a spreadsheet. Then a WhatsApp group. Then a simple website. Word spread fast. Within three months, 47 NGOs had signed up. Within a year, the platform had facilitated over ₹18 lakh in donations and connected 3,400 volunteers to causes that needed them.
@@ -618,7 +641,7 @@ export default function OurStory() {
                 <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-green-50 to-green-100 flex items-center justify-center text-3xl shadow-md">🌱</div>
                 <div>
                   <div className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Founded</div>
-                  <div className="text-slate-900 font-black text-lg">2016, Lucknow</div>
+                  <div className="text-slate-900 font-black text-lg">2026, Lucknow</div>
                 </div>
               </div>
               {/* Second small image with border */}
@@ -725,7 +748,7 @@ export default function OurStory() {
             <VineCluster side="right" offsetX={26} topPct="81%" />
 
             {[
-              { year: "2016 — The Beginning",            title: "12 NGOs. One spreadsheet.",       img: edu2Img,      reverse: false,
+              { year: "2026 — The Beginning",            title: "12 NGOs. One spreadsheet.",       img: edu2Img,      reverse: false,
                 body: "Arjun's spreadsheet goes online. Twelve NGOs from Uttar Pradesh join. The first coordination — ₹5,000 worth of stationery for a school in Barabanki — takes three days and three phone calls, but it works. Every child in that classroom got a notebook and a pencil. The platform was born." },
               { year: "2018 — Expanding the mission",    title: "When giving goes beyond money",   img: empowerImg1,  reverse: true,
                 body: "We launch volunteer matching — connecting skilled professionals (doctors, lawyers, teachers, engineers) with NGOs that need their expertise on weekends. Over 800 professionals sign up in the first two months. Women's empowerment groups across UP and Bihar are among the first beneficiaries." },
@@ -830,7 +853,7 @@ export default function OurStory() {
               <div className="rounded-2xl overflow-hidden group"
                 style={span2 ? { height: "100%", minHeight: "320px" } : { aspectRatio: "4/3" }}>
                 <img
-                  src={imageMap[imgKey]}
+                  src={getImageSrc(imgKey)}
                   alt={alt}
                   className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
                   style={span2 ? { minHeight: "320px" } : undefined}
@@ -847,7 +870,7 @@ export default function OurStory() {
             <FadeIn key={imgKey} delay={delay}>
               <div className="rounded-2xl overflow-hidden group" style={{ aspectRatio: "1/1" }}>
                 <img
-                  src={imageMap[imgKey]}
+                  src={getImageSrc(imgKey)}
                   alt={alt}
                   className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
                 />
@@ -882,7 +905,7 @@ export default function OurStory() {
               <FadeIn key={name} delay={delay}>
                 <div className="bg-gradient-to-br from-slate-800/60 to-slate-800/40 backdrop-blur-md rounded-2xl overflow-hidden border border-slate-700/50 flex flex-col h-full hover:shadow-2xl hover:border-green-400/30 transition-all duration-300 group">
                   <div className="h-40 overflow-hidden relative">
-                    <img src={imageMap[imgKey]} alt={name} className="w-full h-full object-cover opacity-70 group-hover:opacity-100 group-hover:scale-105 transition-all duration-500" />
+                    <img src={getImageSrc(imgKey)} alt={name} className="w-full h-full object-cover opacity-70 group-hover:opacity-100 group-hover:scale-105 transition-all duration-500" />
                     <div className="absolute inset-0 bg-gradient-to-t from-slate-900 to-transparent" />
                   </div>
                   <div className="p-7 flex flex-col flex-1">
