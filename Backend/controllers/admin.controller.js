@@ -354,6 +354,20 @@ export const getAllUsers = asyncHandler(async (req, res) => {
             }
         });
 });
+
+export const deleteUser = asyncHandler(async (req, res) => {
+    const { id } = req.params;
+    const user = await User.findById(id);
+    if (!user) {
+        return res.status(404).json({ success: false, message: "User not found" });
+    }
+    if (user.role === "admin") {
+        return res.status(403).json({ success: false, message: "Cannot delete an admin account" });
+    }
+    await User.findByIdAndDelete(id);
+    return res.status(200).json({ success: true, message: "User deleted successfully" });
+});
+
 // ─── Fund Request Management ───
 
 // Admin: View all NGO fund requests with filters and pagination
@@ -528,7 +542,7 @@ export const getDonationsByNgo = asyncHandler(async (req, res) => {
                 as: "ngo"
             }
         },
-        { $unwind: { path: "$ngo", preserveNullAndEmpty: true } },
+        { $unwind: { path: "$ngo", preserveNullAndEmptyArrays: true } },
         {
             $project: {
                 ngoId: "$_id",
