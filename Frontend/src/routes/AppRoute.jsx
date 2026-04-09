@@ -15,6 +15,8 @@ const AddNGO                  = lazy(() => import("../pages/addNgo.jsx"));
 const Login                   = lazy(() => import("../pages/login.jsx"));
 const Contact                 = lazy(() => import("../pages/contact.jsx"));
 const EventsPage              = lazy(() => import("../pages/events.jsx"));
+const UpcomingEventsPage      = lazy(() => import("../pages/events/UpcomingEvents.jsx"));
+const PastEventsPage          = lazy(() => import("../pages/events/PastEvents.jsx"));
 const BlogPage                = lazy(() => import("../pages/blog.jsx"));
 const ResetPassword           = lazy(() => import("../pages/resetPassword.jsx"));
 const Profile                 = lazy(() => import("../pages/profile.jsx"));
@@ -63,7 +65,7 @@ const NgoLayout               = lazy(() => import("../pages/ngo/NgoLayout.jsx"))
 const NgoDashboard            = lazy(() => import("../pages/ngo/NgoDashboard.jsx"));
 const NgoProfile              = lazy(() => import("../pages/ngo/NgoProfile.jsx"));
 const NgoGallery              = lazy(() => import("../pages/ngo/NgoGallery.jsx"));
-const NgoVolunteers           = lazy(() => import("../pages/ngo/NgoVolunteers.jsx"));
+
 const NgoPending              = lazy(() => import("../pages/ngo/NgoPending.jsx"));
 const NgoFundRequests         = lazy(() => import("../pages/ngo/NgoFundRequests.jsx"));
 const NgoEvents               = lazy(() => import("../pages/ngo/NgoEvents.jsx"));
@@ -223,6 +225,8 @@ function AppRoutes() {
 
           {/* General */}
           <Route path="/events"           element={<EventsPage />} />
+          <Route path="/events/upcoming"  element={<UpcomingEventsPage />} />
+          <Route path="/events/past"      element={<PastEventsPage />} />
           <Route path="/blog"             element={<BlogPage />} />
           <Route path="/blog/:id"         element={<BlogPage />} />
           <Route path="/community/*"      element={<CommunityRoutes />} />
@@ -302,7 +306,7 @@ function AppRoutes() {
             <Route path="dashboard"   element={<NgoDashboard />} />
             <Route path="profile"     element={<NgoProfile />} />
             <Route path="gallery"     element={<NgoGallery />} />
-            <Route path="volunteers"  element={<NgoVolunteers />} />
+
             <Route path="funds"       element={<NgoFundRequests />} />
             <Route path="events"      element={<NgoEvents />} />
             <Route path="villages"    element={<NgoVillages />} />

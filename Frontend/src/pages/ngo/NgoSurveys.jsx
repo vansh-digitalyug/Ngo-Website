@@ -3,7 +3,7 @@ import { ClipboardList, Plus, Edit2, Trash2, Loader2, X, ChevronDown, Link2, Cop
 import { API_BASE_URL } from "./NgoLayout.jsx";
 
 const STATUS_META = {
-  draft:  { label: "Draft",  bg: "#f1f5f9", color: "#475569", Icon: FileText },
+  draft:  { label: "Draft",  bg: "#F5F0E6", color: "#7C6F5B", Icon: FileText },
   active: { label: "Active", bg: "#dcfce7", color: "#166534", Icon: CheckCircle },
   closed: { label: "Closed", bg: "#fef9c3", color: "#854d0e", Icon: Clock },
 };
@@ -16,7 +16,7 @@ const Q_TYPES = [
   { value: "scale",           label: "Number Scale",     icon: "📊" },
 ];
 
-const CAT_COLORS = { beneficiaries:"#16a34a", health:"#dc2626", education:"#2563eb", employment:"#d97706", infrastructure:"#7c3aed", environment:"#0891b2", other:"#64748b" };
+const CAT_COLORS = { beneficiaries:"#16a34a", health:"#dc2626", education:"#6B5A46", employment:"#d97706", infrastructure:"#7c3aed", environment:"#0891b2", other:"#7C6F5B" };
 
 // ── Mini chart components ─────────────────────────────────────────────────
 
@@ -27,11 +27,11 @@ function BarResult({ data }) {
       {data.map(({ label, count }) => (
         <div key={label}>
           <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "2px" }}>
-            <span style={{ fontSize: "12px", color: "#374151", fontWeight: "500" }}>{label}</span>
-            <span style={{ fontSize: "12px", fontWeight: "700", color: "#0f172a" }}>{count}</span>
+            <span style={{ fontSize: "12px", color: "#4A3F35", fontWeight: "500" }}>{label}</span>
+            <span style={{ fontSize: "12px", fontWeight: "700", color: "#3A3124" }}>{count}</span>
           </div>
-          <div style={{ height: "8px", background: "#f1f5f9", borderRadius: "4px" }}>
-            <div style={{ height: "100%", width: `${(count / max) * 100}%`, background: "#2563eb", borderRadius: "4px", transition: "width 0.6s ease" }} />
+          <div style={{ height: "8px", background: "#F5F0E6", borderRadius: "4px" }}>
+            <div style={{ height: "100%", width: `${(count / max) * 100}%`, background: "#6B5A46", borderRadius: "4px", transition: "width 0.6s ease" }} />
           </div>
         </div>
       ))}
@@ -45,13 +45,13 @@ function RatingResult({ dist, avg, total }) {
     <div>
       <div style={{ display: "flex", alignItems: "baseline", gap: "8px", marginBottom: "10px" }}>
         <span style={{ fontSize: "28px", fontWeight: "900", color: "#d97706" }}>{avg}</span>
-        <span style={{ fontSize: "13px", color: "#64748b" }}>/ 5 avg · {total} responses</span>
+        <span style={{ fontSize: "13px", color: "#7C6F5B" }}>/ 5 avg · {total} responses</span>
       </div>
       <div style={{ display: "flex", gap: "6px", alignItems: "flex-end", height: "50px" }}>
         {dist.map(({ value, count }) => (
           <div key={value} style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: "3px" }}>
             <div style={{ width: "100%", background: "#fef3c7", borderRadius: "3px 3px 0 0", height: `${max > 0 ? (count / max) * 40 : 0}px`, minHeight: "2px" }} />
-            <span style={{ fontSize: "10px", color: "#64748b" }}>{"⭐".repeat(value)}</span>
+            <span style={{ fontSize: "10px", color: "#7C6F5B" }}>{"⭐".repeat(value)}</span>
           </div>
         ))}
       </div>
@@ -89,37 +89,37 @@ function ResultsPanel({ surveyId, onClose }) {
 
   return (
     <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000, padding: "16px" }}>
-      <div style={{ background: "#f8fafc", borderRadius: "18px", width: "100%", maxWidth: "680px", maxHeight: "90vh", overflow: "hidden", display: "flex", flexDirection: "column" }}>
-        <div style={{ background: "#fff", padding: "20px 24px", borderBottom: "1px solid #e2e8f0", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+      <div style={{ background: "#F9F6F0", borderRadius: "18px", width: "100%", maxWidth: "680px", maxHeight: "90vh", overflow: "hidden", display: "flex", flexDirection: "column" }}>
+        <div style={{ background: "#fff", padding: "20px 24px", borderBottom: "1px solid #E8E2D9", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
           <div>
-            <h2 style={{ margin: "0 0 2px", fontWeight: "800", fontSize: "18px", color: "#0f172a" }}>Survey Results</h2>
-            {data && <p style={{ margin: 0, fontSize: "13px", color: "#64748b" }}>{data.totalResponses} responses</p>}
+            <h2 style={{ margin: "0 0 2px", fontWeight: "800", fontSize: "18px", color: "#3A3124" }}>Survey Results</h2>
+            {data && <p style={{ margin: 0, fontSize: "13px", color: "#7C6F5B" }}>{data.totalResponses} responses</p>}
           </div>
-          <button onClick={onClose} style={{ background: "none", border: "none", cursor: "pointer", color: "#64748b" }}><X size={20} /></button>
+          <button onClick={onClose} style={{ background: "none", border: "none", cursor: "pointer", color: "#7C6F5B" }}><X size={20} /></button>
         </div>
         <div style={{ overflowY: "auto", padding: "20px 24px", display: "flex", flexDirection: "column", gap: "16px" }}>
           {loading ? (
-            <div style={{ display: "flex", justifyContent: "center", padding: "40px", gap: "10px", color: "#64748b" }}>
+            <div style={{ display: "flex", justifyContent: "center", padding: "40px", gap: "10px", color: "#7C6F5B" }}>
               <Loader2 size={20} style={{ animation: "spin 1s linear infinite" }} /> Loading results…
             </div>
           ) : !data ? (
-            <p style={{ color: "#94a3b8", textAlign: "center", padding: "40px" }}>No data available.</p>
+            <p style={{ color: "#A69B8A", textAlign: "center", padding: "40px" }}>No data available.</p>
           ) : data.results.map((r, i) => (
-            <div key={r.questionId} style={{ background: "#fff", borderRadius: "12px", padding: "18px", border: "1px solid #e2e8f0" }}>
-              <p style={{ margin: "0 0 14px", fontWeight: "700", fontSize: "14px", color: "#0f172a" }}>
+            <div key={r.questionId} style={{ background: "#fff", borderRadius: "12px", padding: "18px", border: "1px solid #E8E2D9" }}>
+              <p style={{ margin: "0 0 14px", fontWeight: "700", fontSize: "14px", color: "#3A3124" }}>
                 Q{i + 1}. {r.question}
-                <span style={{ marginLeft: "8px", fontSize: "11px", fontWeight: "500", color: "#94a3b8" }}>({r.count} answered)</span>
+                <span style={{ marginLeft: "8px", fontSize: "11px", fontWeight: "500", color: "#A69B8A" }}>({r.count} answered)</span>
               </p>
               {r.aggregated.type === "bar"    && <BarResult data={r.aggregated.data} />}
               {r.aggregated.type === "rating" && <RatingResult {...r.aggregated} />}
               {r.aggregated.type === "pie"    && <YesNoResult {...r.aggregated} />}
-              {r.aggregated.type === "scale"  && <p style={{ fontSize: "20px", fontWeight: "800", color: "#0f172a" }}>{r.aggregated.avg} <span style={{ fontSize: "13px", fontWeight: "500", color: "#64748b" }}>/ {r.aggregated.max} avg</span></p>}
+              {r.aggregated.type === "scale"  && <p style={{ fontSize: "20px", fontWeight: "800", color: "#3A3124" }}>{r.aggregated.avg} <span style={{ fontSize: "13px", fontWeight: "500", color: "#7C6F5B" }}>/ {r.aggregated.max} avg</span></p>}
               {r.aggregated.type === "text"   && (
                 <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
                   {r.aggregated.answers.length === 0
-                    ? <p style={{ color: "#94a3b8", fontSize: "13px", margin: 0 }}>No responses yet.</p>
+                    ? <p style={{ color: "#A69B8A", fontSize: "13px", margin: 0 }}>No responses yet.</p>
                     : r.aggregated.answers.map((a, j) => (
-                      <div key={j} style={{ background: "#f8fafc", padding: "8px 12px", borderRadius: "7px", fontSize: "13px", color: "#374151", borderLeft: "3px solid #e2e8f0" }}>{a}</div>
+                      <div key={j} style={{ background: "#F9F6F0", padding: "8px 12px", borderRadius: "7px", fontSize: "13px", color: "#4A3F35", borderLeft: "3px solid #E8E2D9" }}>{a}</div>
                     ))
                   }
                 </div>
@@ -135,16 +135,16 @@ function ResultsPanel({ surveyId, onClose }) {
 // ── Question Builder ──────────────────────────────────────────────────────
 
 function QuestionEditor({ q, idx, onChange, onDelete }) {
-  const inp = { padding: "8px 11px", border: "1px solid #e2e8f0", borderRadius: "7px", fontSize: "13px", width: "100%", boxSizing: "border-box", fontFamily: "inherit" };
+  const inp = { padding: "8px 11px", border: "1px solid #E8E2D9", borderRadius: "7px", fontSize: "13px", width: "100%", boxSizing: "border-box", fontFamily: "inherit", background: "#fff" };
 
   const addOption = () => onChange(idx, { ...q, options: [...(q.options || []), ""] });
   const setOption = (oi, val) => onChange(idx, { ...q, options: q.options.map((o, j) => j === oi ? val : o) });
   const removeOption = (oi) => onChange(idx, { ...q, options: q.options.filter((_, j) => j !== oi) });
 
   return (
-    <div style={{ background: "#fff", border: "1px solid #e2e8f0", borderRadius: "12px", padding: "16px" }}>
+    <div style={{ background: "#fff", border: "1px solid #E8E2D9", borderRadius: "12px", padding: "16px" }}>
       <div style={{ display: "flex", gap: "10px", marginBottom: "10px", alignItems: "flex-start" }}>
-        <div style={{ width: "24px", height: "24px", borderRadius: "50%", background: "#eff6ff", color: "#2563eb", fontWeight: "800", fontSize: "12px", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>{idx + 1}</div>
+        <div style={{ width: "24px", height: "24px", borderRadius: "50%", background: "#F5F0E6", color: "#6B5A46", fontWeight: "800", fontSize: "12px", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>{idx + 1}</div>
         <div style={{ flex: 1 }}>
           <input style={inp} value={q.question} onChange={e => onChange(idx, { ...q, question: e.target.value })} placeholder="Enter your question…" />
         </div>
@@ -157,9 +157,9 @@ function QuestionEditor({ q, idx, onChange, onDelete }) {
             style={{ ...inp, width: "auto", appearance: "none", paddingRight: "26px", cursor: "pointer" }}>
             {Q_TYPES.map(t => <option key={t.value} value={t.value}>{t.icon} {t.label}</option>)}
           </select>
-          <ChevronDown size={12} style={{ position: "absolute", right: "8px", top: "50%", transform: "translateY(-50%)", pointerEvents: "none", color: "#9ca3af" }} />
+          <ChevronDown size={12} style={{ position: "absolute", right: "8px", top: "50%", transform: "translateY(-50%)", pointerEvents: "none", color: "#A69B8A" }} />
         </div>
-        <label style={{ display: "flex", alignItems: "center", gap: "5px", fontSize: "12px", fontWeight: "600", color: "#374151", cursor: "pointer" }}>
+        <label style={{ display: "flex", alignItems: "center", gap: "5px", fontSize: "12px", fontWeight: "600", color: "#4A3F35", cursor: "pointer" }}>
           <input type="checkbox" checked={q.required} onChange={e => onChange(idx, { ...q, required: e.target.checked })} />
           Required
         </label>
@@ -173,17 +173,17 @@ function QuestionEditor({ q, idx, onChange, onDelete }) {
               <button onClick={() => removeOption(oi)} style={{ background: "none", border: "none", cursor: "pointer", color: "#dc2626", padding: "0 4px" }}><X size={13} /></button>
             </div>
           ))}
-          <button onClick={addOption} style={{ fontSize: "12px", color: "#2563eb", background: "none", border: "1px dashed #bfdbfe", borderRadius: "6px", padding: "5px 12px", cursor: "pointer", marginTop: "2px" }}>+ Add option</button>
+          <button onClick={addOption} style={{ fontSize: "12px", color: "#6B5A46", background: "none", border: "1px dashed #D4C9BA", borderRadius: "6px", padding: "5px 12px", cursor: "pointer", marginTop: "2px" }}>+ Add option</button>
         </div>
       )}
       {q.type === "scale" && (
         <div style={{ display: "flex", gap: "10px", marginLeft: "34px" }}>
           <div>
-            <label style={{ fontSize: "11px", color: "#64748b" }}>Min</label>
+            <label style={{ fontSize: "11px", color: "#7C6F5B" }}>Min</label>
             <input type="number" style={{ ...inp, width: "70px" }} value={q.scaleMin || 1} onChange={e => onChange(idx, { ...q, scaleMin: Number(e.target.value) })} />
           </div>
           <div>
-            <label style={{ fontSize: "11px", color: "#64748b" }}>Max</label>
+            <label style={{ fontSize: "11px", color: "#7C6F5B" }}>Max</label>
             <input type="number" style={{ ...inp, width: "70px" }} value={q.scaleMax || 10} onChange={e => onChange(idx, { ...q, scaleMax: Number(e.target.value) })} />
           </div>
         </div>
@@ -211,22 +211,16 @@ function CoverImg({ imgKey, height = "auto" }) {
       .finally(() => setLoading(false));
   }, [imgKey]);
 
-  // Handle responsive sizing
   useEffect(() => {
     const handleResize = () => setWindowWidth(window.innerWidth);
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  // Responsive height logic
   let responsiveHeight = 280;
-  if (windowWidth <= 480) {
-    responsiveHeight = 180;
-  } else if (windowWidth <= 768) {
-    responsiveHeight = 220;
-  } else if (windowWidth <= 1024) {
-    responsiveHeight = 250;
-  }
+  if (windowWidth <= 480) responsiveHeight = 180;
+  else if (windowWidth <= 768) responsiveHeight = 220;
+  else if (windowWidth <= 1024) responsiveHeight = 250;
 
   const heightValue = height === "auto" ? `${responsiveHeight}px` : `${height}px`;
 
@@ -235,19 +229,17 @@ function CoverImg({ imgKey, height = "auto" }) {
       width: "100%", 
       height: heightValue, 
       position: "relative", 
-      background: "#e2e8f0",
+      background: "#E8E2D9",
       transition: "height 0.3s ease"
     }}>
-      {/* shimmer */}
       {loading && !url && (
         <div style={{
           position: "absolute", inset: 0,
-          background: "linear-gradient(90deg,#e2e8f0 0%,#f1f5f9 50%,#e2e8f0 100%)",
+          background: "linear-gradient(90deg,#E8E2D9 0%,#F5F0E6 50%,#E8E2D9 100%)",
           backgroundSize: "400% 100%",
           animation: "coverShimmer 1.4s ease infinite",
         }} />
       )}
-      {/* background-image approach — maintains aspect ratio, shows full image */}
       {url && (
         <div style={{
           position: "absolute",
@@ -256,7 +248,7 @@ function CoverImg({ imgKey, height = "auto" }) {
           backgroundSize: "contain",
           backgroundPosition: "center",
           backgroundRepeat: "no-repeat",
-          backgroundColor: "#f8fafc"
+          backgroundColor: "#F9F6F0"
         }} />
       )}
     </div>
@@ -276,6 +268,7 @@ function SurveyModal({ survey, villages, onClose, onSaved }) {
     questions: survey.questions || [],
     coverImageKey: survey.coverImageKey || "",
   } : { title: "", description: "", status: "draft", targetAudience: "", startDate: "", endDate: "", villageId: "", isPublic: true, questions: [], coverImageKey: "" });
+  
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [coverUploading, setCoverUploading] = useState(false);
@@ -321,37 +314,37 @@ function SurveyModal({ survey, villages, onClose, onSaved }) {
       .finally(() => setSaving(false));
   };
 
-  const inp = { padding: "9px 12px", border: "1px solid #e2e8f0", borderRadius: "8px", fontSize: "14px", width: "100%", boxSizing: "border-box", fontFamily: "inherit" };
+  const inp = { padding: "9px 12px", border: "1px solid #E8E2D9", borderRadius: "8px", fontSize: "14px", width: "100%", boxSizing: "border-box", fontFamily: "inherit", background: "#fff" };
 
   return (
     <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", display: "flex", alignItems: "flex-start", justifyContent: "center", zIndex: 1000, padding: "20px", overflowY: "auto" }}>
-      <div style={{ background: "#f8fafc", borderRadius: "18px", width: "100%", maxWidth: "680px", marginBottom: "20px" }}>
+      <div style={{ background: "#F9F6F0", borderRadius: "18px", width: "100%", maxWidth: "680px", marginBottom: "20px" }}>
         {/* Header */}
-        <div style={{ background: "#fff", borderRadius: "18px 18px 0 0", padding: "20px 24px", borderBottom: "1px solid #e2e8f0", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-          <h2 style={{ margin: 0, fontWeight: "800", fontSize: "18px", color: "#0f172a" }}>{survey ? "Edit Survey" : "Build a Survey"}</h2>
-          <button onClick={onClose} style={{ background: "none", border: "none", cursor: "pointer", color: "#64748b" }}><X size={20} /></button>
+        <div style={{ background: "#fff", borderRadius: "18px 18px 0 0", padding: "20px 24px", borderBottom: "1px solid #E8E2D9", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <h2 style={{ margin: 0, fontWeight: "800", fontSize: "18px", color: "#3A3124" }}>{survey ? "Edit Survey" : "Build a Survey"}</h2>
+          <button onClick={onClose} style={{ background: "none", border: "none", cursor: "pointer", color: "#7C6F5B" }}><X size={20} /></button>
         </div>
 
         <div style={{ padding: "20px 24px", display: "flex", flexDirection: "column", gap: "20px" }}>
           {error && <div style={{ background: "#fef2f2", border: "1px solid #fecaca", color: "#dc2626", padding: "10px 14px", borderRadius: "8px", fontSize: "13px" }}>{error}</div>}
 
           {/* Basic info */}
-          <div style={{ background: "#fff", borderRadius: "12px", border: "1px solid #e2e8f0", overflow: "hidden" }}>
+          <div style={{ background: "#fff", borderRadius: "12px", border: "1px solid #E8E2D9", overflow: "hidden" }}>
             {/* Cover image area */}
-            <div style={{ position: "relative", background: "#f1f5f9", minHeight: "140px", display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <div style={{ position: "relative", background: "#F5F0E6", minHeight: "140px", display: "flex", alignItems: "center", justifyContent: "center" }}>
               {coverPreview ? (
                 <img src={coverPreview} alt="Cover preview" style={{ width: "100%", height: "160px", objectFit: "cover", display: "block" }} />
               ) : form.coverImageKey ? (
                 <CoverImg imgKey={form.coverImageKey} height={160} />
               ) : (
-                <div style={{ textAlign: "center", color: "#94a3b8", padding: "24px" }}>
+                <div style={{ textAlign: "center", color: "#A69B8A", padding: "24px" }}>
                   <ImageIcon size={32} style={{ marginBottom: "8px", opacity: 0.5 }} />
                   <p style={{ margin: 0, fontSize: "13px" }}>No cover image</p>
                 </div>
               )}
               <div style={{ position: "absolute", bottom: "10px", right: "10px", display: "flex", gap: "6px" }}>
                 <button type="button" onClick={() => coverInputRef.current?.click()} disabled={coverUploading}
-                  style={{ display: "flex", alignItems: "center", gap: "5px", padding: "7px 12px", borderRadius: "8px", border: "none", background: "rgba(255,255,255,0.92)", fontWeight: "700", fontSize: "12px", cursor: coverUploading ? "not-allowed" : "pointer", boxShadow: "0 2px 8px rgba(0,0,0,0.15)", color: "#374151" }}>
+                  style={{ display: "flex", alignItems: "center", gap: "5px", padding: "7px 12px", borderRadius: "8px", border: "none", background: "rgba(255,255,255,0.92)", fontWeight: "700", fontSize: "12px", cursor: coverUploading ? "not-allowed" : "pointer", boxShadow: "0 2px 8px rgba(0,0,0,0.15)", color: "#4A3F35" }}>
                   {coverUploading ? <><Loader2 size={12} style={{ animation: "spin 1s linear infinite" }} /> Uploading…</> : <><ImageIcon size={12} /> {form.coverImageKey || coverPreview ? "Change Cover" : "Add Cover"}</>}
                 </button>
                 {(form.coverImageKey || coverPreview) && (
@@ -365,43 +358,43 @@ function SurveyModal({ survey, villages, onClose, onSaved }) {
             </div>
 
             <div style={{ padding: "18px", display: "flex", flexDirection: "column", gap: "12px" }}>
-            <h3 style={{ margin: 0, fontWeight: "700", fontSize: "14px", color: "#0f172a" }}>Survey Details</h3>
-            <input style={inp} value={form.title} onChange={e => set("title", e.target.value)} placeholder="Survey title *" />
-            <textarea rows={2} style={{ ...inp, resize: "vertical" }} value={form.description} onChange={e => set("description", e.target.value)} placeholder="Brief description of this survey's purpose…" />
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px" }}>
-              <div style={{ position: "relative" }}>
-                <select value={form.status} onChange={e => set("status", e.target.value)} style={{ ...inp, appearance: "none", paddingRight: "26px", cursor: "pointer" }}>
-                  <option value="draft">Draft</option>
-                  <option value="active">Active (accepting responses)</option>
-                  <option value="closed">Closed</option>
-                </select>
-                <ChevronDown size={13} style={{ position: "absolute", right: "10px", top: "50%", transform: "translateY(-50%)", pointerEvents: "none", color: "#9ca3af" }} />
+              <h3 style={{ margin: 0, fontWeight: "700", fontSize: "14px", color: "#3A3124" }}>Survey Details</h3>
+              <input style={inp} value={form.title} onChange={e => set("title", e.target.value)} placeholder="Survey title *" />
+              <textarea rows={2} style={{ ...inp, resize: "vertical" }} value={form.description} onChange={e => set("description", e.target.value)} placeholder="Brief description of this survey's purpose…" />
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px" }}>
+                <div style={{ position: "relative" }}>
+                  <select value={form.status} onChange={e => set("status", e.target.value)} style={{ ...inp, appearance: "none", paddingRight: "26px", cursor: "pointer" }}>
+                    <option value="draft">Draft</option>
+                    <option value="active">Active (accepting responses)</option>
+                    <option value="closed">Closed</option>
+                  </select>
+                  <ChevronDown size={13} style={{ position: "absolute", right: "10px", top: "50%", transform: "translateY(-50%)", pointerEvents: "none", color: "#A69B8A" }} />
+                </div>
+                <div style={{ position: "relative" }}>
+                  <select value={form.villageId} onChange={e => set("villageId", e.target.value)} style={{ ...inp, appearance: "none", paddingRight: "26px", cursor: "pointer" }}>
+                    <option value="">No village</option>
+                    {villages.map(v => <option key={v._id} value={v._id}>{v.villageName}</option>)}
+                  </select>
+                  <ChevronDown size={13} style={{ position: "absolute", right: "10px", top: "50%", transform: "translateY(-50%)", pointerEvents: "none", color: "#A69B8A" }} />
+                </div>
+                <input style={inp} type="date" value={form.startDate} onChange={e => set("startDate", e.target.value)} placeholder="Start date" />
+                <input style={inp} type="date" value={form.endDate} onChange={e => set("endDate", e.target.value)} placeholder="End date" />
               </div>
-              <div style={{ position: "relative" }}>
-                <select value={form.villageId} onChange={e => set("villageId", e.target.value)} style={{ ...inp, appearance: "none", paddingRight: "26px", cursor: "pointer" }}>
-                  <option value="">No village</option>
-                  {villages.map(v => <option key={v._id} value={v._id}>{v.villageName}</option>)}
-                </select>
-                <ChevronDown size={13} style={{ position: "absolute", right: "10px", top: "50%", transform: "translateY(-50%)", pointerEvents: "none", color: "#9ca3af" }} />
-              </div>
-              <input style={inp} type="date" value={form.startDate} onChange={e => set("startDate", e.target.value)} placeholder="Start date" />
-              <input style={inp} type="date" value={form.endDate} onChange={e => set("endDate", e.target.value)} placeholder="End date" />
-            </div>
-            <input style={inp} value={form.targetAudience} onChange={e => set("targetAudience", e.target.value)} placeholder="Target audience (e.g. Village women, Farmers)" />
+              <input style={inp} value={form.targetAudience} onChange={e => set("targetAudience", e.target.value)} placeholder="Target audience (e.g. Village women, Farmers)" />
             </div>
           </div>
 
           {/* Questions */}
           <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-              <h3 style={{ margin: 0, fontWeight: "700", fontSize: "14px", color: "#0f172a" }}>Questions ({form.questions.length})</h3>
+              <h3 style={{ margin: 0, fontWeight: "700", fontSize: "14px", color: "#3A3124" }}>Questions ({form.questions.length})</h3>
               <button onClick={addQuestion}
-                style={{ display: "flex", alignItems: "center", gap: "5px", padding: "7px 14px", borderRadius: "8px", border: "1px dashed #2563eb", background: "#eff6ff", color: "#2563eb", fontWeight: "600", fontSize: "12px", cursor: "pointer" }}>
+                style={{ display: "flex", alignItems: "center", gap: "5px", padding: "7px 14px", borderRadius: "8px", border: "1px dashed #6B5A46", background: "#F5F0E6", color: "#6B5A46", fontWeight: "600", fontSize: "12px", cursor: "pointer" }}>
                 <Plus size={13} /> Add Question
               </button>
             </div>
             {form.questions.length === 0 && (
-              <div style={{ textAlign: "center", padding: "30px", background: "#fff", borderRadius: "12px", border: "1px dashed #e2e8f0", color: "#94a3b8", fontSize: "13px" }}>
+              <div style={{ textAlign: "center", padding: "30px", background: "#fff", borderRadius: "12px", border: "1px dashed #E8E2D9", color: "#A69B8A", fontSize: "13px" }}>
                 Click "Add Question" to start building your survey.
               </div>
             )}
@@ -412,9 +405,9 @@ function SurveyModal({ survey, villages, onClose, onSaved }) {
 
           {/* Actions */}
           <div style={{ display: "flex", gap: "10px", justifyContent: "flex-end" }}>
-            <button onClick={onClose} style={{ padding: "10px 20px", borderRadius: "8px", border: "1px solid #e2e8f0", background: "#fff", fontWeight: "600", cursor: "pointer" }}>Cancel</button>
+            <button onClick={onClose} style={{ padding: "10px 20px", borderRadius: "8px", border: "1px solid #E8E2D9", background: "#fff", fontWeight: "600", cursor: "pointer", color: "#4A3F35" }}>Cancel</button>
             <button onClick={save} disabled={saving}
-              style={{ padding: "10px 24px", borderRadius: "8px", border: "none", background: "#2563eb", color: "#fff", fontWeight: "700", cursor: saving ? "not-allowed" : "pointer", opacity: saving ? 0.7 : 1 }}>
+              style={{ padding: "10px 24px", borderRadius: "8px", border: "none", background: "#6B5A46", color: "#fff", fontWeight: "700", cursor: saving ? "not-allowed" : "pointer", opacity: saving ? 0.7 : 1 }}>
               {saving ? "Saving…" : survey ? "Save Changes" : "Create Survey"}
             </button>
           </div>
@@ -466,30 +459,30 @@ export default function NgoSurveys() {
     <div style={{ padding: "24px 20px", fontFamily: "system-ui, -apple-system, sans-serif", maxWidth: "1400px", margin: "0 auto" }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "28px", flexWrap: "wrap", gap: "12px" }}>
         <div>
-          <h1 style={{ margin: "0 0 2px", fontWeight: "800", fontSize: "28px", color: "#0f172a" }}>Surveys</h1>
-          <p style={{ margin: 0, color: "#64748b", fontSize: "14px" }}>Collect community feedback with shareable surveys</p>
+          <h1 style={{ margin: "0 0 2px", fontWeight: "800", fontSize: "28px", color: "#3A3124" }}>Surveys</h1>
+          <p style={{ margin: 0, color: "#7C6F5B", fontSize: "14px" }}>Collect community feedback with shareable surveys</p>
         </div>
         <button onClick={() => setModal("create")}
-          style={{ display: "flex", alignItems: "center", gap: "7px", padding: "10px 20px", borderRadius: "10px", border: "none", background: "#2563eb", color: "#fff", fontWeight: "700", fontSize: "14px", cursor: "pointer", boxShadow: "0 2px 8px rgba(37, 99, 235, 0.3)", transition: "all 0.2s ease" }}
-          onMouseEnter={(e) => e.target.style.boxShadow = "0 4px 12px rgba(37, 99, 235, 0.4)"}
-          onMouseLeave={(e) => e.target.style.boxShadow = "0 2px 8px rgba(37, 99, 235, 0.3)"}>
+          style={{ display: "flex", alignItems: "center", gap: "7px", padding: "10px 20px", borderRadius: "10px", border: "none", background: "#6B5A46", color: "#fff", fontWeight: "700", fontSize: "14px", cursor: "pointer", boxShadow: "0 2px 8px rgba(107, 90, 70, 0.3)", transition: "all 0.2s ease" }}
+          onMouseEnter={(e) => e.target.style.boxShadow = "0 4px 12px rgba(107, 90, 70, 0.4)"}
+          onMouseLeave={(e) => e.target.style.boxShadow = "0 2px 8px rgba(107, 90, 70, 0.3)"}>
           <Plus size={16} /> Build Survey
         </button>
       </div>
 
       {loading ? (
-        <div style={{ display: "flex", justifyContent: "center", padding: "80px", gap: "10px", color: "#64748b" }}>
+        <div style={{ display: "flex", justifyContent: "center", padding: "80px", gap: "10px", color: "#7C6F5B" }}>
           <Loader2 size={22} style={{ animation: "spin 1s linear infinite" }} /> Loading…
         </div>
       ) : surveys.length === 0 ? (
-        <div style={{ textAlign: "center", padding: "60px 20px", background: "#fff", borderRadius: "14px", border: "1px dashed #e2e8f0", maxWidth: "500px", margin: "0 auto" }}>
-          <ClipboardList size={48} style={{ color: "#cbd5e1", marginBottom: "14px" }} />
-          <h3 style={{ margin: "0 0 8px", fontWeight: "700", color: "#0f172a", fontSize: "16px" }}>No surveys yet</h3>
-          <p style={{ color: "#64748b", margin: "0 0 22px", fontSize: "13px" }}>Build surveys to collect feedback from communities you serve.</p>
+        <div style={{ textAlign: "center", padding: "60px 20px", background: "#fff", borderRadius: "14px", border: "1px dashed #E8E2D9", maxWidth: "500px", margin: "0 auto" }}>
+          <ClipboardList size={48} style={{ color: "#D4C9BA", marginBottom: "14px" }} />
+          <h3 style={{ margin: "0 0 8px", fontWeight: "700", color: "#3A3124", fontSize: "16px" }}>No surveys yet</h3>
+          <p style={{ color: "#7C6F5B", margin: "0 0 22px", fontSize: "13px" }}>Build surveys to collect feedback from communities you serve.</p>
           <button onClick={() => setModal("create")}
-            style={{ padding: "10px 24px", borderRadius: "10px", border: "none", background: "#2563eb", color: "#fff", fontWeight: "700", cursor: "pointer", fontSize: "14px", boxShadow: "0 2px 8px rgba(37, 99, 235, 0.3)", transition: "all 0.2s ease" }}
-            onMouseEnter={(e) => e.target.style.boxShadow = "0 4px 12px rgba(37, 99, 235, 0.4)"}
-            onMouseLeave={(e) => e.target.style.boxShadow = "0 2px 8px rgba(37, 99, 235, 0.3)"}>
+            style={{ padding: "10px 24px", borderRadius: "10px", border: "none", background: "#6B5A46", color: "#fff", fontWeight: "700", cursor: "pointer", fontSize: "14px", boxShadow: "0 2px 8px rgba(107, 90, 70, 0.3)", transition: "all 0.2s ease" }}
+            onMouseEnter={(e) => e.target.style.boxShadow = "0 4px 12px rgba(107, 90, 70, 0.4)"}
+            onMouseLeave={(e) => e.target.style.boxShadow = "0 2px 8px rgba(107, 90, 70, 0.3)"}>
             Create First Survey
           </button>
         </div>
@@ -500,7 +493,7 @@ export default function NgoSurveys() {
             return (
               <div key={sv._id} style={{ 
                 background: "#fff", 
-                border: "1px solid #e2e8f0", 
+                border: "1px solid #E8E2D9", 
                 borderRadius: "12px", 
                 overflow: "hidden", 
                 boxShadow: "0 1px 3px rgba(0,0,0,0.05)", 
@@ -523,7 +516,7 @@ export default function NgoSurveys() {
                 <div style={{ padding: "12px 14px", display: "flex", flexDirection: "column", gap: "8px", flex: 1 }}>
                   {/* Title and Status */}
                   <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: "8px" }}>
-                    <h3 style={{ margin: 0, fontWeight: "800", fontSize: "14px", color: "#0f172a", lineHeight: "1.3", flex: 1, wordBreak: "break-word" }}>{sv.title}</h3>
+                    <h3 style={{ margin: 0, fontWeight: "800", fontSize: "14px", color: "#3A3124", lineHeight: "1.3", flex: 1, wordBreak: "break-word" }}>{sv.title}</h3>
                     <span style={{ background: sm.bg, color: sm.color, padding: "2px 6px", borderRadius: "4px", fontSize: "9px", fontWeight: "700", display: "flex", alignItems: "center", gap: "1px", whiteSpace: "nowrap", flexShrink: 0 }}>
                       <sm.Icon size={8} /> {sm.label}
                     </span>
@@ -534,7 +527,7 @@ export default function NgoSurveys() {
                     <p style={{ 
                       margin: 0, 
                       fontSize: "11px", 
-                      color: "#64748b", 
+                      color: "#7C6F5B", 
                       lineHeight: "1.4",
                       display: "-webkit-box",
                       WebkitLineClamp: 2,
@@ -546,21 +539,21 @@ export default function NgoSurveys() {
                   )}
 
                   {/* Divider */}
-                  <div style={{ height: "1px", background: "#f1f5f9", margin: "4px 0" }} />
+                  <div style={{ height: "1px", background: "#F9F6F0", margin: "4px 0" }} />
 
                   {/* Stats in compact row */}
-                  <div style={{ display: "flex", gap: "8px", alignItems: "center", fontSize: "10px", color: "#64748b" }}>
+                  <div style={{ display: "flex", gap: "8px", alignItems: "center", fontSize: "10px", color: "#7C6F5B" }}>
                     <span style={{ display: "flex", alignItems: "center", gap: "1px" }}>
                       <ClipboardList size={9} /> {sv.questions?.length || 0}
                     </span>
-                    <span style={{ width: "1px", height: "12px", background: "#e2e8f0" }} />
+                    <span style={{ width: "1px", height: "12px", background: "#E8E2D9" }} />
                     <span style={{ display: "flex", alignItems: "center", gap: "1px" }}>
                       <Users size={9} /> {sv.responseCount || 0}
                     </span>
                     {sv.villageId && (
                       <>
-                        <span style={{ width: "1px", height: "12px", background: "#e2e8f0" }} />
-                        <span style={{ color: "#6366f1", fontWeight: "600", fontSize: "9px" }}>
+                        <span style={{ width: "1px", height: "12px", background: "#E8E2D9" }} />
+                        <span style={{ color: "#6B5A46", fontWeight: "600", fontSize: "9px" }}>
                           📍 {sv.villageId.villageName?.substring(0, 12)}
                         </span>
                       </>
@@ -579,12 +572,12 @@ export default function NgoSurveys() {
                         gap: "2px", 
                         padding: "5px 8px", 
                         borderRadius: "5px", 
-                        border: "1px solid #e2e8f0", 
-                        background: copied === sv.shareToken ? "#dcfce7" : "#f8fafc", 
+                        border: "1px solid #E8E2D9", 
+                        background: copied === sv.shareToken ? "#dcfce7" : "#F9F6F0", 
                         fontSize: "10px", 
                         fontWeight: "600", 
                         cursor: "pointer", 
-                        color: copied === sv.shareToken ? "#166534" : "#374151", 
+                        color: copied === sv.shareToken ? "#166534" : "#4A3F35", 
                         transition: "all 0.2s ease"
                       }}>
                       {copied === sv.shareToken ? <CheckCircle size={10} /> : <Copy size={10} />}
@@ -598,9 +591,9 @@ export default function NgoSurveys() {
                         gap: "2px", 
                         padding: "5px 8px", 
                         borderRadius: "5px", 
-                        border: "1px solid #dcfce7", 
-                        background: "#f0fdf4", 
-                        color: "#166534", 
+                        border: "1px solid #D4C9BA", 
+                        background: "#F5F0E6", 
+                        color: "#6B5A46", 
                         fontSize: "10px", 
                         fontWeight: "600", 
                         cursor: "pointer", 
@@ -618,9 +611,9 @@ export default function NgoSurveys() {
                         gap: "2px", 
                         padding: "5px 8px", 
                         borderRadius: "5px", 
-                        border: "1px solid #bfdbfe", 
-                        background: "#eff6ff", 
-                        color: "#2563eb", 
+                        border: "1px solid #E8E2D9", 
+                        background: "#fff", 
+                        color: "#4A3F35", 
                         fontSize: "10px", 
                         fontWeight: "600", 
                         cursor: "pointer", 

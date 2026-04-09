@@ -55,6 +55,36 @@ export const getEventById = asyncHandler(async (req, res) => {
     res.status(200).json(new ApiResponse(200, "Event retrieved successfully", serialized));
 });
 
+// GET /api/events/past/all — get all published past events with photos (public)
+export const getPastEvents = asyncHandler(async (_req, res) => {
+    const events = await Event.find({
+        isPublished: true,
+        status: { $in: ["past", "completed"] }, // Support both new "past" and legacy "completed" statuses
+    })
+        .sort({ date: -1 })
+        .populate("createdBy", "name email")
+        .populate("ngoId", "ngoName");
+    
+    const serialized = await serializeEvents(events);
+    
+    // Fetch photos for each event
+    const eventsWithPhotos = await Promise.all(serialized.map(async (event) => {
+        const photos = await EventPhoto.find({ eventId: event._id })
+            .sort({ createdAt: -1 })
+            .populate("uploadedBy", "name");
+        
+        const photosWithUrls = await Promise.all(photos.map(async (p) => {
+            const obj = p.toObject ? p.toObject() : { ...p };
+            obj.imageUrl = await buildImageUrl(obj.S3Imagekey);
+            return obj;
+        }));
+        
+        return { ...event, photos: photosWithUrls };
+    }));
+    
+    res.status(200).json(new ApiResponse(200, "Past events retrieved successfully", eventsWithPhotos));
+});
+
 // ─────────────────────────────────────────────────────────────────────────────
 // AUTHENTICATED (admin / ngo / volunteer)
 // ─────────────────────────────────────────────────────────────────────────────
@@ -112,6 +142,11 @@ export const updateEvent = asyncHandler(async (req, res) => {
 
     if (Object.keys(updates).length === 0) {
         throw new ApiError(400, "No valid fields provided to update");
+    }
+
+    // Auto-publish events when status is changed to "past", "ongoing", or "completed"
+    if (updates.status && ["past", "ongoing", "completed"].includes(updates.status)) {
+        updates.isPublished = true;
     }
 
     const updated = await Event.findByIdAndUpdate(req.params.id, updates, { new: true });
@@ -207,9 +242,9 @@ export const addEventPhotos = asyncHandler(async (req, res) => {
 
     const saved = await EventPhoto.insertMany(docs);
 
-    // Auto-mark event as completed when photos are uploaded for a past event
-    if (event.status !== "completed") {
-        await Event.findByIdAndUpdate(event._id, { status: "completed" });
+    // Auto-mark event as past when photos are uploaded for a past event
+    if (event.status !== "past") {
+        await Event.findByIdAndUpdate(event._id, { status: "past" });
     }
 
     res.status(201).json(new ApiResponse(201, `${saved.length} photo(s) uploaded successfully`, saved));

@@ -15,10 +15,29 @@ const INTEREST_AREAS = [
   "Field Work", "Content / Social Media"
 ];
 
+const PROFESSION_OPTIONS = [
+  'Doctor',
+  'Nurse / Healthcare Worker',
+  'Teacher / Educator',
+  'Engineer',
+  'Lawyer / Legal Professional',
+  'Social Worker',
+  'Student',
+  'Business Owner / Entrepreneur',
+  'IT Professional',
+  'Accountant / CA',
+  'Farmer',
+  'Government Employee',
+  'NGO Worker',
+  'Retired',
+  'Homemaker',
+  'Other'
+];
+
 const INITIAL_FORM_DATA = {
   fullName: "", email: "", phone: "", dob: "", gender: "", city: "", state: "",
   interests: [], mode: "", availability: "", duration: "",
-  education: "", occupation: "", skills: "", experience: "",
+  profession: "", education: "", occupation: "", skills: "", experience: "",
   idType: "", idNumber: "", emergencyName: "", emergencyPhone: "", bgCheck: false,
   motivation: "", declaration: false
 };
@@ -691,6 +710,7 @@ function Volunteer() {
     if (!formData.city.trim()) newErrors.city = "City is required";
     if (!formData.state) newErrors.state = "State is required";
     if (formData.interests.length === 0) newErrors.interests = "Select at least one area of interest";
+    if (!formData.profession) newErrors.profession = "Profession is required";
     if (!formData.motivation.trim()) newErrors.motivation = "Please tell us why you want to join";
     if (!formData.idType) newErrors.idType = "ID Type is required";
     if (!formData.idNumber.trim()) {
@@ -728,6 +748,7 @@ function Volunteer() {
       interests: formData.interests,
       mode: formData.mode || "On-site",
       availability: formData.availability || "Flexible",
+      profession: formData.profession,
       occupation: formData.occupation.trim(),
       education: formData.education || "",
       skills: formData.skills.trim(),
@@ -1152,8 +1173,12 @@ function Volunteer() {
                 <h3 style={styles.sectionHeader}>3. Skills & Experience</h3>
                 <div style={styles.row}>
                   <div style={styles.inputGroup}>
-                    <label style={styles.label}>Current Occupation</label>
-                    <input style={styles.input} name="occupation" value={formData.occupation} onChange={handleChange} placeholder="e.g. Student, Engineer" />
+                    <label style={styles.label}>Profession *</label>
+                    <select style={{...styles.select, borderColor: errors.profession ? 'red' : '#ddd'}} name="profession" value={formData.profession} onChange={handleChange}>
+                      <option value="">Select Profession</option>
+                      {PROFESSION_OPTIONS.map((prof) => <option key={prof} value={prof}>{prof}</option>)}
+                    </select>
+                    {errors.profession && <span style={styles.errorMsg}>{errors.profession}</span>}
                   </div>
                   <div style={styles.inputGroup}>
                     <label style={styles.label}>Highest Education</label>
@@ -1164,6 +1189,12 @@ function Volunteer() {
                       <option value="Postgraduate">Postgraduate</option>
                       <option value="Other">Other</option>
                     </select>
+                  </div>
+                </div>
+                <div style={styles.row}>
+                  <div style={styles.inputGroup}>
+                    <label style={styles.label}>Current Occupation</label>
+                    <input style={styles.input} name="occupation" value={formData.occupation} onChange={handleChange} placeholder="e.g. Senior Doctor at AIIMS" />
                   </div>
                 </div>
                 <div style={styles.inputGroup}>

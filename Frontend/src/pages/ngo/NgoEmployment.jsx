@@ -10,28 +10,35 @@ const CAT_LABELS = {
   skill_training: "Skill Training", job_placement: "Job Placement",
   self_employment: "Self Employment", apprenticeship: "Apprenticeship", other: "Other",
 };
+
 const CAT_COLORS = {
-  skill_training: "#0891b2", job_placement: "#16a34a",
-  self_employment: "#d97706", apprenticeship: "#7c3aed", other: "#64748b",
+  skill_training: "bg-cyan-50 text-cyan-700",
+  job_placement: "bg-green-50 text-green-700",
+  self_employment: "bg-amber-50 text-amber-700",
+  apprenticeship: "bg-purple-50 text-purple-700",
+  other: "bg-slate-50 text-slate-700",
 };
+
 const STATUS_META = {
-  open:      { label: "Open",      bg: "#dcfce7", color: "#166534", Icon: CheckCircle },
-  closed:    { label: "Closed",    bg: "#fef9c3", color: "#854d0e", Icon: Clock },
-  completed: { label: "Completed", bg: "#dbeafe", color: "#1e40af", Icon: XCircle },
+  open: { label: "Open", bg: "bg-green-100", color: "text-green-800", Icon: CheckCircle },
+  closed: { label: "Closed", bg: "bg-yellow-100", color: "text-yellow-800", Icon: Clock },
+  completed: { label: "Completed", bg: "bg-blue-100", color: "text-blue-800", Icon: XCircle },
 };
+
 const APP_STATUS_META = {
-  pending:   { label: "Pending",   bg: "#fef9c3", color: "#854d0e" },
-  reviewing: { label: "Reviewing", bg: "#ede9fe", color: "#5b21b6" },
-  accepted:  { label: "Accepted",  bg: "#dcfce7", color: "#166534" },
-  rejected:  { label: "Rejected",  bg: "#fee2e2", color: "#991b1b" },
+  pending: { label: "Pending", bg: "bg-yellow-100", color: "text-yellow-800", border: "border-yellow-200" },
+  reviewing: { label: "Reviewing", bg: "bg-purple-100", color: "text-purple-800", border: "border-purple-200" },
+  accepted: { label: "Accepted", bg: "bg-green-100", color: "text-green-800", border: "border-green-200" },
+  rejected: { label: "Rejected", bg: "bg-red-100", color: "text-red-800", border: "border-red-200" },
 };
+
 const EDU_LABELS = {
   below_10th: "Below 10th", "10th": "10th Pass", "12th": "12th Pass",
   graduate: "Graduate", postgraduate: "Post Graduate", other: "Other",
 };
 
 const fmtDate = (d) => d ? new Date(d).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" }) : "—";
-const fmtINR  = (n) => n > 0 ? new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 0 }).format(n) + "/mo" : "Unpaid";
+const fmtINR = (n) => n > 0 ? new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 0 }).format(n) + "/mo" : "Unpaid";
 
 const EMPTY = {
   title: "", category: "skill_training", description: "", skills: "", location: "",
@@ -51,6 +58,7 @@ function JobModal({ job, villages, onClose, onSaved }) {
     villageId: job.villageId?._id || job.villageId || "",
     isPublic: job.isPublic !== false,
   } : { ...EMPTY });
+  
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const token = localStorage.getItem("token");
@@ -73,97 +81,142 @@ function JobModal({ job, villages, onClose, onSaved }) {
       .finally(() => setSaving(false));
   };
 
-  const inp = { padding: "9px 12px", border: "1px solid #e2e8f0", borderRadius: "8px", fontSize: "14px", width: "100%", boxSizing: "border-box", fontFamily: "inherit" };
-  const sel = { ...inp, appearance: "none", cursor: "pointer" };
-
   return (
-    <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.55)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000, padding: "16px" }}>
-      <div style={{ background: "#fff", borderRadius: "18px", padding: "28px", width: "100%", maxWidth: "580px", maxHeight: "90vh", overflowY: "auto" }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px" }}>
-          <h2 style={{ margin: 0, fontWeight: "800", fontSize: "18px", color: "#0f172a" }}>{job ? "Edit Listing" : "New Employment Listing"}</h2>
-          <button onClick={onClose} style={{ background: "none", border: "none", cursor: "pointer", color: "#64748b" }}><X size={20} /></button>
+    <div className="fixed inset-0 z-[1000] flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
+      <div className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-2xl bg-white p-6 shadow-2xl md:p-8">
+        <div className="mb-6 flex items-center justify-between">
+          <h2 className="text-xl font-bold text-gray-900">{job ? "Edit Listing" : "New Employment Listing"}</h2>
+          <button onClick={onClose} className="rounded-full p-2 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-700">
+            <X size={20} />
+          </button>
         </div>
-        {error && <div style={{ background: "#fef2f2", border: "1px solid #fecaca", color: "#dc2626", padding: "10px 14px", borderRadius: "8px", marginBottom: "14px", fontSize: "13px" }}>{error}</div>}
+        
+        {error && (
+          <div className="mb-6 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+            {error}
+          </div>
+        )}
 
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "14px" }}>
-          <div style={{ gridColumn: "1/-1" }}>
-            <label style={{ fontSize: "12px", fontWeight: "600", color: "#374151", display: "block", marginBottom: "5px" }}>Program Title *</label>
-            <input style={inp} value={form.title} onChange={e => set("title", e.target.value)} placeholder="e.g. Mobile Repair Skill Training" />
+        <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+          <div className="md:col-span-2">
+            <label className="mb-1.5 block text-xs font-semibold text-gray-600">Program Title *</label>
+            <input 
+              className="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm transition-colors focus:border-[#6B5A46] focus:outline-none focus:ring-1 focus:ring-[#6B5A46]" 
+              value={form.title} onChange={e => set("title", e.target.value)} placeholder="e.g. Mobile Repair Skill Training" 
+            />
           </div>
           <div>
-            <label style={{ fontSize: "12px", fontWeight: "600", color: "#374151", display: "block", marginBottom: "5px" }}>Category</label>
-            <div style={{ position: "relative" }}>
-              <select style={sel} value={form.category} onChange={e => set("category", e.target.value)}>
+            <label className="mb-1.5 block text-xs font-semibold text-gray-600">Category</label>
+            <div className="relative">
+              <select className="w-full appearance-none rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm transition-colors focus:border-[#6B5A46] focus:outline-none focus:ring-1 focus:ring-[#6B5A46]" value={form.category} onChange={e => set("category", e.target.value)}>
                 {Object.entries(CAT_LABELS).map(([v, l]) => <option key={v} value={v}>{l}</option>)}
               </select>
-              <ChevronDown size={13} style={{ position: "absolute", right: "10px", top: "50%", transform: "translateY(-50%)", pointerEvents: "none", color: "#9ca3af" }} />
+              <ChevronDown size={16} className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-gray-400" />
             </div>
           </div>
           <div>
-            <label style={{ fontSize: "12px", fontWeight: "600", color: "#374151", display: "block", marginBottom: "5px" }}>Status</label>
-            <div style={{ position: "relative" }}>
-              <select style={sel} value={form.status} onChange={e => set("status", e.target.value)}>
+            <label className="mb-1.5 block text-xs font-semibold text-gray-600">Status</label>
+            <div className="relative">
+              <select className="w-full appearance-none rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm transition-colors focus:border-[#6B5A46] focus:outline-none focus:ring-1 focus:ring-[#6B5A46]" value={form.status} onChange={e => set("status", e.target.value)}>
                 <option value="open">Open</option>
                 <option value="closed">Closed</option>
                 <option value="completed">Completed</option>
               </select>
-              <ChevronDown size={13} style={{ position: "absolute", right: "10px", top: "50%", transform: "translateY(-50%)", pointerEvents: "none", color: "#9ca3af" }} />
+              <ChevronDown size={16} className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-gray-400" />
             </div>
           </div>
-          <div style={{ gridColumn: "1/-1" }}>
-            <label style={{ fontSize: "12px", fontWeight: "600", color: "#374151", display: "block", marginBottom: "5px" }}>Description</label>
-            <textarea rows={3} style={{ ...inp, resize: "vertical" }} value={form.description} onChange={e => set("description", e.target.value)} placeholder="Describe the program, eligibility, and expected outcomes…" />
+          <div className="md:col-span-2">
+            <label className="mb-1.5 block text-xs font-semibold text-gray-600">Description</label>
+            <textarea 
+              rows={3} 
+              className="w-full resize-y rounded-lg border border-gray-300 px-4 py-2.5 text-sm transition-colors focus:border-[#6B5A46] focus:outline-none focus:ring-1 focus:ring-[#6B5A46]" 
+              value={form.description} onChange={e => set("description", e.target.value)} placeholder="Describe the program, eligibility, and expected outcomes…" 
+            />
           </div>
-          <div style={{ gridColumn: "1/-1" }}>
-            <label style={{ fontSize: "12px", fontWeight: "600", color: "#374151", display: "block", marginBottom: "5px" }}>Skills (comma-separated)</label>
-            <input style={inp} value={form.skills} onChange={e => set("skills", e.target.value)} placeholder="e.g. Mobile repair, soldering, customer service" />
+          <div className="md:col-span-2">
+            <label className="mb-1.5 block text-xs font-semibold text-gray-600">Skills (comma-separated)</label>
+            <input 
+              className="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm transition-colors focus:border-[#6B5A46] focus:outline-none focus:ring-1 focus:ring-[#6B5A46]" 
+              value={form.skills} onChange={e => set("skills", e.target.value)} placeholder="e.g. Mobile repair, soldering, customer service" 
+            />
           </div>
           <div>
-            <label style={{ fontSize: "12px", fontWeight: "600", color: "#374151", display: "block", marginBottom: "5px" }}>Location</label>
-            <input style={inp} value={form.location} onChange={e => set("location", e.target.value)} placeholder="e.g. Rampur Village Center" />
+            <label className="mb-1.5 block text-xs font-semibold text-gray-600">Location</label>
+            <input 
+              className="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm transition-colors focus:border-[#6B5A46] focus:outline-none focus:ring-1 focus:ring-[#6B5A46]" 
+              value={form.location} onChange={e => set("location", e.target.value)} placeholder="e.g. Rampur Village Center" 
+            />
           </div>
           <div>
-            <label style={{ fontSize: "12px", fontWeight: "600", color: "#374151", display: "block", marginBottom: "5px" }}>Linked Village</label>
-            <div style={{ position: "relative" }}>
-              <select style={sel} value={form.villageId} onChange={e => set("villageId", e.target.value)}>
+            <label className="mb-1.5 block text-xs font-semibold text-gray-600">Linked Village</label>
+            <div className="relative">
+              <select className="w-full appearance-none rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm transition-colors focus:border-[#6B5A46] focus:outline-none focus:ring-1 focus:ring-[#6B5A46]" value={form.villageId} onChange={e => set("villageId", e.target.value)}>
                 <option value="">None</option>
                 {villages.map(v => <option key={v._id} value={v._id}>{v.villageName}, {v.district}</option>)}
               </select>
-              <ChevronDown size={13} style={{ position: "absolute", right: "10px", top: "50%", transform: "translateY(-50%)", pointerEvents: "none", color: "#9ca3af" }} />
+              <ChevronDown size={16} className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-gray-400" />
             </div>
           </div>
           <div>
-            <label style={{ fontSize: "12px", fontWeight: "600", color: "#374151", display: "block", marginBottom: "5px" }}>Openings</label>
-            <input type="number" min={0} style={inp} value={form.openings} onChange={e => set("openings", e.target.value)} />
+            <label className="mb-1.5 block text-xs font-semibold text-gray-600">Openings</label>
+            <input 
+              type="number" min={0} 
+              className="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm transition-colors focus:border-[#6B5A46] focus:outline-none focus:ring-1 focus:ring-[#6B5A46]" 
+              value={form.openings} onChange={e => set("openings", e.target.value)} 
+            />
           </div>
           <div>
-            <label style={{ fontSize: "12px", fontWeight: "600", color: "#374151", display: "block", marginBottom: "5px" }}>Filled</label>
-            <input type="number" min={0} style={inp} value={form.filled} onChange={e => set("filled", e.target.value)} />
+            <label className="mb-1.5 block text-xs font-semibold text-gray-600">Filled</label>
+            <input 
+              type="number" min={0} 
+              className="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm transition-colors focus:border-[#6B5A46] focus:outline-none focus:ring-1 focus:ring-[#6B5A46]" 
+              value={form.filled} onChange={e => set("filled", e.target.value)} 
+            />
           </div>
           <div>
-            <label style={{ fontSize: "12px", fontWeight: "600", color: "#374151", display: "block", marginBottom: "5px" }}>Stipend/Month (₹, 0 = unpaid)</label>
-            <input type="number" min={0} style={inp} value={form.stipend} onChange={e => set("stipend", e.target.value)} />
+            <label className="mb-1.5 block text-xs font-semibold text-gray-600">Stipend/Month (₹, 0 = unpaid)</label>
+            <input 
+              type="number" min={0} 
+              className="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm transition-colors focus:border-[#6B5A46] focus:outline-none focus:ring-1 focus:ring-[#6B5A46]" 
+              value={form.stipend} onChange={e => set("stipend", e.target.value)} 
+            />
           </div>
           <div>
-            <label style={{ fontSize: "12px", fontWeight: "600", color: "#374151", display: "block", marginBottom: "5px" }}>Start Date</label>
-            <input type="date" style={inp} value={form.startDate} onChange={e => set("startDate", e.target.value)} />
+            <label className="mb-1.5 block text-xs font-semibold text-gray-600">Start Date</label>
+            <input 
+              type="date" 
+              className="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm transition-colors focus:border-[#6B5A46] focus:outline-none focus:ring-1 focus:ring-[#6B5A46]" 
+              value={form.startDate} onChange={e => set("startDate", e.target.value)} 
+            />
           </div>
           <div>
-            <label style={{ fontSize: "12px", fontWeight: "600", color: "#374151", display: "block", marginBottom: "5px" }}>End Date</label>
-            <input type="date" style={inp} value={form.endDate} onChange={e => set("endDate", e.target.value)} />
+            <label className="mb-1.5 block text-xs font-semibold text-gray-600">End Date</label>
+            <input 
+              type="date" 
+              className="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm transition-colors focus:border-[#6B5A46] focus:outline-none focus:ring-1 focus:ring-[#6B5A46]" 
+              value={form.endDate} onChange={e => set("endDate", e.target.value)} 
+            />
           </div>
-          <div style={{ gridColumn: "1/-1" }}>
-            <label style={{ display: "flex", alignItems: "center", gap: "8px", cursor: "pointer", fontSize: "13px", fontWeight: "600", color: "#374151" }}>
-              <input type="checkbox" checked={form.isPublic} onChange={e => set("isPublic", e.target.checked)} style={{ width: "16px", height: "16px" }} />
+          <div className="md:col-span-2">
+            <label className="flex cursor-pointer items-center gap-3 text-sm font-semibold text-gray-700">
+              <input 
+                type="checkbox" 
+                className="h-4 w-4 rounded border-gray-300 text-[#6B5A46] focus:ring-[#6B5A46]" 
+                checked={form.isPublic} onChange={e => set("isPublic", e.target.checked)} 
+              />
               Show on public employment listings
             </label>
           </div>
         </div>
 
-        <div style={{ display: "flex", gap: "10px", justifyContent: "flex-end", marginTop: "22px" }}>
-          <button onClick={onClose} style={{ padding: "10px 20px", borderRadius: "8px", border: "1px solid #e2e8f0", background: "#fff", fontWeight: "600", cursor: "pointer" }}>Cancel</button>
-          <button onClick={save} disabled={saving}
-            style={{ padding: "10px 24px", borderRadius: "8px", border: "none", background: "#2563eb", color: "#fff", fontWeight: "700", cursor: saving ? "not-allowed" : "pointer", opacity: saving ? 0.7 : 1 }}>
+        <div className="mt-8 flex items-center justify-end gap-3 border-t border-gray-100 pt-5">
+          <button onClick={onClose} className="rounded-lg border border-gray-300 bg-white px-5 py-2.5 text-sm font-semibold text-gray-700 transition-colors hover:bg-gray-50">
+            Cancel
+          </button>
+          <button 
+            onClick={save} disabled={saving}
+            className={`rounded-lg bg-[#6B5A46] px-6 py-2.5 text-sm font-bold text-white transition-colors hover:bg-[#5D4E3C] ${saving ? "cursor-not-allowed opacity-70" : ""}`}
+          >
             {saving ? "Saving…" : job ? "Save Changes" : "Create Listing"}
           </button>
         </div>
@@ -197,73 +250,86 @@ function AppDetailModal({ app, onClose, onUpdated }) {
   };
 
   const sm = APP_STATUS_META[status] || APP_STATUS_META.pending;
-  const inp = { padding: "9px 12px", border: "1px solid #e2e8f0", borderRadius: "8px", fontSize: "14px", width: "100%", boxSizing: "border-box", fontFamily: "inherit" };
 
   return (
-    <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.55)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000, padding: "16px" }}>
-      <div style={{ background: "#fff", borderRadius: "18px", width: "100%", maxWidth: "520px", maxHeight: "90vh", overflowY: "auto" }}>
+    <div className="fixed inset-0 z-[1000] flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
+      <div className="max-h-[90vh] w-full max-w-lg overflow-hidden rounded-2xl bg-white shadow-2xl flex flex-col">
         {/* Header */}
-        <div style={{ background: "#0f172a", borderRadius: "18px 18px 0 0", padding: "20px 24px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <div className="flex items-center justify-between bg-gray-900 px-6 py-5">
           <div>
-            <div style={{ color: "#94a3b8", fontSize: "11px", fontWeight: "600", marginBottom: "2px" }}>APPLICATION</div>
-            <div style={{ color: "#fff", fontWeight: "800", fontSize: "16px" }}>{app.name}</div>
+            <div className="mb-1 text-xs font-bold tracking-wider text-gray-400">APPLICATION</div>
+            <div className="text-lg font-bold text-white">{app.name}</div>
           </div>
-          <button onClick={onClose} style={{ background: "rgba(255,255,255,0.1)", border: "none", color: "#fff", borderRadius: "8px", padding: "6px 8px", cursor: "pointer" }}><X size={16} /></button>
+          <button onClick={onClose} className="rounded-lg bg-white/10 p-2 text-white transition-colors hover:bg-white/20">
+            <X size={18} />
+          </button>
         </div>
 
-        <div style={{ padding: "24px" }}>
+        <div className="overflow-y-auto p-6">
           {/* Applicant info */}
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px", marginBottom: "20px" }}>
+          <div className="mb-6 grid grid-cols-2 gap-3">
             {[
               ["Email", app.email],
               ["Phone", app.phone || "—"],
               ["Age", app.age || "—"],
               ["Education", EDU_LABELS[app.education] || app.education || "—"],
             ].map(([label, value]) => (
-              <div key={label} style={{ background: "#f8fafc", borderRadius: "8px", padding: "10px 14px" }}>
-                <div style={{ fontSize: "11px", color: "#94a3b8", fontWeight: "600", marginBottom: "2px" }}>{label}</div>
-                <div style={{ fontSize: "13px", color: "#0f172a", fontWeight: "600" }}>{value}</div>
+              <div key={label} className="rounded-xl bg-gray-50 p-3">
+                <div className="mb-1 text-xs font-semibold text-gray-500">{label}</div>
+                <div className="text-sm font-semibold text-gray-900">{value}</div>
               </div>
             ))}
           </div>
 
           {app.experience && (
-            <div style={{ marginBottom: "14px" }}>
-              <div style={{ fontSize: "12px", fontWeight: "700", color: "#374151", marginBottom: "5px" }}>Experience</div>
-              <p style={{ margin: 0, fontSize: "13px", color: "#475569", background: "#f8fafc", padding: "10px 14px", borderRadius: "8px", lineHeight: 1.6 }}>{app.experience}</p>
+            <div className="mb-4">
+              <div className="mb-1.5 text-xs font-bold text-gray-700">Experience</div>
+              <p className="rounded-xl bg-gray-50 p-3 text-sm leading-relaxed text-gray-600">{app.experience}</p>
             </div>
           )}
 
           {app.message && (
-            <div style={{ marginBottom: "20px" }}>
-              <div style={{ fontSize: "12px", fontWeight: "700", color: "#374151", marginBottom: "5px" }}>Cover Message</div>
-              <p style={{ margin: 0, fontSize: "13px", color: "#475569", background: "#f8fafc", padding: "10px 14px", borderRadius: "8px", lineHeight: 1.6 }}>{app.message}</p>
+            <div className="mb-6">
+              <div className="mb-1.5 text-xs font-bold text-gray-700">Cover Message</div>
+              <p className="rounded-xl bg-gray-50 p-3 text-sm leading-relaxed text-gray-600">{app.message}</p>
             </div>
           )}
 
           {/* Status update */}
-          <div style={{ borderTop: "1px solid #f1f5f9", paddingTop: "16px" }}>
-            <div style={{ fontSize: "12px", fontWeight: "700", color: "#374151", marginBottom: "8px" }}>Update Status</div>
-            <div style={{ display: "flex", gap: "8px", marginBottom: "12px", flexWrap: "wrap" }}>
+          <div className="border-t border-gray-100 pt-5">
+            <div className="mb-3 text-xs font-bold text-gray-700">Update Status</div>
+            <div className="mb-4 flex flex-wrap gap-2">
               {Object.entries(APP_STATUS_META).map(([s, meta]) => (
-                <button key={s} onClick={() => setStatus(s)}
-                  style={{ padding: "6px 14px", borderRadius: "20px", border: "2px solid", cursor: "pointer", fontSize: "12px", fontWeight: "600",
-                    background: status === s ? meta.bg : "#fff",
-                    color: status === s ? meta.color : "#64748b",
-                    borderColor: status === s ? meta.color : "#e2e8f0" }}>
+                <button 
+                  key={s} onClick={() => setStatus(s)}
+                  className={`rounded-full border-2 px-4 py-1.5 text-xs font-bold transition-all ${
+                    status === s 
+                      ? `${meta.bg} ${meta.color} border-transparent shadow-sm` 
+                      : "border-gray-200 bg-white text-gray-500 hover:border-gray-300 hover:bg-gray-50"
+                  }`}
+                >
                   {meta.label}
                 </button>
               ))}
             </div>
             <div>
-              <label style={{ fontSize: "12px", fontWeight: "600", color: "#374151", display: "block", marginBottom: "5px" }}>NGO Note (optional)</label>
-              <textarea rows={2} style={{ ...inp, resize: "vertical" }} value={note} onChange={e => setNote(e.target.value)} placeholder="Add a note for the applicant…" />
+              <label className="mb-1.5 block text-xs font-semibold text-gray-600">NGO Note (optional)</label>
+              <textarea 
+                rows={2} 
+                className="w-full resize-y rounded-lg border border-gray-300 px-4 py-2.5 text-sm transition-colors focus:border-[#6B5A46] focus:outline-none focus:ring-1 focus:ring-[#6B5A46]" 
+                value={note} onChange={e => setNote(e.target.value)} placeholder="Add a note for the applicant…" 
+              />
             </div>
-            {error && <div style={{ color: "#dc2626", fontSize: "13px", marginTop: "8px" }}>{error}</div>}
-            <div style={{ display: "flex", gap: "10px", justifyContent: "flex-end", marginTop: "14px" }}>
-              <button onClick={onClose} style={{ padding: "9px 18px", borderRadius: "8px", border: "1px solid #e2e8f0", background: "#fff", fontWeight: "600", cursor: "pointer" }}>Cancel</button>
-              <button onClick={save} disabled={saving}
-                style={{ padding: "9px 22px", borderRadius: "8px", border: "none", background: sm.color, color: "#fff", fontWeight: "700", cursor: saving ? "not-allowed" : "pointer", opacity: saving ? 0.7 : 1 }}>
+            {error && <div className="mt-2 text-sm text-red-600">{error}</div>}
+            
+            <div className="mt-5 flex items-center justify-end gap-3">
+              <button onClick={onClose} className="rounded-lg border border-gray-300 bg-white px-5 py-2.5 text-sm font-semibold text-gray-700 transition-colors hover:bg-gray-50">
+                Cancel
+              </button>
+              <button 
+                onClick={save} disabled={saving}
+                className={`rounded-lg bg-[#6B5A46] px-6 py-2.5 text-sm font-bold text-white transition-colors hover:bg-[#5D4E3C] ${saving ? "cursor-not-allowed opacity-70" : ""}`}
+              >
                 {saving ? "Saving…" : "Save Status"}
               </button>
             </div>
@@ -277,67 +343,102 @@ function AppDetailModal({ app, onClose, onUpdated }) {
 /* ── Job Card ─────────────────────────────────────────────────────────────── */
 function JobCard({ job, onEdit, onDelete }) {
   const sm = STATUS_META[job.status] || STATUS_META.open;
-  const catColor = CAT_COLORS[job.category] || "#64748b";
+  const catClasses = CAT_COLORS[job.category] || "bg-slate-50 text-slate-700";
   const fillPct = job.openings > 0 ? Math.min(100, Math.round((job.filled / job.openings) * 100)) : 0;
+  
   return (
-    <div style={{ background: "#fff", border: "1px solid #e2e8f0", borderRadius: "14px", padding: "18px" }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "10px" }}>
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <h3 style={{ margin: "0 0 4px", fontWeight: "800", fontSize: "15px", color: "#0f172a", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{job.title}</h3>
-          <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
-            <span style={{ background: `${catColor}18`, color: catColor, padding: "2px 8px", borderRadius: "5px", fontSize: "11px", fontWeight: "600" }}>{CAT_LABELS[job.category]}</span>
-            <span style={{ background: sm.bg, color: sm.color, padding: "2px 8px", borderRadius: "5px", fontSize: "11px", fontWeight: "600", display: "flex", alignItems: "center", gap: "3px" }}>
-              <sm.Icon size={10} /> {sm.label}
+    <div className="flex flex-col rounded-2xl border border-gray-100 bg-white p-5 shadow-sm transition-all hover:shadow-md">
+      <div className="mb-3 flex items-start justify-between gap-4">
+        <div className="min-w-0 flex-1">
+          <h3 className="mb-2 truncate text-base font-bold text-gray-900">{job.title}</h3>
+          <div className="flex flex-wrap gap-2">
+            <span className={`rounded-md px-2.5 py-1 text-xs font-bold ${catClasses}`}>
+              {CAT_LABELS[job.category]}
+            </span>
+            <span className={`flex items-center gap-1 rounded-md px-2.5 py-1 text-xs font-bold ${sm.bg} ${sm.color}`}>
+              <sm.Icon size={12} /> {sm.label}
             </span>
           </div>
         </div>
-        <div style={{ display: "flex", gap: "6px", marginLeft: "10px", flexShrink: 0 }}>
-          <button onClick={() => onEdit(job)} style={{ background: "#eff6ff", border: "none", color: "#2563eb", borderRadius: "6px", padding: "6px 8px", cursor: "pointer" }}><Edit2 size={13} /></button>
-          <button onClick={() => onDelete(job._id)} style={{ background: "#fef2f2", border: "none", color: "#dc2626", borderRadius: "6px", padding: "6px 8px", cursor: "pointer" }}><Trash2 size={13} /></button>
+        <div className="flex shrink-0 gap-2">
+          <button onClick={() => onEdit(job)} className="rounded-lg bg-blue-50 p-2 text-blue-600 transition-colors hover:bg-blue-100">
+            <Edit2 size={14} />
+          </button>
+          <button onClick={() => onDelete(job._id)} className="rounded-lg bg-red-50 p-2 text-red-600 transition-colors hover:bg-red-100">
+            <Trash2 size={14} />
+          </button>
         </div>
       </div>
 
-      {job.description && <p style={{ margin: "0 0 10px", fontSize: "13px", color: "#64748b", lineHeight: 1.5, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{job.description}</p>}
+      {job.description && (
+        <p className="line-clamp-2 mb-4 text-sm leading-relaxed text-gray-500">
+          {job.description}
+        </p>
+      )}
 
-      <div style={{ display: "flex", gap: "14px", flexWrap: "wrap", marginBottom: "12px" }}>
-        {job.location && <span style={{ fontSize: "12px", color: "#64748b", display: "flex", alignItems: "center", gap: "3px" }}><MapPin size={11} />{job.location}</span>}
-        <span style={{ fontSize: "12px", color: "#64748b", display: "flex", alignItems: "center", gap: "3px" }}><Users size={11} />{job.filled}/{job.openings} filled</span>
-        <span style={{ fontSize: "12px", color: "#64748b", display: "flex", alignItems: "center", gap: "3px" }}><IndianRupee size={11} />{fmtINR(job.stipend)}</span>
-        {job.startDate && <span style={{ fontSize: "12px", color: "#94a3b8" }}>{fmtDate(job.startDate)} → {fmtDate(job.endDate)}</span>}
+      <div className="mb-4 flex flex-wrap gap-x-4 gap-y-2">
+        {job.location && (
+          <span className="flex items-center gap-1.5 text-xs font-medium text-gray-500">
+            <MapPin size={12} /> {job.location}
+          </span>
+        )}
+        <span className="flex items-center gap-1.5 text-xs font-medium text-gray-500">
+          <Users size={12} /> {job.filled}/{job.openings} filled
+        </span>
+        <span className="flex items-center gap-1.5 text-xs font-medium text-gray-500">
+          <IndianRupee size={12} /> {fmtINR(job.stipend)}
+        </span>
+        {job.startDate && (
+          <span className="text-xs font-medium text-gray-400">
+            {fmtDate(job.startDate)} → {fmtDate(job.endDate)}
+          </span>
+        )}
       </div>
 
-      {job.openings > 0 && (
-        <div>
-          <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "3px" }}>
-            <span style={{ fontSize: "11px", color: "#64748b" }}>Seats filled</span>
-            <span style={{ fontSize: "11px", fontWeight: "700", color: fillPct >= 100 ? "#16a34a" : "#0f172a" }}>{fillPct}%</span>
+      <div className="mt-auto">
+        {job.openings > 0 && (
+          <div className="mb-4">
+            <div className="mb-1.5 flex justify-between text-xs">
+              <span className="font-medium text-gray-500">Seats filled</span>
+              <span className={`font-bold ${fillPct >= 100 ? "text-green-600" : "text-gray-900"}`}>{fillPct}%</span>
+            </div>
+            <div className="h-1.5 w-full overflow-hidden rounded-full bg-gray-100">
+              <div 
+                className={`h-full rounded-full transition-all duration-500 ${fillPct >= 100 ? "bg-green-500" : "bg-[#6B5A46]"}`} 
+                style={{ width: `${fillPct}%` }} 
+              />
+            </div>
           </div>
-          <div style={{ height: "5px", background: "#f1f5f9", borderRadius: "3px" }}>
-            <div style={{ height: "100%", width: `${fillPct}%`, background: fillPct >= 100 ? "#16a34a" : "#2563eb", borderRadius: "3px" }} />
-          </div>
-        </div>
-      )}
+        )}
 
-      {job.skills?.length > 0 && (
-        <div style={{ display: "flex", gap: "5px", flexWrap: "wrap", marginTop: "10px" }}>
-          {job.skills.slice(0, 5).map(s => (
-            <span key={s} style={{ background: "#f1f5f9", color: "#475569", padding: "2px 8px", borderRadius: "5px", fontSize: "11px" }}>{s}</span>
-          ))}
-        </div>
-      )}
+        {job.skills?.length > 0 && (
+          <div className="flex flex-wrap gap-1.5">
+            {job.skills.slice(0, 4).map(s => (
+              <span key={s} className="rounded-md bg-gray-50 px-2.5 py-1 text-[11px] font-medium text-gray-600 border border-gray-100">
+                {s}
+              </span>
+            ))}
+            {job.skills.length > 4 && (
+              <span className="rounded-md bg-gray-50 px-2.5 py-1 text-[11px] font-medium text-gray-400 border border-gray-100">
+                +{job.skills.length - 4}
+              </span>
+            )}
+          </div>
+        )}
+      </div>
     </div>
   );
 }
 
 /* ── Applications Tab ─────────────────────────────────────────────────────── */
 function ApplicationsTab({ jobs }) {
-  const [apps, setApps]           = useState([]);
-  const [loading, setLoading]     = useState(true);
+  const [apps, setApps] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [statusFilter, setStatus] = useState("all");
-  const [jobFilter, setJob]       = useState("all");
-  const [page, setPage]           = useState(1);
-  const [total, setTotal]         = useState(0);
-  const [selected, setSelected]   = useState(null);
+  const [jobFilter, setJob] = useState("all");
+  const [page, setPage] = useState(1);
+  const [total, setTotal] = useState(0);
+  const [selected, setSelected] = useState(null);
   const token = localStorage.getItem("token");
   const LIMIT = 15;
 
@@ -367,83 +468,94 @@ function ApplicationsTab({ jobs }) {
   const pages = Math.ceil(total / LIMIT);
 
   return (
-    <div>
+    <div className="animate-in fade-in duration-300">
       {/* Filters */}
-      <div style={{ display: "flex", gap: "10px", marginBottom: "20px", flexWrap: "wrap", alignItems: "center" }}>
-        <div style={{ display: "flex", gap: "6px", flexWrap: "wrap" }}>
+      <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex flex-wrap gap-2">
           {["all", "pending", "reviewing", "accepted", "rejected"].map(s => {
             const meta = APP_STATUS_META[s];
+            const isActive = statusFilter === s;
             return (
-              <button key={s} onClick={() => { setStatus(s); setPage(1); }}
-                style={{ padding: "5px 14px", borderRadius: "20px", border: "1px solid", cursor: "pointer", fontSize: "12px", fontWeight: "600",
-                  background: statusFilter === s ? "#0f172a" : "#fff",
-                  color: statusFilter === s ? "#fff" : meta?.color || "#374151",
-                  borderColor: statusFilter === s ? "#0f172a" : "#e2e8f0" }}>
+              <button 
+                key={s} onClick={() => { setStatus(s); setPage(1); }}
+                className={`rounded-full border px-4 py-1.5 text-xs font-bold transition-colors ${
+                  isActive 
+                    ? "border-[#6B5A46] bg-[#6B5A46] text-white" 
+                    : "border-gray-200 bg-white text-gray-600 hover:bg-gray-50"
+                }`}
+              >
                 {meta?.label || "All"}
               </button>
             );
           })}
         </div>
+        
         {jobs.length > 0 && (
-          <div style={{ position: "relative", marginLeft: "auto" }}>
-            <select value={jobFilter} onChange={e => { setJob(e.target.value); setPage(1); }}
-              style={{ padding: "6px 32px 6px 12px", border: "1px solid #e2e8f0", borderRadius: "8px", fontSize: "12px", appearance: "none", cursor: "pointer", fontFamily: "inherit", background: "#fff" }}>
+          <div className="relative w-full sm:w-auto">
+            <select 
+              value={jobFilter} onChange={e => { setJob(e.target.value); setPage(1); }}
+              className="w-full appearance-none rounded-lg border border-gray-200 bg-white py-2 pl-4 pr-10 text-sm font-medium text-gray-700 focus:border-[#6B5A46] focus:outline-none focus:ring-1 focus:ring-[#6B5A46] sm:min-w-[200px]"
+            >
               <option value="all">All Programs</option>
               {jobs.map(j => <option key={j._id} value={j._id}>{j.title}</option>)}
             </select>
-            <ChevronDown size={12} style={{ position: "absolute", right: "10px", top: "50%", transform: "translateY(-50%)", pointerEvents: "none", color: "#9ca3af" }} />
+            <ChevronDown size={16} className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-gray-400" />
           </div>
         )}
       </div>
 
       {loading ? (
-        <div style={{ display: "flex", justifyContent: "center", padding: "60px", gap: "10px", color: "#64748b" }}>
-          <Loader2 size={22} style={{ animation: "spin 1s linear infinite" }} /> Loading…
+        <div className="flex justify-center py-20 text-gray-500">
+          <Loader2 size={24} className="animate-spin text-[#6B5A46]" />
         </div>
       ) : apps.length === 0 ? (
-        <div style={{ textAlign: "center", padding: "60px 20px", background: "#fff", borderRadius: "14px", border: "1px dashed #e2e8f0" }}>
-          <FileText size={40} style={{ color: "#cbd5e1", marginBottom: "12px" }} />
-          <p style={{ color: "#64748b", margin: 0, fontWeight: "600" }}>No applications yet</p>
-          <p style={{ color: "#94a3b8", margin: "4px 0 0", fontSize: "13px" }}>Applications from public listings will appear here.</p>
+        <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-gray-200 bg-white py-20 px-6 text-center">
+          <FileText size={48} className="mb-4 text-gray-300" />
+          <h3 className="mb-1 text-base font-bold text-gray-900">No applications found</h3>
+          <p className="text-sm text-gray-500">Applications from public listings will appear here.</p>
         </div>
       ) : (
         <>
-          <div style={{ background: "#fff", borderRadius: "14px", border: "1px solid #e2e8f0", overflow: "hidden" }}>
-            <table style={{ width: "100%", borderCollapse: "collapse" }}>
+          <div className="overflow-x-auto rounded-2xl border border-gray-100 bg-white shadow-sm">
+            <table className="w-full min-w-[700px] border-collapse text-left">
               <thead>
-                <tr style={{ background: "#f8fafc", borderBottom: "1px solid #e2e8f0" }}>
+                <tr className="border-b border-gray-100 bg-gray-50/50">
                   {["Applicant", "Program", "Education", "Applied On", "Status", ""].map(h => (
-                    <th key={h} style={{ padding: "10px 14px", textAlign: "left", fontSize: "11px", fontWeight: "700", color: "#64748b", textTransform: "uppercase", letterSpacing: "0.05em", whiteSpace: "nowrap" }}>{h}</th>
+                    <th key={h} className="px-5 py-4 text-xs font-bold uppercase tracking-wider text-gray-500 whitespace-nowrap">
+                      {h}
+                    </th>
                   ))}
                 </tr>
               </thead>
-              <tbody>
-                {apps.map((app, i) => {
+              <tbody className="divide-y divide-gray-50">
+                {apps.map((app) => {
                   const sm = APP_STATUS_META[app.status] || APP_STATUS_META.pending;
                   return (
-                    <tr key={app._id} style={{ borderBottom: i < apps.length - 1 ? "1px solid #f1f5f9" : "none", transition: "background 0.15s" }}
-                      onMouseEnter={e => e.currentTarget.style.background = "#f8fafc"}
-                      onMouseLeave={e => e.currentTarget.style.background = "#fff"}>
-                      <td style={{ padding: "12px 14px" }}>
-                        <div style={{ fontWeight: "700", fontSize: "13px", color: "#0f172a" }}>{app.name}</div>
-                        <div style={{ fontSize: "11px", color: "#94a3b8" }}>{app.email}</div>
+                    <tr key={app._id} className="transition-colors hover:bg-gray-50/50">
+                      <td className="px-5 py-4">
+                        <div className="font-bold text-gray-900">{app.name}</div>
+                        <div className="text-xs text-gray-500">{app.email}</div>
                       </td>
-                      <td style={{ padding: "12px 14px", fontSize: "12px", color: "#475569", maxWidth: "180px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                      <td className="max-w-[200px] truncate px-5 py-4 text-sm text-gray-600">
                         {app.employmentId?.title || "—"}
                       </td>
-                      <td style={{ padding: "12px 14px", fontSize: "12px", color: "#64748b" }}>
+                      <td className="px-5 py-4 text-sm text-gray-600">
                         {EDU_LABELS[app.education] || app.education || "—"}
                       </td>
-                      <td style={{ padding: "12px 14px", fontSize: "12px", color: "#94a3b8", whiteSpace: "nowrap" }}>
+                      <td className="whitespace-nowrap px-5 py-4 text-sm text-gray-500">
                         {fmtDate(app.createdAt)}
                       </td>
-                      <td style={{ padding: "12px 14px" }}>
-                        <span style={{ background: sm.bg, color: sm.color, padding: "3px 10px", borderRadius: "20px", fontSize: "11px", fontWeight: "700" }}>{sm.label}</span>
+                      <td className="px-5 py-4">
+                        <span className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-bold ${sm.bg} ${sm.color}`}>
+                          {sm.label}
+                        </span>
                       </td>
-                      <td style={{ padding: "12px 14px" }}>
-                        <button onClick={() => setSelected(app)}
-                          style={{ display: "flex", alignItems: "center", gap: "4px", padding: "5px 12px", borderRadius: "6px", border: "1px solid #e2e8f0", background: "#fff", fontSize: "12px", fontWeight: "600", color: "#374151", cursor: "pointer" }}>
-                          <Eye size={12} /> Review
+                      <td className="px-5 py-4 text-right">
+                        <button 
+                          onClick={() => setSelected(app)}
+                          className="inline-flex items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs font-bold text-gray-700 transition-colors hover:bg-gray-50 hover:text-[#6B5A46]"
+                        >
+                          <Eye size={14} /> Review
                         </button>
                       </td>
                     </tr>
@@ -455,17 +567,23 @@ function ApplicationsTab({ jobs }) {
 
           {/* Pagination */}
           {pages > 1 && (
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: "14px" }}>
-              <span style={{ fontSize: "12px", color: "#64748b" }}>{total} applications total</span>
-              <div style={{ display: "flex", gap: "6px", alignItems: "center" }}>
-                <button disabled={page <= 1} onClick={() => setPage(p => p - 1)}
-                  style={{ padding: "5px 10px", borderRadius: "6px", border: "1px solid #e2e8f0", background: page <= 1 ? "#f8fafc" : "#fff", cursor: page <= 1 ? "default" : "pointer", color: "#374151" }}>
-                  <ChevronLeft size={14} />
+            <div className="mt-6 flex flex-col items-center justify-between gap-4 sm:flex-row">
+              <span className="text-sm font-medium text-gray-500">{total} applications total</span>
+              <div className="flex items-center gap-2">
+                <button 
+                  disabled={page <= 1} onClick={() => setPage(p => p - 1)}
+                  className="rounded-lg border border-gray-200 bg-white p-2 text-gray-600 transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  <ChevronLeft size={16} />
                 </button>
-                <span style={{ fontSize: "12px", color: "#374151", fontWeight: "600" }}>Page {page} of {pages}</span>
-                <button disabled={page >= pages} onClick={() => setPage(p => p + 1)}
-                  style={{ padding: "5px 10px", borderRadius: "6px", border: "1px solid #e2e8f0", background: page >= pages ? "#f8fafc" : "#fff", cursor: page >= pages ? "default" : "pointer", color: "#374151" }}>
-                  <ChevronRight size={14} />
+                <span className="px-4 text-sm font-bold text-gray-700">
+                  Page {page} of {pages}
+                </span>
+                <button 
+                  disabled={page >= pages} onClick={() => setPage(p => p + 1)}
+                  className="rounded-lg border border-gray-200 bg-white p-2 text-gray-600 transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  <ChevronRight size={16} />
                 </button>
               </div>
             </div>
@@ -480,12 +598,12 @@ function ApplicationsTab({ jobs }) {
 
 /* ── Main Component ───────────────────────────────────────────────────────── */
 export default function NgoEmployment() {
-  const [jobs, setJobs]           = useState([]);
-  const [villages, setVillages]   = useState([]);
-  const [loading, setLoading]     = useState(true);
-  const [modal, setModal]         = useState(null);
+  const [jobs, setJobs] = useState([]);
+  const [villages, setVillages] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [modal, setModal] = useState(null);
   const [statusFilter, setStatus] = useState("all");
-  const [activeTab, setTab]       = useState("listings");
+  const [activeTab, setTab] = useState("listings");
   const token = localStorage.getItem("token");
 
   useEffect(() => {
@@ -499,7 +617,7 @@ export default function NgoEmployment() {
       })
       .catch(() => {})
       .finally(() => setLoading(false));
-  }, []);
+  }, [token]);
 
   const onSaved = (job) => setJobs(js => {
     const idx = js.findIndex(j => j._id === job._id);
@@ -508,7 +626,7 @@ export default function NgoEmployment() {
   });
 
   const onDelete = (id) => {
-    if (!confirm("Delete this listing?")) return;
+    if (!window.confirm("Delete this listing?")) return;
     fetch(`${API_BASE_URL}/api/employment/${id}`, { method: "DELETE", headers: { Authorization: `Bearer ${token}` } })
       .then(r => r.json())
       .then(d => { if (d.success) setJobs(js => js.filter(j => j._id !== id)); })
@@ -520,97 +638,107 @@ export default function NgoEmployment() {
   const totalFilled = jobs.reduce((a, j) => a + (j.filled || 0), 0);
 
   return (
-    <div style={{ padding: "28px", fontFamily: "system-ui, -apple-system, sans-serif" }}>
+    <div className="min-h-screen bg-[#FAFAFA] p-4 font-sans sm:p-6 md:p-8">
       {/* Header */}
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "24px", flexWrap: "wrap", gap: "12px" }}>
+      <div className="mb-8 flex flex-col items-start justify-between gap-4 md:flex-row md:items-end">
         <div>
-          <h1 style={{ margin: "0 0 4px", fontWeight: "800", fontSize: "22px", color: "#0f172a" }}>Employment & Rojgar</h1>
-          <p style={{ margin: 0, color: "#64748b", fontSize: "14px" }}>Skill training, job placements, and self-employment programs</p>
+          <h1 className="mb-1 text-2xl font-black tracking-tight text-gray-900 md:text-3xl">Employment & Rojgar</h1>
+          <p className="text-sm font-medium text-gray-500">Manage skill training, job placements, and self-employment programs</p>
         </div>
-        <button onClick={() => setModal("create")}
-          style={{ display: "flex", alignItems: "center", gap: "7px", padding: "10px 20px", borderRadius: "10px", border: "none", background: "#2563eb", color: "#fff", fontWeight: "700", fontSize: "14px", cursor: "pointer" }}>
-          <Plus size={16} /> New Program
+        <button 
+          onClick={() => setModal("create")}
+          className="inline-flex shrink-0 items-center gap-2 rounded-xl bg-[#6B5A46] px-5 py-2.5 text-sm font-bold text-white shadow-sm transition-all hover:bg-[#5D4E3C] hover:shadow"
+        >
+          <Plus size={18} /> New Program
         </button>
       </div>
 
-      {/* Stats */}
+      {/* Stats Cards (Inspired by the "Growth Overview" earthy styling) */}
       {jobs.length > 0 && (
-        <div style={{ display: "flex", gap: "12px", marginBottom: "24px", flexWrap: "wrap" }}>
-          <div style={{ background: "#f0fdf4", border: "1px solid #bbf7d0", borderRadius: "10px", padding: "10px 18px" }}>
-            <span style={{ fontWeight: "800", fontSize: "18px", color: "#166534" }}>{jobs.length}</span>
-            <span style={{ fontSize: "13px", color: "#166534", marginLeft: "6px" }}>Total Programs</span>
+        <div className="mb-8 grid grid-cols-2 gap-4 md:grid-cols-4">
+          <div className="rounded-2xl border border-[#E8DCC8]/60 bg-[#F4EFE6] p-5">
+            <div className="text-2xl font-black text-[#5D4E3C]">{jobs.length}</div>
+            <div className="mt-1 text-xs font-bold uppercase tracking-wider text-[#7A6C5B]">Total Programs</div>
           </div>
-          <div style={{ background: "#eff6ff", border: "1px solid #bfdbfe", borderRadius: "10px", padding: "10px 18px" }}>
-            <span style={{ fontWeight: "800", fontSize: "18px", color: "#1e40af" }}>{totalFilled}</span>
-            <span style={{ fontSize: "13px", color: "#1e40af", marginLeft: "6px" }}>People Placed</span>
+          <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
+            <div className="text-2xl font-black text-gray-900">{totalFilled}</div>
+            <div className="mt-1 text-xs font-bold uppercase tracking-wider text-gray-500">People Placed</div>
           </div>
-          {Object.entries(counts).map(([s, c]) => {
-            const sm = STATUS_META[s];
-            return sm ? (
-              <div key={s} style={{ background: sm.bg, border: `1px solid ${sm.color}30`, borderRadius: "10px", padding: "10px 18px" }}>
-                <span style={{ fontWeight: "800", fontSize: "18px", color: sm.color }}>{c}</span>
-                <span style={{ fontSize: "13px", color: sm.color, marginLeft: "6px" }}>{sm.label}</span>
-              </div>
-            ) : null;
-          })}
+          <div className="rounded-2xl border border-green-100 bg-green-50 p-5">
+            <div className="text-2xl font-black text-green-700">{counts.open || 0}</div>
+            <div className="mt-1 text-xs font-bold uppercase tracking-wider text-green-600">Active / Open</div>
+          </div>
+          <div className="rounded-2xl border border-blue-100 bg-blue-50 p-5">
+            <div className="text-2xl font-black text-blue-700">{counts.completed || 0}</div>
+            <div className="mt-1 text-xs font-bold uppercase tracking-wider text-blue-600">Completed</div>
+          </div>
         </div>
       )}
 
       {/* Tabs */}
-      <div style={{ display: "flex", gap: "4px", marginBottom: "24px", borderBottom: "2px solid #f1f5f9" }}>
+      <div className="mb-8 flex gap-6 border-b border-gray-200">
         {[{ key: "listings", label: "My Listings", Icon: Briefcase }, { key: "applications", label: "Applications", Icon: FileText }].map(({ key, label, Icon }) => (
-          <button key={key} onClick={() => setTab(key)}
-            style={{ display: "flex", alignItems: "center", gap: "6px", padding: "10px 18px", border: "none", background: "none", cursor: "pointer", fontSize: "14px", fontWeight: "700",
-              color: activeTab === key ? "#2563eb" : "#64748b",
-              borderBottom: activeTab === key ? "2px solid #2563eb" : "2px solid transparent",
-              marginBottom: "-2px" }}>
-            <Icon size={15} /> {label}
+          <button 
+            key={key} onClick={() => setTab(key)}
+            className={`flex items-center gap-2 border-b-2 pb-3 text-sm font-bold transition-colors ${
+              activeTab === key 
+                ? "border-[#6B5A46] text-[#6B5A46]" 
+                : "border-transparent text-gray-500 hover:text-gray-800"
+            }`}
+          >
+            <Icon size={16} /> {label}
           </button>
         ))}
       </div>
 
       {/* Tab content */}
       {activeTab === "listings" ? (
-        <>
+        <div className="animate-in fade-in duration-300">
           {/* Status filter */}
-          <div style={{ display: "flex", gap: "8px", marginBottom: "20px", flexWrap: "wrap" }}>
-            {["all", "open", "closed", "completed"].map(s => (
-              <button key={s} onClick={() => setStatus(s)}
-                style={{ padding: "6px 16px", borderRadius: "20px", border: "1px solid", cursor: "pointer", fontSize: "12px", fontWeight: "600",
-                  background: statusFilter === s ? "#0f172a" : "#fff",
-                  color: statusFilter === s ? "#fff" : "#374151",
-                  borderColor: statusFilter === s ? "#0f172a" : "#e2e8f0" }}>
-                {s === "all" ? "All" : STATUS_META[s]?.label || s}
-              </button>
-            ))}
-          </div>
+          {jobs.length > 0 && (
+            <div className="mb-6 flex flex-wrap gap-2">
+              {["all", "open", "closed", "completed"].map(s => (
+                <button 
+                  key={s} onClick={() => setStatus(s)}
+                  className={`rounded-full border px-4 py-1.5 text-xs font-bold transition-all ${
+                    statusFilter === s 
+                      ? "border-gray-900 bg-gray-900 text-white" 
+                      : "border-gray-200 bg-white text-gray-600 hover:bg-gray-50"
+                  }`}
+                >
+                  {s === "all" ? "All Programs" : STATUS_META[s]?.label || s}
+                </button>
+              ))}
+            </div>
+          )}
 
           {loading ? (
-            <div style={{ display: "flex", justifyContent: "center", padding: "80px", gap: "10px", color: "#64748b" }}>
-              <Loader2 size={22} style={{ animation: "spin 1s linear infinite" }} /> Loading…
+            <div className="flex justify-center py-20 text-gray-500">
+              <Loader2 size={24} className="animate-spin text-[#6B5A46]" />
             </div>
           ) : filtered.length === 0 ? (
-            <div style={{ textAlign: "center", padding: "80px 20px", background: "#fff", borderRadius: "14px", border: "1px dashed #e2e8f0" }}>
-              <Briefcase size={48} style={{ color: "#cbd5e1", marginBottom: "14px" }} />
-              <h3 style={{ margin: "0 0 8px", fontWeight: "700", color: "#0f172a" }}>No programs yet</h3>
-              <p style={{ color: "#64748b", margin: "0 0 20px" }}>Create employment and skill training programs to track your impact.</p>
-              <button onClick={() => setModal("create")}
-                style={{ padding: "10px 24px", borderRadius: "10px", border: "none", background: "#2563eb", color: "#fff", fontWeight: "700", cursor: "pointer" }}>
+            <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-gray-200 bg-white py-20 px-6 text-center">
+              <Briefcase size={48} className="mb-4 text-gray-300" />
+              <h3 className="mb-2 text-lg font-bold text-gray-900">No programs yet</h3>
+              <p className="mb-6 max-w-sm text-sm text-gray-500">Create employment and skill training programs to start tracking your impact and receiving applications.</p>
+              <button 
+                onClick={() => setModal("create")}
+                className="rounded-xl bg-[#6B5A46] px-6 py-2.5 text-sm font-bold text-white shadow-sm transition-colors hover:bg-[#5D4E3C]"
+              >
                 Create First Program
               </button>
             </div>
           ) : (
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(340px,1fr))", gap: "16px" }}>
+            <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
               {filtered.map(j => <JobCard key={j._id} job={j} onEdit={j => setModal(j)} onDelete={onDelete} />)}
             </div>
           )}
-        </>
+        </div>
       ) : (
         <ApplicationsTab jobs={jobs} />
       )}
 
       {modal && <JobModal job={modal === "create" ? null : modal} villages={villages} onClose={() => setModal(null)} onSaved={onSaved} />}
-      <style>{`@keyframes spin { from { transform:rotate(0deg) } to { transform:rotate(360deg) } }`}</style>
     </div>
   );
 }

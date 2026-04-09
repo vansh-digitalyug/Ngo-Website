@@ -1,17 +1,18 @@
 import { useState, useEffect, useRef } from "react";
 import {
   CalendarDays, PlusCircle, Pencil, Trash2, Eye, EyeOff,
-  Loader2, X, ImagePlus, Clock, MapPin,
+  Loader2, X, ImagePlus, Clock, MapPin, Upload,
   CheckCircle, XCircle, AlertCircle,
 } from "lucide-react";
 import AIDescribeButton from "../../components/ui/AIDescribeButton.jsx";
 import {
   adminFetchAllEvents, adminTogglePublish,
   createEvent, updateEvent, deleteEvent, uploadEventImageToS3,
+  addEventPhotos, fetchEventPhotos,
 } from "../../utils/eventStore";
 
 const CATEGORIES = ["General", "Education", "Health", "Environment", "Community", "Cultural", "Sports"];
-const STATUSES   = ["upcoming", "ongoing", "completed", "cancelled"];
+const STATUSES   = ["upcoming", "ongoing", "past", "cancelled"];
 
 function formatDate(d) {
   if (!d) return "—";
@@ -31,9 +32,279 @@ const STATUS_CFG = {
   published:  "border border-green-400 text-green-600 bg-green-50",
   upcoming:   "border border-yellow-300 text-yellow-600 bg-yellow-50",
   ongoing:    "border border-blue-300 text-blue-600 bg-blue-50",
-  completed:  "border border-gray-300 text-gray-500 bg-gray-50",
+  past:       "border border-gray-300 text-gray-500 bg-gray-50",
   cancelled:  "border border-red-300 text-red-500 bg-red-50",
 };
+
+/* ── Event Photos Upload Modal ── */
+function EventPhotosModal({ event, onClose, onPhotosAdded }) {
+  const [photos, setPhotos] = useState([]);
+  const [uploadedUrls, setUploadedUrls] = useState({});
+  const [captions, setCaptions] = useState({});
+  const [submitting, setSubmitting] = useState(false);
+  const [msg, setMsg] = useState({ text: "", ok: true });
+  const [loadingPhotos, setLoadingPhotos] = useState(false);
+  const [existingPhotos, setExistingPhotos] = useState([]);
+  const fileRefs = useRef({});
+  const inputRefs = useRef({});
+
+  useEffect(() => {
+    setLoadingPhotos(true);
+    fetchEventPhotos(event._id)
+      .then(setExistingPhotos)
+      .catch((e) => setMsg({ text: e.message, ok: false }))
+      .finally(() => setLoadingPhotos(false));
+  }, [event._id]);
+
+  useEffect(() => {
+    const esc = (e) => { if (e.key === "Escape") onClose(); };
+    window.addEventListener("keydown", esc);
+    document.body.style.overflow = "hidden";
+    return () => { window.removeEventListener("keydown", esc); document.body.style.overflow = ""; };
+  }, [onClose]);
+
+  const onPhotoSelect = async (index) => {
+    const file = fileRefs.current[index]?.files?.[0];
+    if (!file) return;
+    if (file.size > 10 * 1024 * 1024) {
+      setMsg({ text: "Image must be under 10 MB.", ok: false });
+      return;
+    }
+    
+    try {
+      setSubmitting(true);
+      const s3Key = await uploadEventImageToS3(file);
+      setUploadedUrls((p) => ({ ...p, [index]: URL.createObjectURL(file) }));
+      setPhotos((p) => {
+        const n = [...p];
+        n[index] = { S3Imagekey: s3Key, caption: captions[index] || "" };
+        return n;
+      });
+      setMsg({ text: "", ok: true });
+    } catch (err) {
+      setMsg({ text: err.message || "Failed to upload image.", ok: false });
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const onCaptionChange = (index, value) => {
+    setCaptions((p) => ({ ...p, [index]: value }));
+    setPhotos((p) => {
+      const n = [...p];
+      if (n[index]) n[index].caption = value;
+      return n;
+    });
+  };
+
+  const addPhotoSlot = () => {
+    setPhotos((p) => [...p, null]);
+    setCaptions((p) => ({ ...p, [Object.keys(p).length]: "" }));
+  };
+
+  const removePhotoSlot = (index) => {
+    setPhotos((p) => p.filter((_, i) => i !== index));
+    const newCaptions = { ...captions };
+    delete newCaptions[index];
+    setCaptions(newCaptions);
+    if (fileRefs.current[index]) fileRefs.current[index].value = "";
+  };
+
+  const onSubmit = async (e) => {
+    e.preventDefault();
+    const toSubmit = photos.filter((p) => p && p.S3Imagekey);
+    if (toSubmit.length === 0) {
+      setMsg({ text: "Please upload at least one photo.", ok: false });
+      return;
+    }
+    
+    setSubmitting(true);
+    setMsg({ text: "", ok: true });
+    try {
+      await addEventPhotos(event._id, toSubmit, false);
+      setMsg({ text: "Photos uploaded successfully!", ok: true });
+      setPhotos([]);
+      setCaptions({});
+      setUploadedUrls({});
+      if (onPhotosAdded) onPhotosAdded();
+      setTimeout(() => onClose(), 1000);
+    } catch (err) {
+      setMsg({ text: err.message || "Failed to upload photos.", ok: false });
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  return (
+    <div
+      className="fixed inset-0 z-[9999] bg-black/40 backdrop-blur-sm flex items-end sm:items-center justify-center sm:p-4 overflow-y-auto"
+      onClick={onClose}
+    >
+      <div
+        className="bg-[#faf9f6] rounded-t-3xl sm:rounded-3xl w-full sm:max-w-2xl shadow-2xl flex flex-col max-h-[95vh] sm:max-h-[90vh] my-auto"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* ── Header ── */}
+        <div className="flex items-start justify-between px-6 pt-6 pb-4 flex-shrink-0">
+          <div className="sm:hidden absolute top-3 left-1/2 -translate-x-1/2 w-10 h-1 bg-gray-300 rounded-full" />
+          <div>
+            <h2 className="text-2xl sm:text-3xl font-black text-gray-900 m-0 leading-tight">
+              Upload Event Photos
+            </h2>
+            <p className="text-sm text-gray-500 m-0 mt-1">{event.title}</p>
+          </div>
+          <button
+            onClick={onClose}
+            className="w-9 h-9 rounded-full bg-gray-200 hover:bg-gray-300 border-0 flex items-center justify-center text-gray-600 cursor-pointer transition-colors flex-shrink-0 mt-1"
+          >
+            <X size={16} />
+          </button>
+        </div>
+
+        {/* ── Body ── */}
+        <form onSubmit={onSubmit} className="flex-1 overflow-y-auto">
+          <div className="px-6 pb-4">
+            
+            {/* Existing photos */}
+            {loadingPhotos ? (
+              <div className="text-center py-12">
+                <Loader2 size={24} className="animate-spin mx-autotext-gray-400" />
+              </div>
+            ) : existingPhotos.length > 0 ? (
+              <div className="mb-6">
+                <p className="text-sm font-bold text-gray-600 mb-3">Already Uploaded ({existingPhotos.length})</p>
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                  {existingPhotos.map((photo) => (
+                    <div key={photo._id} className="relative group rounded-xl overflow-hidden bg-gray-100">
+                      <img src={photo.imageUrl} alt="event" className="w-full h-32 object-cover" />
+                      {photo.caption && (
+                        <div className="absolute bottom-0 left-0 right-0 bg-black/60 text-white text-xs p-2">
+                          {photo.caption}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : null}
+
+            {/* New photos to upload */}
+            <div className="mb-4">
+              <div className="flex items-center justify-between mb-3">
+                <p className="text-sm font-bold text-gray-600">New Photos to Upload</p>
+                {photos.filter((p) => p && p.S3Imagekey).length > 0 && (
+                  <span className="text-xs bg-green-50 text-green-700 px-2.5 py-1 rounded-full font-semibold">
+                    {photos.filter((p) => p && p.S3Imagekey).length} ready
+                  </span>
+                )}
+              </div>
+
+              {photos.length === 0 && (
+                <p className="text-xs text-gray-400 mb-4">No photos selected yet. Click "Add Photo" to start uploading.</p>
+              )}
+
+              <div className="space-y-3 mb-4">
+                {photos.map((photo, idx) => (
+                  <div key={idx} className="border border-gray-200 rounded-xl p-4 bg-white">
+                    {/* Photo preview or upload area */}
+                    {uploadedUrls[idx] && photo?.S3Imagekey ? (
+                      <div className="flex gap-4">
+                        <div className="w-[100px] h-[100px] rounded-lg overflow-hidden bg-gray-100 flex-shrink-0">
+                          <img src={uploadedUrls[idx]} alt="preview" className="w-full h-full object-cover" />
+                        </div>
+                        <div className="flex-1">
+                          <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Caption (Optional)</p>
+                          <input
+                            ref={(el) => inputRefs.current[idx] = el}
+                            type="text"
+                            value={captions[idx] || ""}
+                            onChange={(e) => onCaptionChange(idx, e.target.value)}
+                            placeholder="Add a caption for this photo…"
+                            className="w-full bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none focus:border-[#2d5a1b] focus:ring-1 focus:ring-[#2d5a1b]"
+                          />
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => removePhotoSlot(idx)}
+                          className="w-8 h-8 rounded-full bg-red-50 text-red-500 hover:bg-red-100 border-0 flex items-center justify-center cursor-pointer transition-colors flex-shrink-0"
+                        >
+                          <X size={14} />
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="flex flex-col gap-2">
+                        <button
+                          type="button"
+                          onClick={() => fileRefs.current[idx]?.click()}
+                          className="w-full border-2 border-dashed border-gray-300 rounded-lg py-6 flex flex-col items-center gap-2 cursor-pointer bg-gray-50 hover:border-[#2d5a1b] hover:bg-green-50 transition-colors"
+                        >
+                          <ImagePlus size={20} className="text-gray-400" />
+                          <span className="text-xs font-semibold text-gray-600">Click to select image</span>
+                        </button>
+                        <input
+                          ref={(el) => fileRefs.current[idx] = el}
+                          type="file"
+                          accept="image/jpeg,image/jpg,image/png,image/webp"
+                          onChange={() => onPhotoSelect(idx)}
+                          className="hidden"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => removePhotoSlot(idx)}
+                          className="text-xs text-red-500 hover:text-red-700 border-0 bg-transparent cursor-pointer"
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+
+              <button
+                type="button"
+                onClick={addPhotoSlot}
+                className="w-full px-4 py-2 rounded-lg border border-dashed border-gray-300 text-sm font-semibold text-gray-600 bg-gray-50 hover:bg-gray-100 cursor-pointer transition-colors"
+              >
+                <ImagePlus size={14} className="inline mr-2" />
+                Add Photo
+              </button>
+            </div>
+
+            {/* Message */}
+            {msg.text && (
+              <div className={`flex items-center gap-2 px-4 py-3 rounded-lg text-sm font-medium ${msg.ok ? "bg-green-50 text-green-700" : "bg-red-50 text-red-700"}`}>
+                {msg.ok ? <CheckCircle size={14} /> : <XCircle size={14} />}
+                {msg.text}
+              </div>
+            )}
+          </div>
+
+          {/* ── Footer ── */}
+          <div className="sticky bottom-0 bg-[#f0ede8] border-t border-gray-200/60 px-6 py-4 flex items-center justify-end gap-3 flex-shrink-0 rounded-b-3xl">
+            <button
+              type="button"
+              onClick={onClose}
+              className="px-6 py-3 rounded-full text-sm font-semibold text-gray-600 bg-transparent border-0 hover:text-gray-900 cursor-pointer transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={submitting || photos.filter((p) => p && p.S3Imagekey).length === 0}
+              className="px-7 py-3 rounded-full border-0 bg-[#2d5a1b] hover:bg-[#1f3f12] text-white text-sm font-bold flex items-center gap-2 cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed transition-colors shadow-sm"
+            >
+              {submitting
+                ? <><Loader2 size={14} className="animate-spin" /> Uploading…</>
+                : <><Upload size={14} /> Upload Photos</>
+              }
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
 
 
 /* ── Event Form Modal ── */
@@ -336,6 +607,7 @@ export default function AdminEvents() {
   const [loading,     setLoading]     = useState(true);
   const [filterStatus, setFilterStatus] = useState("All");
   const [modal,       setModal]       = useState(null);
+  const [photosModal, setPhotosModal] = useState(null);
   const [globalMsg,   setGlobalMsg]   = useState({ text: "", ok: true });
   const [toggling,    setToggling]    = useState(null);
   const [deleting,    setDeleting]    = useState(null);
@@ -384,6 +656,10 @@ export default function AdminEvents() {
     }
   };
 
+  const onPhotosAdded = () => {
+    setGlobalMsg({ text: "Photos uploaded successfully! They will appear on the public past events page.", ok: true });
+  };
+
   const total       = events.length;
   const published   = events.filter((e) => e.isPublished).length;
   const upcoming    = events.filter((e) => e.status === "upcoming").length;
@@ -393,7 +669,7 @@ export default function AdminEvents() {
     ? events
     : events.filter((e) => e.status === filterStatus.toLowerCase());
 
-  const TABS = ["All", "Upcoming", "Ongoing", "Completed", "Cancelled"];
+  const TABS = ["All", "Upcoming", "Ongoing", "Past", "Cancelled"];
 
   return (
     <div className="-m-4 sm:-m-6 lg:-m-8 min-h-screen bg-[#f5f0e8]">
@@ -611,6 +887,15 @@ export default function AdminEvents() {
                       >
                         <Pencil size={14} />
                       </button>
+                      {event.status === "past" && (
+                        <button
+                          onClick={() => { setGlobalMsg({ text: "", ok: true }); setPhotosModal(event); }}
+                          title="Upload Photos"
+                          className="w-9 h-9 rounded-full bg-purple-50 hover:bg-purple-100 text-purple-600 border-0 flex items-center justify-center cursor-pointer transition-colors"
+                        >
+                          <ImagePlus size={14} />
+                        </button>
+                      )}
                       <button
                         onClick={() => onDelete(event._id)}
                         disabled={busy}
@@ -674,7 +959,7 @@ export default function AdminEvents() {
                       )}
 
                       {/* Action buttons */}
-                      <div className="grid grid-cols-3 gap-2">
+                      <div className={`grid ${event.status === "past" ? "grid-cols-4" : "grid-cols-3"} gap-2`}>
                         <button
                           onClick={() => onTogglePublish(event._id)}
                           disabled={busy}
@@ -695,6 +980,14 @@ export default function AdminEvents() {
                         >
                           <Pencil size={12} /> Edit
                         </button>
+                        {event.status === "past" && (
+                          <button
+                            onClick={() => { setGlobalMsg({ text: "", ok: true }); setPhotosModal(event); }}
+                            className="py-2.5 rounded-xl border-0 bg-purple-50 text-purple-700 text-xs font-bold hover:bg-purple-100 cursor-pointer transition-colors flex items-center justify-center gap-1.5"
+                          >
+                            <ImagePlus size={12} /> Photos
+                          </button>
+                        )}
                         <button
                           onClick={() => onDelete(event._id)}
                           disabled={busy}
@@ -722,6 +1015,15 @@ export default function AdminEvents() {
             event={modal.event}
             onClose={() => setModal(null)}
             onSaved={onSaved}
+          />
+        )}
+
+        {/* Photos Upload Modal */}
+        {photosModal && (
+          <EventPhotosModal
+            event={photosModal}
+            onClose={() => setPhotosModal(null)}
+            onPhotosAdded={onPhotosAdded}
           />
         )}
 

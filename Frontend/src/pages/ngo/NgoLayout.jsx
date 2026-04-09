@@ -4,7 +4,6 @@ import {
   LayoutDashboard,
   User,
   Image,
-  Handshake,
   Building2,
   CheckCircle,
   Globe,
@@ -20,6 +19,8 @@ import {
   Users,
   ClipboardList,
   AlertTriangle,
+  Menu,
+  X,
 } from "lucide-react";
 import "./ngo.css";
 // Removed remove-ngo-padding.css import
@@ -30,7 +31,6 @@ const NAV_ITEMS = [
   { path: "/ngo", label: "Dashboard", icon: LayoutDashboard, exact: true },
   { path: "/ngo/profile", label: "Organization Profile", icon: User },
   { path: "/ngo/gallery", label: "Media Gallery", icon: Image },
-  { path: "/ngo/volunteers", label: "Volunteer Management", icon: Handshake },
   { path: "/ngo/events", label: "Events", icon: CalendarDays },
   { path: "/ngo/funds", label: "Fund Requests", icon: IndianRupee },
   { path: "/ngo/villages", label: "Village Adoptions", icon: MapPin },
@@ -46,9 +46,8 @@ function NgoLayout() {
   const navigate = useNavigate();
   const [ngoData, setNgoData] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [pendingCounts, setPendingCounts] = useState({ gallery: 0, volunteers: 0 });
-
-  // Removed body class toggling for NGO dashboard to restore default spacing
+  const [pendingCounts, setPendingCounts] = useState({ gallery: 0 });
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const user = (() => {
     try { return JSON.parse(localStorage.getItem("user")); } catch { return null; }
@@ -78,7 +77,6 @@ function NgoLayout() {
         }
 
         if (data.status === "none") {
-          // User has no NGO - redirect to add NGO page
           sessionStorage.setItem("flash_message", JSON.stringify({
             type: "info",
             message: "You don't have an NGO registered. Please register first."
@@ -88,12 +86,10 @@ function NgoLayout() {
         }
 
         if (data.status === "pending") {
-          // NGO exists but pending - redirect to pending page
           navigate("/ngo/pending", { replace: true, state: { ngo: data.data } });
           return;
         }
 
-        // NGO is approved - fetch dashboard data
         setNgoData(data.data);
         fetchDashboardStats();
       })
@@ -118,8 +114,7 @@ function NgoLayout() {
         if (data.success) {
           setNgoData(data.data.ngo);
           setPendingCounts({
-            gallery: data.data.stats.gallery?.pending || 0,
-            volunteers: data.data.stats.volunteers?.pending || 0
+            gallery: data.data.stats.gallery?.pending || 0
           });
         }
       })
@@ -133,7 +128,6 @@ function NgoLayout() {
 
   const getBadge = (label) => {
     if (label === "Gallery" && pendingCounts.gallery > 0) return pendingCounts.gallery;
-    if (label === "Volunteers" && pendingCounts.volunteers > 0) return pendingCounts.volunteers;
     return null;
   };
 
@@ -146,77 +140,141 @@ function NgoLayout() {
 
   if (loading) {
     return (
-      <div className="ngo-loading-screen">
-        <div className="ngo-loading-spinner"></div>
-        <p>Loading NGO Dashboard...</p>
+      <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
+        <div className="text-center">
+          <div className="inline-flex items-center justify-center w-16 h-16 bg-white rounded-full shadow-lg mb-4">
+            <div className="w-12 h-12 border-4 border-slate-200 border-t-[#1a2744] rounded-full animate-spin"></div>
+          </div>
+          <p className="text-slate-600 font-medium">Loading NGO Dashboard...</p>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="ngo-layout">
+    <div className="flex h-screen bg-[#f8f7f5]">
+      {/* Mobile Overlay */}
+      {sidebarOpen && (
+        <div 
+          className="fixed inset-0 bg-black bg-opacity-50 z-30 lg:hidden transition-opacity"
+          onClick={() => setSidebarOpen(false)}
+        ></div>
+      )}
+
       {/* Sidebar */}
-      <aside className="ngo-sidebar">
-        <div className="ngo-sidebar-header">
-          <div className="ngo-org-logo">
-            {ngoData?.ngoName?.charAt(0) || 'N'}
-          </div>
-          <div className="ngo-org-details">
-            <h2>{ngoData?.ngoName || "NGO Dashboard"}</h2>
-            <span className="ngo-verified-badge">
-              <CheckCircle size={10} /> Verified
-            </span>
+      <aside className={`fixed lg:relative w-64 h-screen bg-white border-r border-slate-200 shadow-xl lg:shadow-none transform transition-transform duration-300 ease-in-out z-40 flex flex-col overflow-hidden ${
+        sidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
+      }`}>
+        
+        {/* Sidebar Header */}
+        <div className="p-6 border-b border-slate-200 bg-gradient-to-r from-slate-50 to-white">
+          <div className="flex items-center gap-4">
+            <div className="w-14 h-14 rounded-lg bg-gradient-to-br from-[#1a2744] to-[#2d3e5f] text-white flex items-center justify-center font-bold text-xl shadow-md">
+              {ngoData?.ngoName?.charAt(0) || 'N'}
+            </div>
+            <div className="flex-1 min-w-0">
+              <h2 className="text-sm font-bold text-[#1a2744] truncate">{ngoData?.ngoName || "NGO Dashboard"}</h2>
+              <span className="inline-flex items-center gap-1 text-xs text-green-600 bg-green-50 px-2 py-1 rounded-full mt-1">
+                <CheckCircle size={11} /> Verified
+              </span>
+            </div>
           </div>
         </div>
 
-        <nav className="ngo-sidebar-nav">
-          <div className="nav-section">
-            <span className="nav-section-label">Main Menu</span>
-            <ul>
-              {NAV_ITEMS.map((item) => (
+        {/* Navigation */}
+        <nav className="flex-1 overflow-y-auto px-3 py-6 space-y-2">
+          <p className="px-4 py-2 text-xs font-bold uppercase text-slate-500 tracking-wider mb-4">Main Menu</p>
+          <ul className="space-y-1">
+            {NAV_ITEMS.map((item) => {
+              const Icon = item.icon;
+              return (
                 <li key={item.path}>
-                  <Link to={item.path} className={isActive(item) ? "active" : ""}>
-                    <span className="nav-icon"><item.icon size={18} /></span>
-                    <span className="nav-text">{item.label}</span>
+                  <Link 
+                    to={item.path} 
+                    onClick={() => setSidebarOpen(false)}
+                    className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 group ${
+                      isActive(item) 
+                        ? "bg-[#1a2744] text-white shadow-md" 
+                        : "text-slate-600 hover:bg-slate-100"
+                    }`}
+                  >
+                    <Icon size={20} className="flex-shrink-0" />
+                    <span className="text-sm font-medium flex-1">{item.label}</span>
                     {getBadge(item.label) && (
-                      <span className="nav-badge">{getBadge(item.label)}</span>
+                      <span className="inline-flex items-center justify-center min-w-6 h-6 text-xs font-bold text-white bg-red-500 rounded-full shadow-sm">
+                        {getBadge(item.label)}
+                      </span>
                     )}
-                    <ChevronRight size={14} className="nav-arrow" />
+                    <ChevronRight size={16} className={`flex-shrink-0 transition-opacity ${isActive(item) ? "opacity-100" : "opacity-0 group-hover:opacity-100"}`} />
                   </Link>
                 </li>
-              ))}
-            </ul>
-          </div>
+              );
+            })}
+          </ul>
 
-          <div className="ngo-sidebar-divider"></div>
+          {/* Divider */}
+          <div className="my-6 border-t border-slate-200"></div>
 
-          <div className="nav-section">
-            <span className="nav-section-label">Other</span>
-            <ul className="ngo-sidebar-bottom">
-              <li>
-                <Link to="/" className="back-link">
-                  <span className="nav-icon"><Globe size={18} /></span>
-                  <span className="nav-text">Back to Website</span>
-                </Link>
-              </li>
-              <li>
-                <button onClick={handleLogout} className="logout-btn">
-                  <span className="nav-icon"><LogOut size={18} /></span>
-                  <span className="nav-text">Sign Out</span>
-                </button>
-              </li>
-            </ul>
-          </div>
+          {/* Other Section */}
+          <p className="px-4 py-2 text-xs font-bold uppercase text-slate-500 tracking-wider mb-4">Other</p>
+          <ul className="space-y-1">
+            <li>
+              <Link 
+                to="/" 
+                onClick={() => setSidebarOpen(false)}
+                className="flex items-center gap-3 px-4 py-3 rounded-lg text-slate-600 hover:bg-slate-100 transition-all duration-200 group"
+              >
+                <Globe size={20} className="flex-shrink-0" />
+                <span className="text-sm font-medium flex-1">Back to Website</span>
+                <ChevronRight size={16} className="flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity" />
+              </Link>
+            </li>
+            <li>
+              <button 
+                onClick={() => {
+                  handleLogout();
+                  setSidebarOpen(false);
+                }}
+                className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-slate-600 hover:bg-red-50 hover:text-red-600 transition-all duration-200 group"
+              >
+                <LogOut size={20} className="flex-shrink-0" />
+                <span className="text-sm font-medium flex-1 text-left">Sign Out</span>
+                <ChevronRight size={16} className="flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity" />
+              </button>
+            </li>
+          </ul>
         </nav>
 
-        <div className="ngo-sidebar-footer">
-          <span>SevaIndia Platform</span>
+        {/* Sidebar Footer */}
+        <div className="p-4 border-t border-slate-200 bg-gradient-to-r from-slate-50 to-white text-center">
+          <span className="text-xs text-slate-500 font-semibold">SevaIndia Platform</span>
         </div>
       </aside>
 
       {/* Main Content */}
-      <main className="ngo-content">
-        <Outlet context={{ ngoData, setNgoData, refreshStats: fetchDashboardStats }} />
+      <main className="flex-1 flex flex-col overflow-hidden relative">
+        {/* Mobile Header - Visible on small devices */}
+        <div className="lg:hidden bg-white border-b border-slate-200 shadow-sm px-4 py-3 flex items-center gap-3">
+          <button
+            onClick={() => setSidebarOpen(!sidebarOpen)}
+            className="inline-flex items-center justify-center p-2 hover:bg-slate-100 rounded-lg transition-colors duration-200"
+            title={sidebarOpen ? "Close Menu" : "Open Menu"}
+          >
+            {sidebarOpen ? (
+              <X size={24} className="text-slate-600" />
+            ) : (
+              <Menu size={24} className="text-slate-600" />
+            )}
+          </button>
+          <h1 className="text-lg font-bold text-slate-800">NGO Panel</h1>
+        </div>
+
+        {/* Content Area with Padding */}
+        <div className="flex-1 overflow-auto bg-[#f8f7f5]">
+          <div className="pt-4 sm:pt-6 lg:pt-8 pr-4 sm:pr-6 lg:pr-8 pb-4 sm:pb-6 lg:pb-8 pl-0">
+            <Outlet context={{ ngoData, setNgoData, refreshStats: fetchDashboardStats }} />
+          </div>
+        </div>
       </main>
     </div>
   );

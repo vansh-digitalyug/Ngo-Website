@@ -8,7 +8,8 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "nodemon server.js",
     "start": "node server.js",
-    "seed:blogs": "node seed/blogSeed.js"
+    "seed:blogs": "node seed/blogSeed.js",
+    "migrate:events": "node seed/migrateEventsStatus.js"
   },
   "keywords": [],
   "author": "",

@@ -1,25 +1,40 @@
 import { useState, useEffect } from "react";
-import { TrendingUp, TrendingDown, IndianRupee, Plus, Edit2, Trash2, Loader2, X, ChevronDown, Eye, EyeOff } from "lucide-react";
+import { 
+  TrendingUp, TrendingDown, IndianRupee, Plus, Edit2, Trash2, 
+  Loader2, X, ChevronDown, Eye, EyeOff, Wallet 
+} from "lucide-react";
 import { API_BASE_URL } from "./NgoLayout.jsx";
 
 const fmtINR = (n) => new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 0 }).format(n || 0);
 const fmtDate = (d) => d ? new Date(d).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" }) : "—";
 
 const CATEGORIES = ["donation","govt_grant","salary","materials","event","operations","village_work","medical","education","other"];
+
 const CAT_LABELS = {
   donation: "Donations", govt_grant: "Govt Grants", salary: "Salaries",
   materials: "Materials", event: "Events", operations: "Operations",
   village_work: "Village Work", medical: "Medical", education: "Education", other: "Other",
 };
-const CAT_COLORS = {
-  donation: "#16a34a", govt_grant: "#0369a1", salary: "#9333ea",
-  materials: "#ea580c", event: "#0891b2", operations: "#64748b",
-  village_work: "#d97706", medical: "#dc2626", education: "#7c3aed", other: "#475569",
+
+const CAT_THEMES = {
+  donation:     "bg-[#f0f4ea] text-[#5a6b46] border-[#d6e3c9]",
+  govt_grant:   "bg-blue-50 text-blue-700 border-blue-200",
+  salary:       "bg-purple-50 text-purple-700 border-purple-200",
+  materials:    "bg-orange-50 text-orange-700 border-orange-200",
+  event:        "bg-cyan-50 text-cyan-700 border-cyan-200",
+  operations:   "bg-slate-50 text-slate-700 border-slate-200",
+  village_work: "bg-amber-50 text-amber-700 border-amber-200",
+  medical:      "bg-red-50 text-red-700 border-red-200",
+  education:    "bg-indigo-50 text-indigo-700 border-indigo-200",
+  other:        "bg-gray-50 text-gray-700 border-gray-200",
 };
 
 const emptyEntry = {
   type: "credit", category: "donation", amount: "", description: "", date: new Date().toISOString().slice(0,10), isPublic: true,
 };
+
+const inputCls = "w-full px-4 py-2.5 bg-[#f8f7f5] border border-[#e5e5e5] rounded-xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-[#eaddc8] focus:border-[#6c5d46] transition-all text-[#222222]";
+const labelCls = "block text-sm font-bold text-[#222222] mb-1.5";
 
 function EntryModal({ entry, onClose, onSaved }) {
   const [form, setForm] = useState(entry ? {
@@ -55,68 +70,84 @@ function EntryModal({ entry, onClose, onSaved }) {
       .finally(() => setSaving(false));
   };
 
-  const inp = { padding: "9px 12px", border: "1px solid #e2e8f0", borderRadius: "8px", fontSize: "14px", width: "100%", boxSizing: "border-box", fontFamily: "inherit" };
+  // close on backdrop click
+  const onBackdrop = (e) => { if (e.target === e.currentTarget) onClose(); };
 
   return (
-    <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.55)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000, padding: "16px" }}>
-      <div style={{ background: "#fff", borderRadius: "18px", padding: "28px", width: "100%", maxWidth: "480px" }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px" }}>
-          <h2 style={{ margin: 0, fontWeight: "800", fontSize: "18px", color: "#0f172a" }}>{entry ? "Edit Entry" : "Add Fund Entry"}</h2>
-          <button onClick={onClose} style={{ background: "none", border: "none", cursor: "pointer", color: "#64748b" }}><X size={20} /></button>
+    <div onClick={onBackdrop} className="fixed inset-0 z-[1000] bg-[#222222]/60 backdrop-blur-sm flex items-center justify-center p-4 sm:p-6 opacity-100 animate-in fade-in duration-200">
+      <div className="bg-white rounded-2xl w-full max-w-md flex flex-col shadow-xl scale-100 animate-in zoom-in-95 duration-200 overflow-hidden p-6 sm:p-8">
+        
+        <div className="flex justify-between items-center mb-6">
+          <h2 className="text-xl font-extrabold text-[#222222]">{entry ? "Edit Entry" : "Add Fund Entry"}</h2>
+          <button onClick={onClose} className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors shrink-0">
+            <X size={20} />
+          </button>
         </div>
 
-        {error && <div style={{ background: "#fef2f2", border: "1px solid #fecaca", color: "#dc2626", padding: "10px 14px", borderRadius: "8px", marginBottom: "14px", fontSize: "13px" }}>{error}</div>}
+        {error && (
+          <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-xl mb-5 text-sm font-bold flex items-center gap-2">
+            {error}
+          </div>
+        )}
 
         {/* Type toggle */}
-        <div style={{ display: "flex", gap: "8px", marginBottom: "16px" }}>
+        <div className="flex gap-3 mb-6">
           {["credit","debit"].map(t => (
             <button key={t} onClick={() => set("type", t)}
-              style={{ flex: 1, padding: "10px", borderRadius: "8px", border: "2px solid", cursor: "pointer", fontWeight: "700", fontSize: "14px",
-                background: form.type === t ? (t === "credit" ? "#f0fdf4" : "#fef2f2") : "#fff",
-                color: form.type === t ? (t === "credit" ? "#166534" : "#991b1b") : "#374151",
-                borderColor: form.type === t ? (t === "credit" ? "#16a34a" : "#dc2626") : "#e2e8f0",
-              }}>
+              className={`flex-1 py-2.5 rounded-xl border-2 text-sm font-extrabold transition-all ${
+                form.type === t 
+                  ? t === "credit" 
+                    ? "bg-[#f0f4ea] text-[#5a6b46] border-[#d6e3c9] ring-2 ring-offset-1 ring-[#d6e3c9]" 
+                    : "bg-red-50 text-red-700 border-red-200 ring-2 ring-offset-1 ring-red-200"
+                  : "bg-white text-[#6c6c6c] border-gray-200 hover:bg-gray-50"
+              }`}
+            >
               {t === "credit" ? "↑ Income" : "↓ Expense"}
             </button>
           ))}
         </div>
 
-        <div style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
+        <div className="flex flex-col gap-4">
           <div>
-            <label style={{ fontSize: "12px", fontWeight: "600", color: "#374151", display: "block", marginBottom: "5px" }}>Amount (₹) *</label>
-            <input type="number" style={inp} value={form.amount} onChange={e => set("amount", e.target.value)} placeholder="0" />
+            <label className={labelCls}>Amount (₹) *</label>
+            <input type="number" className={inputCls} value={form.amount} onChange={e => set("amount", e.target.value)} placeholder="0" />
           </div>
           <div>
-            <label style={{ fontSize: "12px", fontWeight: "600", color: "#374151", display: "block", marginBottom: "5px" }}>Category *</label>
-            <div style={{ position: "relative" }}>
-              <select value={form.category} onChange={e => set("category", e.target.value)}
-                style={{ ...inp, appearance: "none", paddingRight: "30px", cursor: "pointer" }}>
+            <label className={labelCls}>Category *</label>
+            <div className="relative">
+              <select value={form.category} onChange={e => set("category", e.target.value)} className={`${inputCls} appearance-none pr-10 cursor-pointer`}>
                 {CATEGORIES.map(c => <option key={c} value={c}>{CAT_LABELS[c]}</option>)}
               </select>
-              <ChevronDown size={14} style={{ position: "absolute", right: "10px", top: "50%", transform: "translateY(-50%)", pointerEvents: "none", color: "#9ca3af" }} />
+              <ChevronDown size={16} className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[#888888] pointer-events-none" />
             </div>
           </div>
           <div>
-            <label style={{ fontSize: "12px", fontWeight: "600", color: "#374151", display: "block", marginBottom: "5px" }}>Description *</label>
-            <textarea rows={2} style={{ ...inp, resize: "vertical" }} value={form.description} onChange={e => set("description", e.target.value)} placeholder="Briefly describe this transaction…" />
+            <label className={labelCls}>Description *</label>
+            <textarea rows={2} className={`${inputCls} resize-y min-h-[80px]`} value={form.description} onChange={e => set("description", e.target.value)} placeholder="Briefly describe this transaction…" />
           </div>
           <div>
-            <label style={{ fontSize: "12px", fontWeight: "600", color: "#374151", display: "block", marginBottom: "5px" }}>Date</label>
-            <input type="date" style={inp} value={form.date} onChange={e => set("date", e.target.value)} />
+            <label className={labelCls}>Date</label>
+            <input type="date" className={inputCls} value={form.date} onChange={e => set("date", e.target.value)} />
           </div>
-          <div>
-            <label style={{ display: "flex", alignItems: "center", gap: "8px", cursor: "pointer", fontSize: "13px", fontWeight: "600", color: "#374151" }}>
-              <input type="checkbox" checked={form.isPublic} onChange={e => set("isPublic", e.target.checked)} style={{ width: "16px", height: "16px" }} />
-              Show on public transparency dashboard
+          <div className="mt-1">
+            <label className="flex items-center gap-3 cursor-pointer group">
+              <div className="relative flex items-center justify-center">
+                <input type="checkbox" checked={form.isPublic} onChange={e => set("isPublic", e.target.checked)} className="peer appearance-none w-5 h-5 border-2 border-[#e5e5e5] rounded-md bg-[#f8f7f5] checked:bg-[#6c5d46] checked:border-[#6c5d46] transition-colors cursor-pointer" />
+                <div className="absolute text-white opacity-0 peer-checked:opacity-100 pointer-events-none">
+                  <svg width="12" height="10" viewBox="0 0 12 10" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M1 5L4.5 8.5L11 1.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                </div>
+              </div>
+              <span className="text-sm font-bold text-[#222222] group-hover:text-[#6c5d46] transition-colors">Show on public transparency dashboard</span>
             </label>
           </div>
         </div>
 
-        <div style={{ display: "flex", gap: "10px", justifyContent: "flex-end", marginTop: "22px" }}>
-          <button onClick={onClose} style={{ padding: "10px 20px", borderRadius: "8px", border: "1px solid #e2e8f0", background: "#fff", fontWeight: "600", cursor: "pointer" }}>Cancel</button>
-          <button onClick={save} disabled={saving}
-            style={{ padding: "10px 24px", borderRadius: "8px", border: "none", background: "#2563eb", color: "#fff", fontWeight: "700", cursor: saving ? "not-allowed" : "pointer", opacity: saving ? 0.7 : 1 }}>
-            {saving ? "Saving…" : entry ? "Save Changes" : "Add Entry"}
+        <div className="flex items-center justify-end gap-3 mt-8">
+          <button onClick={onClose} className="px-5 py-2.5 bg-white text-[#2c2c2c] border border-gray-200 rounded-lg text-sm font-semibold hover:bg-gray-50 transition-all shadow-sm">
+            Cancel
+          </button>
+          <button onClick={save} disabled={saving} className="px-5 py-2.5 bg-[#6c5d46] text-white rounded-lg text-sm font-semibold hover:bg-[#584a36] transition-all shadow-sm disabled:opacity-70 disabled:cursor-not-allowed flex items-center gap-2">
+            {saving ? <><Loader2 size={16} className="animate-spin" /> Saving…</> : entry ? "Save Changes" : "Add Entry"}
           </button>
         </div>
       </div>
@@ -189,112 +220,131 @@ export default function NgoFundLedger() {
   const balance = summary.totals.credit - summary.totals.debit;
 
   return (
-    <div style={{ padding: "28px", fontFamily: "system-ui, -apple-system, sans-serif" }}>
+    <div className="min-h-screen bg-[#f8f7f5] p-4 sm:p-6 lg:p-8 font-sans text-[#2c2c2c] selection:bg-[#eaddc8] selection:text-[#2c2c2c] flex flex-col gap-6">
+      
       {/* Header */}
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "24px", flexWrap: "wrap", gap: "12px" }}>
+      <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <h1 style={{ margin: "0 0 4px", fontWeight: "800", fontSize: "22px", color: "#0f172a" }}>Fund Ledger</h1>
-          <p style={{ margin: 0, color: "#64748b", fontSize: "14px" }}>Track income and expenses for your NGO</p>
+          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-[#222222] flex items-center gap-3 mb-2">
+            <div className="p-2 bg-white rounded-xl shadow-sm border border-gray-100 text-[#6c5d46]">
+              <Wallet size={24} />
+            </div>
+            Fund Ledger
+          </h1>
+          <p className="text-[#6c6c6c] text-sm sm:text-base font-medium">
+            Track income and expenses for your NGO securely
+          </p>
         </div>
-        <button onClick={() => setModal("create")}
-          style={{ display: "flex", alignItems: "center", gap: "7px", padding: "10px 20px", borderRadius: "10px", border: "none", background: "#2563eb", color: "#fff", fontWeight: "700", fontSize: "14px", cursor: "pointer" }}>
-          <Plus size={16} /> Add Entry
+        <button onClick={() => setModal("create")} className="px-5 py-2.5 bg-[#6c5d46] text-white rounded-xl text-sm font-bold hover:bg-[#584a36] transition-all shadow-sm flex items-center gap-2">
+          <Plus size={18} /> Add Entry
         </button>
       </div>
 
       {/* Summary cards */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px,1fr))", gap: "14px", marginBottom: "24px" }}>
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         {[
-          { label: "Total Income", value: fmtINR(summary.totals.credit), icon: TrendingUp, bg: "#f0fdf4", border: "#bbf7d0", color: "#166534" },
-          { label: "Total Expense", value: fmtINR(summary.totals.debit), icon: TrendingDown, bg: "#fef2f2", border: "#fecaca", color: "#991b1b" },
-          { label: "Net Balance", value: fmtINR(Math.abs(balance)), icon: IndianRupee, bg: balance >= 0 ? "#eff6ff" : "#fef2f2", border: balance >= 0 ? "#bfdbfe" : "#fecaca", color: balance >= 0 ? "#1e40af" : "#991b1b" },
-        ].map(({ label, value, icon: Icon, bg, border, color }) => (
-          <div key={label} style={{ background: bg, border: `1px solid ${border}`, borderRadius: "12px", padding: "18px" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "10px" }}>
-              <div style={{ width: "36px", height: "36px", borderRadius: "9px", background: "#fff", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 1px 4px rgba(0,0,0,0.08)" }}>
-                <Icon size={16} color={color} />
+          { label: "Total Income", value: fmtINR(summary.totals.credit), icon: TrendingUp, wrapperClass: "bg-[#f0f4ea] border-[#d6e3c9] text-[#5a6b46]" },
+          { label: "Total Expense", value: fmtINR(summary.totals.debit), icon: TrendingDown, wrapperClass: "bg-red-50 border-red-200 text-red-700" },
+          { label: "Net Balance", value: fmtINR(Math.abs(balance)), icon: IndianRupee, wrapperClass: balance >= 0 ? "bg-blue-50 border-blue-200 text-blue-700" : "bg-red-50 border-red-200 text-red-700" },
+        ].map(({ label, value, icon: Icon, wrapperClass }) => (
+          <div key={label} className={`p-6 rounded-2xl border ${wrapperClass} shadow-sm relative overflow-hidden`}>
+            <div className="flex items-center gap-3 mb-3 relative z-10">
+              <div className="w-10 h-10 rounded-xl bg-white/80 shadow-sm flex items-center justify-center backdrop-blur-sm">
+                <Icon size={20} />
               </div>
-              <span style={{ fontSize: "11px", fontWeight: "700", color, textTransform: "uppercase", letterSpacing: "0.05em" }}>{label}</span>
+              <span className="text-xs font-extrabold uppercase tracking-wider opacity-90">{label}</span>
             </div>
-            <p style={{ margin: 0, fontSize: "20px", fontWeight: "800", color }}>{value}</p>
+            <p className="text-2xl sm:text-3xl font-extrabold relative z-10 tracking-tight">{value}</p>
           </div>
         ))}
       </div>
 
       {/* Type filter */}
-      <div style={{ display: "flex", gap: "8px", marginBottom: "16px" }}>
+      <div className="flex flex-wrap gap-2">
         {["all","credit","debit"].map(t => (
           <button key={t} onClick={() => setTypeFilter(t)}
-            style={{ padding: "6px 16px", borderRadius: "20px", border: "1px solid", cursor: "pointer", fontSize: "13px", fontWeight: "600",
-              background: typeFilter === t ? "#0f172a" : "#fff",
-              color: typeFilter === t ? "#fff" : "#374151",
-              borderColor: typeFilter === t ? "#0f172a" : "#e2e8f0",
-            }}>
-            {t === "all" ? "All" : t === "credit" ? "↑ Income" : "↓ Expenses"}
+            className={`px-5 py-2 rounded-lg text-xs font-bold transition-all border
+              ${typeFilter === t 
+                ? "bg-[#6c5d46] text-white border-[#6c5d46] shadow-sm" 
+                : "bg-white text-[#6c6c6c] border-gray-200 hover:bg-[#f8f7f5]"}`}
+          >
+            {t === "all" ? "All Entries" : t === "credit" ? "↑ Income" : "↓ Expenses"}
           </button>
         ))}
       </div>
 
       {/* Table */}
       {loading ? (
-        <div style={{ display: "flex", justifyContent: "center", padding: "60px", gap: "10px", color: "#64748b" }}>
-          <Loader2 size={20} style={{ animation: "spin 1s linear infinite" }} /> Loading…
+        <div className="flex flex-col items-center justify-center min-h-[40vh] gap-4">
+          <div className="w-10 h-10 border-4 border-[#eaddc8] border-t-[#6c5d46] rounded-full animate-spin"></div>
+          <p className="text-[#888888] font-medium">Loading ledger…</p>
         </div>
       ) : entries.length === 0 ? (
-        <div style={{ textAlign: "center", padding: "60px 20px", background: "#fff", borderRadius: "14px", border: "1px dashed #e2e8f0" }}>
-          <IndianRupee size={40} style={{ color: "#cbd5e1", marginBottom: "12px" }} />
-          <p style={{ color: "#94a3b8", fontSize: "15px", margin: "0 0 16px" }}>No entries yet. Start tracking your funds.</p>
-          <button onClick={() => setModal("create")}
-            style={{ padding: "10px 24px", borderRadius: "10px", border: "none", background: "#2563eb", color: "#fff", fontWeight: "700", cursor: "pointer" }}>
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-12 text-center flex flex-col items-center justify-center min-h-[40vh]">
+          <div className="w-20 h-20 bg-[#f8f7f5] rounded-full flex items-center justify-center text-[#d5cfc4] mb-4">
+            <IndianRupee size={32} strokeWidth={1.5} />
+          </div>
+          <h3 className="text-lg font-bold text-[#222222] mb-2">No entries yet</h3>
+          <p className="text-sm font-medium text-[#888888] mb-6">Start tracking your funds by adding your first transaction.</p>
+          <button onClick={() => setModal("create")} className="px-5 py-2.5 bg-[#6c5d46] text-white rounded-xl text-sm font-bold hover:bg-[#584a36] transition-all shadow-sm">
             Add First Entry
           </button>
         </div>
       ) : (
-        <div style={{ background: "#fff", border: "1px solid #e2e8f0", borderRadius: "14px", overflow: "hidden" }}>
-          <div style={{ overflowX: "auto" }}>
-            <table style={{ width: "100%", borderCollapse: "collapse", minWidth: "620px" }}>
+        <div className="bg-white border border-gray-100 rounded-2xl overflow-hidden shadow-sm">
+          <div className="overflow-x-auto custom-scrollbar">
+            <table className="w-full text-left border-collapse min-w-[750px]">
               <thead>
-                <tr style={{ background: "#f8fafc" }}>
+                <tr className="bg-[#f8f7f5] border-b border-gray-100">
                   {["Date", "Type", "Category", "Description", "Amount", "Public", "Actions"].map(h => (
-                    <th key={h} style={{ padding: "11px 14px", fontSize: "11px", fontWeight: "700", color: "#64748b", textAlign: h === "Amount" ? "right" : "left", textTransform: "uppercase", letterSpacing: "0.05em", borderBottom: "1px solid #e2e8f0", whiteSpace: "nowrap" }}>{h}</th>
+                    <th key={h} className={`py-3 px-4 text-[11px] font-extrabold text-[#888888] uppercase tracking-wider whitespace-nowrap ${h === "Amount" ? "text-right" : "text-left"}`}>
+                      {h}
+                    </th>
                   ))}
                 </tr>
               </thead>
               <tbody>
                 {entries.map(e => {
-                  const catColor = CAT_COLORS[e.category] || "#64748b";
+                  const themeCls = CAT_THEMES[e.category] || "bg-gray-50 text-gray-700 border-gray-200";
                   return (
-                    <tr key={e._id} style={{ borderBottom: "1px solid #f1f5f9" }}>
-                      <td style={{ padding: "11px 14px", fontSize: "12px", color: "#64748b", whiteSpace: "nowrap" }}>{fmtDate(e.date)}</td>
-                      <td style={{ padding: "11px 14px" }}>
-                        <span style={{ padding: "3px 9px", borderRadius: "20px", fontSize: "11px", fontWeight: "700",
-                          background: e.type === "credit" ? "#dcfce7" : "#fee2e2",
-                          color: e.type === "credit" ? "#166534" : "#991b1b",
-                        }}>
+                    <tr key={e._id} className="border-b border-gray-50 hover:bg-[#f8f7f5] transition-colors group">
+                      <td className="py-4 px-4 text-xs font-bold text-[#6c6c6c] whitespace-nowrap">{fmtDate(e.date)}</td>
+                      <td className="py-4 px-4 whitespace-nowrap">
+                        <span className={`px-2.5 py-1 rounded-md text-[10px] font-extrabold uppercase tracking-wider border ${
+                          e.type === "credit" ? "bg-[#f0f4ea] text-[#5a6b46] border-[#d6e3c9]" : "bg-red-50 text-red-700 border-red-200"
+                        }`}>
                           {e.type === "credit" ? "↑ Income" : "↓ Expense"}
                         </span>
                       </td>
-                      <td style={{ padding: "11px 14px" }}>
-                        <span style={{ background: `${catColor}18`, color: catColor, padding: "3px 8px", borderRadius: "5px", fontSize: "11px", fontWeight: "600" }}>
+                      <td className="py-4 px-4 whitespace-nowrap">
+                        <span className={`px-2.5 py-1 rounded-md text-[10px] font-extrabold uppercase tracking-wider border ${themeCls}`}>
                           {CAT_LABELS[e.category] || e.category}
                         </span>
                       </td>
-                      <td style={{ padding: "11px 14px", fontSize: "13px", color: "#374151", maxWidth: "200px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{e.description}</td>
-                      <td style={{ padding: "11px 14px", textAlign: "right", fontWeight: "700", fontSize: "13px", color: e.type === "credit" ? "#166534" : "#dc2626", whiteSpace: "nowrap" }}>
+                      <td className="py-4 px-4 text-sm font-medium text-[#222222] max-w-[200px] truncate group-hover:text-[#6c5d46] transition-colors">
+                        {e.description}
+                      </td>
+                      <td className={`py-4 px-4 text-right font-extrabold text-sm whitespace-nowrap ${e.type === "credit" ? "text-[#5a6b46]" : "text-red-600"}`}>
                         {e.type === "credit" ? "+" : "-"}{fmtINR(e.amount)}
                       </td>
-                      <td style={{ padding: "11px 14px", textAlign: "center" }}>
-                        {e.isPublic ? <Eye size={14} color="#16a34a" /> : <EyeOff size={14} color="#94a3b8" />}
+                      <td className="py-4 px-4 whitespace-nowrap text-center">
+                        {e.isPublic ? (
+                          <div className="flex items-center justify-center bg-green-50 text-green-600 w-8 h-8 rounded-lg mx-auto">
+                            <Eye size={16} />
+                          </div>
+                        ) : (
+                          <div className="flex items-center justify-center bg-gray-50 text-gray-400 w-8 h-8 rounded-lg mx-auto">
+                            <EyeOff size={16} />
+                          </div>
+                        )}
                       </td>
-                      <td style={{ padding: "11px 14px" }}>
-                        <div style={{ display: "flex", gap: "6px" }}>
-                          <button onClick={() => setModal(e)}
-                            style={{ background: "#eff6ff", border: "none", color: "#2563eb", borderRadius: "6px", padding: "5px 8px", cursor: "pointer" }}>
-                            <Edit2 size={13} />
+                      <td className="py-4 px-4 whitespace-nowrap">
+                        <div className="flex items-center gap-2">
+                          <button onClick={() => setModal(e)} className="w-8 h-8 flex items-center justify-center bg-blue-50 text-blue-600 hover:bg-blue-100 hover:text-blue-700 rounded-lg transition-colors">
+                            <Edit2 size={14} />
                           </button>
-                          <button onClick={() => deleteEntry(e._id)}
-                            style={{ background: "#fef2f2", border: "none", color: "#dc2626", borderRadius: "6px", padding: "5px 8px", cursor: "pointer" }}>
-                            <Trash2 size={13} />
+                          <button onClick={() => deleteEntry(e._id)} className="w-8 h-8 flex items-center justify-center bg-red-50 text-red-600 hover:bg-red-100 hover:text-red-700 rounded-lg transition-colors">
+                            <Trash2 size={14} />
                           </button>
                         </div>
                       </td>
@@ -309,12 +359,18 @@ export default function NgoFundLedger() {
 
       {/* Pagination */}
       {pagination.pages > 1 && (
-        <div style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: "14px", marginTop: "24px" }}>
+        <div className="flex justify-center items-center gap-4 mt-4">
           <button disabled={page <= 1} onClick={() => setPage(p => p - 1)}
-            style={{ padding: "8px 18px", borderRadius: "8px", border: "1px solid #e2e8f0", background: "#fff", cursor: page <= 1 ? "not-allowed" : "pointer", opacity: page <= 1 ? 0.5 : 1, fontWeight: "600" }}>← Prev</button>
-          <span style={{ color: "#64748b", fontSize: "13px" }}>Page {page} of {pagination.pages}</span>
+            className="px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm font-semibold hover:bg-gray-50 transition-all disabled:opacity-50 disabled:cursor-not-allowed text-[#222222]">
+            &larr; Prev
+          </button>
+          <span className="text-sm font-bold text-[#888888]">
+            Page {page} of {pagination.pages}
+          </span>
           <button disabled={page >= pagination.pages} onClick={() => setPage(p => p + 1)}
-            style={{ padding: "8px 18px", borderRadius: "8px", border: "1px solid #e2e8f0", background: "#fff", cursor: page >= pagination.pages ? "not-allowed" : "pointer", opacity: page >= pagination.pages ? 0.5 : 1, fontWeight: "600" }}>Next →</button>
+            className="px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm font-semibold hover:bg-gray-50 transition-all disabled:opacity-50 disabled:cursor-not-allowed text-[#222222]">
+            Next &rarr;
+          </button>
         </div>
       )}
 
@@ -326,8 +382,6 @@ export default function NgoFundLedger() {
           onSaved={onSaved}
         />
       )}
-
-      <style>{`@keyframes spin { from { transform:rotate(0deg) } to { transform:rotate(360deg) } }`}</style>
     </div>
   );
 }

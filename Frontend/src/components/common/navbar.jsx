@@ -11,7 +11,7 @@ function Navbar() {
   const [scrolled, setScrolled] = useState(false);
 
   // Mobile accordion state
-  const [mobileOpen, setMobileOpen] = useState({ about: false, getInvolved: false, media: false, donate: false });
+  const [mobileOpen, setMobileOpen] = useState({ about: false, getInvolved: false, media: false, gallery: false, donate: false });
 
   const toggleMobile = (key) =>
     setMobileOpen((prev) => ({ ...prev, [key]: !prev[key] }));
@@ -96,7 +96,7 @@ function Navbar() {
 
   const closeMenu = () => {
     setMenuOpen(false);
-    setMobileOpen({ about: false, getInvolved: false, media: false, donate: false });
+    setMobileOpen({ about: false, getInvolved: false, media: false, gallery: false, donate: false });
   };
 
   // Nav data
@@ -116,8 +116,20 @@ function Navbar() {
   ];
 
   const mediaLinks = [
-    { name: "Gallery", path: "/gallery/images" },
-    { name: "Events", path: "/events" },
+    { 
+      name: "Gallery", 
+      submenu: [
+        { name: "Image Gallery", path: "/gallery/images" },
+        { name: "Video Gallery", path: "/gallery/videos" },
+      ]
+    },
+    { 
+      name: "Events",
+      submenu: [
+        { name: "Upcoming Events", path: "/events/upcoming" },
+        { name: "Past Events", path: "/events/past" },
+      ]
+    },
     { name: "Blog", path: "/blog" },
   ];
 
@@ -291,10 +303,32 @@ function Navbar() {
             <button type="button" className={navBtn} aria-label="Media menu">
               Media <span className="text-[10px] opacity-70 transition-transform group-hover:rotate-180 duration-300">▼</span>
             </button>
-            <div className={`w-40 ${dropdownAnimation}`}>
-              <ul className="bg-white border border-gray-100 rounded-xl shadow-xl py-2 overflow-hidden">
+            <div className={`w-48 ${dropdownAnimation}`}>
+              <ul className="bg-white border border-gray-100 rounded-xl shadow-xl py-2 overflow-visible">
                 {mediaLinks.map((item) => (
-                  <li key={item.name}><Link to={item.path} className={dropLink}>{item.name}</Link></li>
+                  <li key={item.name} className={item.submenu ? "relative group/gallery" : ""}>
+                    {item.submenu ? (
+                      <>
+                        <button type="button" className={`${dropLink} w-full flex justify-between items-center group/gallery-btn`}>
+                          {item.name}
+                          <span className="text-[8px] opacity-60 transition-transform group-hover/gallery:translate-x-1 duration-200">▶</span>
+                        </button>
+                        <div className="absolute left-full top-0 mt-0 ml-0 pt-0 opacity-0 invisible group-hover/gallery:opacity-100 group-hover/gallery:visible transition-all duration-200 ease-in-out translate-x-0 group-hover/gallery:translate-x-0 scale-95 group-hover/gallery:scale-100 origin-left z-[9999]">
+                          <ul className="bg-white border border-gray-100 rounded-lg shadow-2xl py-2 overflow-hidden w-44 ml-1">
+                            {item.submenu.map((subitem) => (
+                              <li key={subitem.name}>
+                                <Link to={subitem.path} className={dropLink}>
+                                  {subitem.name}
+                                </Link>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      </>
+                    ) : (
+                      <Link to={item.path} className={dropLink}>{item.name}</Link>
+                    )}
+                  </li>
                 ))}
               </ul>
             </div>
@@ -490,7 +524,29 @@ function Navbar() {
             <div className={`grid transition-all duration-300 ease-in-out ${mobileOpen.media ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'}`}>
               <ul className="overflow-hidden bg-gray-50">
                 {mediaLinks.map((item) => (
-                  <li key={item.name}><Link to={item.path} onClick={closeMenu} className="block px-8 py-2.5 text-gray-600 hover:text-green-700 transition-colors border-l-2 border-transparent hover:border-green-600">{item.name}</Link></li>
+                  <li key={item.name}>
+                    {item.submenu ? (
+                      <>
+                        <button type="button" onClick={() => toggleMobile("gallery")} className="w-full flex justify-between items-center px-8 py-2.5 text-gray-600 hover:text-green-700 transition-colors border-l-2 border-transparent hover:border-green-600 text-sm font-medium">
+                          {item.name}
+                          <span className={`text-xs transition-transform duration-300 ${mobileOpen.gallery ? 'rotate-180' : ''}`}>▼</span>
+                        </button>
+                        <div className={`grid transition-all duration-300 ease-in-out ${mobileOpen.gallery ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'}`}>
+                          <ul className="overflow-hidden">
+                            {item.submenu.map((subitem) => (
+                              <li key={subitem.name}>
+                                <Link to={subitem.path} onClick={closeMenu} className="block px-12 py-2 text-gray-500 hover:text-green-700 transition-colors border-l-2 border-transparent hover:border-green-600 text-xs">
+                                  {subitem.name}
+                                </Link>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      </>
+                    ) : (
+                      <Link to={item.path} onClick={closeMenu} className="block px-8 py-2.5 text-gray-600 hover:text-green-700 transition-colors border-l-2 border-transparent hover:border-green-600">{item.name}</Link>
+                    )}
+                  </li>
                 ))}
               </ul>
             </div>

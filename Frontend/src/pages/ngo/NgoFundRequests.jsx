@@ -11,16 +11,16 @@ import {
   FileText,
   AlertCircle,
   ChevronDown,
-  RefreshCw
+  RefreshCw,
+  Wallet
 } from 'lucide-react';
 import { API_BASE_URL } from './NgoLayout';
-import './ngo.css';
 
 const STATUS_CONFIG = {
-  Pending:  { color: '#d97706', bg: '#fef3c7', icon: Clock },
-  Approved: { color: '#2563eb', bg: '#dbeafe', icon: CheckCircle2 },
-  Released: { color: '#16a34a', bg: '#dcfce7', icon: Banknote },
-  Rejected: { color: '#dc2626', bg: '#fee2e2', icon: XCircle }
+  Pending:  { className: 'bg-[#fff7ed] text-[#c2410c] border border-[#ffedd5]', icon: Clock },
+  Approved: { className: 'bg-[#eff6ff] text-[#1d4ed8] border border-[#bfdbfe]', icon: CheckCircle2 },
+  Released: { className: 'bg-[#f0f4ea] text-[#5a6b46] border border-[#d6e3c9]', icon: Banknote },
+  Rejected: { className: 'bg-[#fef2f2] text-[#991b1b] border border-[#fecaca]', icon: XCircle }
 };
 
 const PURPOSE_OPTIONS = [
@@ -145,175 +145,173 @@ export default function NgoFundRequests() {
   const totalApproved = requests.filter(r => r.status === 'Approved').length;
   const totalReleased = requests.filter(r => r.status === 'Released').length;
 
+  const inputCls = "w-full px-4 py-2.5 bg-[#f8f7f5] border border-[#e5e5e5] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#eaddc8] focus:border-[#6c5d46] transition-all";
+  const labelCls = "block text-sm font-bold text-[#222222] mb-1.5";
+
   return (
-    <div className="ngo-dashboard">
+    <div className="min-h-screen bg-[#f8f7f5] p-4 sm:p-6 lg:p-8 font-sans text-[#2c2c2c] selection:bg-[#eaddc8] selection:text-[#2c2c2c] flex flex-col gap-8">
       {/* Header */}
-      <header className="ngo-welcome-header">
-        <div className="ngo-welcome-content">
-          <div className="ngo-welcome-text">
-            <h1>Fund Requests</h1>
-            <p>Submit and track funding requests for your organization's needs.</p>
-          </div>
-          <div className="ngo-welcome-actions">
-            <button className="ngo-header-btn primary" onClick={() => { setShowForm(true); setFormError(''); setFormSuccess(''); }}>
-              <Plus size={18} />
-              New Request
-            </button>
-          </div>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-[#222222] flex items-center gap-3">
+            <div className="p-2 bg-white rounded-xl shadow-sm border border-gray-100 text-[#6c5d46]">
+              <Wallet size={24} />
+            </div>
+            Fund Requests
+          </h1>
+          <p className="text-[#6c6c6c] text-sm sm:text-base font-medium mt-2">
+            Submit and track funding requests for your organization's needs.
+          </p>
         </div>
-      </header>
+        <button
+          onClick={() => { setShowForm(true); setFormError(''); setFormSuccess(''); }}
+          className="inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-[#6c5d46] text-white rounded-lg text-sm font-semibold hover:bg-[#584a36] transition-all shadow-sm shrink-0"
+        >
+          <Plus size={16} /> New Request
+        </button>
+      </div>
 
       {/* Success Banner */}
       {formSuccess && (
-        <div className="fund-alert fund-alert-success">
-          <CheckCircle2 size={18} />
-          <span>{formSuccess}</span>
-          <button onClick={() => setFormSuccess('')}><X size={16} /></button>
+        <div className="flex items-center justify-between p-4 rounded-xl text-sm font-bold border bg-[#f0f4ea] text-[#5a6b46] border-[#d6e3c9]">
+          <span className="flex items-center gap-3">
+            <CheckCircle2 size={18} /> {formSuccess}
+          </span>
+          <button onClick={() => setFormSuccess('')} className="p-1 hover:bg-white/50 rounded-md transition-colors">
+            <X size={16} />
+          </button>
         </div>
       )}
 
       {/* Summary Stats */}
-      <section className="ngo-stats-section">
-        <div className="ngo-stats-row">
-          <div className="ngo-stat-card">
-            <div className="stat-header">
-              <span className="stat-label">Total Requests</span>
-              <div className="stat-icon purple"><IndianRupee size={20} /></div>
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+        {[
+          { label: "Total Requests", value: pagination.total, icon: <IndianRupee size={20} />, bg: "text-[#6c5d46]" },
+          { label: "Pending", value: totalPending, icon: <Clock size={20} />, bg: "text-[#c2410c]" },
+          { label: "Approved", value: totalApproved, icon: <CheckCircle2 size={20} />, bg: "text-[#1d4ed8]" },
+          { label: "Released", value: totalReleased, icon: <Banknote size={20} />, bg: "text-[#5a6b46]" },
+        ].map((s, idx) => (
+          <div key={idx} className={`flex items-center gap-4 p-5 bg-white rounded-2xl shadow-sm border ${idx === 3 ? 'border-[#d6e3c9]' : 'border-gray-100'}`}>
+            <div className={`w-12 h-12 flex items-center justify-center rounded-xl bg-[#f8f7f5] shrink-0 border border-[#eaddc8] ${s.bg}`}>
+              {s.icon}
             </div>
-            <div className="stat-value">{pagination.total}</div>
-            <div className="stat-footer"><span className="stat-neutral">All time</span></div>
-          </div>
-          <div className="ngo-stat-card">
-            <div className="stat-header">
-              <span className="stat-label">Pending Review</span>
-              <div className="stat-icon orange"><Clock size={20} /></div>
+            <div>
+              <span className="block text-2xl font-extrabold text-[#222222]">{s.value}</span>
+              <span className="block text-xs font-bold text-[#888888] uppercase tracking-wider mt-0.5">{s.label}</span>
             </div>
-            <div className="stat-value">{totalPending}</div>
-            <div className="stat-footer"><span className="stat-neutral">Awaiting admin</span></div>
           </div>
-          <div className="ngo-stat-card">
-            <div className="stat-header">
-              <span className="stat-label">Approved</span>
-              <div className="stat-icon blue"><CheckCircle2 size={20} /></div>
-            </div>
-            <div className="stat-value">{totalApproved}</div>
-            <div className="stat-footer"><span className="stat-neutral">Ready for release</span></div>
-          </div>
-          <div className="ngo-stat-card highlight">
-            <div className="stat-header">
-              <span className="stat-label">Funds Released</span>
-              <div className="stat-icon green"><Banknote size={20} /></div>
-            </div>
-            <div className="stat-value">{totalReleased}</div>
-            <div className="stat-footer"><span className="stat-neutral">Received</span></div>
-          </div>
-        </div>
-      </section>
+        ))}
+      </div>
 
       {/* New Request Form Modal */}
       {showForm && (
-        <div className="fund-modal-overlay" onClick={() => setShowForm(false)}>
-          <div className="fund-modal" onClick={e => e.stopPropagation()}>
-            <div className="fund-modal-header">
-              <div className="fund-modal-title">
-                <IndianRupee size={20} />
-                <h3>Submit Fund Request</h3>
+        <div className="fixed inset-0 z-50 bg-[#222222]/60 backdrop-blur-sm flex items-center justify-center p-4 sm:p-6 opacity-100 animate-in fade-in duration-200" onClick={() => setShowForm(false)}>
+          <div className="bg-white rounded-2xl w-full max-w-lg max-h-[90vh] flex flex-col shadow-xl scale-100 animate-in zoom-in-95 duration-200" onClick={e => e.stopPropagation()}>
+            
+            <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between bg-white shrink-0 rounded-t-2xl">
+              <div className="flex items-center gap-3">
+                <h2 className="text-lg font-bold text-[#222222] flex items-center gap-2">
+                  <IndianRupee size={20} className="text-[#6c5d46]" /> Submit Fund Request
+                </h2>
               </div>
-              <button className="fund-modal-close" onClick={() => setShowForm(false)}>
+              <button onClick={() => setShowForm(false)} className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors">
                 <X size={20} />
               </button>
             </div>
 
-            <form className="fund-form" onSubmit={handleSubmit}>
-              {formError && (
-                <div className="fund-alert fund-alert-error">
-                  <AlertCircle size={16} />
-                  <span>{formError}</span>
-                </div>
-              )}
-
-              <div className="fund-form-group">
-                <label>Requested Amount (₹) <span className="required">*</span></label>
-                <div className="fund-input-prefix">
-                  <span className="prefix-symbol">₹</span>
-                  <input
-                    type="number"
-                    min="1"
-                    placeholder="e.g. 50000"
-                    value={form.amount}
-                    onChange={e => setForm({ ...form, amount: e.target.value })}
-                    required
-                  />
-                </div>
-              </div>
-
-              <div className="fund-form-group">
-                <label>Purpose <span className="required">*</span></label>
-                <div className="fund-select-wrap">
-                  <select
-                    value={PURPOSE_OPTIONS.includes(form.purpose) ? form.purpose : (form.purpose ? 'Other' : '')}
-                    onChange={e => setForm({ ...form, purpose: e.target.value === 'Other' ? '' : e.target.value })}
-                  >
-                    <option value="">Select a purpose</option>
-                    {PURPOSE_OPTIONS.map(opt => (
-                      <option key={opt} value={opt}>{opt}</option>
-                    ))}
-                  </select>
-                  <ChevronDown size={16} className="select-chevron" />
-                </div>
-                {(!PURPOSE_OPTIONS.includes(form.purpose) || form.purpose === '') && (
-                  <input
-                    type="text"
-                    placeholder="Describe the purpose..."
-                    value={form.purpose}
-                    onChange={e => setForm({ ...form, purpose: e.target.value })}
-                    className="fund-input-text"
-                    style={{ marginTop: '8px' }}
-                  />
+            <div className="p-6 overflow-y-auto custom-scrollbar">
+              <form id="fundForm" onSubmit={handleSubmit} className="space-y-5">
+                {formError && (
+                  <div className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold border bg-[#fef2f2] text-[#991b1b] border-[#fecaca]">
+                    <AlertCircle size={16} /> {formError}
+                  </div>
                 )}
-              </div>
 
-              <div className="fund-form-group">
-                <label>Additional Description <span className="optional">(optional)</span></label>
-                <textarea
-                  rows={4}
-                  placeholder="Provide more details about why this funding is needed, how it will be used, and expected impact..."
-                  value={form.description}
-                  onChange={e => setForm({ ...form, description: e.target.value })}
-                />
-              </div>
+                <div>
+                  <label className={labelCls}>Requested Amount (₹) <span className="text-red-500">*</span></label>
+                  <div className="relative">
+                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[#888888] font-bold">₹</span>
+                    <input
+                      type="number"
+                      min="1"
+                      placeholder="e.g. 50000"
+                      value={form.amount}
+                      onChange={e => setForm({ ...form, amount: e.target.value })}
+                      className={`${inputCls} pl-8`}
+                      required
+                    />
+                  </div>
+                </div>
 
-              <div className="fund-form-info">
-                <AlertCircle size={14} />
-                <p>Your request will be reviewed by the admin team. You'll be notified once a decision is made.</p>
-              </div>
-
-              <div className="fund-form-actions">
-                <button type="button" className="fund-btn-secondary" onClick={() => setShowForm(false)} disabled={submitting}>
-                  Cancel
-                </button>
-                <button type="submit" className="fund-btn-primary" disabled={submitting}>
-                  {submitting ? (
-                    <><RefreshCw size={16} className="spin" /> Submitting...</>
-                  ) : (
-                    <><IndianRupee size={16} /> Submit Request</>
+                <div>
+                  <label className={labelCls}>Purpose <span className="text-red-500">*</span></label>
+                  <div className="relative">
+                    <select
+                      value={PURPOSE_OPTIONS.includes(form.purpose) ? form.purpose : (form.purpose ? 'Other' : '')}
+                      onChange={e => setForm({ ...form, purpose: e.target.value === 'Other' ? '' : e.target.value })}
+                      className={`${inputCls} appearance-none pr-10 cursor-pointer`}
+                    >
+                      <option value="">Select a purpose</option>
+                      {PURPOSE_OPTIONS.map(opt => (
+                        <option key={opt} value={opt}>{opt}</option>
+                      ))}
+                      <option value="Other">Other</option>
+                    </select>
+                    <ChevronDown size={16} className="absolute right-4 top-1/2 -translate-y-1/2 text-[#888888] pointer-events-none" />
+                  </div>
+                  {(!PURPOSE_OPTIONS.includes(form.purpose) && form.purpose !== '' || (PURPOSE_OPTIONS.includes(form.purpose) === false && form.purpose !== '')) && (
+                    <input
+                      type="text"
+                      placeholder="Describe the purpose..."
+                      value={form.purpose}
+                      onChange={e => setForm({ ...form, purpose: e.target.value })}
+                      className={`${inputCls} mt-2`}
+                    />
                   )}
-                </button>
-              </div>
-            </form>
+                </div>
+
+                <div>
+                  <label className={labelCls}>Additional Description <span className="text-xs font-medium text-[#888888]">(optional)</span></label>
+                  <textarea
+                    rows={4}
+                    placeholder="Provide details about why funding is needed and the expected impact..."
+                    value={form.description}
+                    onChange={e => setForm({ ...form, description: e.target.value })}
+                    className={`${inputCls} resize-y min-h-[100px]`}
+                  />
+                </div>
+
+                <div className="bg-[#fff7ed] border border-[#ffedd5] rounded-xl p-4 flex items-start gap-3">
+                  <AlertCircle size={18} className="text-[#c2410c] mt-0.5 shrink-0" />
+                  <p className="text-sm font-medium text-[#c2410c]">
+                    Your request will be reviewed by the admin team. You'll be notified once a decision is made.
+                  </p>
+                </div>
+              </form>
+            </div>
+
+            <div className="px-6 py-4 border-t border-gray-100 bg-white flex items-center justify-end gap-3 shrink-0 rounded-b-2xl">
+              <button type="button" onClick={() => setShowForm(false)} disabled={submitting} className="px-5 py-2.5 bg-white text-[#2c2c2c] border border-gray-200 rounded-lg text-sm font-semibold hover:bg-gray-50 transition-all shadow-sm">
+                Cancel
+              </button>
+              <button type="submit" form="fundForm" disabled={submitting} className="px-5 py-2.5 bg-[#6c5d46] text-white rounded-lg text-sm font-semibold hover:bg-[#584a36] transition-all shadow-sm disabled:opacity-70 disabled:cursor-not-allowed flex items-center gap-2">
+                {submitting ? <><RefreshCw size={16} className="animate-spin" /> Submitting...</> : <><IndianRupee size={16} /> Submit Request</>}
+              </button>
+            </div>
+
           </div>
         </div>
       )}
 
-      {/* Requests List */}
-      <section className="ngo-section">
-        <div className="ngo-section-header">
-          <h2>My Fund Requests</h2>
-          <div className="fund-filter-wrap">
+      {/* Requests List Area */}
+      <div className="flex flex-col gap-6">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <h2 className="text-xl font-bold text-[#222222]">My Fund Requests</h2>
+          <div className="relative shrink-0">
             <select
               value={filterStatus}
               onChange={e => setFilterStatus(e.target.value)}
-              className="fund-filter-select"
+              className="pl-4 pr-10 py-2.5 bg-white border border-gray-200 rounded-lg text-sm font-bold text-[#6c6c6c] appearance-none focus:outline-none focus:border-[#6c5d46] hover:border-[#eaddc8] hover:bg-[#f8f7f5] transition-all shadow-sm cursor-pointer"
             >
               <option value="">All Statuses</option>
               <option value="Pending">Pending</option>
@@ -321,68 +319,76 @@ export default function NgoFundRequests() {
               <option value="Released">Released</option>
               <option value="Rejected">Rejected</option>
             </select>
-            <ChevronDown size={14} className="filter-chevron" />
+            <ChevronDown size={14} className="absolute right-4 top-1/2 -translate-y-1/2 text-[#888888] pointer-events-none" />
           </div>
         </div>
 
         {loading ? (
-          <div className="fund-loading">
-            <div className="ngo-loading-spinner" style={{ width: 32, height: 32 }}></div>
-            <p>Loading requests...</p>
+          <div className="flex flex-col items-center justify-center min-h-[30vh] gap-4">
+            <div className="w-10 h-10 border-4 border-[#eaddc8] border-t-[#6c5d46] rounded-full animate-spin"></div>
+            <p className="text-[#888888] font-medium">Loading requests...</p>
           </div>
         ) : requests.length === 0 ? (
-          <div className="ngo-empty-state">
-            <IndianRupee size={48} strokeWidth={1.5} />
-            <h4>No fund requests yet</h4>
-            <p>Submit your first fund request by clicking the "New Request" button above.</p>
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-12 text-center flex flex-col items-center justify-center">
+            <div className="w-20 h-20 bg-[#f8f7f5] rounded-full flex items-center justify-center text-[#d5cfc4] mb-4">
+              <IndianRupee size={32} strokeWidth={1.5} />
+            </div>
+            <h4 className="text-lg font-bold text-[#222222] mb-2">No fund requests yet</h4>
+            <p className="text-sm font-medium text-[#888888] mb-6">Submit your first fund request by clicking the "New Request" button above.</p>
           </div>
         ) : (
-          <div className="fund-requests-list">
+          <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
             {requests.map(req => {
               const cfg = STATUS_CONFIG[req.status] || STATUS_CONFIG.Pending;
               const StatusIcon = cfg.icon;
               return (
-                <div key={req._id} className={`fund-request-card ${req.isResolved ? 'resolved' : ''}`}>
-                  <div className="fund-request-top">
-                    <div className="fund-request-amount">
-                      <IndianRupee size={18} />
-                      <span>₹{Number(req.amount).toLocaleString('en-IN')}</span>
+                <div key={req._id} className={`bg-white rounded-2xl border ${req.isResolved ? 'border-[#d6e3c9] bg-[#fdfdfc]' : 'border-gray-100'} shadow-sm p-6 flex flex-col gap-4 hover:shadow-md transition-all relative overflow-hidden`}>
+                  
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex items-center gap-1.5 text-2xl font-extrabold text-[#222222]">
+                      <IndianRupee size={22} className="text-[#6c5d46]" />
+                      <span>{Number(req.amount).toLocaleString('en-IN')}</span>
                     </div>
-                    <div className="fund-status-badge" style={{ background: cfg.bg, color: cfg.color }}>
-                      <StatusIcon size={13} />
+                    <span className={`flex items-center gap-1.5 text-[10px] font-extrabold uppercase tracking-wider px-2.5 py-1 rounded-md shadow-sm ${req.isResolved ? 'bg-[#f8f7f5] text-[#888888] border border-gray-200' : cfg.className}`}>
+                      <StatusIcon size={12} />
                       {req.isResolved ? 'Resolved' : req.status}
-                    </div>
+                    </span>
                   </div>
 
-                  <div className="fund-request-purpose">
-                    <FileText size={14} />
-                    <strong>{req.purpose}</strong>
+                  <div className="flex items-center gap-2 text-sm font-bold text-[#222222]">
+                    <FileText size={16} className="text-[#888888]" />
+                    {req.purpose}
                   </div>
 
                   {req.description && (
-                    <p className="fund-request-desc">{req.description}</p>
+                    <p className="text-sm text-[#6c6c6c] leading-relaxed line-clamp-3 flex-1">{req.description}</p>
                   )}
 
                   {req.adminNote && (
-                    <div className="fund-admin-note">
-                      <AlertCircle size={14} />
-                      <span><strong>Admin note:</strong> {req.adminNote}</span>
+                    <div className="bg-[#fff7ed] border border-[#ffedd5] text-[#c2410c] p-3 rounded-xl text-xs font-medium mt-2">
+                      <div className="flex items-center gap-1.5 font-bold mb-1">
+                        <AlertCircle size={14} /> Admin Note
+                      </div>
+                      {req.adminNote}
                     </div>
                   )}
 
-                  <div className="fund-request-footer">
-                    <span className="fund-request-date">Submitted: {formatDate(req.createdAt)}</span>
-                    {req.releasedAt && (
-                      <span className="fund-request-date">Released: {formatDate(req.releasedAt)}</span>
-                    )}
+                  <div className="flex flex-wrap items-center justify-between gap-3 pt-4 border-t border-gray-100 mt-auto">
+                    <div className="flex flex-col gap-1">
+                      <span className="text-xs font-bold text-[#888888]">Submitted: {formatDate(req.createdAt)}</span>
+                      {req.releasedAt && (
+                        <span className="text-xs font-bold text-[#5a6b46]">Released: {formatDate(req.releasedAt)}</span>
+                      )}
+                    </div>
+                    
                     {req.status === 'Released' && !req.isResolved && (
                       <button
-                        className="fund-resolve-btn"
                         onClick={() => handleResolve(req._id)}
                         disabled={resolving === req._id}
+                        className="px-4 py-2 bg-[#f0f4ea] text-[#5a6b46] border border-[#d6e3c9] hover:bg-[#e4ebd8] rounded-lg text-xs font-bold transition-all shadow-sm flex items-center gap-1.5 ml-auto disabled:opacity-70"
                       >
                         {resolving === req._id ? (
-                          <><RefreshCw size={14} className="spin" /> Resolving...</>
+                          <><RefreshCw size={14} className="animate-spin" /> Resolving...</>
                         ) : (
                           <><CheckCircle2 size={14} /> Mark as Received</>
                         )}
@@ -397,19 +403,23 @@ export default function NgoFundRequests() {
 
         {/* Pagination */}
         {pagination.totalPages > 1 && (
-          <div className="fund-pagination">
+          <div className="flex items-center justify-center gap-2 mt-4">
             {Array.from({ length: pagination.totalPages }, (_, i) => i + 1).map(page => (
               <button
                 key={page}
-                className={`fund-page-btn ${pagination.page === page ? 'active' : ''}`}
                 onClick={() => fetchRequests(page, filterStatus)}
+                className={`w-10 h-10 rounded-lg flex items-center justify-center text-sm font-bold transition-all border shadow-sm ${
+                  pagination.page === page
+                    ? 'bg-[#6c5d46] text-white border-[#6c5d46]'
+                    : 'bg-white text-[#6c6c6c] border-gray-200 hover:border-[#eaddc8] hover:bg-[#f8f7f5]'
+                }`}
               >
                 {page}
               </button>
             ))}
           </div>
         )}
-      </section>
+      </div>
     </div>
   );
 }

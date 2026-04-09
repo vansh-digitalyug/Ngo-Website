@@ -4,6 +4,7 @@ import { verifyAdmin } from "../middlewares/admin.middleware.js";
 import { requireNgoAuth } from "../middlewares/ngoAuth.middleware.js";
 import {
     getAllEvents,
+    getPastEvents,
     getEventById,
     createEvent,
     updateEvent,
@@ -22,6 +23,7 @@ const router = express.Router();
 // PUBLIC
 // ─────────────────────────────────────────────────────────────────────────────
 router.get("/", getAllEvents);
+router.get("/past/all", getPastEvents);
 router.get("/:id/photos", getEventPhotos);
 router.get("/:id", getEventById);
 

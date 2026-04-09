@@ -3,21 +3,21 @@ import { Link } from "react-router-dom";
 import {
   AlertTriangle, CheckCircle, Clock, Loader2, ChevronDown,
   MapPin, User, TrendingUp, ArrowUpRight, X, Calendar,
-  Tag, Flag, FileText, ThumbsUp, CheckSquare
+  Tag, Flag, FileText, ThumbsUp, CheckSquare, MessageSquare
 } from "lucide-react";
 import { API_BASE_URL } from "./NgoLayout.jsx";
 
 const STATUS_META = {
-  pending:     { label: "Pending",     bg: "#fef9c3", color: "#854d0e", Icon: Clock },
-  in_progress: { label: "In Progress", bg: "#dbeafe", color: "#1e40af", Icon: TrendingUp },
-  solved:      { label: "Solved",      bg: "#dcfce7", color: "#166534", Icon: CheckCircle },
+  pending:     { label: "Pending",     className: "bg-[#fff7ed] text-[#c2410c] border border-[#ffedd5]", Icon: Clock },
+  in_progress: { label: "In Progress", className: "bg-[#eff6ff] text-[#1d4ed8] border border-[#bfdbfe]", Icon: TrendingUp },
+  solved:      { label: "Solved",      className: "bg-[#f0f4ea] text-[#5a6b46] border border-[#d6e3c9]", Icon: CheckCircle },
 };
 
 const PRIORITY_COLORS = {
-  low:      { bg: "#f1f5f9", color: "#475569" },
-  medium:   { bg: "#fffbeb", color: "#92400e" },
-  high:     { bg: "#fef2f2", color: "#991b1b" },
-  critical: { bg: "#fee2e2", color: "#7f1d1d" },
+  low:      { className: "bg-slate-50 text-slate-600 border border-slate-200" },
+  medium:   { className: "bg-amber-50 text-amber-700 border border-amber-200" },
+  high:     { className: "bg-orange-50 text-orange-700 border border-orange-200" },
+  critical: { className: "bg-red-50 text-red-700 border border-red-200" },
 };
 
 const CATEGORIES = ["all","water","sanitation","education","health","road","employment","electricity","other"];
@@ -25,6 +25,9 @@ const CATEGORIES = ["all","water","sanitation","education","health","road","empl
 const fmtDate = (d) => d
   ? new Date(d).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" })
   : "—";
+
+const inputCls = "w-full px-4 py-2.5 bg-[#f8f7f5] border border-[#e5e5e5] rounded-xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-[#eaddc8] focus:border-[#6c5d46] transition-all";
+const labelCls = "block text-sm font-bold text-[#222222] mb-1.5";
 
 // ── Detail modal ──────────────────────────────────────────────────────────────
 function ProblemDetailModal({ problem, onClose, onStatusChanged }) {
@@ -64,104 +67,106 @@ function ProblemDetailModal({ problem, onClose, onStatusChanged }) {
   return (
     <div
       onClick={onBackdrop}
-      style={{ position: "fixed", inset: 0, background: "rgba(15,23,42,0.6)", backdropFilter: "blur(3px)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000, padding: "16px" }}
+      className="fixed inset-0 z-50 bg-[#222222]/60 backdrop-blur-sm flex items-center justify-center p-4 sm:p-6 opacity-100 animate-in fade-in duration-200"
     >
-      <div style={{ background: "#fff", borderRadius: "18px", width: "100%", maxWidth: "560px", maxHeight: "90vh", overflowY: "auto", boxShadow: "0 25px 60px rgba(0,0,0,0.25)" }}>
+      <div className="bg-white rounded-2xl w-full max-w-2xl max-h-[90vh] flex flex-col shadow-xl scale-100 animate-in zoom-in-95 duration-200 overflow-hidden">
 
         {/* Header bar */}
-        <div style={{ padding: "18px 22px 14px", borderBottom: "1px solid #f1f5f9", display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: "12px" }}>
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <h2 style={{ margin: "0 0 6px", fontWeight: "800", fontSize: "17px", color: "#0f172a", lineHeight: 1.3 }}>{problem.title}</h2>
-            <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
-              <span style={{ background: sm.bg, color: sm.color, padding: "3px 10px", borderRadius: "20px", fontSize: "11px", fontWeight: "700", display: "inline-flex", alignItems: "center", gap: "4px" }}>
-                <sm.Icon size={10} /> {sm.label}
+        <div className="px-6 py-5 border-b border-gray-100 flex items-start justify-between gap-4 bg-white shrink-0">
+          <div className="flex-1 min-w-0">
+            <h2 className="text-xl font-extrabold text-[#222222] leading-tight mb-2">{problem.title}</h2>
+            <div className="flex flex-wrap items-center gap-2">
+              <span className={`flex items-center gap-1.5 text-[10px] font-extrabold uppercase tracking-wider px-2.5 py-1 rounded-md shadow-sm ${sm.className}`}>
+                <sm.Icon size={12} /> {sm.label}
               </span>
-              <span style={{ background: pc.bg, color: pc.color, padding: "3px 10px", borderRadius: "20px", fontSize: "11px", fontWeight: "700", textTransform: "capitalize" }}>
-                {problem.priority} priority
+              <span className={`flex items-center gap-1.5 text-[10px] font-extrabold uppercase tracking-wider px-2.5 py-1 rounded-md shadow-sm ${pc.className}`}>
+                {problem.priority}
               </span>
-              <span style={{ background: "#f1f5f9", color: "#475569", padding: "3px 10px", borderRadius: "20px", fontSize: "11px", fontWeight: "600", textTransform: "capitalize", display: "inline-flex", alignItems: "center", gap: "4px" }}>
-                <Tag size={10} /> {problem.category}
+              <span className="flex items-center gap-1.5 text-[10px] font-extrabold uppercase tracking-wider px-2.5 py-1 rounded-md shadow-sm bg-[#f8f7f5] text-[#6c6c6c] border border-[#e5e5e5]">
+                <Tag size={12} /> {problem.category}
               </span>
             </div>
           </div>
-          <button onClick={onClose} style={{ background: "#f1f5f9", border: "none", borderRadius: "8px", width: "32px", height: "32px", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-            <X size={15} color="#64748b" />
+          <button onClick={onClose} className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors shrink-0">
+            <X size={20} />
           </button>
         </div>
 
-        <div style={{ padding: "20px 22px", display: "flex", flexDirection: "column", gap: "18px" }}>
+        <div className="p-6 overflow-y-auto custom-scrollbar flex flex-col gap-6">
 
           {/* Description */}
           {problem.description && (
             <div>
-              <p style={{ margin: "0 0 6px", fontSize: "12px", fontWeight: "700", color: "#64748b", textTransform: "uppercase", letterSpacing: "0.05em", display: "flex", alignItems: "center", gap: "5px" }}>
-                <FileText size={12} /> Description
+              <p className="flex items-center gap-1.5 text-xs font-bold text-[#888888] uppercase tracking-wider mb-2">
+                <FileText size={14} /> Description
               </p>
-              <p style={{ margin: 0, fontSize: "14px", color: "#374151", lineHeight: 1.7, background: "#f8fafc", borderRadius: "10px", padding: "12px 14px" }}>
+              <p className="text-sm text-[#222222] leading-relaxed bg-[#f8f7f5] border border-[#e5e5e5] rounded-xl p-4">
                 {problem.description}
               </p>
             </div>
           )}
 
           {/* Meta grid */}
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px" }}>
-            <div style={{ background: "#f8fafc", borderRadius: "10px", padding: "12px 14px" }}>
-              <p style={{ margin: "0 0 4px", fontSize: "11px", fontWeight: "700", color: "#94a3b8", textTransform: "uppercase" }}>Village</p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="bg-[#f8f7f5] border border-[#e5e5e5] rounded-xl p-4">
+              <p className="text-[10px] font-bold text-[#888888] uppercase tracking-wider mb-1">Village</p>
               {problem.villageId ? (
-                <Link
-                  to={`/villages/${problem.villageId._id}`}
-                  target="_blank"
-                  style={{ display: "flex", alignItems: "center", gap: "5px", color: "#2563eb", fontSize: "13px", fontWeight: "700", textDecoration: "none" }}
-                >
-                  <MapPin size={12} /> {problem.villageId.villageName}
-                  <ArrowUpRight size={11} />
-                </Link>
-              ) : <span style={{ fontSize: "13px", color: "#64748b" }}>—</span>}
-              {problem.villageId?.district && (
-                <p style={{ margin: "2px 0 0", fontSize: "11px", color: "#94a3b8" }}>{problem.villageId.district}, {problem.villageId.state}</p>
-              )}
+                <>
+                  <Link
+                    to={`/villages/${problem.villageId._id}`}
+                    target="_blank"
+                    className="flex items-center gap-1.5 text-sm font-extrabold text-[#6c5d46] hover:text-[#584a36] hover:underline"
+                  >
+                    <MapPin size={14} /> {problem.villageId.villageName}
+                    <ArrowUpRight size={12} />
+                  </Link>
+                  {problem.villageId?.district && (
+                    <p className="mt-1 text-xs text-[#6c6c6c]">{problem.villageId.district}, {problem.villageId.state}</p>
+                  )}
+                </>
+              ) : <span className="text-sm text-[#6c6c6c]">—</span>}
             </div>
 
-            <div style={{ background: "#f8fafc", borderRadius: "10px", padding: "12px 14px" }}>
-              <p style={{ margin: "0 0 4px", fontSize: "11px", fontWeight: "700", color: "#94a3b8", textTransform: "uppercase" }}>Reported By</p>
-              <p style={{ margin: 0, fontSize: "13px", fontWeight: "700", color: "#0f172a", display: "flex", alignItems: "center", gap: "5px" }}>
-                <User size={12} /> {problem.submittedBy?.name || problem.submittedByName || "Anonymous"}
+            <div className="bg-[#f8f7f5] border border-[#e5e5e5] rounded-xl p-4">
+              <p className="text-[10px] font-bold text-[#888888] uppercase tracking-wider mb-1">Reported By</p>
+              <p className="flex items-center gap-1.5 text-sm font-bold text-[#222222]">
+                <User size={14} className="text-[#888888]" /> {problem.submittedBy?.name || problem.submittedByName || "Anonymous"}
               </p>
             </div>
 
-            <div style={{ background: "#f8fafc", borderRadius: "10px", padding: "12px 14px" }}>
-              <p style={{ margin: "0 0 4px", fontSize: "11px", fontWeight: "700", color: "#94a3b8", textTransform: "uppercase" }}>Reported On</p>
-              <p style={{ margin: 0, fontSize: "13px", fontWeight: "600", color: "#374151", display: "flex", alignItems: "center", gap: "5px" }}>
-                <Calendar size={12} /> {fmtDate(problem.createdAt)}
+            <div className="bg-[#f8f7f5] border border-[#e5e5e5] rounded-xl p-4">
+              <p className="text-[10px] font-bold text-[#888888] uppercase tracking-wider mb-1">Reported On</p>
+              <p className="flex items-center gap-1.5 text-sm font-bold text-[#222222]">
+                <Calendar size={14} className="text-[#888888]" /> {fmtDate(problem.createdAt)}
               </p>
             </div>
 
-            <div style={{ background: "#f8fafc", borderRadius: "10px", padding: "12px 14px" }}>
-              <p style={{ margin: "0 0 4px", fontSize: "11px", fontWeight: "700", color: "#94a3b8", textTransform: "uppercase" }}>Upvotes</p>
-              <p style={{ margin: 0, fontSize: "13px", fontWeight: "700", color: "#374151", display: "flex", alignItems: "center", gap: "5px" }}>
-                <ThumbsUp size={12} /> {problem.upvotes?.length || 0} people
+            <div className="bg-[#f8f7f5] border border-[#e5e5e5] rounded-xl p-4">
+              <p className="text-[10px] font-bold text-[#888888] uppercase tracking-wider mb-1">Upvotes</p>
+              <p className="flex items-center gap-1.5 text-sm font-bold text-[#222222]">
+                <ThumbsUp size={14} className="text-[#888888]" /> {problem.upvotes?.length || 0} people
               </p>
             </div>
           </div>
 
           {/* Resolution info (if already solved) */}
           {problem.status === "solved" && problem.resolvedAt && (
-            <div style={{ background: "#f0fdf4", border: "1px solid #bbf7d0", borderRadius: "10px", padding: "12px 14px" }}>
-              <p style={{ margin: "0 0 4px", fontSize: "11px", fontWeight: "700", color: "#16a34a", textTransform: "uppercase", display: "flex", alignItems: "center", gap: "5px" }}>
-                <CheckSquare size={12} /> Resolved on {fmtDate(problem.resolvedAt)}
+            <div className="bg-[#f0f4ea] border border-[#d6e3c9] rounded-xl p-4">
+              <p className="flex items-center gap-1.5 text-xs font-extrabold text-[#5a6b46] uppercase tracking-wider mb-2">
+                <CheckSquare size={14} /> Resolved on {fmtDate(problem.resolvedAt)}
               </p>
               {problem.resolvedNote && (
-                <p style={{ margin: 0, fontSize: "13px", color: "#15803d", lineHeight: 1.6 }}>{problem.resolvedNote}</p>
+                <p className="text-sm text-[#4b593a] leading-relaxed">{problem.resolvedNote}</p>
               )}
             </div>
           )}
 
           {/* ── Update status ── */}
-          <div style={{ borderTop: "1px solid #f1f5f9", paddingTop: "16px" }}>
-            <p style={{ margin: "0 0 10px", fontSize: "13px", fontWeight: "700", color: "#0f172a", display: "flex", alignItems: "center", gap: "6px" }}>
-              <Flag size={13} /> Update Status
+          <div className="pt-6 border-t border-gray-100">
+            <p className="flex items-center gap-2 text-sm font-bold text-[#222222] mb-3">
+              <Flag size={16} className="text-[#6c5d46]" /> Update Status
             </p>
-            <div style={{ display: "flex", gap: "8px", marginBottom: "12px", flexWrap: "wrap" }}>
+            <div className="flex flex-wrap gap-2 mb-4">
               {["pending", "in_progress", "solved"].map(s => {
                 const m = STATUS_META[s];
                 const active = newStatus === s;
@@ -169,34 +174,39 @@ function ProblemDetailModal({ problem, onClose, onStatusChanged }) {
                   <button
                     key={s}
                     onClick={() => setNewStatus(s)}
-                    style={{ padding: "7px 16px", borderRadius: "8px", border: `2px solid ${active ? m.color : "#e2e8f0"}`, background: active ? m.bg : "#fff", color: active ? m.color : "#374151", fontWeight: "700", fontSize: "13px", cursor: "pointer", display: "flex", alignItems: "center", gap: "5px", transition: "all 0.15s" }}
+                    className={`px-4 py-2 rounded-lg border text-xs font-bold flex items-center gap-1.5 transition-all
+                      ${active 
+                        ? `${m.className} ring-2 ring-offset-1 ring-[#eaddc8]` 
+                        : "bg-white border-[#e5e5e5] text-[#6c6c6c] hover:bg-[#f8f7f5]"}`}
                   >
-                    <m.Icon size={12} /> {m.label}
+                    <m.Icon size={14} /> {m.label}
                   </button>
                 );
               })}
             </div>
 
             {newStatus === "solved" && (
-              <textarea
-                rows={2}
-                value={resolveNote}
-                onChange={e => setResolveNote(e.target.value)}
-                placeholder="Resolution note (optional) — describe how it was resolved…"
-                style={{ width: "100%", padding: "10px 12px", border: "1.5px solid #e2e8f0", borderRadius: "8px", fontSize: "13px", resize: "vertical", boxSizing: "border-box", fontFamily: "inherit", marginBottom: "10px" }}
-              />
+              <div className="mb-4 animate-in slide-in-from-top-2 duration-200">
+                <textarea
+                  rows={2}
+                  value={resolveNote}
+                  onChange={e => setResolveNote(e.target.value)}
+                  placeholder="Resolution note (optional) — describe how it was resolved…"
+                  className={`${inputCls} resize-y min-h-[80px]`}
+                />
+              </div>
             )}
 
-            <div style={{ display: "flex", gap: "10px", justifyContent: "flex-end" }}>
-              <button onClick={onClose} style={{ padding: "9px 20px", borderRadius: "8px", border: "1px solid #e2e8f0", background: "#fff", fontWeight: "600", fontSize: "13px", cursor: "pointer" }}>
+            <div className="flex items-center justify-end gap-3 mt-2">
+              <button onClick={onClose} className="px-5 py-2.5 bg-white text-[#2c2c2c] border border-gray-200 rounded-lg text-sm font-semibold hover:bg-gray-50 transition-all shadow-sm">
                 Close
               </button>
               <button
                 onClick={handleStatusSave}
                 disabled={saving || (newStatus === problem.status && resolveNote === (problem.resolvedNote || ""))}
-                style={{ padding: "9px 22px", borderRadius: "8px", border: "none", background: "#2563eb", color: "#fff", fontWeight: "700", fontSize: "13px", cursor: "pointer", opacity: saving ? 0.7 : 1, display: "flex", alignItems: "center", gap: "6px" }}
+                className="px-5 py-2.5 bg-[#6c5d46] text-white rounded-lg text-sm font-semibold hover:bg-[#584a36] transition-all shadow-sm disabled:opacity-70 disabled:cursor-not-allowed flex items-center gap-2"
               >
-                {saving ? <><Loader2 size={13} style={{ animation: "spin 1s linear infinite" }} /> Saving…</> : saved ? "✓ Saved" : "Save Changes"}
+                {saving ? <><Loader2 size={16} className="animate-spin" /> Saving…</> : saved ? "✓ Saved" : "Save Changes"}
               </button>
             </div>
           </div>
@@ -209,19 +219,20 @@ function ProblemDetailModal({ problem, onClose, onStatusChanged }) {
 
 // ── Status inline select (table) ──────────────────────────────────────────────
 function StatusSelect({ value, onChange }) {
+  const meta = STATUS_META[value] || STATUS_META.pending;
   return (
-    <div style={{ position: "relative", display: "inline-block" }}>
+    <div className="relative inline-block">
       <select
         value={value}
         onChange={e => onChange(e.target.value)}
         onClick={e => e.stopPropagation()}
-        style={{ appearance: "none", padding: "5px 28px 5px 10px", borderRadius: "7px", border: "1px solid #e2e8f0", fontSize: "12px", fontWeight: "600", background: "#fff", cursor: "pointer", color: "#374151" }}
+        className={`appearance-none pl-3 pr-8 py-1.5 rounded-lg border text-xs font-bold cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#eaddc8] transition-colors ${meta.className.replace('border', 'border')}`}
       >
-        <option value="pending">Pending</option>
-        <option value="in_progress">In Progress</option>
-        <option value="solved">Solved</option>
+        <option value="pending" className="text-[#222222] bg-white">Pending</option>
+        <option value="in_progress" className="text-[#222222] bg-white">In Progress</option>
+        <option value="solved" className="text-[#222222] bg-white">Solved</option>
       </select>
-      <ChevronDown size={12} style={{ position: "absolute", right: "8px", top: "50%", transform: "translateY(-50%)", pointerEvents: "none", color: "#9ca3af" }} />
+      <ChevronDown size={14} className={`absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none ${meta.className.split(' ')[1]}`} />
     </div>
   );
 }
@@ -303,74 +314,86 @@ export default function NgoProblems() {
       .finally(() => setSaving(false));
   };
 
-  const inp = { appearance: "none", padding: "7px 28px 7px 12px", borderRadius: "8px", border: "1px solid #e2e8f0", fontSize: "13px", background: "#fff", cursor: "pointer", color: "#374151" };
-
   return (
-    <div style={{ padding: "28px", fontFamily: "system-ui, -apple-system, sans-serif" }}>
-      <style>{`@keyframes spin { from { transform:rotate(0deg) } to { transform:rotate(360deg) } }`}</style>
+    <div className="min-h-screen bg-[#f8f7f5] p-4 sm:p-6 lg:p-8 font-sans text-[#2c2c2c] selection:bg-[#eaddc8] selection:text-[#2c2c2c] flex flex-col gap-6">
 
       {/* Header */}
-      <div style={{ marginBottom: "24px" }}>
-        <h1 style={{ margin: "0 0 4px", fontWeight: "800", fontSize: "22px", color: "#0f172a" }}>Village Problems</h1>
-        <p style={{ margin: 0, color: "#64748b", fontSize: "14px" }}>
+      <div>
+        <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-[#222222] flex items-center gap-3 mb-2">
+          <div className="p-2 bg-white rounded-xl shadow-sm border border-gray-100 text-[#6c5d46]">
+            <MessageSquare size={24} />
+          </div>
+          Village Problems
+        </h1>
+        <p className="text-[#6c6c6c] text-sm sm:text-base font-medium">
           {pagination.total} problem{pagination.total !== 1 ? "s" : ""} reported across your adopted villages · click a row to see full details
         </p>
       </div>
 
       {msg && (
-        <div style={{ padding: "10px 14px", marginBottom: "16px", borderRadius: "8px", background: "#f0fdf4", color: "#166534", fontWeight: "600", fontSize: "14px", border: "1px solid #bbf7d0" }}>
-          {msg}
+        <div className="px-4 py-3 bg-[#f0f4ea] border border-[#d6e3c9] text-[#5a6b46] rounded-xl text-sm font-bold flex items-center gap-2 animate-in fade-in slide-in-from-top-2">
+          <CheckCircle size={16} /> {msg}
         </div>
       )}
 
       {/* Filters */}
-      <div style={{ display: "flex", gap: "10px", flexWrap: "wrap", marginBottom: "20px", alignItems: "center" }}>
-        <div style={{ display: "flex", gap: "6px", flexWrap: "wrap" }}>
+      <div className="flex flex-wrap items-center gap-4 bg-white p-4 rounded-2xl border border-gray-100 shadow-sm">
+        <div className="flex flex-wrap gap-2">
           {["all", "pending", "in_progress", "solved"].map(s => (
             <button key={s} onClick={() => setStatusFilter(s)}
-              style={{ padding: "6px 14px", borderRadius: "20px", border: "1px solid", cursor: "pointer", fontSize: "12px", fontWeight: "600",
-                background: statusFilter === s ? "#0f172a" : "#fff",
-                color:      statusFilter === s ? "#fff"    : "#374151",
-                borderColor: statusFilter === s ? "#0f172a" : "#e2e8f0",
-              }}>
+              className={`px-4 py-2 rounded-lg text-xs font-bold transition-all border
+                ${statusFilter === s 
+                  ? "bg-[#6c5d46] text-white border-[#6c5d46] shadow-sm" 
+                  : "bg-white text-[#6c6c6c] border-gray-200 hover:bg-[#f8f7f5]"}`}
+            >
               {s === "all" ? "All" : s === "in_progress" ? "In Progress" : s.charAt(0).toUpperCase() + s.slice(1)}
             </button>
           ))}
         </div>
 
-        <div style={{ position: "relative" }}>
-          <select value={categoryFilter} onChange={e => setCategoryFilter(e.target.value)} style={inp}>
-            {CATEGORIES.map(c => <option key={c} value={c}>{c === "all" ? "All Categories" : c.charAt(0).toUpperCase() + c.slice(1)}</option>)}
-          </select>
-          <ChevronDown size={13} style={{ position: "absolute", right: "9px", top: "50%", transform: "translateY(-50%)", pointerEvents: "none", color: "#9ca3af" }} />
-        </div>
+        <div className="h-8 w-px bg-gray-200 hidden sm:block"></div>
 
-        <div style={{ position: "relative" }}>
-          <select value={priorityFilter} onChange={e => setPriorityFilter(e.target.value)} style={inp}>
-            {["all", "low", "medium", "high", "critical"].map(p => <option key={p} value={p}>{p === "all" ? "All Priorities" : p.charAt(0).toUpperCase() + p.slice(1)}</option>)}
-          </select>
-          <ChevronDown size={13} style={{ position: "absolute", right: "9px", top: "50%", transform: "translateY(-50%)", pointerEvents: "none", color: "#9ca3af" }} />
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="relative">
+            <select value={categoryFilter} onChange={e => setCategoryFilter(e.target.value)} className="appearance-none pl-4 pr-10 py-2 bg-[#f8f7f5] border border-[#e5e5e5] rounded-lg text-xs font-bold text-[#222222] focus:outline-none focus:ring-2 focus:ring-[#eaddc8] cursor-pointer">
+              {CATEGORIES.map(c => <option key={c} value={c}>{c === "all" ? "All Categories" : c.charAt(0).toUpperCase() + c.slice(1)}</option>)}
+            </select>
+            <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-[#888888] pointer-events-none" />
+          </div>
+
+          <div className="relative">
+            <select value={priorityFilter} onChange={e => setPriorityFilter(e.target.value)} className="appearance-none pl-4 pr-10 py-2 bg-[#f8f7f5] border border-[#e5e5e5] rounded-lg text-xs font-bold text-[#222222] focus:outline-none focus:ring-2 focus:ring-[#eaddc8] cursor-pointer">
+              {["all", "low", "medium", "high", "critical"].map(p => <option key={p} value={p}>{p === "all" ? "All Priorities" : p.charAt(0).toUpperCase() + p.slice(1)}</option>)}
+            </select>
+            <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-[#888888] pointer-events-none" />
+          </div>
         </div>
       </div>
 
       {/* Table */}
       {loading ? (
-        <div style={{ display: "flex", justifyContent: "center", padding: "60px", gap: "10px", color: "#64748b" }}>
-          <Loader2 size={20} style={{ animation: "spin 1s linear infinite" }} /> Loading…
+        <div className="flex flex-col items-center justify-center min-h-[40vh] gap-4">
+          <div className="w-10 h-10 border-4 border-[#eaddc8] border-t-[#6c5d46] rounded-full animate-spin"></div>
+          <p className="text-[#888888] font-medium">Loading problems…</p>
         </div>
       ) : problems.length === 0 ? (
-        <div style={{ textAlign: "center", padding: "60px", color: "#94a3b8", background: "#fff", borderRadius: "14px", border: "1px dashed #e2e8f0" }}>
-          <AlertTriangle size={40} style={{ marginBottom: "12px", color: "#cbd5e1" }} />
-          <p style={{ fontSize: "15px", margin: 0 }}>No problems found for the selected filters.</p>
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-12 text-center flex flex-col items-center justify-center min-h-[40vh]">
+          <div className="w-20 h-20 bg-[#f8f7f5] rounded-full flex items-center justify-center text-[#d5cfc4] mb-4">
+            <AlertTriangle size={32} strokeWidth={1.5} />
+          </div>
+          <h3 className="text-lg font-bold text-[#222222] mb-2">No problems found</h3>
+          <p className="text-sm font-medium text-[#888888]">Try adjusting your filters or search criteria.</p>
         </div>
       ) : (
-        <div style={{ background: "#fff", border: "1px solid #e2e8f0", borderRadius: "14px", overflow: "hidden" }}>
-          <div style={{ overflowX: "auto" }}>
-            <table style={{ width: "100%", borderCollapse: "collapse", minWidth: "680px" }}>
+        <div className="bg-white border border-gray-100 rounded-2xl overflow-hidden shadow-sm">
+          <div className="overflow-x-auto custom-scrollbar">
+            <table className="w-full text-left border-collapse min-w-[800px]">
               <thead>
-                <tr style={{ background: "#f8fafc" }}>
+                <tr className="bg-[#f8f7f5] border-b border-gray-100">
                   {["Problem", "Village", "Category", "Priority", "Status", "Reported By", "Update Status"].map(h => (
-                    <th key={h} style={{ padding: "11px 14px", fontSize: "11px", fontWeight: "700", color: "#64748b", textAlign: "left", textTransform: "uppercase", letterSpacing: "0.05em", borderBottom: "1px solid #e2e8f0", whiteSpace: "nowrap" }}>{h}</th>
+                    <th key={h} className="py-3 px-4 text-[11px] font-extrabold text-[#888888] uppercase tracking-wider whitespace-nowrap">
+                      {h}
+                    </th>
                   ))}
                 </tr>
               </thead>
@@ -382,42 +405,40 @@ export default function NgoProblems() {
                     <tr
                       key={p._id}
                       onClick={() => setDetailProblem(p)}
-                      style={{ borderBottom: "1px solid #f1f5f9", cursor: "pointer", transition: "background 0.1s" }}
-                      onMouseEnter={e => e.currentTarget.style.background = "#f8fafc"}
-                      onMouseLeave={e => e.currentTarget.style.background = ""}
+                      className="border-b border-gray-50 hover:bg-[#f8f7f5] cursor-pointer transition-colors group"
                     >
-                      <td style={{ padding: "12px 14px", maxWidth: "220px" }}>
-                        <p style={{ margin: "0 0 2px", fontWeight: "700", fontSize: "13px", color: "#0f172a", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{p.title}</p>
-                        {p.description && <p style={{ margin: 0, fontSize: "11px", color: "#64748b", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{p.description}</p>}
+                      <td className="py-4 px-4 max-w-[250px]">
+                        <p className="font-bold text-sm text-[#222222] truncate mb-0.5 group-hover:text-[#6c5d46] transition-colors">{p.title}</p>
+                        {p.description && <p className="text-xs text-[#888888] truncate">{p.description}</p>}
                       </td>
-                      <td style={{ padding: "12px 14px" }}>
+                      <td className="py-4 px-4 whitespace-nowrap">
                         {p.villageId ? (
-                          <span style={{ display: "flex", alignItems: "center", gap: "4px", color: "#374151", fontSize: "12px", fontWeight: "600" }}>
-                            <MapPin size={11} color="#2563eb" /> {p.villageId.villageName}
+                          <span className="flex items-center gap-1.5 text-xs font-bold text-[#222222]">
+                            <MapPin size={14} className="text-[#6c5d46]" /> {p.villageId.villageName}
                           </span>
-                        ) : "—"}
+                        ) : <span className="text-[#888888]">—</span>}
                       </td>
-                      <td style={{ padding: "12px 14px" }}>
-                        <span style={{ background: "#f1f5f9", color: "#475569", padding: "2px 8px", borderRadius: "5px", fontSize: "11px", fontWeight: "600", textTransform: "capitalize" }}>
+                      <td className="py-4 px-4 whitespace-nowrap">
+                        <span className="bg-[#f8f7f5] text-[#6c6c6c] border border-[#e5e5e5] px-2.5 py-1 rounded-md text-[10px] font-extrabold uppercase tracking-wider">
                           {p.category}
                         </span>
                       </td>
-                      <td style={{ padding: "12px 14px" }}>
-                        <span style={{ background: pc.bg, color: pc.color, padding: "2px 8px", borderRadius: "5px", fontSize: "11px", fontWeight: "700", textTransform: "capitalize" }}>
+                      <td className="py-4 px-4 whitespace-nowrap">
+                        <span className={`px-2.5 py-1 rounded-md text-[10px] font-extrabold uppercase tracking-wider ${pc.className}`}>
                           {p.priority}
                         </span>
                       </td>
-                      <td style={{ padding: "12px 14px" }}>
-                        <span style={{ background: sm.bg, color: sm.color, padding: "3px 9px", borderRadius: "20px", fontSize: "11px", fontWeight: "600", display: "inline-flex", alignItems: "center", gap: "4px" }}>
-                          <sm.Icon size={10} /> {sm.label}
+                      <td className="py-4 px-4 whitespace-nowrap">
+                        <span className={`flex items-center gap-1.5 text-[10px] font-extrabold uppercase tracking-wider px-2.5 py-1 rounded-md shadow-sm w-max ${sm.className}`}>
+                          <sm.Icon size={12} /> {sm.label}
                         </span>
                       </td>
-                      <td style={{ padding: "12px 14px" }}>
-                        <span style={{ fontSize: "12px", color: "#64748b", display: "flex", alignItems: "center", gap: "4px" }}>
-                          <User size={11} /> {p.submittedBy?.name || p.submittedByName || "Anonymous"}
+                      <td className="py-4 px-4 whitespace-nowrap">
+                        <span className="text-xs font-bold text-[#6c6c6c] flex items-center gap-1.5">
+                          <User size={14} /> {p.submittedBy?.name || p.submittedByName || "Anonymous"}
                         </span>
                       </td>
-                      <td style={{ padding: "12px 14px" }}>
+                      <td className="py-4 px-4 whitespace-nowrap">
                         <StatusSelect value={p.status} onChange={v => openQuickStatus(p, v)} />
                       </td>
                     </tr>
@@ -431,12 +452,18 @@ export default function NgoProblems() {
 
       {/* Pagination */}
       {pagination.pages > 1 && (
-        <div style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: "14px", marginTop: "24px" }}>
+        <div className="flex justify-center items-center gap-4 mt-4">
           <button disabled={page <= 1} onClick={() => setPage(p => p - 1)}
-            style={{ padding: "8px 18px", borderRadius: "8px", border: "1px solid #e2e8f0", background: "#fff", cursor: page <= 1 ? "not-allowed" : "pointer", opacity: page <= 1 ? 0.5 : 1, fontWeight: "600" }}>← Prev</button>
-          <span style={{ color: "#64748b", fontSize: "13px" }}>Page {page} of {pagination.pages}</span>
+            className="px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm font-semibold hover:bg-gray-50 transition-all disabled:opacity-50 disabled:cursor-not-allowed text-[#222222]">
+            &larr; Prev
+          </button>
+          <span className="text-sm font-bold text-[#888888]">
+            Page {page} of {pagination.pages}
+          </span>
           <button disabled={page >= pagination.pages} onClick={() => setPage(p => p + 1)}
-            style={{ padding: "8px 18px", borderRadius: "8px", border: "1px solid #e2e8f0", background: "#fff", cursor: page >= pagination.pages ? "not-allowed" : "pointer", opacity: page >= pagination.pages ? 0.5 : 1, fontWeight: "600" }}>Next →</button>
+            className="px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm font-semibold hover:bg-gray-50 transition-all disabled:opacity-50 disabled:cursor-not-allowed text-[#222222]">
+            Next &rarr;
+          </button>
         </div>
       )}
 
@@ -453,25 +480,37 @@ export default function NgoProblems() {
 
       {/* ── Quick status change confirm (from table dropdown) ── */}
       {resolveModal && (
-        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1100 }}>
-          <div style={{ background: "#fff", borderRadius: "16px", padding: "28px", width: "100%", maxWidth: "420px" }}>
-            <h3 style={{ margin: "0 0 8px", fontWeight: "800", fontSize: "17px", color: "#0f172a" }}>
-              Change Status → {resolveModal.newStatus === "in_progress" ? "In Progress" : resolveModal.newStatus.charAt(0).toUpperCase() + resolveModal.newStatus.slice(1)}
+        <div className="fixed inset-0 z-[60] bg-[#222222]/60 backdrop-blur-sm flex items-center justify-center p-4 opacity-100 animate-in fade-in duration-200">
+          <div className="bg-white rounded-2xl p-6 w-full max-w-md shadow-xl scale-100 animate-in zoom-in-95 duration-200">
+            <h3 className="text-lg font-bold text-[#222222] mb-2 flex items-center gap-2">
+              Update Status &rarr; 
+              <span className={`px-2 py-0.5 rounded text-xs uppercase tracking-wider border ${STATUS_META[resolveModal.newStatus].className}`}>
+                {STATUS_META[resolveModal.newStatus].label}
+              </span>
             </h3>
-            <p style={{ margin: "0 0 16px", color: "#64748b", fontSize: "13px" }}>Problem: <strong>{resolveModal.problem.title}</strong></p>
+            <p className="text-sm text-[#6c6c6c] mb-5">
+              Problem: <strong className="text-[#222222]">{resolveModal.problem.title}</strong>
+            </p>
+            
             {resolveModal.newStatus === "solved" && (
-              <div style={{ marginBottom: "16px" }}>
-                <label style={{ fontSize: "13px", fontWeight: "600", color: "#374151", display: "block", marginBottom: "6px" }}>Resolution Note (optional)</label>
-                <textarea rows={3} value={resolveNote} onChange={e => setResolveNote(e.target.value)}
+              <div className="mb-5 animate-in slide-in-from-top-2">
+                <label className={labelCls}>Resolution Note (optional)</label>
+                <textarea 
+                  rows={3} 
+                  value={resolveNote} 
+                  onChange={e => setResolveNote(e.target.value)}
                   placeholder="Describe how the problem was resolved…"
-                  style={{ width: "100%", padding: "10px", border: "1px solid #e2e8f0", borderRadius: "8px", fontSize: "13px", resize: "vertical", boxSizing: "border-box", fontFamily: "inherit" }} />
+                  className={`${inputCls} resize-y min-h-[80px]`} 
+                />
               </div>
             )}
-            <div style={{ display: "flex", gap: "10px", justifyContent: "flex-end" }}>
-              <button onClick={() => setResolveModal(null)} style={{ padding: "9px 18px", borderRadius: "8px", border: "1px solid #e2e8f0", background: "#fff", fontWeight: "600", cursor: "pointer" }}>Cancel</button>
-              <button onClick={confirmQuickStatus} disabled={saving}
-                style={{ padding: "9px 18px", borderRadius: "8px", border: "none", background: "#0f172a", color: "#fff", fontWeight: "700", cursor: saving ? "not-allowed" : "pointer", opacity: saving ? 0.7 : 1 }}>
-                {saving ? "Saving…" : "Confirm"}
+            
+            <div className="flex items-center justify-end gap-3 mt-2">
+              <button onClick={() => setResolveModal(null)} className="px-5 py-2.5 bg-white text-[#2c2c2c] border border-gray-200 rounded-lg text-sm font-semibold hover:bg-gray-50 transition-all shadow-sm">
+                Cancel
+              </button>
+              <button onClick={confirmQuickStatus} disabled={saving} className="px-5 py-2.5 bg-[#6c5d46] text-white rounded-lg text-sm font-semibold hover:bg-[#584a36] transition-all shadow-sm disabled:opacity-70 disabled:cursor-not-allowed flex items-center gap-2">
+                {saving ? <><Loader2 size={16} className="animate-spin" /> Saving…</> : "Confirm Update"}
               </button>
             </div>
           </div>

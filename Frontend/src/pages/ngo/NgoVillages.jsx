@@ -5,25 +5,33 @@ import { useOutletContext } from "react-router-dom";
 import {
   MapPin, Plus, Edit2, Trash2, CheckCircle, PauseCircle, Flag,
   Loader2, Users, Droplets, Zap, Trash, Route, ChevronDown,
-  X, AlertTriangle, Clock, TrendingUp
+  X, AlertTriangle, Clock, TrendingUp, Home
 } from "lucide-react";
 import { API_BASE_URL } from "./NgoLayout.jsx";
 
 const STATUS_META = {
-  active:    { label: "Active",    bg: "#dcfce7", color: "#166534", Icon: CheckCircle },
-  paused:    { label: "Paused",    bg: "#fef9c3", color: "#854d0e", Icon: PauseCircle },
-  completed: { label: "Completed", bg: "#dbeafe", color: "#1e40af", Icon: Flag },
+  active:    { label: "Active",    className: "bg-[#f0f4ea] text-[#5a6b46] border border-[#d6e3c9]", Icon: CheckCircle },
+  paused:    { label: "Paused",    className: "bg-[#fff7ed] text-[#c2410c] border border-[#ffedd5]", Icon: PauseCircle },
+  completed: { label: "Completed", className: "bg-[#eff6ff] text-[#1d4ed8] border border-[#bfdbfe]", Icon: Flag },
 };
 
 const NEED_KEYS = ["water", "electricity", "sanitation", "roads"];
 const NEED_ICONS = { water: Droplets, electricity: Zap, sanitation: Trash, roads: Route };
-const NEED_COLORS = { water: "#0ea5e9", electricity: "#eab308", sanitation: "#10b981", roads: "#8b5cf6" };
+const NEED_COLORS = { 
+  water: { text: "text-[#0ea5e9]", bg: "bg-[#0ea5e9]", track: "bg-[#e0f2fe]" }, 
+  electricity: { text: "text-[#eab308]", bg: "bg-[#eab308]", track: "bg-[#fef9c3]" }, 
+  sanitation: { text: "text-[#10b981]", bg: "bg-[#10b981]", track: "bg-[#d1fae5]" }, 
+  roads: { text: "text-[#8b5cf6]", bg: "bg-[#8b5cf6]", track: "bg-[#ede9fe]" } 
+};
 
 const empty = {
   villageName: "", district: "", state: "", pincode: "",
   totalFamilies: "", description: "", status: "active",
   basicNeeds: { water: { coveragePercent: 0 }, electricity: { coveragePercent: 0 }, sanitation: { coveragePercent: 0 }, roads: { coveragePercent: 0 } },
 };
+
+const inputCls = "w-full px-4 py-2.5 bg-[#f8f7f5] border border-[#e5e5e5] rounded-xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-[#eaddc8] focus:border-[#6c5d46] transition-all";
+const labelCls = "block text-sm font-bold text-[#222222] mb-1.5";
 
 function VillageModal({ village, onClose, onSaved }) {
   const [form, setForm] = useState(village ? {
@@ -41,6 +49,7 @@ function VillageModal({ village, onClose, onSaved }) {
       roads:       { coveragePercent: village.basicNeeds?.roads?.coveragePercent ?? 0 },
     },
   } : { ...empty, basicNeeds: { water: { coveragePercent: 0 }, electricity: { coveragePercent: 0 }, sanitation: { coveragePercent: 0 }, roads: { coveragePercent: 0 } } });
+  
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const token = localStorage.getItem("token");
@@ -76,89 +85,104 @@ function VillageModal({ village, onClose, onSaved }) {
       .finally(() => setSaving(false));
   };
 
-  const inp = { padding: "9px 12px", border: "1px solid #e2e8f0", borderRadius: "8px", fontSize: "14px", width: "100%", boxSizing: "border-box", fontFamily: "inherit" };
-
   return (
-    <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.55)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000, padding: "16px" }}>
-      <div style={{ background: "#fff", borderRadius: "18px", padding: "28px", width: "100%", maxWidth: "560px", maxHeight: "90vh", overflowY: "auto" }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px" }}>
-          <h2 style={{ margin: 0, fontWeight: "800", fontSize: "18px", color: "#0f172a" }}>
+    <div className="fixed inset-0 z-50 bg-[#222222]/60 backdrop-blur-sm flex items-center justify-center p-4 sm:p-6 opacity-100 animate-in fade-in duration-200" onClick={onClose}>
+      <div className="bg-white rounded-2xl w-full max-w-2xl max-h-[90vh] flex flex-col shadow-xl scale-100 animate-in zoom-in-95 duration-200" onClick={e => e.stopPropagation()}>
+        
+        <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between bg-white shrink-0 rounded-t-2xl">
+          <h2 className="text-lg font-bold text-[#222222] flex items-center gap-2">
+            <Home size={20} className="text-[#6c5d46]" />
             {village ? "Edit Village" : "Adopt a Village"}
           </h2>
-          <button onClick={onClose} style={{ background: "none", border: "none", cursor: "pointer", color: "#64748b" }}><X size={20} /></button>
+          <button onClick={onClose} className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors">
+            <X size={20} />
+          </button>
         </div>
 
-        {error && <div style={{ background: "#fef2f2", border: "1px solid #fecaca", color: "#dc2626", padding: "10px 14px", borderRadius: "8px", marginBottom: "16px", fontSize: "13px" }}>{error}</div>}
+        <div className="p-6 overflow-y-auto custom-scrollbar flex flex-col gap-6">
+          {error && (
+            <div className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold border bg-[#fef2f2] text-[#991b1b] border-[#fecaca]">
+              <AlertTriangle size={16} /> {error}
+            </div>
+          )}
 
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "14px" }}>
-          <div style={{ gridColumn: "1/-1" }}>
-            <label style={{ fontSize: "12px", fontWeight: "600", color: "#374151", display: "block", marginBottom: "5px" }}>Village Name *</label>
-            <input style={inp} value={form.villageName} onChange={e => set("villageName", e.target.value)} placeholder="e.g. Rampur" />
-          </div>
-          <div>
-            <label style={{ fontSize: "12px", fontWeight: "600", color: "#374151", display: "block", marginBottom: "5px" }}>District *</label>
-            <input style={inp} value={form.district} onChange={e => set("district", e.target.value)} placeholder="e.g. Varanasi" />
-          </div>
-          <div>
-            <label style={{ fontSize: "12px", fontWeight: "600", color: "#374151", display: "block", marginBottom: "5px" }}>State *</label>
-            <input style={inp} value={form.state} onChange={e => set("state", e.target.value)} placeholder="e.g. Uttar Pradesh" />
-          </div>
-          <div>
-            <label style={{ fontSize: "12px", fontWeight: "600", color: "#374151", display: "block", marginBottom: "5px" }}>Pincode</label>
-            <input style={inp} value={form.pincode} onChange={e => { set("pincode", e.target.value); fetchPincode(e.target.value); }} placeholder="221001" />
-            {pincodeLoading && <p style={{ fontSize: "11px", color: "#9ca3af", marginTop: "3px" }}>Fetching location…</p>}
-            {pincodeError  && <p style={{ fontSize: "11px", color: "#ef4444", marginTop: "3px" }}>{pincodeError}</p>}
-          </div>
-          <div>
-            <label style={{ fontSize: "12px", fontWeight: "600", color: "#374151", display: "block", marginBottom: "5px" }}>Total Families</label>
-            <input type="number" style={inp} value={form.totalFamilies} onChange={e => set("totalFamilies", e.target.value)} placeholder="0" />
-          </div>
-          <div>
-            <label style={{ fontSize: "12px", fontWeight: "600", color: "#374151", display: "block", marginBottom: "5px" }}>Status</label>
-            <div style={{ position: "relative" }}>
-              <select value={form.status} onChange={e => set("status", e.target.value)}
-                style={{ ...inp, appearance: "none", paddingRight: "30px", cursor: "pointer" }}>
-                <option value="active">Active</option>
-                <option value="paused">Paused</option>
-                <option value="completed">Completed</option>
-              </select>
-              <ChevronDown size={14} style={{ position: "absolute", right: "10px", top: "50%", transform: "translateY(-50%)", pointerEvents: "none", color: "#9ca3af" }} />
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+            <div className="sm:col-span-2">
+              <label className={labelCls}>Village Name <span className="text-red-500">*</span></label>
+              <input className={inputCls} value={form.villageName} onChange={e => set("villageName", e.target.value)} placeholder="e.g. Rampur" />
+            </div>
+            
+            <div>
+              <label className={labelCls}>District <span className="text-red-500">*</span></label>
+              <input className={inputCls} value={form.district} onChange={e => set("district", e.target.value)} placeholder="e.g. Varanasi" />
+            </div>
+            
+            <div>
+              <label className={labelCls}>State <span className="text-red-500">*</span></label>
+              <input className={inputCls} value={form.state} onChange={e => set("state", e.target.value)} placeholder="e.g. Uttar Pradesh" />
+            </div>
+            
+            <div>
+              <label className={labelCls}>Pincode</label>
+              <input className={inputCls} value={form.pincode} onChange={e => { set("pincode", e.target.value); fetchPincode(e.target.value); }} placeholder="221001" />
+              {pincodeLoading && <p className="text-xs font-medium text-[#888888] mt-1.5 flex items-center gap-1"><Loader2 size={12} className="animate-spin" /> Fetching location…</p>}
+              {pincodeError  && <p className="text-xs font-medium text-red-500 mt-1.5">{pincodeError}</p>}
+            </div>
+            
+            <div>
+              <label className={labelCls}>Total Families</label>
+              <input type="number" min="0" className={inputCls} value={form.totalFamilies} onChange={e => set("totalFamilies", e.target.value)} placeholder="0" />
+            </div>
+            
+            <div className="sm:col-span-2">
+              <label className={labelCls}>Status</label>
+              <div className="relative">
+                <select value={form.status} onChange={e => set("status", e.target.value)} className={`${inputCls} appearance-none pr-10 cursor-pointer`}>
+                  <option value="active">Active</option>
+                  <option value="paused">Paused</option>
+                  <option value="completed">Completed</option>
+                </select>
+                <ChevronDown size={16} className="absolute right-4 top-1/2 -translate-y-1/2 text-[#888888] pointer-events-none" />
+              </div>
+            </div>
+            
+            <div className="sm:col-span-2">
+              <div className="flex items-center justify-between mb-1.5">
+                <label className="text-sm font-bold text-[#222222]">Description</label>
+                <FixGrammarButton text={form.description} onFixed={t => set("description", t)} />
+              </div>
+              <textarea rows={3} className={`${inputCls} resize-y min-h-[80px]`} value={form.description} onChange={e => set("description", e.target.value)} placeholder="Briefly describe the village and your goals…" />
             </div>
           </div>
-          <div style={{ gridColumn: "1/-1" }}>
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "5px" }}>
-              <label style={{ fontSize: "12px", fontWeight: "600", color: "#374151" }}>Description</label>
-              <FixGrammarButton text={form.description} onFixed={t => set("description", t)} />
+
+          <div className="bg-[#f8f7f5] rounded-xl p-5 border border-[#e5e5e5]">
+            <h3 className="text-sm font-bold text-[#222222] mb-4">Basic Needs Coverage (%)</h3>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {NEED_KEYS.map(need => {
+                const Icon = NEED_ICONS[need];
+                const theme = NEED_COLORS[need];
+                return (
+                  <div key={need} className="bg-white p-3 rounded-lg border border-gray-100 shadow-sm flex items-center gap-3">
+                    <div className={`p-2 rounded-md bg-opacity-20 ${theme.bg.replace('bg-', 'bg-')}/10`}>
+                      <Icon size={16} className={theme.text} />
+                    </div>
+                    <div className="flex-1">
+                      <label className="block text-xs font-bold text-[#6c6c6c] capitalize mb-1">{need}</label>
+                      <input type="number" min={0} max={100} className="w-full px-2 py-1 bg-[#f8f7f5] border border-[#e5e5e5] rounded text-sm font-bold focus:outline-none focus:border-[#6c5d46]" value={form.basicNeeds[need]?.coveragePercent ?? 0} onChange={e => setNeed(need, e.target.value)} />
+                    </div>
+                  </div>
+                );
+              })}
             </div>
-            <textarea rows={3} style={{ ...inp, resize: "vertical" }} value={form.description} onChange={e => set("description", e.target.value)} placeholder="Briefly describe the village and your goals…" />
           </div>
         </div>
 
-        {/* Basic Needs coverage */}
-        <div style={{ marginTop: "20px" }}>
-          <p style={{ margin: "0 0 12px", fontWeight: "700", fontSize: "13px", color: "#0f172a" }}>Basic Needs Coverage (%)</p>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
-            {NEED_KEYS.map(need => {
-              const Icon = NEED_ICONS[need];
-              const color = NEED_COLORS[need];
-              return (
-                <div key={need}>
-                  <label style={{ fontSize: "12px", fontWeight: "600", color, display: "flex", alignItems: "center", gap: "5px", marginBottom: "5px" }}>
-                    <Icon size={13} /> {need.charAt(0).toUpperCase() + need.slice(1)}
-                  </label>
-                  <input type="number" min={0} max={100} style={inp} value={form.basicNeeds[need]?.coveragePercent ?? 0}
-                    onChange={e => setNeed(need, e.target.value)} />
-                </div>
-              );
-            })}
-          </div>
-        </div>
-
-        <div style={{ display: "flex", gap: "10px", justifyContent: "flex-end", marginTop: "24px" }}>
-          <button onClick={onClose} style={{ padding: "10px 20px", borderRadius: "8px", border: "1px solid #e2e8f0", background: "#fff", fontWeight: "600", cursor: "pointer" }}>Cancel</button>
-          <button onClick={save} disabled={saving}
-            style={{ padding: "10px 24px", borderRadius: "8px", border: "none", background: "#2563eb", color: "#fff", fontWeight: "700", cursor: saving ? "not-allowed" : "pointer", opacity: saving ? 0.7 : 1 }}>
-            {saving ? "Saving…" : village ? "Save Changes" : "Create Village"}
+        <div className="px-6 py-4 border-t border-gray-100 bg-white flex items-center justify-end gap-3 shrink-0 rounded-b-2xl">
+          <button onClick={onClose} className="px-5 py-2.5 bg-white text-[#2c2c2c] border border-gray-200 rounded-lg text-sm font-semibold hover:bg-gray-50 transition-all shadow-sm">
+            Cancel
+          </button>
+          <button onClick={save} disabled={saving} className="px-5 py-2.5 bg-[#6c5d46] text-white rounded-lg text-sm font-semibold hover:bg-[#584a36] transition-all shadow-sm disabled:opacity-70 disabled:cursor-not-allowed flex items-center gap-2">
+            {saving ? <><Loader2 size={16} className="animate-spin" /> Saving…</> : (village ? "Save Changes" : "Create Village")}
           </button>
         </div>
       </div>
@@ -189,35 +213,45 @@ function MilestoneModal({ village, onClose, onAdded }) {
       .finally(() => setSaving(false));
   };
 
-  const inp = { padding: "9px 12px", border: "1px solid #e2e8f0", borderRadius: "8px", fontSize: "14px", width: "100%", boxSizing: "border-box", fontFamily: "inherit" };
-
   return (
-    <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.55)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000, padding: "16px" }}>
-      <div style={{ background: "#fff", borderRadius: "16px", padding: "28px", width: "100%", maxWidth: "440px" }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px" }}>
-          <h3 style={{ margin: 0, fontWeight: "800", fontSize: "17px", color: "#0f172a" }}>Add Milestone</h3>
-          <button onClick={onClose} style={{ background: "none", border: "none", cursor: "pointer", color: "#64748b" }}><X size={18} /></button>
+    <div className="fixed inset-0 z-50 bg-[#222222]/60 backdrop-blur-sm flex items-center justify-center p-4 sm:p-6 opacity-100 animate-in fade-in duration-200" onClick={onClose}>
+      <div className="bg-white rounded-2xl w-full max-w-md flex flex-col shadow-xl scale-100 animate-in zoom-in-95 duration-200" onClick={e => e.stopPropagation()}>
+        <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between bg-white shrink-0 rounded-t-2xl">
+          <h3 className="text-lg font-bold text-[#222222] flex items-center gap-2">
+            <Flag size={20} className="text-[#6c5d46]" /> Add Milestone
+          </h3>
+          <button onClick={onClose} className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors">
+            <X size={20} />
+          </button>
         </div>
-        {error && <div style={{ background: "#fef2f2", border: "1px solid #fecaca", color: "#dc2626", padding: "9px 12px", borderRadius: "8px", marginBottom: "14px", fontSize: "13px" }}>{error}</div>}
-        <div style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
+        
+        <div className="p-6 flex flex-col gap-5">
+          {error && (
+            <div className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold border bg-[#fef2f2] text-[#991b1b] border-[#fecaca]">
+              <AlertTriangle size={16} /> {error}
+            </div>
+          )}
+          
           <div>
-            <label style={{ fontSize: "12px", fontWeight: "600", color: "#374151", display: "block", marginBottom: "5px" }}>Title *</label>
-            <input style={inp} value={form.title} onChange={e => setForm(f => ({ ...f, title: e.target.value }))} placeholder="e.g. Water tank installed" />
+            <label className={labelCls}>Title <span className="text-red-500">*</span></label>
+            <input className={inputCls} value={form.title} onChange={e => setForm(f => ({ ...f, title: e.target.value }))} placeholder="e.g. Water tank installed" />
           </div>
           <div>
-            <label style={{ fontSize: "12px", fontWeight: "600", color: "#374151", display: "block", marginBottom: "5px" }}>Description</label>
-            <textarea rows={2} style={{ ...inp, resize: "vertical" }} value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} placeholder="Details…" />
+            <label className={labelCls}>Description</label>
+            <textarea rows={2} className={`${inputCls} resize-y min-h-[80px]`} value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} placeholder="Details…" />
           </div>
           <div>
-            <label style={{ fontSize: "12px", fontWeight: "600", color: "#374151", display: "block", marginBottom: "5px" }}>Achievement Date</label>
-            <input type="date" style={inp} value={form.achievedAt} onChange={e => setForm(f => ({ ...f, achievedAt: e.target.value }))} />
+            <label className={labelCls}>Achievement Date</label>
+            <input type="date" className={inputCls} value={form.achievedAt} onChange={e => setForm(f => ({ ...f, achievedAt: e.target.value }))} />
           </div>
         </div>
-        <div style={{ display: "flex", gap: "10px", justifyContent: "flex-end", marginTop: "20px" }}>
-          <button onClick={onClose} style={{ padding: "9px 18px", borderRadius: "8px", border: "1px solid #e2e8f0", background: "#fff", fontWeight: "600", cursor: "pointer" }}>Cancel</button>
-          <button onClick={save} disabled={saving}
-            style={{ padding: "9px 20px", borderRadius: "8px", border: "none", background: "#2563eb", color: "#fff", fontWeight: "700", cursor: saving ? "not-allowed" : "pointer", opacity: saving ? 0.7 : 1 }}>
-            {saving ? "Saving…" : "Add Milestone"}
+
+        <div className="px-6 py-4 border-t border-gray-100 bg-white flex items-center justify-end gap-3 shrink-0 rounded-b-2xl">
+          <button onClick={onClose} className="px-5 py-2.5 bg-white text-[#2c2c2c] border border-gray-200 rounded-lg text-sm font-semibold hover:bg-gray-50 transition-all shadow-sm">
+            Cancel
+          </button>
+          <button onClick={save} disabled={saving} className="px-5 py-2.5 bg-[#6c5d46] text-white rounded-lg text-sm font-semibold hover:bg-[#584a36] transition-all shadow-sm disabled:opacity-70 disabled:cursor-not-allowed flex items-center gap-2">
+            {saving ? <><Loader2 size={16} className="animate-spin" /> Saving…</> : "Add Milestone"}
           </button>
         </div>
       </div>
@@ -231,7 +265,7 @@ function VillageCard({ village, onEdit, onDelete, onAddMilestone, onMilestoneRem
   const token = localStorage.getItem("token");
 
   const removeMilestone = (mid) => {
-    if (!confirm("Remove this milestone?")) return;
+    if (!window.confirm("Remove this milestone?")) return;
     fetch(`${API_BASE_URL}/api/villages/${village._id}/milestone/${mid}`, {
       method: "DELETE",
       headers: { Authorization: `Bearer ${token}` },
@@ -242,100 +276,105 @@ function VillageCard({ village, onEdit, onDelete, onAddMilestone, onMilestoneRem
   };
 
   return (
-    <div style={{ background: "#fff", border: "1px solid #e2e8f0", borderRadius: "16px", overflow: "hidden" }}>
-      <div style={{ height: "5px", background: "linear-gradient(90deg, #2563eb, #7c3aed)" }} />
-      <div style={{ padding: "18px" }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "10px" }}>
+    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 flex flex-col gap-5 hover:shadow-md transition-all relative overflow-hidden group">
+      {/* Decorative top accent */}
+      <div className="absolute top-0 left-0 right-0 h-1 bg-[#6c5d46] opacity-0 group-hover:opacity-100 transition-opacity"></div>
+      
+      <div>
+        <div className="flex justify-between items-start gap-3 mb-2">
           <div>
-            <h3 style={{ margin: "0 0 3px", fontWeight: "800", color: "#0f172a", fontSize: "16px" }}>{village.villageName}</h3>
-            <div style={{ display: "flex", alignItems: "center", gap: "4px", color: "#64748b", fontSize: "12px" }}>
-              <MapPin size={11} /> {village.district}, {village.state}
+            <h3 className="font-extrabold text-[#222222] text-lg mb-1">{village.villageName}</h3>
+            <div className="flex items-center gap-1.5 text-[#888888] text-xs font-bold uppercase tracking-wide">
+              <MapPin size={12} /> {village.district}, {village.state}
             </div>
           </div>
-          <span style={{ background: sm.bg, color: sm.color, padding: "3px 9px", borderRadius: "20px", fontSize: "11px", fontWeight: "600", display: "flex", alignItems: "center", gap: "3px" }}>
-            <sm.Icon size={10} /> {sm.label}
+          <span className={`flex items-center gap-1.5 text-[10px] font-extrabold uppercase tracking-wider px-2.5 py-1 rounded-md shadow-sm ${sm.className}`}>
+            <sm.Icon size={12} /> {sm.label}
           </span>
         </div>
 
         {village.description && (
-          <p style={{ margin: "0 0 12px", fontSize: "13px", color: "#64748b", lineHeight: 1.5 }}>{village.description}</p>
-        )}
-
-        {/* Stats row */}
-        <div style={{ display: "flex", gap: "16px", marginBottom: "14px", flexWrap: "wrap" }}>
-          <span style={{ fontSize: "12px", color: "#64748b", display: "flex", alignItems: "center", gap: "3px" }}>
-            <Users size={11} /> {village.totalFamilies || 0} families
-          </span>
-          <span style={{ fontSize: "12px", color: "#64748b", display: "flex", alignItems: "center", gap: "3px" }}>
-            <TrendingUp size={11} /> {village.milestones?.length || 0} milestones
-          </span>
-        </div>
-
-        {/* Need bars */}
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px", marginBottom: "14px" }}>
-          {NEED_KEYS.map(need => {
-            const Icon = NEED_ICONS[need];
-            const color = NEED_COLORS[need];
-            const pct = village.basicNeeds?.[need]?.coveragePercent || 0;
-            return (
-              <div key={need}>
-                <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "3px" }}>
-                  <span style={{ fontSize: "11px", color, fontWeight: "600", display: "flex", alignItems: "center", gap: "3px" }}><Icon size={11} />{need}</span>
-                  <span style={{ fontSize: "11px", fontWeight: "700", color }}>{pct}%</span>
-                </div>
-                <div style={{ height: "5px", background: "#f1f5f9", borderRadius: "3px" }}>
-                  <div style={{ height: "100%", width: `${pct}%`, background: color, borderRadius: "3px" }} />
-                </div>
-              </div>
-            );
-          })}
-        </div>
-
-        {/* Actions */}
-        <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", paddingTop: "12px", borderTop: "1px solid #f1f5f9" }}>
-          <button onClick={() => onEdit(village)}
-            style={{ display: "flex", alignItems: "center", gap: "5px", padding: "6px 12px", borderRadius: "7px", border: "1px solid #e2e8f0", background: "#fff", fontSize: "12px", fontWeight: "600", cursor: "pointer" }}>
-            <Edit2 size={12} /> Edit
-          </button>
-          <button onClick={() => onAddMilestone(village)}
-            style={{ display: "flex", alignItems: "center", gap: "5px", padding: "6px 12px", borderRadius: "7px", border: "1px solid #e2e8f0", background: "#f0fdf4", color: "#166534", fontSize: "12px", fontWeight: "600", cursor: "pointer" }}>
-            <Plus size={12} /> Milestone
-          </button>
-          <button onClick={() => setExpanded(x => !x)}
-            style={{ display: "flex", alignItems: "center", gap: "5px", padding: "6px 12px", borderRadius: "7px", border: "1px solid #e2e8f0", background: "#eff6ff", color: "#1d4ed8", fontSize: "12px", fontWeight: "600", cursor: "pointer" }}>
-            {expanded ? "Hide" : "View"} Milestones ({village.milestones?.length || 0})
-          </button>
-          <button onClick={() => onDelete(village._id)}
-            style={{ display: "flex", alignItems: "center", gap: "5px", padding: "6px 12px", borderRadius: "7px", border: "1px solid #fecaca", background: "#fef2f2", color: "#dc2626", fontSize: "12px", fontWeight: "600", cursor: "pointer", marginLeft: "auto" }}>
-            <Trash2 size={12} /> Delete
-          </button>
-        </div>
-
-        {/* Milestones */}
-        {expanded && (
-          <div style={{ marginTop: "14px", borderTop: "1px solid #f1f5f9", paddingTop: "14px" }}>
-            {!village.milestones?.length ? (
-              <p style={{ color: "#94a3b8", fontSize: "13px", margin: 0 }}>No milestones yet. Add your first achievement!</p>
-            ) : (
-              <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-                {village.milestones.map(m => (
-                  <div key={m._id} style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", background: "#f8fafc", borderRadius: "8px", padding: "10px 12px" }}>
-                    <div>
-                      <p style={{ margin: "0 0 2px", fontWeight: "700", fontSize: "13px", color: "#0f172a" }}>{m.title}</p>
-                      {m.description && <p style={{ margin: "0 0 2px", fontSize: "12px", color: "#64748b" }}>{m.description}</p>}
-                      {m.achievedAt && <p style={{ margin: 0, fontSize: "11px", color: "#94a3b8" }}>{new Date(m.achievedAt).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}</p>}
-                    </div>
-                    <button onClick={() => removeMilestone(m._id)}
-                      style={{ background: "none", border: "none", cursor: "pointer", color: "#dc2626", padding: "2px" }}>
-                      <X size={14} />
-                    </button>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
+          <p className="text-sm text-[#6c6c6c] leading-relaxed line-clamp-2 mt-3">{village.description}</p>
         )}
       </div>
+
+      <div className="flex flex-wrap gap-4 py-3 border-y border-gray-100">
+        <span className="flex items-center gap-1.5 text-xs font-bold text-[#6c6c6c] bg-[#f8f7f5] px-2.5 py-1.5 rounded-lg border border-[#e5e5e5]">
+          <Users size={14} className="text-[#888888]" /> {village.totalFamilies || 0} families
+        </span>
+        <span className="flex items-center gap-1.5 text-xs font-bold text-[#6c6c6c] bg-[#f8f7f5] px-2.5 py-1.5 rounded-lg border border-[#e5e5e5]">
+          <TrendingUp size={14} className="text-[#888888]" /> {village.milestones?.length || 0} milestones
+        </span>
+      </div>
+
+      {/* Need bars */}
+      <div className="grid grid-cols-2 gap-4">
+        {NEED_KEYS.map(need => {
+          const Icon = NEED_ICONS[need];
+          const theme = NEED_COLORS[need];
+          const pct = village.basicNeeds?.[need]?.coveragePercent || 0;
+          return (
+            <div key={need}>
+              <div className="flex justify-between items-center mb-1.5">
+                <span className={`flex items-center gap-1.5 text-[10px] font-extrabold uppercase tracking-wider ${theme.text}`}>
+                  <Icon size={12} /> {need}
+                </span>
+                <span className={`text-[10px] font-extrabold ${theme.text}`}>{pct}%</span>
+              </div>
+              <div className={`h-1.5 w-full rounded-full ${theme.track} overflow-hidden`}>
+                <div className={`h-full rounded-full ${theme.bg}`} style={{ width: `${pct}%` }} />
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Actions */}
+      <div className="flex flex-wrap items-center gap-2 pt-2 mt-auto">
+        <button onClick={() => onEdit(village)} className="px-3 py-1.5 bg-white border border-gray-200 text-[#6c6c6c] hover:bg-gray-50 hover:text-[#222222] rounded-lg text-xs font-bold transition-colors flex items-center gap-1.5">
+          <Edit2 size={12} /> Edit
+        </button>
+        <button onClick={() => onAddMilestone(village)} className="px-3 py-1.5 bg-[#f0f4ea] text-[#5a6b46] border border-[#d6e3c9] hover:bg-[#e4ebd8] rounded-lg text-xs font-bold transition-colors flex items-center gap-1.5">
+          <Plus size={12} /> Milestone
+        </button>
+        <button onClick={() => setExpanded(x => !x)} className="px-3 py-1.5 bg-[#eff6ff] text-[#1d4ed8] border border-[#bfdbfe] hover:bg-[#dbeafe] rounded-lg text-xs font-bold transition-colors flex items-center gap-1.5">
+          {expanded ? "Hide" : "View"} ({village.milestones?.length || 0})
+        </button>
+        <button onClick={() => onDelete(village._id)} className="px-3 py-1.5 bg-[#fef2f2] text-[#991b1b] border border-[#fecaca] hover:bg-[#fee2e2] rounded-lg text-xs font-bold transition-colors flex items-center gap-1.5 ml-auto">
+          <Trash2 size={12} />
+        </button>
+      </div>
+
+      {/* Milestones Dropdown */}
+      {expanded && (
+        <div className="mt-2 pt-4 border-t border-gray-100 animate-in slide-in-from-top-2 duration-200">
+          {!village.milestones?.length ? (
+            <div className="text-center p-4 bg-[#f8f7f5] rounded-xl border border-gray-100 border-dashed">
+              <p className="text-sm font-medium text-[#888888]">No milestones yet. Add your first achievement!</p>
+            </div>
+          ) : (
+            <div className="flex flex-col gap-2">
+              {village.milestones.map(m => (
+                <div key={m._id} className="flex justify-between items-start p-3 bg-[#f8f7f5] rounded-xl border border-[#e5e5e5]">
+                  <div>
+                    <p className="font-bold text-sm text-[#222222] mb-0.5">{m.title}</p>
+                    {m.description && <p className="text-xs text-[#6c6c6c] leading-relaxed mb-1.5">{m.description}</p>}
+                    {m.achievedAt && (
+                      <p className="text-[10px] font-extrabold text-[#888888] uppercase tracking-wider flex items-center gap-1">
+                        <Clock size={10} />
+                        {new Date(m.achievedAt).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}
+                      </p>
+                    )}
+                  </div>
+                  <button onClick={() => removeMilestone(m._id)} className="p-1.5 text-gray-400 hover:text-[#991b1b] hover:bg-[#fef2f2] rounded-md transition-colors shrink-0">
+                    <X size={14} />
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }
@@ -366,7 +405,7 @@ export default function NgoVillages() {
   };
 
   const onDelete = (id) => {
-    if (!confirm("Delete this village adoption? This will also delete all associated problems.")) return;
+    if (!window.confirm("Delete this village adoption? This will also delete all associated problems.")) return;
     fetch(`${API_BASE_URL}/api/villages/${id}`, {
       method: "DELETE",
       headers: { Authorization: `Bearer ${token}` },
@@ -386,31 +425,42 @@ export default function NgoVillages() {
   };
 
   return (
-    <div style={{ padding: "28px", fontFamily: "system-ui, -apple-system, sans-serif" }}>
+    <div className="min-h-screen bg-[#f8f7f5] p-4 sm:p-6 lg:p-8 font-sans text-[#2c2c2c] selection:bg-[#eaddc8] selection:text-[#2c2c2c] flex flex-col gap-8">
       {/* Header */}
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "24px", flexWrap: "wrap", gap: "12px" }}>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 style={{ margin: "0 0 4px", fontWeight: "800", fontSize: "22px", color: "#0f172a" }}>Village Adoptions</h1>
-          <p style={{ margin: 0, color: "#64748b", fontSize: "14px" }}>Manage villages your NGO has adopted for development</p>
+          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-[#222222] flex items-center gap-3">
+            <div className="p-2 bg-white rounded-xl shadow-sm border border-gray-100 text-[#6c5d46]">
+              <Home size={24} />
+            </div>
+            Village Adoptions
+          </h1>
+          <p className="text-[#6c6c6c] text-sm sm:text-base font-medium mt-2">
+            Manage villages your NGO has adopted for development.
+          </p>
         </div>
-        <button onClick={() => setModal("create")}
-          style={{ display: "flex", alignItems: "center", gap: "7px", padding: "10px 20px", borderRadius: "10px", border: "none", background: "#2563eb", color: "#fff", fontWeight: "700", fontSize: "14px", cursor: "pointer" }}>
+        <button
+          onClick={() => setModal("create")}
+          className="inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-[#6c5d46] text-white rounded-lg text-sm font-semibold hover:bg-[#584a36] transition-all shadow-sm shrink-0"
+        >
           <Plus size={16} /> Adopt a Village
         </button>
       </div>
 
       {/* Summary */}
       {villages.length > 0 && (
-        <div style={{ display: "flex", gap: "12px", marginBottom: "20px", flexWrap: "wrap" }}>
+        <div className="flex flex-wrap gap-4">
           {Object.entries(
             villages.reduce((acc, v) => { acc[v.status] = (acc[v.status] || 0) + 1; return acc; }, {})
           ).map(([status, count]) => {
             const sm = STATUS_META[status] || STATUS_META.active;
             return (
-              <div key={status} style={{ background: sm.bg, border: `1px solid ${sm.color}30`, borderRadius: "10px", padding: "10px 18px", display: "flex", alignItems: "center", gap: "8px" }}>
-                <sm.Icon size={14} color={sm.color} />
-                <span style={{ fontWeight: "700", fontSize: "16px", color: sm.color }}>{count}</span>
-                <span style={{ fontSize: "13px", color: sm.color }}>{sm.label}</span>
+              <div key={status} className={`px-4 py-3 rounded-xl flex items-center gap-3 font-bold ${sm.className}`}>
+                <sm.Icon size={18} />
+                <div className="flex items-baseline gap-1.5">
+                  <span className="text-xl">{count}</span>
+                  <span className="text-xs uppercase tracking-wide opacity-80">{sm.label}</span>
+                </div>
               </div>
             );
           })}
@@ -419,21 +469,23 @@ export default function NgoVillages() {
 
       {/* Content */}
       {loading ? (
-        <div style={{ display: "flex", justifyContent: "center", padding: "80px", gap: "10px", color: "#64748b" }}>
-          <Loader2 size={22} style={{ animation: "spin 1s linear infinite" }} /> Loading villages…
+        <div className="flex flex-col items-center justify-center min-h-[40vh] gap-4">
+          <div className="w-10 h-10 border-4 border-[#eaddc8] border-t-[#6c5d46] rounded-full animate-spin"></div>
+          <p className="text-[#888888] font-medium">Loading villages…</p>
         </div>
       ) : villages.length === 0 ? (
-        <div style={{ textAlign: "center", padding: "80px 20px", background: "#fff", borderRadius: "16px", border: "1px dashed #e2e8f0" }}>
-          <MapPin size={48} style={{ color: "#cbd5e1", marginBottom: "16px" }} />
-          <h3 style={{ margin: "0 0 8px", fontWeight: "700", color: "#0f172a" }}>No villages adopted yet</h3>
-          <p style={{ color: "#64748b", margin: "0 0 20px" }}>Start by adopting a village to track your NGO's ground-level impact.</p>
-          <button onClick={() => setModal("create")}
-            style={{ padding: "10px 24px", borderRadius: "10px", border: "none", background: "#2563eb", color: "#fff", fontWeight: "700", cursor: "pointer" }}>
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-12 text-center flex flex-col items-center justify-center min-h-[40vh]">
+          <div className="w-20 h-20 bg-[#f8f7f5] rounded-full flex items-center justify-center text-[#d5cfc4] mb-4">
+            <MapPin size={32} strokeWidth={1.5} />
+          </div>
+          <h3 className="text-lg font-bold text-[#222222] mb-2">No villages adopted yet</h3>
+          <p className="text-sm font-medium text-[#888888] mb-6">Start by adopting a village to track your NGO's ground-level impact.</p>
+          <button onClick={() => setModal("create")} className="px-5 py-2.5 bg-[#6c5d46] text-white rounded-lg text-sm font-semibold hover:bg-[#584a36] transition-all shadow-sm">
             Adopt First Village
           </button>
         </div>
       ) : (
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(340px,1fr))", gap: "18px" }}>
+        <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
           {villages.map(v => (
             <VillageCard
               key={v._id}
@@ -462,8 +514,6 @@ export default function NgoVillages() {
           onAdded={onMilestoneAdded}
         />
       )}
-
-      <style>{`@keyframes spin { from { transform:rotate(0deg) } to { transform:rotate(360deg) } }`}</style>
     </div>
   );
 }

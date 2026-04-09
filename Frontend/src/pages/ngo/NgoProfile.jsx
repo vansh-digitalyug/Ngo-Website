@@ -3,7 +3,6 @@ import { useOutletContext } from 'react-router-dom';
 import { Edit, Save, FileText, CreditCard, Home, FolderOpen, X, Building, Mail, Phone, MapPin, Globe, Facebook, Instagram, CheckCircle, AlertCircle, ExternalLink } from 'lucide-react';
 import AIDescribeButton from '../../components/ui/AIDescribeButton.jsx';
 import { API_BASE_URL } from './NgoLayout';
-import './ngo.css';
 
 export default function NgoProfile() {
   const { ngoData, setNgoData } = useOutletContext();
@@ -111,24 +110,30 @@ export default function NgoProfile() {
   };
 
   return (
-    <div className="ngo-profile-page">
+    <div className="min-h-screen bg-[#f8f7f5] p-4 sm:p-6 lg:p-8 font-sans text-[#2c2c2c] selection:bg-[#eaddc8] selection:text-[#2c2c2c]">
       {/* Page Header */}
-      <div className="ngo-page-header">
-        <div className="page-header-content">
-          <h1>Organization Profile</h1>
-          <p>Manage your organization's public information and settings</p>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
+        <div>
+          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-[#222222]">Organization Profile</h1>
+          <p className="text-[#6c6c6c] text-sm sm:text-base font-medium mt-1">Manage your organization's public information and settings</p>
         </div>
         {!isEditing ? (
-          <button className="ngo-btn ngo-btn-primary" onClick={() => setIsEditing(true)}>
+          <button 
+            className="inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-[#6c5d46] text-white rounded-lg text-sm font-semibold hover:bg-[#584a36] transition-all duration-200 shadow-sm w-full sm:w-auto"
+            onClick={() => setIsEditing(true)}
+          >
             <Edit size={16} /> Edit Profile
           </button>
         ) : (
-          <div className="header-actions">
-            <button className="ngo-btn ngo-btn-secondary" onClick={cancelEdit}>
+          <div className="flex items-center gap-3 w-full sm:w-auto">
+            <button 
+              className="inline-flex flex-1 sm:flex-none items-center justify-center gap-2 px-5 py-2.5 bg-white text-[#2c2c2c] border border-gray-200 rounded-lg text-sm font-semibold hover:bg-gray-50 transition-all duration-200 shadow-sm"
+              onClick={cancelEdit}
+            >
               <X size={16} /> Cancel
             </button>
             <button 
-              className="ngo-btn ngo-btn-primary" 
+              className="inline-flex flex-1 sm:flex-none items-center justify-center gap-2 px-5 py-2.5 bg-[#6c5d46] text-white rounded-lg text-sm font-semibold hover:bg-[#584a36] transition-all duration-200 shadow-sm disabled:opacity-70 disabled:cursor-not-allowed" 
               onClick={handleSubmit}
               disabled={loading}
             >
@@ -140,103 +145,116 @@ export default function NgoProfile() {
 
       {/* Message Alert */}
       {message.text && (
-        <div className={`ngo-alert ${message.type}`}>
-          {message.type === 'success' ? <CheckCircle size={18} /> : <AlertCircle size={18} />}
-          <span>{message.text}</span>
-          <button onClick={() => setMessage({ type: '', text: '' })} className="alert-close">
+        <div className={`flex items-center justify-between p-4 mb-6 rounded-xl text-sm font-bold ${
+          message.type === 'success' ? 'bg-[#f0f4ea] text-[#5a6b46] border border-[#d6e3c9]' : 'bg-[#fef2f2] text-[#991b1b] border border-[#fecaca]'
+        }`}>
+          <div className="flex items-center gap-3">
+            {message.type === 'success' ? <CheckCircle size={18} /> : <AlertCircle size={18} />}
+            <span>{message.text}</span>
+          </div>
+          <button onClick={() => setMessage({ type: '', text: '' })} className="p-1 hover:bg-white/50 rounded-md transition-colors">
             <X size={16} />
           </button>
         </div>
       )}
 
-      {/* Profile View / Edit Form */}
-      <div className="ngo-profile-content">
-        <div className="ngo-section">
-          <div className="ngo-section-header">
-            <h2>Organization Information</h2>
+      {/* Main Content Areas */}
+      <div className="space-y-6 lg:space-y-8">
+        
+        {/* Profile View / Edit Form */}
+        <section className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+          <div className="px-6 py-5 border-b border-gray-100 bg-white">
+            <h2 className="text-lg font-bold text-[#222222]">Organization Information</h2>
           </div>
-          <div className="ngo-section-body">
+          
+          <div className="p-6">
             {isEditing ? (
-              <form onSubmit={handleSubmit} className="ngo-profile-form">
-                <div className="form-grid">
-                  <div className="ngo-form-group">
-                    <label>Organization Name <span className="label-note">Read only</span></label>
+              <form onSubmit={handleSubmit} className="space-y-8">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-5 lg:gap-6">
+                  {/* Read-only inputs */}
+                  <div className="space-y-1.5">
+                    <label className="block text-sm font-bold text-[#222222]">
+                      Organization Name <span className="text-[11px] font-medium text-[#888888] ml-2 uppercase tracking-wider">Read only</span>
+                    </label>
                     <input
                       type="text"
                       name="ngoName"
-                      className="ngo-form-input disabled"
+                      className="w-full px-4 py-2.5 bg-[#f0efeb] border border-gray-200 rounded-xl text-sm text-[#888888] cursor-not-allowed focus:outline-none"
                       value={formData.ngoName}
                       disabled
                     />
                   </div>
 
-                  <div className="ngo-form-group">
-                    <label>Email Address <span className="label-note">Read only</span></label>
+                  <div className="space-y-1.5">
+                    <label className="block text-sm font-bold text-[#222222]">
+                      Email Address <span className="text-[11px] font-medium text-[#888888] ml-2 uppercase tracking-wider">Read only</span>
+                    </label>
                     <input
                       type="email"
                       name="email"
-                      className="ngo-form-input disabled"
+                      className="w-full px-4 py-2.5 bg-[#f0efeb] border border-gray-200 rounded-xl text-sm text-[#888888] cursor-not-allowed focus:outline-none"
                       value={formData.email}
                       disabled
                     />
                   </div>
 
-                  <div className="ngo-form-group">
-                    <label>Phone Number</label>
+                  {/* Editable inputs */}
+                  <div className="space-y-1.5">
+                    <label className="block text-sm font-bold text-[#222222]">Phone Number</label>
                     <input
                       type="tel"
                       name="phone"
-                      className="ngo-form-input"
+                      className="w-full px-4 py-2.5 bg-[#f8f7f5] border border-[#e5e5e5] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#eaddc8] focus:border-[#6c5d46] transition-all"
                       value={formData.phone}
                       onChange={handleChange}
                       placeholder="Enter phone number"
                     />
                   </div>
 
-                  <div className="ngo-form-group">
-                    <label>State</label>
+                  <div className="space-y-1.5">
+                    <label className="block text-sm font-bold text-[#222222]">State</label>
                     <input
                       type="text"
                       name="state"
-                      className="ngo-form-input"
+                      className="w-full px-4 py-2.5 bg-[#f8f7f5] border border-[#e5e5e5] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#eaddc8] focus:border-[#6c5d46] transition-all"
                       value={formData.state}
                       onChange={handleChange}
                       placeholder="Enter state"
                     />
                   </div>
 
-                  <div className="ngo-form-group">
-                    <label>Website</label>
+                  <div className="space-y-1.5 md:col-span-2">
+                    <label className="block text-sm font-bold text-[#222222]">Website</label>
                     <input
                       type="url"
                       name="website"
-                      className="ngo-form-input"
+                      className="w-full px-4 py-2.5 bg-[#f8f7f5] border border-[#e5e5e5] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#eaddc8] focus:border-[#6c5d46] transition-all"
                       value={formData.website}
                       onChange={handleChange}
                       placeholder="https://yourwebsite.com"
                     />
                   </div>
 
-                  <div className="ngo-form-group full-width">
-                    <label>Address</label>
+                  <div className="space-y-1.5 md:col-span-2">
+                    <label className="block text-sm font-bold text-[#222222]">Address</label>
                     <input
                       type="text"
                       name="address"
-                      className="ngo-form-input"
+                      className="w-full px-4 py-2.5 bg-[#f8f7f5] border border-[#e5e5e5] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#eaddc8] focus:border-[#6c5d46] transition-all"
                       value={formData.address}
                       onChange={handleChange}
                       placeholder="Enter full address"
                     />
                   </div>
 
-                  <div className="ngo-form-group full-width">
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '4px' }}>
-                      <label style={{ margin: 0 }}>Description</label>
+                  <div className="space-y-1.5 md:col-span-2">
+                    <div className="flex items-center justify-between mb-1.5">
+                      <label className="block text-sm font-bold text-[#222222]">Description</label>
                       <AIDescribeButton context="ngo" hint={formData.ngoName} onGenerated={v => setFormData(p => ({ ...p, description: v }))} />
                     </div>
                     <textarea
                       name="description"
-                      className="ngo-form-input ngo-form-textarea"
+                      className="w-full px-4 py-3 bg-[#f8f7f5] border border-[#e5e5e5] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#eaddc8] focus:border-[#6c5d46] transition-all resize-y min-h-[120px]"
                       value={formData.description}
                       onChange={handleChange}
                       placeholder="Tell us about your organization, mission, and impact..."
@@ -245,28 +263,33 @@ export default function NgoProfile() {
                   </div>
                 </div>
 
-                <div className="form-section-divider">
-                  <span>Social Media Links</span>
+                <div className="relative py-4">
+                  <div className="absolute inset-0 flex items-center" aria-hidden="true">
+                    <div className="w-full border-t border-gray-200"></div>
+                  </div>
+                  <div className="relative flex justify-center">
+                    <span className="bg-white px-4 text-xs font-bold text-[#888888] uppercase tracking-wider">Social Media Links</span>
+                  </div>
                 </div>
                 
-                <div className="form-grid">
-                  <div className="ngo-form-group">
-                    <label><Facebook size={14} /> Facebook</label>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-5 lg:gap-6">
+                  <div className="space-y-1.5">
+                    <label className="flex items-center gap-2 text-sm font-bold text-[#222222]"><Facebook size={16} className="text-[#6c5d46]" /> Facebook</label>
                     <input
                       type="url"
                       name="social_facebook"
-                      className="ngo-form-input"
+                      className="w-full px-4 py-2.5 bg-[#f8f7f5] border border-[#e5e5e5] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#eaddc8] focus:border-[#6c5d46] transition-all"
                       value={formData.socialMedia.facebook}
                       onChange={handleChange}
                       placeholder="https://facebook.com/yourpage"
                     />
                   </div>
-                  <div className="ngo-form-group">
-                    <label><Instagram size={14} /> Instagram</label>
+                  <div className="space-y-1.5">
+                    <label className="flex items-center gap-2 text-sm font-bold text-[#222222]"><Instagram size={16} className="text-[#6c5d46]" /> Instagram</label>
                     <input
                       type="url"
                       name="social_instagram"
-                      className="ngo-form-input"
+                      className="w-full px-4 py-2.5 bg-[#f8f7f5] border border-[#e5e5e5] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#eaddc8] focus:border-[#6c5d46] transition-all"
                       value={formData.socialMedia.instagram}
                       onChange={handleChange}
                       placeholder="https://instagram.com/yourprofile"
@@ -275,119 +298,132 @@ export default function NgoProfile() {
                 </div>
               </form>
             ) : (
-              <div className="profile-view">
+              <div className="space-y-8">
                 {/* Organization Header Card */}
-                <div className="profile-header-card">
-                  <div className="profile-avatar">
+                <div className="flex flex-col sm:flex-row sm:items-center gap-5 p-5 bg-[#f8f7f5] rounded-2xl border border-[#eaddc8]">
+                  <div className="w-16 h-16 rounded-full bg-[#eaddc8] text-[#6c5d46] flex items-center justify-center text-2xl font-bold shrink-0">
                     {ngoData?.ngoName?.charAt(0) || 'N'}
                   </div>
-                  <div className="profile-header-info">
-                    <h3>{ngoData?.ngoName || 'Organization Name'}</h3>
-                    <span className="profile-reg-number">
-                      <Building size={14} /> Reg: {ngoData?.regNumber || 'N/A'}
+                  <div>
+                    <h3 className="text-xl font-extrabold text-[#222222] mb-1.5">{ngoData?.ngoName || 'Organization Name'}</h3>
+                    <span className="inline-flex items-center gap-1.5 text-xs font-bold text-[#6c6c6c] bg-white px-3 py-1 rounded-md border border-gray-200">
+                      <Building size={14} className="text-[#6c5d46]" /> Reg: {ngoData?.regNumber || 'N/A'}
                     </span>
                   </div>
                 </div>
 
-                {/* Contact Details */}
-                <div className="profile-details-grid">
-                  <div className="profile-detail-item">
-                    <div className="detail-icon"><Mail size={18} /></div>
-                    <div className="detail-content">
-                      <span className="detail-label">Email</span>
-                      <span className="detail-value">{ngoData?.email || 'Not provided'}</span>
+                {/* Contact Details Grid */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                  <div className="flex items-start gap-3 p-4 bg-white border border-gray-100 rounded-xl shadow-sm">
+                    <div className="p-2.5 bg-[#f8f7f5] rounded-lg text-[#6c5d46] shrink-0"><Mail size={18} /></div>
+                    <div className="min-w-0">
+                      <span className="block text-[11px] font-bold text-[#888888] uppercase tracking-wider mb-0.5">Email</span>
+                      <span className="block text-sm font-semibold text-[#222222] truncate">{ngoData?.email || 'Not provided'}</span>
                     </div>
                   </div>
 
-                  <div className="profile-detail-item">
-                    <div className="detail-icon"><Phone size={18} /></div>
-                    <div className="detail-content">
-                      <span className="detail-label">Phone</span>
-                      <span className="detail-value">{ngoData?.phone || 'Not provided'}</span>
+                  <div className="flex items-start gap-3 p-4 bg-white border border-gray-100 rounded-xl shadow-sm">
+                    <div className="p-2.5 bg-[#f8f7f5] rounded-lg text-[#6c5d46] shrink-0"><Phone size={18} /></div>
+                    <div className="min-w-0">
+                      <span className="block text-[11px] font-bold text-[#888888] uppercase tracking-wider mb-0.5">Phone</span>
+                      <span className="block text-sm font-semibold text-[#222222] truncate">{ngoData?.phone || 'Not provided'}</span>
                     </div>
                   </div>
 
-                  <div className="profile-detail-item">
-                    <div className="detail-icon"><MapPin size={18} /></div>
-                    <div className="detail-content">
-                      <span className="detail-label">Location</span>
-                      <span className="detail-value">{ngoData?.state || 'Not provided'}</span>
+                  <div className="flex items-start gap-3 p-4 bg-white border border-gray-100 rounded-xl shadow-sm">
+                    <div className="p-2.5 bg-[#f8f7f5] rounded-lg text-[#6c5d46] shrink-0"><MapPin size={18} /></div>
+                    <div className="min-w-0">
+                      <span className="block text-[11px] font-bold text-[#888888] uppercase tracking-wider mb-0.5">Location</span>
+                      <span className="block text-sm font-semibold text-[#222222] truncate">{ngoData?.state || 'Not provided'}</span>
                     </div>
                   </div>
 
-                  <div className="profile-detail-item">
-                    <div className="detail-icon"><Globe size={18} /></div>
-                    <div className="detail-content">
-                      <span className="detail-label">Website</span>
+                  <div className="flex items-start gap-3 p-4 bg-white border border-gray-100 rounded-xl shadow-sm">
+                    <div className="p-2.5 bg-[#f8f7f5] rounded-lg text-[#6c5d46] shrink-0"><Globe size={18} /></div>
+                    <div className="min-w-0">
+                      <span className="block text-[11px] font-bold text-[#888888] uppercase tracking-wider mb-0.5">Website</span>
                       {ngoData?.website ? (
-                        <a href={ngoData.website} target="_blank" rel="noopener noreferrer" className="detail-link">
-                          {ngoData.website.replace(/^https?:\/\//, '')} <ExternalLink size={12} />
+                        <a href={ngoData.website} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-sm font-semibold text-[#6c5d46] hover:text-[#453b2c] truncate hover:underline">
+                          {ngoData.website.replace(/^https?:\/\//, '')} <ExternalLink size={12} className="shrink-0" />
                         </a>
                       ) : (
-                        <span className="detail-value">Not provided</span>
+                        <span className="block text-sm font-semibold text-[#222222] truncate">Not provided</span>
                       )}
                     </div>
                   </div>
                 </div>
 
-                {/* Address */}
-                {ngoData?.address && (
-                  <div className="profile-address-section">
-                    <h4>Full Address</h4>
-                    <p>{ngoData.address}</p>
+                {/* Info Sections */}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                  <div className="space-y-6">
+                    {/* Address */}
+                    {ngoData?.address && (
+                      <div>
+                        <h4 className="text-xs font-bold text-[#888888] uppercase tracking-wider mb-2">Full Address</h4>
+                        <p className="text-sm font-medium text-[#222222] leading-relaxed bg-[#f8f7f5] p-4 rounded-xl border border-gray-100">{ngoData.address}</p>
+                      </div>
+                    )}
+
+                    {/* Social Links */}
+                    {(ngoData?.socialMedia?.facebook || ngoData?.socialMedia?.instagram) && (
+                      <div>
+                        <h4 className="text-xs font-bold text-[#888888] uppercase tracking-wider mb-3">Social Media</h4>
+                        <div className="flex flex-wrap gap-3">
+                          {ngoData?.socialMedia?.facebook && (
+                            <a href={ngoData.socialMedia.facebook} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-[#f8f7f5] text-[#222222] text-sm font-bold hover:bg-[#eaddc8] hover:text-[#6c5d46] transition-colors border border-gray-100">
+                              <Facebook size={16} className="text-[#1877F2]" /> Facebook
+                            </a>
+                          )}
+                          {ngoData?.socialMedia?.instagram && (
+                            <a href={ngoData.socialMedia.instagram} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-[#f8f7f5] text-[#222222] text-sm font-bold hover:bg-[#eaddc8] hover:text-[#6c5d46] transition-colors border border-gray-100">
+                              <Instagram size={16} className="text-[#E4405F]" /> Instagram
+                            </a>
+                          )}
+                        </div>
+                      </div>
+                    )}
                   </div>
-                )}
 
-                {/* Description */}
-                <div className="profile-description-section">
-                  <h4>About Organization</h4>
-                  <p>{ngoData?.description || 'No description provided. Click "Edit Profile" to add information about your organization.'}</p>
-                </div>
-
-                {/* Social Links */}
-                {(ngoData?.socialMedia?.facebook || ngoData?.socialMedia?.instagram) && (
-                  <div className="profile-social-section">
-                    <h4>Social Media</h4>
-                    <div className="social-links">
-                      {ngoData?.socialMedia?.facebook && (
-                        <a href={ngoData.socialMedia.facebook} target="_blank" rel="noopener noreferrer" className="social-link facebook">
-                          <Facebook size={16} /> Facebook
-                        </a>
-                      )}
-                      {ngoData?.socialMedia?.instagram && (
-                        <a href={ngoData.socialMedia.instagram} target="_blank" rel="noopener noreferrer" className="social-link instagram">
-                          <Instagram size={16} /> Instagram
-                        </a>
+                  {/* Description */}
+                  <div>
+                    <h4 className="text-xs font-bold text-[#888888] uppercase tracking-wider mb-2">About Organization</h4>
+                    <div className="text-sm font-medium text-[#222222] leading-relaxed bg-[#f8f7f5] p-5 rounded-xl border border-gray-100 min-h-[120px] whitespace-pre-line">
+                      {ngoData?.description || (
+                        <span className="text-[#888888] italic">No description provided. Click "Edit Profile" to add information about your organization.</span>
                       )}
                     </div>
                   </div>
-                )}
+                </div>
+
               </div>
             )}
           </div>
-        </div>
+        </section>
 
         {/* Documents Section */}
-        <div className="ngo-section">
-          <div className="ngo-section-header">
-            <h2>Documents & Certificates</h2>
-            <span className="section-badge">Verified</span>
+        <section className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+          <div className="px-6 py-5 border-b border-gray-100 bg-white flex items-center justify-between">
+            <h2 className="text-lg font-bold text-[#222222]">Documents & Certificates</h2>
+            <span className="text-[10px] font-bold text-[#5a6b46] bg-[#f0f4ea] px-2.5 py-1 rounded-md uppercase tracking-wider border border-[#d6e3c9]">Verified</span>
           </div>
-          <div className="ngo-section-body">
-            <div className="documents-grid">
+          
+          <div className="p-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {ngoData?.documents?.registrationCertificate && (
                 <a 
                   href={`${API_BASE_URL}/uploads/${ngoData.documents.registrationCertificate}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="document-card"
+                  className="group flex items-center gap-4 p-4 bg-white border border-gray-200 rounded-xl hover:border-[#6c5d46] hover:shadow-md transition-all"
                 >
-                  <div className="document-icon purple">
-                    <FileText size={24} />
+                  <div className="w-12 h-12 rounded-xl flex items-center justify-center bg-[#f8f7f5] text-[#6c5d46] group-hover:bg-[#6c5d46] group-hover:text-white transition-colors">
+                    <FileText size={22} />
                   </div>
-                  <div className="document-info">
-                    <span className="document-title">Registration Certificate</span>
-                    <span className="document-action">View Document <ExternalLink size={12} /></span>
+                  <div>
+                    <span className="block text-sm font-bold text-[#222222] mb-0.5">Registration Certificate</span>
+                    <span className="flex items-center gap-1 text-[11px] font-bold text-[#888888] group-hover:text-[#6c5d46] transition-colors uppercase tracking-wider">
+                      View Document <ExternalLink size={10} />
+                    </span>
                   </div>
                 </a>
               )}
@@ -397,14 +433,16 @@ export default function NgoProfile() {
                   href={`${API_BASE_URL}/uploads/${ngoData.documents.certificate12A}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="document-card"
+                  className="group flex items-center gap-4 p-4 bg-white border border-gray-200 rounded-xl hover:border-[#6c5d46] hover:shadow-md transition-all"
                 >
-                  <div className="document-icon blue">
-                    <CreditCard size={24} />
+                  <div className="w-12 h-12 rounded-xl flex items-center justify-center bg-[#f8f7f5] text-[#6c5d46] group-hover:bg-[#6c5d46] group-hover:text-white transition-colors">
+                    <CreditCard size={22} />
                   </div>
-                  <div className="document-info">
-                    <span className="document-title">12A Certificate</span>
-                    <span className="document-action">View Document <ExternalLink size={12} /></span>
+                  <div>
+                    <span className="block text-sm font-bold text-[#222222] mb-0.5">12A Certificate</span>
+                    <span className="flex items-center gap-1 text-[11px] font-bold text-[#888888] group-hover:text-[#6c5d46] transition-colors uppercase tracking-wider">
+                      View Document <ExternalLink size={10} />
+                    </span>
                   </div>
                 </a>
               )}
@@ -414,28 +452,31 @@ export default function NgoProfile() {
                   href={`${API_BASE_URL}/uploads/${ngoData.documents.certificate80G}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="document-card"
+                  className="group flex items-center gap-4 p-4 bg-white border border-gray-200 rounded-xl hover:border-[#6c5d46] hover:shadow-md transition-all"
                 >
-                  <div className="document-icon green">
-                    <Home size={24} />
+                  <div className="w-12 h-12 rounded-xl flex items-center justify-center bg-[#f8f7f5] text-[#6c5d46] group-hover:bg-[#6c5d46] group-hover:text-white transition-colors">
+                    <Home size={22} />
                   </div>
-                  <div className="document-info">
-                    <span className="document-title">80G Certificate</span>
-                    <span className="document-action">View Document <ExternalLink size={12} /></span>
+                  <div>
+                    <span className="block text-sm font-bold text-[#222222] mb-0.5">80G Certificate</span>
+                    <span className="flex items-center gap-1 text-[11px] font-bold text-[#888888] group-hover:text-[#6c5d46] transition-colors uppercase tracking-wider">
+                      View Document <ExternalLink size={10} />
+                    </span>
                   </div>
                 </a>
               )}
 
               {!ngoData?.documents?.registrationCertificate && !ngoData?.documents?.certificate12A && !ngoData?.documents?.certificate80G && (
-                <div className="ngo-empty-state compact">
-                  <FolderOpen size={40} strokeWidth={1.5} />
-                  <h4>No documents available</h4>
-                  <p>Documents submitted during registration will appear here</p>
+                <div className="col-span-full flex flex-col items-center justify-center py-10 text-center bg-[#f8f7f5] rounded-xl border border-dashed border-gray-200">
+                  <FolderOpen size={36} className="text-[#d5cfc4] mb-3" />
+                  <h4 className="text-sm font-bold text-[#222222]">No documents available</h4>
+                  <p className="text-xs font-medium text-[#888888] mt-1">Documents submitted during registration will appear here</p>
                 </div>
               )}
             </div>
           </div>
-        </div>
+        </section>
+
       </div>
     </div>
   );
