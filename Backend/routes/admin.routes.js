@@ -30,6 +30,7 @@ import {
     updateContactStatus,
     deleteContact,
     getAllUsers,
+    deleteUser,
     getAllFundRequests,
     updateFundRequestStatus,
     getAllDonations,
@@ -88,6 +89,7 @@ router.delete("/contacts/:id", deleteContact);
 
 // User management
 router.get("/users", getAllUsers);
+router.delete("/users/:id", deleteUser);
 
 // Fund request management
 router.get("/funds", getAllFundRequests);
