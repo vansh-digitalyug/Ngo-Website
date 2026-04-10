@@ -226,7 +226,9 @@ function AppRoutes() {
           {/* General */}
           <Route path="/events"           element={<EventsPage />} />
           <Route path="/events/upcoming"  element={<UpcomingEventsPage />} />
+          <Route path="/events/upcoming/:eventName"  element={<UpcomingEventsPage />} />
           <Route path="/events/past"      element={<PastEventsPage />} />
+          <Route path="/events/past/:eventName"  element={<PastEventsPage />} />
           <Route path="/blog"             element={<BlogPage />} />
           <Route path="/blog/:id"         element={<BlogPage />} />
           <Route path="/community/*"      element={<CommunityRoutes />} />
