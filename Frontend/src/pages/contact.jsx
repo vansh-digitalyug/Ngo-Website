@@ -1,5 +1,76 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
+import { AlertTriangle } from 'lucide-react';
+
+/* ===========================
+   VALIDATION UTILITIES
+   =========================== */
+const VALIDATION = {
+  // Remove all numbers and special chars, keep letters, spaces, hyphens
+  onlyTextNoNumbers: (value) =>
+    value
+      .replace(/[0-9]/g, "")
+      .replace(/[^a-zA-Z\s'-]/g, "")
+      .trim(),
+
+  // Validate email format
+  isValidEmail: (email) => {
+    const trimmed = email.trim();
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(trimmed);
+  },
+
+  // Validate name format
+  isValidName: (name) => {
+    const trimmed = name.trim();
+    return (
+      trimmed.length >= 2 &&
+      trimmed.length <= 100 &&
+      /^[a-zA-Z]/.test(trimmed) &&
+      !/[0-9]/.test(trimmed) &&
+      /[a-zA-Z\s'-]/.test(trimmed)
+    );
+  },
+
+  // Validate message length
+  isValidMessage: (message) => {
+    const trimmed = message.trim();
+    return trimmed.length >= 10 && trimmed.length <= 2000;
+  },
+};
+
+/* ===========================
+   VALIDATION FUNCTIONS
+   =========================== */
+const validateContactForm = (formData) => {
+  const errors = {};
+
+  if (!formData.name.trim()) {
+    errors.name = "Full name is required.";
+  } else if (!VALIDATION.isValidName(formData.name)) {
+    errors.name = "⚠️ Name must be 2-100 characters, start with a letter, no numbers.";
+  }
+
+  if (!formData.email.trim()) {
+    errors.email = "Email is required.";
+  } else if (!VALIDATION.isValidEmail(formData.email)) {
+    errors.email = "⚠️ Please enter a valid email address.";
+  }
+
+  if (!formData.message.trim()) {
+    errors.message = "Message is required.";
+  } else if (formData.message.trim().length < 10) {
+    errors.message = "Message must be at least 10 characters.";
+  } else if (formData.message.trim().length > 2000) {
+    errors.message = "Message cannot exceed 2000 characters.";
+  }
+
+  if (!formData.privacy) {
+    errors.privacy = "You must agree to the privacy policy.";
+  }
+
+  return errors;
+};
 
 const Contact = () => {
   // 1. State Management
@@ -21,6 +92,13 @@ const Contact = () => {
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
     
+    let processedValue = value;
+    
+    // Filter out numbers from name field
+    if (name === "name") {
+      processedValue = VALIDATION.onlyTextNoNumbers(value);
+    }
+
     // Clear error when user types
     if (errors[name]) {
       setErrors({ ...errors, [name]: '' });
@@ -33,22 +111,13 @@ const Contact = () => {
 
     setFormData({
       ...formData,
-      [name]: type === 'checkbox' ? checked : value
+      [name]: type === 'checkbox' ? checked : processedValue
     });
   };
 
   // 3. Validation Logic
   const validate = () => {
-    let newErrors = {};
-    if (!formData.name.trim()) newErrors.name = 'Full name is required';
-    if (!formData.email.trim()) {
-      newErrors.email = 'Email is required';
-    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
-      newErrors.email = 'Please enter a valid email address';
-    }
-    if (!formData.message.trim()) newErrors.message = 'Message cannot be empty';
-    if (!formData.privacy) newErrors.privacy = 'You must agree to the privacy policy';
-
+    const newErrors = validateContactForm(formData);
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -420,20 +489,42 @@ const Contact = () => {
               </div>
             ) : null}
 
+            {Object.keys(errors).length > 0 && (
+              <div className="error-box" style={{ marginBottom: '20px', textAlign: 'left', display: 'flex', gap: '8px', alignItems: 'flex-start' }}>
+                <AlertTriangle size={18} style={{ marginTop: '2px', flexShrink: 0 }} />
+                <div>
+                  <p style={{ fontWeight: 600, marginBottom: '6px' }}>Please fix the following errors:</p>
+                  <ul style={{ listStyleType: 'disc', paddingLeft: '20px', fontSize: '0.9rem' }}>
+                    {Object.values(errors).map((err, idx) => (
+                      <li key={idx}>{err}</li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+            )}
+
             <form onSubmit={handleSubmit}>
               <div className="form-row">
                 {/* Name */}
                 <div className="form-group">
-                  <label>Full Name</label>
+                  <label>Full Name <span style={{ fontSize: '0.8rem', color: '#999' }}>(Letters only)</span></label>
                   <input 
                     type="text" 
                     name="name" 
                     value={formData.name}
                     onChange={handleChange}
                     className={errors.name ? 'error-input' : ''}
-                    placeholder="John Doe" 
+                    placeholder="John Doe"
+                    maxLength={100}
                   />
-                  {errors.name && <span className="error-msg">{errors.name}</span>}
+                  {errors.name && (
+                    <span className="error-msg" style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                      <AlertTriangle size={12} /> {errors.name}
+                    </span>
+                  )}
+                  {formData.name && !errors.name && (
+                    <span style={{ color: '#16a34a', fontSize: '12px', marginTop: '6px', display: 'block' }}>✓ Valid name</span>
+                  )}
                 </div>
 
                 {/* Email */}
@@ -447,7 +538,14 @@ const Contact = () => {
                     className={errors.email ? 'error-input' : ''}
                     placeholder="john@example.com" 
                   />
-                  {errors.email && <span className="error-msg">{errors.email}</span>}
+                  {errors.email && (
+                    <span className="error-msg" style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                      <AlertTriangle size={12} /> {errors.email}
+                    </span>
+                  )}
+                  {formData.email && !errors.email && VALIDATION.isValidEmail(formData.email) && (
+                    <span style={{ color: '#16a34a', fontSize: '12px', marginTop: '6px', display: 'block' }}>✓ Valid email</span>
+                  )}
                 </div>
               </div>
 
@@ -470,26 +568,31 @@ const Contact = () => {
               <div className="form-group">
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
                   <label style={{ margin: 0 }}>Message</label>
-                  <button
-                    type="button"
-                    onClick={handleFixGrammar}
-                    disabled={fixingGrammar || !formData.message.trim()}
-                    style={{
-                      display: 'flex', alignItems: 'center', gap: '5px',
-                      padding: '4px 12px', borderRadius: '8px',
-                      border: '1px solid #2563eb', background: fixingGrammar ? '#eff6ff' : '#fff',
-                      color: '#2563eb', fontSize: '12px', fontWeight: '600',
-                      cursor: fixingGrammar || !formData.message.trim() ? 'not-allowed' : 'pointer',
-                      opacity: !formData.message.trim() ? 0.5 : 1,
-                      transition: 'all 0.2s',
-                    }}
-                  >
-                    {fixingGrammar ? (
-                      <><span style={{ width: '10px', height: '10px', border: '2px solid #2563eb', borderTopColor: 'transparent', borderRadius: '50%', display: 'inline-block', animation: 'spin 0.7s linear infinite' }} /> Fixing…</>
-                    ) : (
-                      <><span>✦</span> Fix Grammar</>
-                    )}
-                  </button>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                    <span style={{ fontSize: '12px', color: formData.message.length > 2000 ? '#ef4444' : formData.message.length >= 10 ? '#16a34a' : '#999' }}>
+                      {formData.message.length}/2000
+                    </span>
+                    <button
+                      type="button"
+                      onClick={handleFixGrammar}
+                      disabled={fixingGrammar || !formData.message.trim()}
+                      style={{
+                        display: 'flex', alignItems: 'center', gap: '5px',
+                        padding: '4px 12px', borderRadius: '8px',
+                        border: '1px solid #2563eb', background: fixingGrammar ? '#eff6ff' : '#fff',
+                        color: '#2563eb', fontSize: '12px', fontWeight: '600',
+                        cursor: fixingGrammar || !formData.message.trim() ? 'not-allowed' : 'pointer',
+                        opacity: !formData.message.trim() ? 0.5 : 1,
+                        transition: 'all 0.2s',
+                      }}
+                    >
+                      {fixingGrammar ? (
+                        <><span style={{ width: '10px', height: '10px', border: '2px solid #2563eb', borderTopColor: 'transparent', borderRadius: '50%', display: 'inline-block', animation: 'spin 0.7s linear infinite' }} /> Fixing…</>
+                      ) : (
+                        <><span>✦</span> Fix Grammar</>
+                      )}
+                    </button>
+                  </div>
                 </div>
                 <textarea
                   name="message"
@@ -497,14 +600,26 @@ const Contact = () => {
                   onChange={handleChange}
                   className={errors.message ? 'error-input' : ''}
                   rows="5"
-                  placeholder="How can we help you?"
+                  placeholder="How can we help you? (Min 10 characters)"
+                  maxLength={2000}
                 ></textarea>
-                {grammarError && <span className="error-msg">{grammarError}</span>}
-                {errors.message && <span className="error-msg">{errors.message}</span>}
+                {grammarError && (
+                  <span className="error-msg" style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                    <AlertTriangle size={12} /> {grammarError}
+                  </span>
+                )}
+                {errors.message && (
+                  <span className="error-msg" style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                    <AlertTriangle size={12} /> {errors.message}
+                  </span>
+                )}
+                {formData.message && !errors.message && formData.message.length >= 10 && (
+                  <span style={{ color: '#16a34a', fontSize: '12px', marginTop: '6px', display: 'block' }}>✓ Valid message length</span>
+                )}
               </div>
 
               {/* Privacy Checkbox */}
-              <div className="checkbox-group">
+              <div className="checkbox-group" style={{ borderBottom: errors.privacy ? '2px solid #ef4444' : 'none', paddingBottom: errors.privacy ? '12px' : '0' }}>
                 <input 
                   type="checkbox" 
                   id="privacy" 
@@ -516,13 +631,22 @@ const Contact = () => {
                   I agree to the <Link to="/privacy-policy" style={{ color: '#2563eb', textDecoration: 'none' }}>privacy policy</Link> and consent to being contacted.
                 </label>
               </div>
-              {errors.privacy && <span className="error-msg" style={{ marginTop: '-15px', marginBottom: '20px' }}>{errors.privacy}</span>}
+              {errors.privacy && (
+                <span className="error-msg" style={{ display: 'flex', alignItems: 'center', gap: '4px', marginTop: '8px', marginBottom: '20px' }}>
+                  <AlertTriangle size={12} /> {errors.privacy}
+                </span>
+              )}
 
               {/* Submit Button */}
               <button 
                 type="submit" 
                 className="submit-btn" 
-                disabled={status === 'submitting' || status === 'success'}
+                disabled={status === 'submitting' || status === 'success' || Object.keys(errors).length > 0}
+                title={Object.keys(errors).length > 0 ? `Please fix ${Object.keys(errors).length} error(s)` : ""}
+                style={{
+                  opacity: (status === 'submitting' || status === 'success' || Object.keys(errors).length > 0) ? 0.7 : 1,
+                  cursor: (status === 'submitting' || status === 'success' || Object.keys(errors).length > 0) ? 'not-allowed' : 'pointer'
+                }}
               >
                 {status === 'submitting' ? (
                   <>
@@ -530,6 +654,10 @@ const Contact = () => {
                   </>
                 ) : status === 'success' ? (
                   'Message Sent'
+                ) : Object.keys(errors).length > 0 ? (
+                  <>
+                    <AlertTriangle size={18} /> Fix {Object.keys(errors).length} Error(s)
+                  </>
                 ) : (
                   'Send Message'
                 )}

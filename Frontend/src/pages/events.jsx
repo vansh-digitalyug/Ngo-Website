@@ -1,7 +1,49 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { Calendar, Clock, MapPin, Users, Facebook, Twitter, Linkedin, CalendarDays, AlertCircle, Loader2 } from "lucide-react";
+import { Calendar, Clock, MapPin, Users, Facebook, Twitter, Linkedin, CalendarDays, AlertCircle, Loader2, X } from "lucide-react";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchEvents, selectEvents, selectEventsStatus, selectEventsError } from "../store/slices/eventsSlice";
+
+/* ─── EVENT REGISTRATION VALIDATION UTILITY ──────────────────────────────────── */
+const EVENT_VALIDATION = {
+  onlyText: (str) => str.replace(/[^a-zA-Z\s]/g, ""),
+  onlyDigits: (str) => str.replace(/[^0-9]/g, ""),
+  maxLength: (str, len) => str.slice(0, len),
+  
+  validateName: (name) => {
+    const trimmed = name.trim();
+    if (trimmed.length === 0) return "Name is required";
+    if (trimmed.length < 2) return "Name must be at least 2 characters";
+    if (trimmed.length > 50) return "Name limited to 50 characters";
+    return "";
+  },
+  
+  validatePhone: (phone) => {
+    if (phone.length === 0) return "Phone is required";
+    if (phone.length !== 10) return "Phone must be exactly 10 digits";
+    return "";
+  },
+  
+  validateEmail: (email) => {
+    if (email.length === 0) return "Email is required";
+    if (!/^[\w.-]+@([\w-]+\.)+[\w-]{2,4}$/.test(email)) return "Invalid email address";
+    return "";
+  },
+  
+  validateAge: (age) => {
+    if (age.length === 0) return "Age is required";
+    const ageNum = Number(age);
+    if (ageNum < 5 || ageNum > 120) return "Age must be between 5 and 120";
+    return "";
+  },
+  
+  validateCity: (city) => {
+    const trimmed = city.trim();
+    if (trimmed.length === 0) return "City is required";
+    if (trimmed.length < 2) return "City must be at least 2 characters";
+    if (trimmed.length > 50) return "City limited to 50 characters";
+    return "";
+  },
+};
 
 // ─── Countdown Hook ───────────────────────────────────────────────────────────
 function useCountdown(targetDate) {
@@ -23,6 +65,332 @@ function useCountdown(targetDate) {
     return () => clearInterval(id);
   }, [calc]);
   return time;
+}
+
+/* ─── REGISTRATION MODAL ──────────────────────────────────────────────────────── */
+function EventRegistrationModal({ event, isOpen, onClose }) {
+  const [formData, setFormData] = useState({
+    name: "",
+    email: "",
+    phone: "",
+    age: "",
+    city: "",
+    agreeToTerms: false,
+  });
+  const [errors, setErrors] = useState({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitSuccess, setSubmitSuccess] = useState(false);
+
+  const handleInputChange = (e) => {
+    const { name, value, type, checked } = e.target;
+    let nextValue = type === "checkbox" ? checked : value;
+
+    // Text-only fields - PREVENT numbers completely
+    if (["name", "city"].includes(name)) {
+      nextValue = EVENT_VALIDATION.onlyText(String(nextValue));
+      if (name === "name") nextValue = EVENT_VALIDATION.maxLength(nextValue, 50);
+      if (name === "city") nextValue = EVENT_VALIDATION.maxLength(nextValue, 50);
+    }
+
+    // Number-only fields - PREVENT letters completely
+    if (["phone", "age"].includes(name)) {
+      nextValue = EVENT_VALIDATION.onlyDigits(String(nextValue));
+      if (name === "phone") nextValue = nextValue.slice(0, 10);
+      if (name === "age") nextValue = nextValue.slice(0, 3);
+    }
+
+    // Update the DOM immediately
+    if (e.target) e.target.value = nextValue;
+    
+    setFormData((prev) => ({ ...prev, [name]: nextValue }));
+    if (errors[name]) setErrors((prev) => ({ ...prev, [name]: "" }));
+  };
+
+  const validateForm = () => {
+    const newErrors = {};
+    const nameErr = EVENT_VALIDATION.validateName(formData.name);
+    if (nameErr) newErrors.name = nameErr;
+    const emailErr = EVENT_VALIDATION.validateEmail(formData.email);
+    if (emailErr) newErrors.email = emailErr;
+    const phoneErr = EVENT_VALIDATION.validatePhone(formData.phone);
+    if (phoneErr) newErrors.phone = phoneErr;
+    const ageErr = EVENT_VALIDATION.validateAge(formData.age);
+    if (ageErr) newErrors.age = ageErr;
+    const cityErr = EVENT_VALIDATION.validateCity(formData.city);
+    if (cityErr) newErrors.city = cityErr;
+    if (!formData.agreeToTerms) newErrors.agreeToTerms = "You must agree to the terms";
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!validateForm()) return;
+    setIsSubmitting(true);
+    try {
+      await new Promise((resolve) => setTimeout(resolve, 1500));
+      setSubmitSuccess(true);
+      setTimeout(() => {
+        onClose();
+        setFormData({
+          name: "",
+          email: "",
+          phone: "",
+          age: "",
+          city: "",
+          agreeToTerms: false,
+        });
+        setSubmitSuccess(false);
+      }, 2000);
+    } catch (err) {
+      setErrors({ submit: "Failed to register. Please try again." });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+      <div className="bg-white rounded-2xl max-w-md w-full shadow-2xl">
+        <div className="flex items-center justify-between p-6 border-b border-slate-100">
+          <h2 className="text-xl font-bold text-slate-900">Register for Event</h2>
+          <button
+            onClick={onClose}
+            className="text-slate-400 hover:text-slate-600 transition-colors"
+          >
+            <X size={20} />
+          </button>
+        </div>
+
+        {submitSuccess ? (
+          <div className="p-8 text-center">
+            <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <Users size={32} className="text-green-600" />
+            </div>
+            <h3 className="text-lg font-bold text-slate-900 mb-2">Registration Successful!</h3>
+            <p className="text-sm text-slate-600">We'll send you event details at {formData.email}</p>
+          </div>
+        ) : (
+          <form onSubmit={handleSubmit} className="p-6 space-y-4">
+            {event?.title && (
+              <p className="text-sm text-slate-600 mb-4">
+                <span className="font-semibold text-slate-900">{event.title}</span>
+              </p>
+            )}
+
+            {/* Name */}
+            <div>
+              <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">
+                Full Name *
+              </label>
+              <div className="relative">
+                <input
+                  type="text"
+                  name="name"
+                  value={formData.name}
+                  onChange={handleInputChange}
+                  onInput={handleInputChange}
+                  placeholder="e.g. Rajesh Kumar"
+                  className={`w-full px-4 py-3 border-2 rounded-xl text-sm outline-none transition-all ${
+                    errors.name
+                      ? "border-red-300 bg-red-50 focus:border-red-400"
+                      : formData.name.trim().length >= 2 && !errors.name
+                      ? "border-green-300 bg-green-50 focus:border-green-400"
+                      : "border-slate-200 bg-white hover:border-slate-300 focus:border-green-600"
+                  }`}
+                />
+                {formData.name.trim().length >= 2 && !errors.name && (
+                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-green-600 font-bold">
+                    ✓
+                  </span>
+                )}
+              </div>
+              {errors.name && (
+                <span className="text-xs text-red-600 mt-1 block font-medium">{errors.name}</span>
+              )}
+            </div>
+
+            {/* Email */}
+            <div>
+              <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">
+                Email Address *
+              </label>
+              <div className="relative">
+                <input
+                  type="email"
+                  name="email"
+                  value={formData.email}
+                  onChange={handleInputChange}
+                  placeholder="your@email.com"
+                  className={`w-full px-4 py-3 border-2 rounded-xl text-sm outline-none transition-all ${
+                    errors.email
+                      ? "border-red-300 bg-red-50 focus:border-red-400"
+                      : /^[\w.-]+@([\w-]+\.)+[\w-]{2,4}$/.test(formData.email) && !errors.email
+                      ? "border-green-300 bg-green-50 focus:border-green-400"
+                      : "border-slate-200 bg-white hover:border-slate-300 focus:border-green-600"
+                  }`}
+                />
+                {/^[\w.-]+@([\w-]+\.)+[\w-]{2,4}$/.test(formData.email) && !errors.email && (
+                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-green-600 font-bold">
+                    ✓
+                  </span>
+                )}
+              </div>
+              {errors.email && (
+                <span className="text-xs text-red-600 mt-1 block font-medium">{errors.email}</span>
+              )}
+            </div>
+
+            {/* Phone */}
+            <div>
+              <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">
+                Phone Number *
+              </label>
+              <div className="relative">
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  name="phone"
+                  value={formData.phone}
+                  onChange={handleInputChange}
+                  onInput={handleInputChange}
+                  placeholder="10-digit number"
+                  maxLength={10}
+                  className={`w-full px-4 py-3 border-2 rounded-xl text-sm outline-none transition-all ${
+                    errors.phone
+                      ? "border-red-300 bg-red-50 focus:border-red-400"
+                      : formData.phone.length === 10 && !errors.phone
+                      ? "border-green-300 bg-green-50 focus:border-green-400"
+                      : "border-slate-200 bg-white hover:border-slate-300 focus:border-green-600"
+                  }`}
+                />
+                {formData.phone.length === 10 && !errors.phone && (
+                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-green-600 font-bold">
+                    ✓
+                  </span>
+                )}
+              </div>
+              {errors.phone && (
+                <span className="text-xs text-red-600 mt-1 block font-medium">{errors.phone}</span>
+              )}
+            </div>
+
+            {/* Age */}
+            <div>
+              <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">
+                Age *
+              </label>
+              <div className="relative">
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  name="age"
+                  value={formData.age}
+                  onChange={handleInputChange}
+                  onInput={handleInputChange}
+                  placeholder="e.g. 25"
+                  maxLength={3}
+                  className={`w-full px-4 py-3 border-2 rounded-xl text-sm outline-none transition-all ${
+                    errors.age
+                      ? "border-red-300 bg-red-50 focus:border-red-400"
+                      : formData.age && !errors.age
+                      ? "border-green-300 bg-green-50 focus:border-green-400"
+                      : "border-slate-200 bg-white hover:border-slate-300 focus:border-green-600"
+                  }`}
+                />
+                {formData.age && !errors.age && (
+                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-green-600 font-bold">
+                    ✓
+                  </span>
+                )}
+              </div>
+              {errors.age && (
+                <span className="text-xs text-red-600 mt-1 block font-medium">{errors.age}</span>
+              )}
+            </div>
+
+            {/* City */}
+            <div>
+              <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">
+                City *
+              </label>
+              <div className="relative">
+                <input
+                  type="text"
+                  name="city"
+                  value={formData.city}
+                  onChange={handleInputChange}
+                  onInput={handleInputChange}
+                  placeholder="e.g. New Delhi"
+                  className={`w-full px-4 py-3 border-2 rounded-xl text-sm outline-none transition-all ${
+                    errors.city
+                      ? "border-red-300 bg-red-50 focus:border-red-400"
+                      : formData.city.trim().length >= 2 && !errors.city
+                      ? "border-green-300 bg-green-50 focus:border-green-400"
+                      : "border-slate-200 bg-white hover:border-slate-300 focus:border-green-600"
+                  }`}
+                />
+                {formData.city.trim().length >= 2 && !errors.city && (
+                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-green-600 font-bold">
+                    ✓
+                  </span>
+                )}
+              </div>
+              {errors.city && (
+                <span className="text-xs text-red-600 mt-1 block font-medium">{errors.city}</span>
+              )}
+            </div>
+
+            {/* Terms */}
+            <div className="flex items-start gap-3 pt-2">
+              <input
+                type="checkbox"
+                name="agreeToTerms"
+                checked={formData.agreeToTerms}
+                onChange={handleInputChange}
+                className="mt-1 accent-green-600 w-4 h-4 rounded cursor-pointer"
+              />
+              <label className="text-xs text-slate-600 cursor-pointer">
+                I agree to receive event updates and acknowledge the{" "}
+                <span className="font-semibold text-slate-900">terms and conditions</span>
+                {errors.agreeToTerms && (
+                  <span className="block text-red-600 font-medium mt-0.5">{errors.agreeToTerms}</span>
+                )}
+              </label>
+            </div>
+
+            {errors.submit && (
+              <div className="px-4 py-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-xs font-medium">
+                {errors.submit}
+              </div>
+            )}
+
+            {/* Submit Button */}
+            <button
+              type="submit"
+              disabled={isSubmitting || Object.keys(errors).length > 0}
+              className={`w-full py-3 rounded-xl font-bold text-sm transition-all ${
+                isSubmitting || Object.keys(errors).length > 0
+                  ? "bg-slate-300 text-slate-500 cursor-not-allowed"
+                  : "bg-green-600 text-white hover:bg-green-700 shadow-md shadow-green-200"
+              }`}
+            >
+              {isSubmitting ? (
+                <span className="flex items-center justify-center gap-2">
+                  <Loader2 size={16} className="animate-spin" />
+                  Registering...
+                </span>
+              ) : (
+                "Register Now"
+              )}
+            </button>
+          </form>
+        )}
+      </div>
+    </div>
+  );
 }
 
 // ─── Digit Box ────────────────────────────────────────────────────────────────
@@ -72,7 +440,7 @@ function fmtTime(t) {
 }
 
 // ─── Featured Event ───────────────────────────────────────────────────────────
-function FeaturedEvent({ event }) {
+function FeaturedEvent({ event, onRegister }) {
   const timeStr = [event.startTime && fmtTime(event.startTime), event.endTime && fmtTime(event.endTime)]
     .filter(Boolean).join(" – ");
 
@@ -150,24 +518,32 @@ function FeaturedEvent({ event }) {
             </p>
           )}
 
-          {/* Share */}
-          <div className="flex items-center gap-3 pt-1">
-            <span className="text-xs text-slate-400 font-semibold uppercase tracking-wider">Share</span>
-            <a href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(window.location.href)}`}
-              target="_blank" rel="noopener noreferrer"
-              className="w-8 h-8 rounded-full bg-[#1877f2]/10 flex items-center justify-center text-[#1877f2] hover:bg-[#1877f2]/20 transition-colors">
-              <Facebook size={14} />
-            </a>
-            <a href={`https://twitter.com/intent/tweet?text=${encodeURIComponent(event.title)}`}
-              target="_blank" rel="noopener noreferrer"
-              className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-600 hover:bg-slate-200 transition-colors">
-              <Twitter size={14} />
-            </a>
-            <a href={`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(window.location.href)}`}
-              target="_blank" rel="noopener noreferrer"
-              className="w-8 h-8 rounded-full bg-[#0077b5]/10 flex items-center justify-center text-[#0077b5] hover:bg-[#0077b5]/20 transition-colors">
-              <Linkedin size={14} />
-            </a>
+          {/* Share & Register */}
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 pt-3 border-t border-slate-200">
+            <div className="flex items-center gap-3 flex-1">
+              <span className="text-xs text-slate-400 font-semibold uppercase tracking-wider">Share</span>
+              <a href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(window.location.href)}`}
+                target="_blank" rel="noopener noreferrer"
+                className="w-8 h-8 rounded-full bg-[#1877f2]/10 flex items-center justify-center text-[#1877f2] hover:bg-[#1877f2]/20 transition-colors">
+                <Facebook size={14} />
+              </a>
+              <a href={`https://twitter.com/intent/tweet?text=${encodeURIComponent(event.title)}`}
+                target="_blank" rel="noopener noreferrer"
+                className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-600 hover:bg-slate-200 transition-colors">
+                <Twitter size={14} />
+              </a>
+              <a href={`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(window.location.href)}`}
+                target="_blank" rel="noopener noreferrer"
+                className="w-8 h-8 rounded-full bg-[#0077b5]/10 flex items-center justify-center text-[#0077b5] hover:bg-[#0077b5]/20 transition-colors">
+                <Linkedin size={14} />
+              </a>
+            </div>
+            <button
+              onClick={() => onRegister?.(event)}
+              className="px-6 py-2.5 bg-green-600 text-white font-bold rounded-lg hover:bg-green-700 transition-colors shadow-md shadow-green-200"
+            >
+              Register Now
+            </button>
           </div>
         </div>
       </div>
@@ -176,7 +552,7 @@ function FeaturedEvent({ event }) {
 }
 
 // ─── Event Card ───────────────────────────────────────────────────────────────
-function EventCard({ event }) {
+function EventCard({ event, onRegister }) {
   const timeStr = [event.startTime && fmtTime(event.startTime), event.endTime && fmtTime(event.endTime)]
     .filter(Boolean).join(" – ");
 
@@ -233,6 +609,12 @@ function EventCard({ event }) {
               <span className="text-slate-500">{event.location}</span>
             </div>
           </div>
+          <button
+            onClick={() => onRegister?.(event)}
+            className="w-full mt-4 px-4 py-2.5 bg-green-600 text-white font-bold text-sm rounded-lg hover:bg-green-700 transition-colors"
+          >
+            Register Now
+          </button>
         </div>
       </div>
     </article>
@@ -249,6 +631,13 @@ export default function EventsPage() {
   const error = useSelector(selectEventsError);
   const loading = status === "loading" || status === "idle";
   const [filterCat, setFilterCat] = useState("All");
+  const [modalOpen, setModalOpen] = useState(false);
+  const [selectedEvent, setSelectedEvent] = useState(null);
+
+  const handleRegisterClick = (event) => {
+    setSelectedEvent(event);
+    setModalOpen(true);
+  };
 
   useEffect(() => {
     if (status === "idle") dispatch(fetchEvents());
@@ -317,7 +706,7 @@ export default function EventsPage() {
           <div className="space-y-12">
 
             {/* Featured */}
-            {featured && <FeaturedEvent event={featured} />}
+            {featured && <FeaturedEvent event={featured} onRegister={handleRegisterClick} />}
 
             {/* More events */}
             {rest.length > 0 && (
@@ -328,7 +717,7 @@ export default function EventsPage() {
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                   {rest.map((event) => (
-                    <EventCard key={event._id} event={event} />
+                    <EventCard key={event._id} event={event} onRegister={handleRegisterClick} />
                   ))}
                 </div>
               </div>
@@ -337,6 +726,13 @@ export default function EventsPage() {
           </div>
         )}
       </div>
+
+      {/* Registration Modal */}
+      <EventRegistrationModal 
+        event={selectedEvent} 
+        isOpen={modalOpen} 
+        onClose={() => setModalOpen(false)} 
+      />
     </div>
   );
 }

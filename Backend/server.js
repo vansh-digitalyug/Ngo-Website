@@ -27,6 +27,7 @@ import servicesRoutes from "./routes/services.routes.js";
 import blogRoutes from "./routes/blog.routes.js";
 import otpRoutes from "./routes/otp.routes.js";
 import eventRoutes from "./routes/event.routes.js";
+import eventRegistrationRoutes from "./routes/eventRegistration.routes.js";
 import communityPostRoutes from "./routes/communityPost.routes.js";
 import feedbackRoutes from "./routes/feedback.routes.js";
 import reportRoutes from "./routes/report.routes.js";
@@ -38,6 +39,8 @@ import employmentApplicationRoutes from "./routes/employmentApplication.routes.j
 import staffRoutes from "./routes/staff.routes.js";
 import surveyRoutes from "./routes/survey.routes.js";
 import impactReportRoutes from "./routes/impactReport.routes.js";
+import activityRoutes from "./routes/activity.routes.js";
+import notificationRoutes from "./routes/notification.routes.js";
 
 import connectDB from "./config/db.js";
 import seedAdmin from "./utils/seedAdmin.js";
@@ -117,6 +120,7 @@ app.use("/api/services", servicesRoutes);
 app.use("/api/blogs", blogRoutes);
 app.use("/api/otp", otpRoutes);
 app.use("/api/events", eventRoutes);
+app.use("/api/registrations", eventRegistrationRoutes);
 app.use("/api/posts", communityPostRoutes);
 app.use("/api/feedback", feedbackRoutes);
 app.use("/api/report", reportRoutes);
@@ -128,6 +132,8 @@ app.use("/api/employment-applications", employmentApplicationRoutes);
 app.use("/api/staff", staffRoutes);
 app.use("/api/surveys", surveyRoutes);
 app.use("/api/impact-reports", impactReportRoutes);
+app.use("/api", activityRoutes);
+app.use("/api/notifications", notificationRoutes);
 
 // ─── Health check ─────────────────────────────────────────────────────────────
 app.get("/health", (_req, res) => {

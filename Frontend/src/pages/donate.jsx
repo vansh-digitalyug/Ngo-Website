@@ -133,11 +133,15 @@ const handleProceedPayment = async (e) => {
       try {
 
         // 3️⃣ VERIFY PAYMENT
+        const _token = localStorage.getItem("token");
         const verifyRes = await fetch(
           `${API_BASE_URL}/api/payment/verify`,
           {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
+            headers: { 
+              "Content-Type": "application/json",
+              ...(_token ? { Authorization: `Bearer ${_token}` } : {}),
+            },
             credentials: "include",
             body: JSON.stringify(response),
           }

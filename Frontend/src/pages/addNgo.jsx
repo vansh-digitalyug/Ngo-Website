@@ -11,11 +11,62 @@ import { usePincodeAutoFill } from '../hooks/usePincodeAutoFill.js';
 
 const API = String(import.meta.env.VITE_API_BASE_URL || "http://localhost:5000").replace(/\/$/, "");
 
+/* ─── VALIDATION UTILITY ─────────────────────────────────────────────────────── */
+const NGO_VALIDATION = {
+  onlyText: (str) => str.replace(/[^a-zA-Z\s]/g, ""),
+  onlyDigits: (str) => str.replace(/[^0-9]/g, ""),
+  onlyAlphanumeric: (str) => str.replace(/[^a-zA-Z0-9]/g, "").toUpperCase(),
+  maxLength: (str, len) => str.slice(0, len),
+  
+  validateNgoName: (name) => {
+    const trimmed = name.trim();
+    if (trimmed.length === 0) return "NGO Name is required";
+    if (trimmed.length < 3) return "NGO Name must be at least 3 characters";
+    if (trimmed.length > 100) return "NGO Name limited to 100 characters";
+    return "";
+  },
+  
+  validateContactName: (name) => {
+    const trimmed = name.trim();
+    if (trimmed.length === 0) return "Contact Name is required";
+    if (trimmed.length < 2) return "Contact Name must be at least 2 characters";
+    if (trimmed.length > 50) return "Contact Name limited to 50 characters";
+    return "";
+  },
+  
+  validatePhone: (phone) => {
+    if (phone.length === 0) return "Phone is required";
+    if (phone.length !== 10) return "Phone must be exactly 10 digits";
+    return "";
+  },
+  
+  validatePincode: (pincode) => {
+    if (pincode.length === 0) return "Pincode is required";
+    if (!/^\d{6}$/.test(pincode)) return "Pincode must be exactly 6 digits";
+    return "";
+  },
+  
+  validateCity: (city) => {
+    const trimmed = city.trim();
+    if (trimmed.length === 0) return "City is required";
+    if (trimmed.length < 2) return "City must be at least 2 characters";
+    if (trimmed.length > 50) return "City limited to 50 characters";
+    return "";
+  },
+  
+  validateEmail: (email) => {
+    if (email.length === 0) return "Email is required";
+    if (!/^[\w.-]+@([\w-]+\.)+[\w-]{2,4}$/.test(email)) return "Invalid email address";
+    return "";
+  },
+};
+
 /* ─── Input class helper ────────────────────────────────────────────────────── */
-const inputCls = (error) =>
+const inputCls = (error, valid) =>
   `w-full px-4 py-3 border-2 ${
     error
       ? 'border-red-300 bg-red-50 focus:border-red-400'
+      : valid ? 'border-green-300 bg-green-50 focus:border-green-400'
       : 'border-gray-100 bg-white hover:border-gray-200 focus:border-green-600'
   } rounded-xl text-sm text-gray-800 focus:outline-none focus:ring-4 focus:ring-green-50 transition-all font-[inherit] placeholder:text-gray-300`;
 
@@ -38,31 +89,39 @@ const FieldLabel = ({ children, required }) => (
 const ErrorMsg = ({ msg }) =>
   msg ? <span className="block text-red-500 text-xs mt-1.5 font-medium error-msg">{msg}</span> : null;
 
-const InputField = ({ label, name, type = 'text', placeholder, required = false, value, onChange, error, maxLength, ...rest }) => (
-  <div className="mb-5">
+const InputField = ({ label, name, type = 'text', placeholder, required = false, value, onChange, error, maxLength, valid = false, ...rest }) => (
+  <div className="mb-5 relative">
     <FieldLabel required={required}>{label}</FieldLabel>
-    <input
-      type={type} name={name} value={value} onChange={onChange}
-      placeholder={placeholder} maxLength={maxLength}
-      className={inputCls(error)}
-      {...rest}
-    />
+    <div className="relative">
+      <input
+        type={type} name={name} value={value} onChange={onChange}
+        placeholder={placeholder} maxLength={maxLength}
+        className={inputCls(error, valid && !error)}
+        {...rest}
+      />
+      {valid && !error && value && (
+        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-green-600 font-bold">✓</span>
+      )}
+    </div>
     <ErrorMsg msg={error} />
   </div>
 );
 
-const SelectField = ({ label, name, options, required = false, value, onChange, error }) => (
-  <div className="mb-5">
+const SelectField = ({ label, name, options, required = false, value, onChange, error, valid = false }) => (
+  <div className="mb-5 relative">
     <FieldLabel required={required}>{label}</FieldLabel>
     <div className="relative">
       <select
         name={name} value={value} onChange={onChange}
-        className={`${inputCls(error)} appearance-none cursor-pointer`}
+        className={`${inputCls(error, valid && !error)} appearance-none cursor-pointer`}
       >
         <option value="">— Select —</option>
         {options.map(opt => <option key={opt} value={opt}>{opt}</option>)}
       </select>
       <span className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-gray-300 text-xs">▾</span>
+      {valid && !error && value && (
+        <span className="absolute right-10 top-1/2 -translate-y-1/2 text-green-600 font-bold text-sm">✓</span>
+      )}
     </div>
     <ErrorMsg msg={error} />
   </div>
@@ -221,10 +280,42 @@ const AddNGOPage = () => {
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
     let nextValue = type === 'checkbox' ? checked : value;
-    if (name === 'estYear')   nextValue = String(value).replace(/\D/g, '').slice(0, 4);
-    if (name === 'phone' || name === 'whatsapp') nextValue = String(value).replace(/\D/g, '').slice(0, 10);
-    if (name === 'pincode')   { nextValue = String(value).replace(/\D/g, '').slice(0, 6); fetchPincode(nextValue); }
-    if (name === 'panNumber') nextValue = String(value).replace(/[^a-zA-Z0-9]/g, '').toUpperCase().slice(0, 10);
+    
+    // Text-only fields: Remove all numbers
+    if (['ngoName', 'contactName', 'contactRole', 'district', 'city', 'address'].includes(name)) {
+      nextValue = NGO_VALIDATION.onlyText(String(nextValue)).slice(0, name === 'address' ? 200 : 100);
+    }
+    
+    // Number-only fields: Remove all non-digits
+    if (['phone', 'whatsapp', 'pincode'].includes(name)) {
+      nextValue = NGO_VALIDATION.onlyDigits(String(nextValue));
+      if (name === 'phone' || name === 'whatsapp') nextValue = nextValue.slice(0, 10);
+      if (name === 'pincode') {
+        nextValue = nextValue.slice(0, 6);
+        if (nextValue.length === 6) fetchPincode(nextValue);
+      }
+    }
+    
+    // Establishment year: 4 digits, between 1800 and current year
+    if (name === 'estYear') {
+      nextValue = NGO_VALIDATION.onlyDigits(String(nextValue)).slice(0, 4);
+    }
+    
+    // PAN: Alphanumeric uppercase, max 10
+    if (name === 'panNumber') {
+      nextValue = NGO_VALIDATION.onlyAlphanumeric(String(nextValue)).slice(0, 10);
+    }
+    
+    // DARPAN ID: Alphanumeric with slashes, uppercase
+    if (name === 'darpanId') {
+      nextValue = String(nextValue).replace(/[^a-zA-Z0-9/]/g, '').toUpperCase().slice(0, 20);
+    }
+    
+    // Registration Number: Alphanumeric and common separators
+    if (name === 'regNumber') {
+      nextValue = String(nextValue).replace(/[^a-zA-Z0-9\-/]/g, '').toUpperCase().slice(0, 30);
+    }
+    
     setFormData(prev => ({ ...prev, [name]: nextValue }));
     if (errors[name]) setErrors(prev => ({ ...prev, [name]: '' }));
     if (apiError) setApiError('');
@@ -437,24 +528,29 @@ const AddNGOPage = () => {
             <div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-x-5">
                 <InputField label="NGO Name" name="ngoName" required placeholder="e.g. Hope Foundation"
-                  value={formData.ngoName} onChange={handleInputChange} error={errors.ngoName} />
+                  value={formData.ngoName} onChange={handleInputChange} error={errors.ngoName}
+                  valid={formData.ngoName.trim().length >= 3 && !errors.ngoName} />
                 <SelectField label="Registration Type" name="regType" required
                   options={['Public Trust', 'Society', 'Section 8 Company']}
-                  value={formData.regType} onChange={handleInputChange} error={errors.regType} />
+                  value={formData.regType} onChange={handleInputChange} error={errors.regType}
+                  valid={!!formData.regType && !errors.regType} />
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-x-5">
                 <InputField label="Registration Number" name="regNumber" required placeholder="Reg. No."
-                  value={formData.regNumber} onChange={handleInputChange} error={errors.regNumber} />
+                  value={formData.regNumber} onChange={handleInputChange} error={errors.regNumber}
+                  valid={formData.regNumber.length > 0 && !errors.regNumber} />
                 <InputField label="Year of Establishment" name="estYear" type="text" placeholder="YYYY"
                   value={formData.estYear} onChange={handleInputChange} error={errors.estYear}
-                  maxLength={4} inputMode="numeric" pattern="[0-9]{4}" />
+                  maxLength={4} inputMode="numeric" pattern="[0-9]{4}"
+                  valid={formData.estYear.length === 4 && !errors.estYear} />
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-x-5">
-                <InputField label="NGO Darpan ID" name="darpanId" placeholder="e.g. DL/2021/0000"
-                  value={formData.darpanId} onChange={handleInputChange} />
+                <InputField label="NGO Darpan ID" name="darpanId" placeholder="e.g. DL/2021/0000" 
+                  value={formData.darpanId} onChange={handleInputChange}
+                  valid={formData.darpanId.length > 0} />
                 <InputField label="PAN Number" name="panNumber" placeholder="AAAAA0000A"
                   value={formData.panNumber} onChange={handleInputChange} maxLength={10}
-                  style={{ textTransform: 'uppercase' }} />
+                  valid={formData.panNumber.length === 10} />
               </div>
 
               <div className="mb-5">
@@ -468,7 +564,7 @@ const AddNGOPage = () => {
                   </span>
                 </div>
                 <textarea name="description"
-                  className={`${inputCls(false)} resize-y min-h-[110px]`}
+                  className={`${inputCls(false, formData.description.length > 20)} resize-y min-h-[110px]`}
                   placeholder="Briefly describe your mission, vision and key programs…"
                   value={formData.description} onChange={handleInputChange} />
               </div>
@@ -481,16 +577,21 @@ const AddNGOPage = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-x-5">
                 <SelectField label="State" name="state" required
                   options={['Andhra Pradesh','Arunachal Pradesh','Assam','Bihar','Chhattisgarh','Goa','Gujarat','Haryana','Himachal Pradesh','Jharkhand','Karnataka','Kerala','Madhya Pradesh','Maharashtra','Manipur','Meghalaya','Mizoram','Nagaland','Odisha','Punjab','Rajasthan','Sikkim','Tamil Nadu','Telangana','Tripura','Uttar Pradesh','Uttarakhand','West Bengal','Delhi','Puducherry']}
-                  value={formData.state} onChange={handleInputChange} error={errors.state} />
+                  value={formData.state} onChange={handleInputChange} error={errors.state}
+                  valid={!!formData.state && !errors.state} />
                 <InputField label="District" name="district" placeholder="District Name"
-                  value={formData.district} onChange={handleInputChange} />
+                  value={formData.district} onChange={handleInputChange}
+                  valid={formData.district.trim().length > 0} />
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-x-5">
                 <InputField label="City / Locality" name="city" required placeholder="e.g. Vasant Kunj"
-                  value={formData.city} onChange={handleInputChange} error={errors.city} />
+                  value={formData.city} onChange={handleInputChange} error={errors.city}
+                  valid={formData.city.trim().length >= 2 && !errors.city} />
                 <div>
                   <InputField label="Pincode" name="pincode" type="number" required placeholder="110001"
-                    value={formData.pincode} onChange={handleInputChange} error={errors.pincode} maxLength={6} />
+                    value={formData.pincode} onChange={handleInputChange} error={errors.pincode}
+                    maxLength={6}
+                    valid={formData.pincode.length === 6 && !errors.pincode} />
                   {pincodeLoading && <p className="text-[11px] text-gray-400 -mt-4 mb-4">Fetching location…</p>}
                   {pincodeError   && <p className="text-[11px] text-red-500 -mt-4 mb-4">{pincodeError}</p>}
                 </div>
@@ -498,7 +599,7 @@ const AddNGOPage = () => {
               <div className="mb-5">
                 <FieldLabel>Registered Address</FieldLabel>
                 <textarea name="address" rows="3"
-                  className={`${inputCls(false)} resize-y min-h-[90px]`}
+                  className={`${inputCls(false, formData.address.trim().length > 10)} resize-y min-h-[90px]`}
                   placeholder="Full street address…"
                   value={formData.address} onChange={handleInputChange} />
               </div>
@@ -510,9 +611,11 @@ const AddNGOPage = () => {
             <div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-x-5">
                 <InputField label="Contact Person Name" name="contactName" required placeholder="Full Name"
-                  value={formData.contactName} onChange={handleInputChange} error={errors.contactName} />
+                  value={formData.contactName} onChange={handleInputChange} error={errors.contactName}
+                  valid={formData.contactName.trim().length >= 2 && !errors.contactName} />
                 <InputField label="Role / Designation" name="contactRole" required placeholder="e.g. Secretary"
-                  value={formData.contactRole} onChange={handleInputChange} error={errors.contactRole} />
+                  value={formData.contactRole} onChange={handleInputChange} error={errors.contactRole}
+                  valid={formData.contactRole.trim().length > 0 && !errors.contactRole} />
               </div>
 
               {/* Phone + OTP */}
@@ -520,9 +623,14 @@ const AddNGOPage = () => {
                 <FieldLabel required>Phone Number</FieldLabel>
                 <div className="flex gap-2 items-start">
                   <div className="flex-1">
-                    <input type="tel" name="phone" value={formData.phone} onChange={handlePhoneChange}
-                      placeholder="10-digit mobile number" maxLength={10} disabled={phoneVerified}
-                      className={`${inputCls(errors.phone)} ${phoneVerified ? 'opacity-60 cursor-not-allowed' : ''}`} />
+                    <div className="relative">
+                      <input type="tel" name="phone" value={formData.phone} onChange={handlePhoneChange}
+                        placeholder="10-digit mobile number" maxLength={10} disabled={phoneVerified}
+                        className={`${inputCls(errors.phone, formData.phone.length === 10 && !errors.phone)} ${phoneVerified ? 'opacity-60 cursor-not-allowed' : ''}`} />
+                      {formData.phone.length === 10 && !errors.phone && (
+                        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-green-600 font-bold">✓</span>
+                      )}
+                    </div>
                   </div>
                   {!phoneVerified && (
                     <button type="button" onClick={handleSendOtp} disabled={otpLoading || otpCooldown > 0}
@@ -558,15 +666,18 @@ const AddNGOPage = () => {
 
               <InputField label="WhatsApp Number" name="whatsapp" type="number" required
                 placeholder="10-digit WhatsApp number"
-                value={formData.whatsapp} onChange={handleInputChange} error={errors.whatsapp} />
+                value={formData.whatsapp} onChange={handleInputChange} error={errors.whatsapp}
+                valid={formData.whatsapp.length === 10 && !errors.whatsapp} />
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-x-5">
                 <InputField label="Email Address" name="email" type="email" required
                   placeholder="contact@ngo.org"
-                  value={formData.email} onChange={handleInputChange} error={errors.email} />
+                  value={formData.email} onChange={handleInputChange} error={errors.email}
+                  valid={/^[\w.-]+@([\w-]+\.)+[\w-]{2,4}$/.test(formData.email) && !errors.email} />
                 <InputField label="Website (Optional)" name="website" type="url"
                   placeholder="https://www.ngo.org"
-                  value={formData.website} onChange={handleInputChange} />
+                  value={formData.website} onChange={handleInputChange}
+                  valid={formData.website.length > 0 && /^https?:\/\/.+/.test(formData.website)} />
               </div>
 
               <div className="mb-5">
@@ -575,12 +686,12 @@ const AddNGOPage = () => {
                   <div className="relative">
                     <Link2 size={14} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-300" />
                     <input type="text" name="facebook" value={formData.facebook} onChange={handleInputChange}
-                      placeholder="Facebook URL" className={`${inputCls(false)} pl-10`} />
+                      placeholder="Facebook URL" className={`${inputCls(false, formData.facebook.length > 0)} pl-10`} />
                   </div>
                   <div className="relative">
                     <Link2 size={14} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-300" />
                     <input type="text" name="instagram" value={formData.instagram} onChange={handleInputChange}
-                      placeholder="Instagram URL" className={`${inputCls(false)} pl-10`} />
+                      placeholder="Instagram URL" className={`${inputCls(false, formData.instagram.length > 0)} pl-10`} />
                   </div>
                 </div>
               </div>

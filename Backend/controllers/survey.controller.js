@@ -1,6 +1,7 @@
 import Survey from "../models/Survey.model.js";
 import SurveyResponse from "../models/SurveyResponse.model.js";
 import mongoose from "mongoose";
+import { createActivity } from "./activity.controller.js";
 
 const ok  = (res, data, msg = "Success", code = 200) =>
     res.status(code).json({ success: true, message: msg, data });
@@ -164,6 +165,40 @@ export const submitResponse = async (req, res) => {
         });
 
         await Survey.findByIdAndUpdate(survey._id, { $inc: { responseCount: 1 } });
+
+        // Log activity if user is authenticated
+        if (req.user?._id) {
+            try {
+                const activityCreated = await createActivity(
+                    req.user._id,
+                    'survey_completed',
+                    `Completed Survey: ${survey.title}`,
+                    `You successfully completed the survey "${survey.title}"`,
+                    null,
+                    {
+                        type: 'survey',
+                        id: survey._id,
+                        name: survey.title,
+                    },
+                    {
+                        surveyId: survey._id,
+                        responseId: response._id,
+                        questionCount: answers.length,
+                    }
+                );
+                console.log('Activity created for survey submission:', {
+                    userId: req.user._id,
+                    surveyTitle: survey.title,
+                    activityId: activityCreated?._id,
+                    activityCreated: !!activityCreated
+                });
+            } catch (activityError) {
+                console.error('Error creating activity for survey:', activityError);
+            }
+        } else {
+            console.log('No authenticated user for survey submission, skipping activity log');
+        }
+
         ok(res, { response }, "Response submitted", 201);
     } catch (e) { err(res, e.message); }
 };

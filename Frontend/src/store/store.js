@@ -12,6 +12,7 @@ import employmentReducer from "./slices/employmentSlice";
 import communityPostsReducer from "./slices/communityPostsSlice";
 import impactReportsReducer from "./slices/impactReportsSlice";
 import villagesReducer from "./slices/villagesSlice";
+import registrationReducer from "./slices/registrationSlice";
 
 const store = configureStore({
   reducer: {
@@ -28,6 +29,7 @@ const store = configureStore({
     communityPosts: communityPostsReducer,
     impactReports: impactReportsReducer,
     villages: villagesReducer,
+    registration: registrationReducer,
   },
 });
 

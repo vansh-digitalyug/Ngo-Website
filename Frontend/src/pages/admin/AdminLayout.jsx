@@ -5,7 +5,7 @@ import {
   LayoutDashboard, Building2, Users, Mail, Image, UserCircle, Heart,
   ClipboardList, Wallet, IndianRupee, CheckCircle2, Coins, BookOpenText,
   CalendarDays, Settings, Briefcase, MapPin, BookMarked,
-  MessageSquare, UserCog, AlertCircle, BarChart2,
+  MessageSquare, UserCog, AlertCircle, BarChart2, Bell,
 } from "lucide-react";
 
 const API_BASE_URL = String(import.meta.env.VITE_API_BASE_URL || "http://localhost:5000").replace(/\/$/, "");
@@ -18,6 +18,8 @@ const NAV_ITEMS = [
   { path: "/admin/gallery",           label: "Gallery",          icon: Image },
   { path: "/admin/blogs",             label: "Blogs",            icon: BookOpenText },
   { path: "/admin/events",            label: "Events",           icon: CalendarDays },
+  { path: "/admin/registrations",     label: "Event Registrations",    icon: ClipboardList },
+  { path: "/admin/notifications",     label: "Event Notifications",  icon: Bell },
   { path: "/admin/users",             label: "Users",            icon: UserCircle },
   { path: "/admin/kanyadan",          label: "Kanyadan",         icon: Heart },
   { path: "/admin/donations",         label: "Donations",        icon: Coins },
@@ -35,6 +37,7 @@ const NAV_ITEMS = [
   { path: "/admin/staff",             label: "Staff",            icon: Users },
   { path: "/admin/surveys",           label: "Surveys",          icon: ClipboardList },
   { path: "/admin/impact-reports",    label: "Impact Reports",   icon: BarChart2 },
+  
 ];
 
 function AdminLayout() {

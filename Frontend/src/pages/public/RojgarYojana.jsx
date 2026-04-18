@@ -40,17 +40,93 @@ function fmtDate(d) {
 
 /* ── Apply Modal ─────────────────────────────────────────────────────────── */
 function ApplyModal({ job, onClose }) {
+  const VALIDATION = {
+    onlyTextNoNumbers: (value) =>
+      value.replace(/[0-9]/g, "").replace(/[^a-zA-Z\s'-]/g, "").trim(),
+    isValidEmail: (email) =>
+      /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim()),
+    isValidName: (name) => {
+      const trimmed = name.trim();
+      return trimmed.length >= 2 && trimmed.length <= 100 && !/[0-9]/.test(trimmed) && /^[a-zA-Z]/.test(trimmed);
+    },
+    isValidPhone: (phone) => {
+      const digitsOnly = phone.replace(/\D/g, "");
+      return digitsOnly.length === 10;
+    },
+    onlyNumbers: (value) =>
+      value.replace(/[^0-9]/g, "").slice(0, 10),
+  };
+
+  const validateApplicationForm = (formData) => {
+    const errors = {};
+
+    if (!formData.name.trim()) {
+      errors.name = "Name is required.";
+    } else if (!VALIDATION.isValidName(formData.name)) {
+      errors.name = "Name must be 2-100 chars, no numbers, start with letter.";
+    }
+
+    if (!formData.email.trim()) {
+      errors.email = "Email is required.";
+    } else if (!VALIDATION.isValidEmail(formData.email)) {
+      errors.email = "Please enter a valid email.";
+    }
+
+    if (!formData.phone.trim()) {
+      errors.phone = "Phone is required.";
+    } else if (!VALIDATION.isValidPhone(formData.phone)) {
+      errors.phone = "Phone must be exactly 10 digits.";
+    }
+
+    if (formData.age && (formData.age < 14 || formData.age > 65)) {
+      errors.age = "Age must be between 14 and 65.";
+    }
+
+    return errors;
+  };
+
   const [form, setForm] = useState({
     name: "", email: "", phone: "", age: "", education: "other", experience: "", message: "",
   });
+  const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
   const [done, setDone]       = useState(false);
   const [error, setError]     = useState("");
   const meta = CAT_META[job.category] || CAT_META.other;
-  const set  = (k, v) => setForm(f => ({ ...f, [k]: v }));
+
+  const set = (k, v) => {
+    let processedVal = v;
+    if ((k === "name") && typeof v === "string") {
+      processedVal = VALIDATION.onlyTextNoNumbers(v);
+    }
+    if ((k === "phone") && typeof v === "string") {
+      processedVal = VALIDATION.onlyNumbers(v);
+    }
+    if ((k === "age") && typeof v === "string") {
+      processedVal = v.replace(/[^0-9]/g, "").slice(0, 2);
+    }
+    if ((k === "experience" || k === "message") && typeof v === "string") {
+      processedVal = VALIDATION.onlyTextNoNumbers(v);
+    }
+    setForm(f => ({ ...f, [k]: processedVal }));
+    if (errors[k]) {
+      setErrors(prev => {
+        const newErrors = { ...prev };
+        delete newErrors[k];
+        return newErrors;
+      });
+    }
+  };
 
   const submit = async (e) => {
-    e.preventDefault(); setError(""); setLoading(true);
+    e.preventDefault();
+    setError("");
+    const formErrors = validateApplicationForm(form);
+    if (Object.keys(formErrors).length > 0) {
+      setErrors(formErrors);
+      return;
+    }
+    setLoading(true);
     try {
       const res = await fetch(`${API}/api/employment-applications`, {
         method: "POST", headers: { "Content-Type": "application/json" },
@@ -64,6 +140,7 @@ function ApplyModal({ job, onClose }) {
   };
 
   const input = "w-full border border-stone-200 rounded-lg px-3.5 py-2.5 text-sm text-stone-800 placeholder-stone-400 focus:outline-none focus:border-stone-400 bg-white transition-colors";
+  const errorClass = "border-red-200 bg-red-50 text-red-700 focus:border-red-400";
 
   return (
     <motion.div
@@ -109,52 +186,161 @@ function ApplyModal({ job, onClose }) {
           </div>
         ) : (
           <form onSubmit={submit} className="px-6 py-5 flex flex-col gap-4">
+            {/* Error Summary Box */}
+            {Object.keys(errors).length > 0 && (
+              <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-xs text-red-700">
+                <div className="flex items-start gap-2">
+                  <AlertCircle size={14} className="mt-0.5 flex-shrink-0" />
+                  <div>
+                    <div className="font-semibold mb-1">Please fix the following errors:</div>
+                    <ul className="list-disc ml-4 space-y-0.5">
+                      {Object.values(errors).map((e, i) => (
+                        <li key={i}>{e}</li>
+                      ))}
+                    </ul>
+                  </div>
+                </div>
+              </div>
+            )}
+
             {error && (
               <div className="flex items-center gap-2 bg-red-50 border border-red-200 text-red-700 text-xs rounded-lg px-4 py-3">
                 <AlertCircle size={14} />{error}
               </div>
             )}
+
             <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="block text-xs font-semibold text-stone-500 mb-1.5">Full Name *</label>
-                <input required value={form.name} onChange={e => set("name", e.target.value)} placeholder="Your name" className={input} />
+              <div className="relative">
+                <label className="block text-xs font-semibold text-stone-500 mb-1.5 flex items-center justify-between">
+                  <span>Full Name *</span>
+                  {form.name && !errors.name && <CheckCircle size={14} className="text-green-600" />}
+                </label>
+                <input
+                  value={form.name}
+                  onChange={e => set("name", e.target.value)}
+                  placeholder="Your name"
+                  className={`${input} ${errors.name ? errorClass : ""}`}
+                />
+                {errors.name && <div className="text-xs text-red-600 mt-1">{errors.name}</div>}
               </div>
-              <div>
-                <label className="block text-xs font-semibold text-stone-500 mb-1.5">Age</label>
-                <input type="number" min="14" max="65" value={form.age} onChange={e => set("age", e.target.value)} placeholder="Your age" className={input} />
+              <div className="relative">
+                <label className="block text-xs font-semibold text-stone-500 mb-1.5 flex items-center justify-between">
+                  <span>Age</span>
+                  {form.age && (form.age >= 14 && form.age <= 65) && <CheckCircle size={14} className="text-green-600" />}
+                </label>
+                <input
+                  type="text"
+                  min="14"
+                  max="65"
+                  value={form.age}
+                  onChange={e => set("age", e.target.value)}
+                  placeholder="14-65"
+                  className={input}
+                  maxLength={2}
+                />
+                {errors.age && <div className="text-xs text-red-600 mt-1">{errors.age}</div>}
               </div>
             </div>
+
             <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="block text-xs font-semibold text-stone-500 mb-1.5">Email *</label>
-                <input required type="email" value={form.email} onChange={e => set("email", e.target.value)} placeholder="you@email.com" className={input} />
+              <div className="relative">
+                <label className="block text-xs font-semibold text-stone-500 mb-1.5 flex items-center justify-between">
+                  <span>Email *</span>
+                  {form.email && !errors.email && <CheckCircle size={14} className="text-green-600" />}
+                </label>
+                <input
+                  type="email"
+                  value={form.email}
+                  onChange={e => set("email", e.target.value)}
+                  placeholder="you@email.com"
+                  className={`${input} ${errors.email ? errorClass : ""}`}
+                />
+                {errors.email && <div className="text-xs text-red-600 mt-1">{errors.email}</div>}
               </div>
-              <div>
-                <label className="block text-xs font-semibold text-stone-500 mb-1.5">Phone *</label>
-                <input required value={form.phone} onChange={e => set("phone", e.target.value)} placeholder="10-digit number" className={input} />
+              <div className="relative">
+                <label className="block text-xs font-semibold text-stone-500 mb-1.5 flex items-center justify-between">
+                  <span>Phone *</span>
+                  {form.phone.length === 10 && <CheckCircle size={14} className="text-green-600" />}
+                </label>
+                <div className="relative">
+                  <input
+                    type="tel"
+                    value={form.phone}
+                    onChange={e => set("phone", e.target.value)}
+                    placeholder="10-digit number"
+                    className={`${input} ${errors.phone ? errorClass : ""} pr-10`}
+                    maxLength={10}
+                    inputMode="numeric"
+                  />
+                  <span className={`absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-semibold ${
+                    form.phone.length === 10 ? "text-green-600" : form.phone.length > 0 ? "text-orange-400" : "text-stone-300"
+                  }`}>
+                    {form.phone.length}/10
+                  </span>
+                </div>
+                {errors.phone && <div className="text-xs text-red-600 mt-1">{errors.phone}</div>}
               </div>
             </div>
+
             <div>
               <label className="block text-xs font-semibold text-stone-500 mb-1.5">Education</label>
-              <select value={form.education} onChange={e => set("education", e.target.value)} className={input + " bg-white"}>
+              <select
+                value={form.education}
+                onChange={e => set("education", e.target.value)}
+                className={input + " bg-white"}
+              >
                 {EDU_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
               </select>
             </div>
+
             <div>
-              <label className="block text-xs font-semibold text-stone-500 mb-1.5">Experience</label>
-              <textarea value={form.experience} onChange={e => set("experience", e.target.value)} rows={2}
-                placeholder="Any relevant skills or experience…" className={input + " resize-none"} />
+              <label className="block text-xs font-semibold text-stone-500 mb-1.5 flex items-center justify-between">
+                <span>Experience (Optional)</span>
+                <span className="text-[10px] text-stone-400 font-normal">No numbers allowed</span>
+              </label>
+              <textarea
+                value={form.experience}
+                onChange={e => set("experience", e.target.value)}
+                rows={2}
+                placeholder="Skills, training, or work experience (letters only)…"
+                className={input + " resize-none"}
+                maxLength={500}
+              />
+              <div className={`text-xs mt-1 ${form.experience.length > 450 ? "text-orange-500" : "text-stone-400"}`}>
+                {form.experience.length}/500
+              </div>
             </div>
+
             <div>
-              <label className="block text-xs font-semibold text-stone-500 mb-1.5">Cover Message</label>
-              <textarea value={form.message} onChange={e => set("message", e.target.value)} rows={3}
-                placeholder="Why are you interested in this?" className={input + " resize-none"} />
+              <label className="block text-xs font-semibold text-stone-500 mb-1.5 flex items-center justify-between">
+                <span>Cover Message (Optional)</span>
+                <span className="text-[10px] text-stone-400 font-normal">No numbers allowed</span>
+              </label>
+              <textarea
+                value={form.message}
+                onChange={e => set("message", e.target.value)}
+                rows={3}
+                placeholder="Why are you interested in this (letters only)?"
+                className={input + " resize-none"}
+                maxLength={500}
+              />
+              <div className={`text-xs mt-1 ${form.message.length > 450 ? "text-orange-500" : "text-stone-400"}`}>
+                {form.message.length}/500
+              </div>
             </div>
-            <button type="submit" disabled={loading}
-              className="w-full py-3 rounded-lg font-semibold text-sm text-white flex items-center justify-center gap-2 disabled:opacity-60 transition-opacity hover:opacity-90 mt-1"
-              style={{ background: meta.color }}>
+
+            <button
+              type="submit"
+              disabled={loading || Object.keys(errors).length > 0}
+              className={`w-full py-3 rounded-lg font-semibold text-sm text-white flex items-center justify-center gap-2 transition-all mt-1 ${
+                Object.keys(errors).length > 0
+                  ? "opacity-50 cursor-not-allowed"
+                  : "hover:opacity-90"
+              }`}
+              style={{ background: meta.color }}
+            >
               {loading && <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />}
-              {loading ? "Submitting…" : "Submit Application"}
+              {loading ? "Submitting…" : Object.keys(errors).length > 0 ? `Fix ${Object.keys(errors).length} Error(s)` : "Submit Application"}
             </button>
           </form>
         )}

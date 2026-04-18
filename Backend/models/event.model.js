@@ -49,7 +49,13 @@ const eventSchema = new mongoose.Schema({
         type: Number,
         default: null,
     },
-    // Who created this event
+    eventCapacity: {
+        type: Number,
+        default: 100,
+    },
+    registrationDeadline: {
+        type: Date,
+    },
     createdBy: {
         type: mongoose.Schema.Types.ObjectId,
         ref: "User",

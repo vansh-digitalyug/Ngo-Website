@@ -4,10 +4,89 @@ import {
   MessageSquare, Star, CheckCircle, Loader2,
   ArrowLeft, User, Mail, Phone, ChevronRight,
   Monitor, Building2, HandHeart, CalendarDays,
-  Users, Layers, HelpCircle, X,
+  Users, Layers, HelpCircle, X, AlertTriangle,
 } from "lucide-react";
 
 const API_BASE_URL = String(import.meta.env.VITE_API_BASE_URL || "http://localhost:5000").replace(/\/$/, "");
+
+/* ===========================
+   VALIDATION UTILITIES
+   =========================== */
+const VALIDATION = {
+  // Remove all numbers and special chars, keep letters, spaces, hyphens
+  onlyTextNoNumbers: (value) =>
+    value
+      .replace(/[0-9]/g, "")
+      .replace(/[^a-zA-Z\s'-]/g, "")
+      .trim(),
+
+  // Keep only numbers for phone field
+  onlyNumbers: (value) =>
+    value.replace(/[^0-9]/g, "").slice(0, 10),
+
+  // Validate email format
+  isValidEmail: (email) => {
+    const trimmed = email.trim();
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(trimmed);
+  },
+
+  // Validate name format
+  isValidName: (name) => {
+    const trimmed = name.trim();
+    return (
+      trimmed.length >= 2 &&
+      trimmed.length <= 100 &&
+      /^[a-zA-Z]/.test(trimmed) &&
+      !/[0-9]/.test(trimmed) &&
+      /[a-zA-Z\s'-]/.test(trimmed)
+    );
+  },
+
+  // Validate phone format (exactly 10 digits)
+  isValidPhone: (phone) => {
+    if (!phone.trim()) return true; // optional field
+    const digitsOnly = phone.replace(/\D/g, "");
+    return digitsOnly.length === 10;
+  },
+
+
+};
+
+/* ===========================
+   VALIDATION FUNCTIONS
+   =========================== */
+const validateFeedbackForm = (form) => {
+  const errors = {};
+
+  if (!form.name.trim()) {
+    errors.name = "Full name is required.";
+  } else if (!VALIDATION.isValidName(form.name)) {
+    errors.name = "⚠️ Name must be 2-100 characters, start with a letter, no numbers.";
+  }
+
+  if (!form.email.trim()) {
+    errors.email = "Email is required.";
+  } else if (!VALIDATION.isValidEmail(form.email)) {
+    errors.email = "⚠️ Please enter a valid email address.";
+  }
+
+  if (form.phone && !VALIDATION.isValidPhone(form.phone)) {
+    errors.phone = "Phone number must be exactly 10 digits.";
+  }
+
+  if (!form.feedbackType) {
+    errors.feedbackType = "Please select a feedback type.";
+  }
+
+
+
+  if (form.rating && (form.rating < 1 || form.rating > 5)) {
+    errors.rating = "Rating must be between 1 and 5.";
+  }
+
+  return errors;
+};
 
 // ── Constants ────────────────────────────────────────────────────────────────
 const FEEDBACK_TYPES = [
@@ -111,7 +190,7 @@ function TypeSelector({ value, onChange, error }) {
 }
 
 // ── Field Component ──────────────────────────────────────────────────────────
-function Field({ label, required, error, children, hint }) {
+function Field({ label, required, error, children, hint, valid }) {
   return (
     <div>
       <label className="block text-sm font-semibold text-gray-700 mb-1.5">
@@ -121,7 +200,12 @@ function Field({ label, required, error, children, hint }) {
       </label>
       {children}
       {hint && !error && <p className="text-xs text-gray-400 mt-1">{hint}</p>}
-      {error && <p className="text-xs text-red-500 mt-1">{error}</p>}
+      {error && (
+        <p className="text-xs text-red-600 mt-1 flex items-center gap-1.5">
+          <AlertTriangle size={12} /> {error}
+        </p>
+      )}
+      {valid && !error && <p className="text-xs text-green-600 mt-1">✓ Valid</p>}
     </div>
   );
 }
@@ -164,31 +248,37 @@ export default function FeedbackForm() {
   const [apiError, setApiError] = useState("");
 
   const set = (field, val) => {
-    setForm((p) => ({ ...p, [field]: val }));
+    let processedVal = val;
+    
+    // Filter numbers from name and targetName fields
+    if ((field === "name" || field === "targetName") && typeof val === "string") {
+      processedVal = VALIDATION.onlyTextNoNumbers(val);
+    }
+
+    // Keep only numbers (max 10 digits) for phone field
+    if (field === "phone" && typeof val === "string") {
+      processedVal = VALIDATION.onlyNumbers(val);
+    }
+
+    setForm((p) => ({ ...p, [field]: processedVal }));
     setErrors((p) => { const n = { ...p }; delete n[field]; return n; });
   };
 
   // ── Validation ─────────────────────────────────────────────────────────────
   const validate = () => {
-    const e = {};
-    if (!form.name.trim())                           e.name         = "Name is required.";
-    if (!form.email.trim())                          e.email        = "Email is required.";
-    else if (!/^\S+@\S+\.\S+$/.test(form.email))    e.email        = "Enter a valid email address.";
-    if (!form.feedbackType)                          e.feedbackType = "Please select a feedback type.";
-    if (!form.subject.trim())                        e.subject      = "Subject is required.";
-    if (form.subject.trim().length > 200)            e.subject      = "Subject cannot exceed 200 characters.";
-    if (!form.message.trim())                        e.message      = "Message is required.";
-    if (form.message.trim().length < 10)             e.message      = "Message must be at least 10 characters.";
-    if (form.message.trim().length > 2000)           e.message      = "Message cannot exceed 2000 characters.";
-    if (form.rating && (form.rating < 1 || form.rating > 5)) e.rating = "Rating must be between 1 and 5.";
-    return e;
+    const errs = validateFeedbackForm(form);
+    return errs;
   };
 
   // ── Submit ─────────────────────────────────────────────────────────────────
   const handleSubmit = async (e) => {
     e.preventDefault();
     const errs = validate();
-    if (Object.keys(errs).length) { setErrors(errs); window.scrollTo({ top: 200, behavior: "smooth" }); return; }
+    if (Object.keys(errs).length) { 
+      setErrors(errs); 
+      window.scrollTo({ top: 200, behavior: "smooth" }); 
+      return; 
+    }
 
     setStatus("submitting");
     setApiError("");
@@ -337,6 +427,21 @@ export default function FeedbackForm() {
             </div>
           )}
 
+          {/* Validation Errors Summary */}
+          {Object.keys(errors).length > 0 && (
+            <div className="flex items-start gap-3 bg-red-50 border border-red-200 rounded-2xl p-4">
+              <AlertTriangle size={16} className="text-red-500 mt-0.5 shrink-0" />
+              <div className="flex-1">
+                <p className="text-sm font-semibold text-red-700">Please fix the following errors:</p>
+                <ul className="list-disc list-inside mt-2 text-xs text-red-600 space-y-1">
+                  {Object.values(errors).map((err, idx) => (
+                    <li key={idx}>{err}</li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          )}
+
           {/* ── Section 1: Your Info ── */}
           <div>
             <h3 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-4 flex items-center gap-2">
@@ -344,7 +449,7 @@ export default function FeedbackForm() {
             </h3>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <Field label="Full Name" required error={errors.name}>
+              <Field label="Full Name" required error={errors.name} valid={form.name && !errors.name && VALIDATION.isValidName(form.name)}>
                 <Input
                   type="text"
                   value={form.name}
@@ -352,10 +457,11 @@ export default function FeedbackForm() {
                   placeholder="Your full name"
                   error={errors.name}
                   disabled={isLoggedIn && !!loggedUser?.name}
+                  maxLength={100}
                 />
               </Field>
 
-              <Field label="Email Address" required error={errors.email}>
+              <Field label="Email Address" required error={errors.email} valid={form.email && !errors.email && VALIDATION.isValidEmail(form.email)}>
                 <Input
                   type="email"
                   value={form.email}
@@ -368,17 +474,26 @@ export default function FeedbackForm() {
             </div>
 
             <div className="mt-4">
-              <Field label="Phone Number" required={false} error={errors.phone} hint="We'll contact you only if needed.">
+              <Field label="Phone Number" required={false} error={errors.phone} hint="We'll contact you only if needed. Must be exactly 10 digits." valid={form.phone && !errors.phone && VALIDATION.isValidPhone(form.phone)}>
                 <div className="relative">
                   <Phone size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
                   <Input
                     type="tel"
                     value={form.phone}
                     onChange={(e) => set("phone", e.target.value)}
-                    placeholder="+91 98765 43210"
+                    placeholder="10-digit number"
                     error={errors.phone}
-                    style={{ paddingLeft: "2.25rem" }}
+                    maxLength={10}
+                    inputMode="numeric"
+                    style={{ paddingLeft: "2.25rem", paddingRight: "3rem" }}
                   />
+                  <span
+                    className={`absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-semibold ${
+                      form.phone.length === 10 ? "text-green-600" : form.phone.length > 0 ? "text-orange-400" : "text-gray-300"
+                    }`}
+                  >
+                    {form.phone.length}/10
+                  </span>
                 </div>
               </Field>
             </div>
@@ -408,12 +523,15 @@ export default function FeedbackForm() {
                   label={TARGET_LABEL[form.feedbackType]}
                   required={false}
                   hint={`Name of the ${form.feedbackType} you're giving feedback about`}
+                  valid={form.targetName && !errors.targetName && VALIDATION.isValidName(form.targetName)}
+                  error={errors.targetName}
                 >
                   <Input
                     type="text"
                     value={form.targetName}
                     onChange={(e) => set("targetName", e.target.value)}
                     placeholder={`Enter ${TARGET_LABEL[form.feedbackType].toLowerCase()}...`}
+                    maxLength={100}
                   />
                 </Field>
               </div>
@@ -449,16 +567,14 @@ export default function FeedbackForm() {
                     error={errors.subject}
                   />
                   <span
-                    className={`absolute right-3 bottom-3 text-[10px] ${
-                      form.subject.length > 180 ? "text-red-400" : "text-gray-300"
-                    }`}
+                    className="absolute right-3 bottom-3 text-[10px] text-gray-300"
                   >
                     {form.subject.length}/200
                   </span>
                 </div>
               </Field>
 
-              <Field label="Message" required error={errors.message} hint="Minimum 10 characters.">
+              <Field label="Message" required error={errors.message} hint="Share your detailed feedback here." >
                 <div className="relative">
                   <textarea
                     value={form.message}
@@ -472,17 +588,8 @@ export default function FeedbackForm() {
                         : "border-gray-200 bg-white focus:border-indigo-400"
                     }`}
                   />
-                  <div className="flex justify-between mt-1">
+                  <div className="flex justify-end mt-1">
                     <span className="text-xs text-gray-400">
-                      {form.message.length < 10 && form.message.length > 0
-                        ? <span className="text-orange-400">{10 - form.message.length} more characters needed</span>
-                        : ""}
-                    </span>
-                    <span
-                      className={`text-xs ${
-                        form.message.length > 1900 ? "text-red-400" : "text-gray-300"
-                      }`}
-                    >
                       {form.message.length}/2000
                     </span>
                   </div>
@@ -495,11 +602,14 @@ export default function FeedbackForm() {
           <div className="pt-2">
             <button
               type="submit"
-              disabled={status === "submitting"}
+              disabled={status === "submitting" || Object.keys(errors).length > 0}
               className="w-full py-4 bg-gradient-to-r from-indigo-500 to-purple-500 hover:from-indigo-600 hover:to-purple-600 disabled:from-indigo-300 disabled:to-purple-300 text-white font-bold rounded-2xl transition-all duration-200 flex items-center justify-center gap-2 text-sm shadow-lg hover:shadow-xl disabled:cursor-not-allowed"
+              title={Object.keys(errors).length > 0 ? `Please fix ${Object.keys(errors).length} error(s)` : ""}
             >
               {status === "submitting" ? (
                 <><Loader2 size={18} className="animate-spin" /> Submitting…</>
+              ) : Object.keys(errors).length > 0 ? (
+                <><AlertTriangle size={18} /> Fix {Object.keys(errors).length} Error(s) <ChevronRight size={16} /></>
               ) : (
                 <><MessageSquare size={18} /> Submit Feedback <ChevronRight size={16} /></>
               )}

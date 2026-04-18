@@ -6,6 +6,8 @@ import {
 } from "lucide-react";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchEvents, selectEvents, selectEventsStatus, selectEventsError } from "../../store/slices/eventsSlice";
+import { checkRegistration, selectIsRegisteredForEvent } from "../../store/slices/registrationSlice";
+import RegistrationModal from "../../components/RegistrationModal";
 
 // ─── Countdown Hook ───────────────────────────────────────────────────────────
 function useCountdown(targetDate) {
@@ -38,8 +40,107 @@ function fmtDate(d) {
 // ─── Event Card (Redesigned) ──────────────────────────────────────────────────
 function EventCard({ event, onNavigate }) {
   const { days, hours, minutes, seconds, expired } = useCountdown(event.date);
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [spotsData, setSpotsData] = useState(null);
+  const [spotsLoading, setSpotsLoading] = useState(false);
+  const [lastCheckTime, setLastCheckTime] = useState(0); // ✅ Track last check to prevent hammering API
+  
+  // Use per-event selector for registration status
+  const isRegistered = useSelector(state => selectIsRegisteredForEvent(state, event._id));
+
+  // ✅ Helper function to check if we should make API call (debounce/prevent hammering)
+  const shouldCheckRegistration = useCallback(() => {
+    const now = Date.now();
+    const timeSinceLastCheck = now - lastCheckTime;
+    const MIN_INTERVAL = 2000; // Minimum 2 seconds between checks for same event
+    return timeSinceLastCheck >= MIN_INTERVAL;
+  }, [lastCheckTime]);
+
+  // Fetch spots data on mount
+  useEffect(() => {
+    const fetchSpots = async () => {
+      try {
+        setSpotsLoading(true);
+        const response = await fetch(`/api/registrations/${event._id}/spots`);
+        if (response.ok) {
+          const data = await response.json();
+          setSpotsData(data.data);
+        }
+      } catch (err) {
+        console.error('Failed to fetch spots:', err);
+      } finally {
+        setSpotsLoading(false);
+      }
+    };
+    fetchSpots();
+  }, [event._id]);
+
+  // ✅ CHECK REGISTRATION STATUS ON MOUNT (Only once!)
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    if (token && event._id) {
+      // ✅ Single check on mount - eventId is passed through thunk payload
+      dispatch(checkRegistration(event._id));
+      setLastCheckTime(Date.now());
+    }
+  }, [event._id, dispatch]);
+
+  // ✅ RE-CHECK WHEN MODAL OPENS (if enough time has passed)
+  useEffect(() => {
+    if (isModalOpen) {
+      const token = localStorage.getItem('token');
+      if (token && event._id && shouldCheckRegistration()) {
+        setLastCheckTime(Date.now());
+        dispatch(checkRegistration(event._id));
+      }
+    }
+  }, [isModalOpen, event._id, dispatch, shouldCheckRegistration]);
+
+  // ✅ RE-CHECK WHEN MODAL CLOSES (after user registers)
+  useEffect(() => {
+    if (!isModalOpen && event._id) {
+      const token = localStorage.getItem('token');
+      if (token && shouldCheckRegistration()) {
+        // Delay a bit to let backend data settle
+        const timer = setTimeout(() => {
+          setLastCheckTime(Date.now());
+          dispatch(checkRegistration(event._id));
+        }, 500);
+        return () => clearTimeout(timer);
+      }
+    }
+  }, [isModalOpen, event._id, dispatch, shouldCheckRegistration]);
+
+  const handleRegisterClick = (e) => {
+    e.stopPropagation();
+    const token = localStorage.getItem('token');
+    if (!token) {
+      sessionStorage.setItem(
+        'flash_message',
+        JSON.stringify({ type: 'info', message: 'Please log in to register for events' })
+      );
+      navigate(`/login/user?redirectTo=${encodeURIComponent(`/events/upcoming/${encodeURIComponent(event.title)}`)}`);
+      return;
+    }
+    setIsModalOpen(true);
+  };
+
+  const getButtonState = () => {
+    if (isRegistered) {
+      return { label: '✓ Already Registered', disabled: true, color: 'bg-stone-100 text-stone-500' };
+    }
+    if (spotsData?.isFullyBooked) {
+      return { label: 'Fully Booked', disabled: true, color: 'bg-stone-100 text-stone-500' };
+    }
+    return { label: 'Register Now', disabled: false, color: 'bg-[#0F766E] hover:bg-[#0D9488] text-white' };
+  };
+
+  const buttonState = getButtonState();
 
   return (
+    <>
     <article 
       onClick={() => onNavigate(event._id, event.title)}
       className="group cursor-pointer bg-white rounded-2xl border border-stone-200/80 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col overflow-hidden h-full">
@@ -136,23 +237,44 @@ function EventCard({ event, onNavigate }) {
           </div>
         )}
 
-        {/* CTA Area */}
-        <div className="flex flex-col gap-2">
-          <div className="flex gap-2.5">
-            <button className="flex-1 bg-[#0F766E] hover:bg-[#0D9488] text-white font-bold py-3 rounded-xl transition-colors text-sm tracking-wide shadow-sm">
-              Register Now
-            </button>
-            <button className="w-12 rounded-xl border border-stone-200 bg-white hover:bg-stone-50 flex items-center justify-center transition-colors text-stone-600 shadow-sm flex-shrink-0 group-hover:border-stone-300">
-              <Bell size={20} className="hover:text-amber-600 transition-colors" />
-            </button>
-          </div>
-          <p className="text-[11px] text-center text-stone-500 font-medium">
-            Register to secure a spot & get reminders
-          </p>
-        </div>
-      </div>
+          {/* Spots Remaining Display */}
+          {spotsData && (
+            <div className="mb-4 text-center">
+              {spotsData.isFullyBooked ? (
+                <p className="text-sm font-bold text-red-600">No spots available</p>
+              ) : (
+                <p className="text-sm font-bold text-green-600">
+                  {spotsData.spotsRemaining} {spotsData.spotsRemaining === 1 ? 'spot' : 'spots'} remaining
+                </p>
+              )}
+            </div>
+          )}
 
-    </article>
+          {/* CTA Area */}
+          <div className="flex flex-col gap-2">
+            <button 
+              onClick={handleRegisterClick}
+              disabled={buttonState.disabled}
+              className={`w-full ${buttonState.color} font-bold py-3 rounded-lg transition-all text-xs tracking-wide shadow-sm disabled:opacity-60 disabled:cursor-not-allowed`}
+            >
+              {buttonState.label}
+            </button>
+            <p className="text-[11px] text-center text-stone-500 font-medium">
+              Register to secure a spot & get reminders
+            </p>
+          </div>
+        </div>
+
+      </article>
+
+      {/* Registration Modal */}
+      <RegistrationModal 
+        event={event} 
+        isOpen={isModalOpen} 
+        onClose={() => setIsModalOpen(false)}
+        isRegistered={isRegistered}
+      />
+    </>
   );
 }
 

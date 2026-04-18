@@ -148,7 +148,7 @@ function Navbar() {
           >
             <span className="text-base leading-none">⚠</span> Report
           </Link>
-          
+
           {isLoggedIn ? (
             <div className="relative group cursor-pointer">
               {/* Profile Icon Trigger */}
@@ -298,9 +298,13 @@ function Navbar() {
           {isLoggedIn ? (
             <div className="mt-4 px-6 pb-6">
               <div className="bg-gray-50 rounded-lg p-4 mb-4 border border-gray-100">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="w-8 h-8 bg-green-700 text-white rounded-full flex items-center justify-center text-sm font-bold">
+                    {userInitial}
+                  </div>
+                </div>
                 {isAdmin ? (
                   <Link to="/admin" onClick={closeMenu} className="flex items-center gap-3 text-blue-700 font-bold mb-3">
-                    Admin Panel
                   </Link>
                 ) : hasNgo ? (
                   <Link 
@@ -315,9 +319,6 @@ function Navbar() {
                   </Link>
                 ) : (
                   <Link to="/profile" onClick={closeMenu} className="flex items-center gap-3 text-gray-800 font-medium mb-3">
-                    <div className="w-8 h-8 bg-green-700 text-white rounded-full flex items-center justify-center text-sm font-bold">
-                      {userInitial}
-                    </div>
                     My Profile
                   </Link>
                 )}

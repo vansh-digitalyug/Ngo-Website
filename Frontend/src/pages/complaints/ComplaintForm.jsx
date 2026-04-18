@@ -11,6 +11,42 @@ import {
 
 const API_BASE_URL = String(import.meta.env.VITE_API_BASE_URL || "http://localhost:5000").replace(/\/$/, "");
 
+// ── VALIDATION UTILITIES ──────────────────────────────────────────────────────
+const VALIDATION = {
+  // Only text - NO NUMBERS ALLOWED (removes all numbers and special chars)
+  onlyTextNoNumbers: (value) => value.replace(/[0-9]/g, '').replace(/[^a-zA-Z\s'-]/g, '').trim(),
+  
+  // Only text (no numbers at start, no special chars)
+  onlyText: (value) => value.replace(/[0-9]/g, '').replace(/[^a-zA-Z\s'-]/g, ''),
+  
+  // Only numbers (0-9)
+  onlyNumbers: (value) => value.replace(/[^0-9]/g, ''),
+  
+  // Text with limited numbers (name field - spaces, hyphens, NO DIGITS)
+  nameFormat: (value) => value.replace(/[0-9]/g, '').replace(/[^a-zA-Z\s'-]/g, '').trim(),
+  
+  // Validate name (min 2 chars, no leading numbers, no numbers at all)
+  isValidName: (name) => {
+    const trimmed = name.trim();
+    return trimmed.length >= 2 && trimmed.length <= 100 && !/[0-9]/.test(trimmed) && /^[a-zA-Z]/.test(trimmed);
+  },
+  
+  // Validate pin (exactly 6 digits)
+  isValidPin: (pin) => /^[0-9]{6}$/.test(pin),
+  
+  // Validate title (min 5, max 200, TEXT ONLY - NO NUMBERS)
+  isValidTitle: (title) => {
+    const trimmed = title.trim();
+    return trimmed.length >= 5 && trimmed.length <= 200 && !/[0-9]/.test(trimmed) && /[a-zA-Z]/.test(trimmed);
+  },
+
+  // Validate village name (TEXT ONLY - NO NUMBERS)
+  isValidVillageName: (name) => {
+    const trimmed = name.trim();
+    return trimmed.length >= 2 && trimmed.length <= 100 && !/[0-9]/.test(trimmed) && /^[a-zA-Z]/.test(trimmed);
+  },
+};
+
 const CATEGORIES = [
   { value: "water",       label: "Water Supply",          CatIcon: Droplets,   color: "#0ea5e9" },
   { value: "sanitation",  label: "Sanitation",            CatIcon: Trash2,     color: "#10b981" },
@@ -167,15 +203,72 @@ export default function ComplaintForm() {
 
   const validate = () => {
     const e = {};
-    if (villageMode === "search" && !form.villageId)
+    
+    // Village validation
+    if (villageMode === "search" && !form.villageId) {
       e.villageId = "Please select your village from the list.";
-    if (villageMode === "manual" && !form.villageName.trim())
-      e.villageName = "Village name is required.";
-    if (!form.title.trim())             e.title       = "Title is required.";
-    if (form.title.trim().length > 200) e.title       = "Title cannot exceed 200 characters.";
-    if (!form.category)                 e.category    = "Please select a problem category.";
-    if (form.description.length > 2000) e.description = "Description cannot exceed 2000 characters.";
-    if (!isLoggedIn && !form.name.trim()) e.name      = "Your name is required.";
+    }
+    if (villageMode === "manual") {
+      if (!form.villageName.trim()) {
+        e.villageName = "Village name is required.";
+      } else if (form.villageName.trim().length < 2) {
+        e.villageName = "Village name must be at least 2 characters.";
+      } else if (!/^[a-zA-Z]/.test(form.villageName.trim())) {
+        e.villageName = "Village name must start with letters.";
+      } else if (/[0-9]/.test(form.villageName)) {
+        e.villageName = "Village name must NOT contain numbers.";
+      }
+    }
+    
+    // PIN code validation
+    if (villageMode === "manual" && form.pincode) {
+      if (!/^[0-9]*$/.test(form.pincode)) {
+        e.pincode = "PIN code must contain only numbers.";
+      } else if (form.pincode.length > 0 && form.pincode.length !== 6) {
+        e.pincode = "PIN code must be exactly 6 digits.";
+      }
+    }
+    
+    // Title validation - NO NUMBERS ALLOWED
+    if (!form.title.trim()) {
+      e.title = "Problem title is required.";
+    } else if (form.title.trim().length < 5) {
+      e.title = "Title must be at least 5 characters.";
+    } else if (form.title.trim().length > 200) {
+      e.title = "Title cannot exceed 200 characters.";
+    } else if (!/[a-zA-Z]/.test(form.title)) {
+      e.title = "Title must contain letters.";
+    } else if (/[0-9]/.test(form.title)) {
+      e.title = "⚠️ Title must NOT contain any numbers.";
+    }
+    
+    // Category validation
+    if (!form.category) {
+      e.category = "Please select a problem category.";
+    }
+    
+    // Description validation (optional, but if provided should be text-only)
+    if (form.description) {
+      if (form.description.length > 2000) {
+        e.description = "Description cannot exceed 2000 characters.";
+      } else if (/[0-9]/.test(form.description)) {
+        e.description = "⚠️ Description must NOT contain any numbers.";
+      }
+    }
+    
+    // Name validation (for non-logged-in users) - NO NUMBERS
+    if (!isLoggedIn) {
+      if (!form.name.trim()) {
+        e.name = "Your name is required.";
+      } else if (form.name.trim().length < 2) {
+        e.name = "Name must be at least 2 characters.";
+      } else if (!/^[a-zA-Z]/.test(form.name.trim())) {
+        e.name = "Name must start with letters.";
+      } else if (/[0-9]/.test(form.name)) {
+        e.name = "⚠️ Name must NOT contain any numbers.";
+      }
+    }
+    
     return e;
   };
 
@@ -283,9 +376,12 @@ export default function ComplaintForm() {
         <div className="p-6 md:p-8 space-y-7">
 
           {status === "error" && apiError && (
-            <div className="flex items-start gap-3 bg-red-50 border border-red-200 rounded-xl p-4">
-              <X size={16} className="text-red-500 mt-0.5 shrink-0" />
-              <p className="text-sm text-red-700">{apiError}</p>
+            <div className="flex items-start gap-3 bg-red-50 border-l-4 border-red-500 rounded-lg p-4">
+              <X size={18} className="text-red-600 mt-0.5 shrink-0 font-bold" />
+              <div>
+                <p className="text-sm font-semibold text-red-800">Error Submitting Complaint</p>
+                <p className="text-xs text-red-700 mt-1">{apiError}</p>
+              </div>
             </div>
           )}
 
@@ -331,51 +427,74 @@ export default function ComplaintForm() {
               <div className="space-y-3">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Village / Gram Panchayat Name <span className="text-red-500">*</span>
+                    Village / Gram Panchayat Name <span className="text-red-500">*</span> <span className="text-xs text-gray-400 font-normal">(Text only)</span>
                   </label>
                   <input
                     type="text"
                     value={form.villageName}
-                    onChange={e => field("villageName")(e.target.value)}
-                    placeholder="e.g. Rampur Gram Panchayat"
-                    className={`w-full px-4 py-3 border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-orange-400 ${errors.villageName ? "border-red-400 bg-red-50" : "border-gray-300"}`}
+                    onChange={e => {
+                      const cleaned = VALIDATION.onlyTextNoNumbers(e.target.value);
+                      field("villageName")(cleaned);
+                    }}
+                    placeholder="e.g. Rampur"
+                    className={`w-full px-4 py-3 border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-orange-400 transition-colors ${errors.villageName ? "border-red-400 bg-red-50" : "border-gray-300"}`}
                   />
-                  {errors.villageName && <p className="text-xs text-red-500 mt-1">{errors.villageName}</p>}
+                  {errors.villageName && <p className="text-xs text-red-500 mt-1.5">❌ {errors.villageName}</p>}
+                  {form.villageName && !errors.villageName && <p className="text-xs text-green-600 mt-1.5">✓ Valid village name</p>}
+                  <p className="text-xs text-gray-400 mt-1.5">💡 Numbers are not allowed</p>
                 </div>
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">District</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">District <span className="text-xs text-gray-400">(Text only)</span></label>
                     <input
                       type="text"
                       value={form.district}
-                      onChange={e => field("district")(e.target.value)}
+                      onChange={e => {
+                        const cleaned = VALIDATION.onlyTextNoNumbers(e.target.value);
+                        field("district")(cleaned);
+                      }}
                       placeholder="e.g. Aligarh"
-                      className="w-full px-4 py-3 border border-gray-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-orange-400"
+                      className="w-full px-4 py-3 border border-gray-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-orange-400 transition-colors"
                     />
+                    {form.district && !/^[a-zA-Z]/.test(form.district) && <p className="text-xs text-red-500 mt-1">❌ Must start with letters</p>}
+                    {form.district && !/[0-9]/.test(form.district) && <p className="text-xs text-green-600 mt-1">✓ Valid</p>}
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">State</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">State <span className="text-xs text-gray-400">(Text only)</span></label>
                     <input
                       type="text"
                       value={form.state}
-                      onChange={e => field("state")(e.target.value)}
+                      onChange={e => {
+                        const cleaned = VALIDATION.onlyTextNoNumbers(e.target.value);
+                        field("state")(cleaned);
+                      }}
                       placeholder="e.g. Uttar Pradesh"
-                      className="w-full px-4 py-3 border border-gray-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-orange-400"
+                      className="w-full px-4 py-3 border border-gray-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-orange-400 transition-colors"
                     />
+                    {form.state && !/^[a-zA-Z]/.test(form.state) && <p className="text-xs text-red-500 mt-1">❌ Must start with letters</p>}
+                    {form.state && !/[0-9]/.test(form.state) && <p className="text-xs text-green-600 mt-1">✓ Valid</p>}
                   </div>
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">PIN Code</label>
                   <input
                     type="text"
+                    inputMode="numeric"
                     value={form.pincode}
-                    onChange={e => { field("pincode")(e.target.value); fetchPincode(e.target.value); }}
+                    onChange={e => {
+                      const cleaned = VALIDATION.onlyNumbers(e.target.value).slice(0, 6);
+                      field("pincode")(cleaned);
+                      if (cleaned.length === 6) fetchPincode(cleaned);
+                    }}
                     placeholder="e.g. 202001"
                     maxLength={6}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-orange-400"
+                    className={`w-full px-4 py-3 border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-orange-400 transition-colors ${form.pincode && !/^[0-9]{6}$/.test(form.pincode) ? "border-red-400 bg-red-50" : "border-gray-300"}`}
                   />
-                  {pincodeLoading && <p className="text-xs text-gray-400 mt-1">Fetching location…</p>}
-                  {pincodeError  && <p className="text-xs text-red-500 mt-1">{pincodeError}</p>}
+                  {form.pincode && !/^[0-9]*$/.test(form.pincode) && <p className="text-xs text-red-500 mt-1">❌ PIN must contain only numbers</p>}
+                  {form.pincode && /^[0-9]*$/.test(form.pincode) && form.pincode.length < 6 && <p className="text-xs text-orange-500 mt-1">⏳ PIN must be 6 digits ({form.pincode.length}/6)</p>}
+                  {form.pincode && /^[0-9]{6}$/.test(form.pincode) && <p className="text-xs text-green-600 mt-1">✓ Valid PIN</p>}
+                  {pincodeLoading && <p className="text-xs text-blue-500 mt-1">🔍 Fetching location…</p>}
+                  {pincodeError && <p className="text-xs text-red-500 mt-1">❌ {pincodeError}</p>}
                 </div>
               </div>
             )}
@@ -389,20 +508,29 @@ export default function ComplaintForm() {
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                Problem Title <span className="text-red-500">*</span>
+                Problem Title <span className="text-red-500">*</span> <span className="text-xs text-gray-400 font-normal">(Text only)</span>
               </label>
               <input
                 type="text"
                 value={form.title}
                 maxLength={200}
-                onChange={e => { field("title")(e.target.value); }}
-                placeholder="e.g. No drinking water supply for 3 days"
+                onChange={e => { 
+                  const cleaned = VALIDATION.onlyTextNoNumbers(e.target.value);
+                  field("title")(cleaned);
+                }}
+                placeholder="e.g. No drinking water supply"
                 className={`w-full px-4 py-3 border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-orange-400 transition-colors ${errors.title ? "border-red-400 bg-red-50" : "border-gray-300 focus:border-orange-400"}`}
               />
-              <div className="flex justify-between mt-1">
-                {errors.title ? <p className="text-xs text-red-500">{errors.title}</p> : <span />}
-                <span className={`text-xs ${form.title.length > 180 ? "text-red-500" : "text-gray-400"}`}>{form.title.length}/200</span>
+              <div className="flex justify-between items-center mt-1.5">
+                <div>
+                  {errors.title && <p className="text-xs text-red-500">❌ {errors.title}</p>}
+                  {form.title && !errors.title && form.title.trim().length >= 5 && <p className="text-xs text-green-600">✓ Valid title</p>}
+                </div>
+                <span className={`text-xs font-medium ${form.title.length > 180 ? "text-red-500" : form.title.length > 150 ? "text-orange-500" : "text-gray-400"}`}>
+                  {form.title.length}/200
+                </span>
               </div>
+              <p className="text-xs text-gray-400 mt-1.5">💡 Numbers are not allowed in title field</p>
             </div>
 
             <div>
@@ -455,22 +583,31 @@ export default function ComplaintForm() {
             <div>
               <div className="flex items-center justify-between mb-1.5">
                 <label className="text-sm font-medium text-gray-700">
-                  Description <span className="text-gray-400 text-xs font-normal">(Optional — more details help faster resolution)</span>
+                  Description <span className="text-gray-400 text-xs font-normal">(Optional — Text only)</span>
                 </label>
-                <FixGrammarButton text={form.description} onFixed={text => field("description")(text)} />
+                <FixGrammarButton text={form.description} onFixed={text => field("description")(VALIDATION.onlyTextNoNumbers(text))} />
               </div>
               <textarea
                 value={form.description}
                 maxLength={2000}
                 rows={4}
-                onChange={e => field("description")(e.target.value)}
+                onChange={e => {
+                  const cleaned = VALIDATION.onlyTextNoNumbers(e.target.value);
+                  field("description")(cleaned);
+                }}
                 placeholder="Describe the problem in detail — when did it start, how many people are affected..."
                 className={`w-full px-4 py-3 border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-orange-400 resize-none transition-colors ${errors.description ? "border-red-400 bg-red-50" : "border-gray-300 focus:border-orange-400"}`}
               />
-              <div className="flex justify-between mt-1">
-                {errors.description ? <p className="text-xs text-red-500">{errors.description}</p> : <span />}
-                <span className={`text-xs ${form.description.length > 1900 ? "text-red-500" : "text-gray-400"}`}>{form.description.length}/2000</span>
+              <div className="flex justify-between items-center mt-1.5">
+                <div>
+                  {errors.description && <p className="text-xs text-red-500">❌ {errors.description}</p>}
+                  {form.description && !errors.description && <p className="text-xs text-green-600">✓ Valid</p>}
+                </div>
+                <span className={`text-xs font-medium ${form.description.length > 1900 ? "text-red-500" : form.description.length > 1500 ? "text-orange-500" : "text-gray-400"}`}>
+                  {form.description.length}/2000
+                </span>
               </div>
+              <p className="text-xs text-gray-400 mt-1.5">💡 Numbers are not allowed in description</p>
             </div>
           </div>
 
@@ -479,19 +616,24 @@ export default function ComplaintForm() {
             <div>
               <h3 className="text-sm font-bold text-gray-700 uppercase tracking-wider mb-3">Your Details</h3>
               <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                Your Name <span className="text-red-500">*</span>
+                Your Name <span className="text-red-500">*</span> <span className="text-xs text-gray-400 font-normal">(Text only)</span>
               </label>
               <input
                 type="text"
                 value={form.name}
-                onChange={e => field("name")(e.target.value)}
-                placeholder="Enter your name"
-                className={`w-full px-4 py-3 border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-orange-400 transition-colors ${errors.name ? "border-red-400 bg-red-50" : "border-gray-300 focus:border-orange-400"}`}
+                onChange={e => {
+                  const cleaned = VALIDATION.nameFormat(e.target.value);
+                  field("name")(cleaned);
+                }}
+                placeholder="e.g. John Doe"
+                className={`w-full px-4 py-3 border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-orange-400 transition-colors ${errors.name ? "border-red-400 bg-red-50" : "border-gray-300"}`}
               />
-              {errors.name && <p className="text-xs text-red-500 mt-1">{errors.name}</p>}
-              <p className="text-xs text-gray-400 mt-1">
-                <button type="button" onClick={() => navigate("/login/user")} className="text-orange-500 hover:underline">Login</button>{" "}
-                to auto-fill your details and track your complaint.
+              {errors.name && <p className="text-xs text-red-500 mt-1.5">❌ {errors.name}</p>}
+              {form.name && !errors.name && VALIDATION.isValidName(form.name) && <p className="text-xs text-green-600 mt-1.5">✓ Valid name</p>}
+              <p className="text-xs text-gray-400 mt-2">
+                💡 Numbers are not allowed | 
+                <button type="button" onClick={() => navigate("/login/user")} className="text-orange-500 hover:underline font-medium ml-1">Login</button>{" "}
+                to auto-fill your details
               </p>
             </div>
           )}
@@ -507,11 +649,14 @@ export default function ComplaintForm() {
 
           <button
             type="submit"
-            disabled={status === "submitting"}
-            className="w-full py-3.5 bg-orange-500 hover:bg-orange-600 disabled:bg-orange-300 text-white font-bold rounded-xl transition-all duration-200 flex items-center justify-center gap-2 text-sm shadow-md hover:shadow-lg"
+            disabled={status === "submitting" || Object.keys(errors).length > 0}
+            title={Object.keys(errors).length > 0 ? `Please fix ${Object.keys(errors).length} error(s) before submitting` : "Submit your complaint"}
+            className="w-full py-3.5 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 disabled:from-orange-300 disabled:to-orange-300 text-white font-bold rounded-xl transition-all duration-200 flex items-center justify-center gap-2 text-sm shadow-md hover:shadow-lg disabled:cursor-not-allowed disabled:shadow-none"
           >
             {status === "submitting"
               ? <><Loader2 size={18} className="animate-spin" /> Submitting…</>
+              : Object.keys(errors).length > 0
+              ? <><AlertTriangle size={18} /> Fix {Object.keys(errors).length} Error(s)</>
               : <><AlertTriangle size={18} /> Submit Complaint</>
             }
           </button>

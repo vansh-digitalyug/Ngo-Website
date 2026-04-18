@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { useSearchParams } from "react-router-dom";
-import { Eye, X, UserPlus, ChevronLeft, ChevronRight, MapPin, Calendar, Shield } from "lucide-react";
+import { Eye, X, ChevronLeft, ChevronRight, MapPin, Calendar, Shield } from "lucide-react";
 import { API_BASE_URL } from "./AdminLayout.jsx";
 
 const STATUS_OPTIONS = ["Pending", "Approved", "Rejected"];
@@ -160,7 +160,7 @@ function AdminVolunteers() {
       <div className="p-4 sm:p-6 lg:p-8">
 
         {/* ══ HEADER ══ */}
-        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-6">
+        <div className="mb-6">
           <div>
             <h1 className="text-[1.8rem] sm:text-[2.4rem] font-black text-gray-900 leading-tight m-0">
               Manage Volunteers
@@ -169,10 +169,6 @@ function AdminVolunteers() {
               Review, approve, and manage community impact contributors.
             </p>
           </div>
-          <button className="inline-flex items-center gap-2 px-5 py-3 bg-[#2d5a1b] hover:bg-[#1f3f12] text-white text-sm font-semibold rounded-full transition-colors self-start flex-shrink-0 cursor-pointer border-0">
-            <UserPlus size={16} />
-            Invite Volunteer
-          </button>
         </div>
 
         {/* ══ FILTERS ══ */}

@@ -19,7 +19,7 @@ const UpcomingEventsPage      = lazy(() => import("../pages/events/UpcomingEvent
 const PastEventsPage          = lazy(() => import("../pages/events/PastEvents.jsx"));
 const BlogPage                = lazy(() => import("../pages/blog.jsx"));
 const ResetPassword           = lazy(() => import("../pages/resetPassword.jsx"));
-const Profile                 = lazy(() => import("../pages/profile.jsx"));
+const Profile                 = lazy(() => import("../pages/profile/Profile.jsx"));
 const VolunteerDashboard      = lazy(() => import("../pages/volunteer/VolunteerDashboard.jsx"));
 const NgoPublicProfile        = lazy(() => import("../pages/NgoPublicProfile.jsx"));
 const PrivacyPolicy           = lazy(() => import("../pages/PrivacyPolicy.jsx"));
@@ -36,6 +36,8 @@ const AdminUsers              = lazy(() => import("../pages/admin/AdminUsers.jsx
 const AdminGallery            = lazy(() => import("../pages/admin/AdminGallery.jsx"));
 const AdminBlogs              = lazy(() => import("../pages/admin/AdminBlogs.jsx"));
 const AdminEvents             = lazy(() => import("../pages/admin/AdminEvents.jsx"));
+const AdminEventRegistrations = lazy(() => import("../pages/admin/AdminEventRegistrations.jsx"));
+const AdminAllRegistrations   = lazy(() => import("../pages/admin/AdminAllRegistrations.jsx"));
 const AdminKanyadan           = lazy(() => import("../pages/admin/AdminKanyadan.jsx"));
 const AdminTasks              = lazy(() => import("../pages/admin/AdminTasks.jsx"));
 const AdminDonations          = lazy(() => import("../pages/admin/AdminDonations.jsx"));
@@ -52,6 +54,7 @@ const AdminEmployment         = lazy(() => import("../pages/admin/AdminEmploymen
 const AdminStaff              = lazy(() => import("../pages/admin/AdminStaff.jsx"));
 const AdminSurveys            = lazy(() => import("../pages/admin/AdminSurveys.jsx"));
 const AdminImpactReports      = lazy(() => import("../pages/admin/AdminImpactReports.jsx"));
+const AdminNotificationManager = lazy(() => import("../pages/admin/AdminNotificationManager.jsx"));
 
 // Public pages (lazy)
 const RojgarYojana            = lazy(() => import("../pages/public/RojgarYojana.jsx"));
@@ -289,6 +292,8 @@ function AppRoutes() {
             <Route path="payments"        element={<AdminPayments />} />
             <Route path="completed-tasks" element={<AdminCompletedTasks />} />
             <Route path="events"          element={<AdminEvents />} />
+            <Route path="events/:eventId/registrations" element={<AdminEventRegistrations />} />
+            <Route path="registrations"   element={<AdminAllRegistrations />} />
             <Route path="services/add"    element={<AddServices />} />
             <Route path="services/manage" element={<ManageServices />} />
             <Route path="villages"        element={<AdminVillages />} />
@@ -299,6 +304,7 @@ function AppRoutes() {
             <Route path="staff"           element={<AdminStaff />} />
             <Route path="surveys"         element={<AdminSurveys />} />
             <Route path="impact-reports"  element={<AdminImpactReports />} />
+            <Route path="notifications"   element={<AdminNotificationManager />} />
           </Route>
 
           {/* NGO Dashboard */}

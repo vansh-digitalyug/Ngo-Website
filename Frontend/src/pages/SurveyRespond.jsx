@@ -84,6 +84,26 @@ const TYPE_LABEL = {
   scale:           { label: "Scale",            color: "#7c3aed", bg: "#f5f3ff" },
 };
 
+/* ─── Respondent Validation ───────────────────────────────── */
+const RESPONDENT_VALIDATION = {
+  onlyTextSpaces: (str) => str.replace(/[^a-zA-Z\s]/g, ""),
+  onlyDigits: (str) => str.replace(/[^0-9]/g, ""),
+  
+  validateName: (name) => {
+    const trimmed = name.trim();
+    if (trimmed.length > 0 && trimmed.length < 2) return "Name must be at least 2 characters";
+    if (trimmed.length > 50) return "Name limited to 50 characters";
+    return "";
+  },
+  
+  validatePhone: (phone) => {
+    const digits = phone.replace(/\D/g, "");
+    if (phone.length > 0 && digits.length < 10) return "Phone must be exactly 10 digits";
+    if (digits.length > 10) return "Phone must be exactly 10 digits";
+    return "";
+  },
+};
+
 /* ─── Cover Image Loader ───────────────────────────────────── */
 function CoverImageDisplay({ imgKey, title, description }) {
   const [url, setUrl] = useState(null);
@@ -362,6 +382,8 @@ export default function SurveyRespond() {
   const [answers,         setAnswers]         = useState({});
   const [respondentName,  setRespondentName]  = useState("");
   const [respondentPhone, setRespondentPhone] = useState("");
+  const [nameError,       setNameError]       = useState("");
+  const [phoneError,      setPhoneError]      = useState("");
   const [submitting,      setSubmitting]      = useState(false);
   const [submitError,     setSubmitError]     = useState("");
   const [submitted,       setSubmitted]       = useState(false);
@@ -392,6 +414,24 @@ export default function SurveyRespond() {
     setSubmitError("");
   };
 
+  const handleNameChange = (e) => {
+    const value = e.target.value;
+    const cleaned = RESPONDENT_VALIDATION.onlyTextSpaces(value);
+    const limited = cleaned.slice(0, 50);
+    setRespondentName(limited);
+    const error = RESPONDENT_VALIDATION.validateName(limited);
+    setNameError(error);
+  };
+
+  const handlePhoneChange = (e) => {
+    const value = e.target.value;
+    const digits = RESPONDENT_VALIDATION.onlyDigits(value);
+    const limited = digits.slice(0, 10);
+    setRespondentPhone(limited);
+    const error = RESPONDENT_VALIDATION.validatePhone(limited);
+    setPhoneError(error);
+  };
+
   /* progress */
   const total    = survey?.questions?.length || 0;
   const answered = survey?.questions?.filter(q => {
@@ -403,6 +443,18 @@ export default function SurveyRespond() {
   /* submit */
   const handleSubmit = () => {
     if (!survey) return;
+
+    /* validate respondent info */
+    if (respondentName.trim() && RESPONDENT_VALIDATION.validateName(respondentName)) {
+      setSubmitError("Please fix: " + RESPONDENT_VALIDATION.validateName(respondentName));
+      topRef.current?.scrollIntoView({ behavior: "smooth" });
+      return;
+    }
+    if (respondentPhone.trim() && RESPONDENT_VALIDATION.validatePhone(respondentPhone)) {
+      setSubmitError("Please fix: " + RESPONDENT_VALIDATION.validatePhone(respondentPhone));
+      topRef.current?.scrollIntoView({ behavior: "smooth" });
+      return;
+    }
 
     /* validate required */
     const missing = survey.questions.filter(
@@ -426,9 +478,16 @@ export default function SurveyRespond() {
       })),
     };
 
+    // Get auth token if user is logged in
+    const token = localStorage.getItem("token");
+    const headers = { "Content-Type": "application/json" };
+    if (token) {
+      headers["Authorization"] = `Bearer ${token}`;
+    }
+
     fetch(`${API}/api/surveys/respond/${token}`, {
       method:  "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: headers,
       body:    JSON.stringify(payload),
     })
       .then(r => r.json())
@@ -652,10 +711,23 @@ export default function SurveyRespond() {
               </label>
               <input
                 className="sr-text-input"
+                style={{
+                  borderColor: nameError ? "#fecaca" : respondentName.trim().length > 0 ? "#86efac" : "#e2e8f0",
+                  background: nameError ? "#fef2f2" : respondentName.trim().length > 0 ? "#f0fdf4" : "#fafafa"
+                }}
                 value={respondentName}
-                onChange={e => setRespondentName(e.target.value)}
-                placeholder="Enter your name"
+                onChange={handleNameChange}
+                placeholder="Enter your name (letters only)"
+                maxLength={50}
               />
+              <div style={{ display: "flex", justifyContent: "space-between", marginTop: 4 }}>
+                {nameError ? (
+                  <p style={{ fontSize: 11, color: "#dc2626", margin: 0, fontWeight: 600 }}>❌ {nameError}</p>
+                ) : respondentName.trim().length > 0 ? (
+                  <p style={{ fontSize: 11, color: "#16a34a", margin: 0, fontWeight: 600 }}>✓ Valid name</p>
+                ) : null}
+                <span style={{ fontSize: 10, color: "#94a3b8", fontWeight: 600 }}>{respondentName.length}/50</span>
+              </div>
             </div>
             <div>
               <label style={{ fontSize: 11, fontWeight: 600, color: "#64748b", display: "block", marginBottom: 4 }}>
@@ -663,11 +735,25 @@ export default function SurveyRespond() {
               </label>
               <input
                 className="sr-text-input"
+                style={{
+                  borderColor: phoneError ? "#fecaca" : respondentPhone.length === 10 ? "#86efac" : "#e2e8f0",
+                  background: phoneError ? "#fef2f2" : respondentPhone.length === 10 ? "#f0fdf4" : "#fafafa"
+                }}
                 value={respondentPhone}
-                onChange={e => setRespondentPhone(e.target.value)}
-                placeholder="+91 00000 00000"
+                onChange={handlePhoneChange}
+                placeholder="Enter 10-digit number"
                 type="tel"
+                inputMode="numeric"
+                maxLength={10}
               />
+              <div style={{ display: "flex", justifyContent: "space-between", marginTop: 4 }}>
+                {phoneError ? (
+                  <p style={{ fontSize: 11, color: "#dc2626", margin: 0, fontWeight: 600 }}>❌ {phoneError}</p>
+                ) : respondentPhone.length === 10 ? (
+                  <p style={{ fontSize: 11, color: "#16a34a", margin: 0, fontWeight: 600 }}>✓ Valid phone</p>
+                ) : null}
+                <span style={{ fontSize: 10, color: "#94a3b8", fontWeight: 600 }}>{respondentPhone.length}/10</span>
+              </div>
             </div>
           </div>
         </div>
@@ -714,21 +800,21 @@ export default function SurveyRespond() {
 
           <button
             onClick={handleSubmit}
-            disabled={submitting}
+            disabled={submitting || nameError || phoneError}
             style={{
               width: "100%", padding: "14px 20px",
               borderRadius: 10, border: "none",
-              background: submitting
+              background: submitting || nameError || phoneError
                 ? "#cbd5e1"
                 : "#0f766e",
               color: "#fff", fontWeight: 800, fontSize: 15,
-              cursor: submitting ? "not-allowed" : "pointer",
-              boxShadow: submitting ? "none" : "0 4px 12px rgba(15,118,110,0.2)",
+              cursor: submitting || nameError || phoneError ? "not-allowed" : "pointer",
+              boxShadow: submitting || nameError || phoneError ? "none" : "0 4px 12px rgba(15,118,110,0.2)",
               transition: "all 0.25s",
               display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
             }}
-            onMouseEnter={e => { if (!submitting) { e.currentTarget.style.transform = "translateY(-1px)"; e.currentTarget.style.boxShadow = "0 6px 16px rgba(15,118,110,0.28)"; } }}
-            onMouseLeave={e => { if (!submitting) { e.currentTarget.style.transform = ""; e.currentTarget.style.boxShadow = "0 4px 12px rgba(15,118,110,0.2)"; } }}
+            onMouseEnter={e => { if (!submitting && !nameError && !phoneError) { e.currentTarget.style.transform = "translateY(-1px)"; e.currentTarget.style.boxShadow = "0 6px 16px rgba(15,118,110,0.28)"; } }}
+            onMouseLeave={e => { if (!submitting && !nameError && !phoneError) { e.currentTarget.style.transform = ""; e.currentTarget.style.boxShadow = "0 4px 12px rgba(15,118,110,0.2)"; } }}
           >
             {submitting ? (
               <>

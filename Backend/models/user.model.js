@@ -58,6 +58,38 @@ const userSchema = new mongoose.Schema({
         type: String,
         default: null
     },
+    bio: {
+        type: String,
+        trim: true,
+        default: "",
+        maxlength: [200, "Bio cannot exceed 200 characters"]
+    },
+    preferredLanguage: {
+        type: String,
+        default: "English",
+        enum: ["English", "Hindi", "Marathi"]
+    },
+    timezone: {
+        type: String,
+        default: "Asia/Kolkata"
+    },
+    socialAccounts: {
+        linkedin: {
+            type: String,
+            trim: true,
+            default: null
+        },
+        twitter: {
+            type: String,
+            trim: true,
+            default: null
+        },
+        facebook: {
+            type: String,
+            trim: true,
+            default: null
+        }
+    },
     emailVerified: {
         type: Boolean,
         default: false

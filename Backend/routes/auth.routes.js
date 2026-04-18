@@ -16,7 +16,8 @@ import {
   resetPassword,
   getUserDonations,
   getUserVolunteer,
-  getUserKanyadan
+  getUserKanyadan,
+  getUserStats
 } from "../controllers/auth.controller.js";
 import { verifyToken } from "../middlewares/auth.middleware.js";
 import profileUpload from "../middlewares/profileUpload.middleware.js";
@@ -67,6 +68,8 @@ router.post("/forgot-password", passwordResetLimiter, forgotPassword);
 router.post("/reset-password/:token", passwordResetLimiter, resetPassword);
 // Get current user profile (protected route)
 router.get("/profile", verifyToken, getProfile);
+// Get current user stats (protected route)
+router.get("/user/stats", verifyToken, getUserStats);
 // Update current user profile (protected route)
 router.put("/profile", verifyToken, handleProfileUpload, updateProfile);
 // Send email verification OTP (protected route)

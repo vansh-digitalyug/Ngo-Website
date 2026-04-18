@@ -3,9 +3,12 @@ import Ngo from "../models/ngo.model.js";
 import Payment from "../models/payment.model.js";
 import Volunteer from "../models/volunteer.model.js";
 import KanyadanApplication from "../models/kanyadanApplication.model.js";
+import Activity from "../models/activity.model.js";
+import { createActivity } from "./activity.controller.js";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import crypto from "crypto";
+import mongoose from "mongoose";
 import { OAuth2Client } from "google-auth-library";
 import {
     sendResetPasswordEmail,
@@ -57,6 +60,14 @@ const toUserPayload = (user, ngoData = null) => ({
     city: user.city || "",
     state: user.state || "",
     avatar: user.avatar || null,
+    bio: user.bio || "",
+    preferredLanguage: user.preferredLanguage || "English",
+    timezone: user.timezone || "Asia/Kolkata",
+    socialAccounts: {
+        linkedin: user.socialAccounts?.linkedin || null,
+        twitter: user.socialAccounts?.twitter || null,
+        facebook: user.socialAccounts?.facebook || null
+    },
     authProvider: user.authProvider || "local",
     role: user.role || "user",
     createdAt: user.createdAt || null,
@@ -860,6 +871,37 @@ export const updateProfile = asyncHandler(async (req, res) => {
             updates.state = String(req.body.state || "").trim();
         }
 
+        if (typeof req.body?.bio !== "undefined") {
+            updates.bio = String(req.body.bio || "").trim();
+        }
+
+        if (typeof req.body?.preferredLanguage !== "undefined") {
+            const language = String(req.body.preferredLanguage || "").trim();
+            if (["English", "Hindi", "Marathi"].includes(language)) {
+                updates.preferredLanguage = language;
+            }
+        }
+
+        if (typeof req.body?.timezone !== "undefined") {
+            updates.timezone = String(req.body.timezone || "").trim();
+        }
+
+        // Handle social accounts
+        if (req.body?.socialAccounts) {
+            try {
+                const socialData = typeof req.body.socialAccounts === 'string' 
+                    ? JSON.parse(req.body.socialAccounts) 
+                    : req.body.socialAccounts;
+                updates.socialAccounts = {
+                    linkedin: String(socialData.linkedin || "").trim() || null,
+                    twitter: String(socialData.twitter || "").trim() || null,
+                    facebook: String(socialData.facebook || "").trim() || null
+                };
+            } catch (error) {
+                console.warn('Invalid socialAccounts format:', error);
+            }
+        }
+
         if (req.file?.buffer && req.file?.mimetype) {
             updates.avatar = `data:${req.file.mimetype};base64,${req.file.buffer.toString("base64")}`;
         }
@@ -882,6 +924,26 @@ export const updateProfile = asyncHandler(async (req, res) => {
                 success: false,
                 message: "User not found"
             });
+        }
+
+        // Log activity for profile update
+        const updatedFields = Object.keys(updates).filter(key => 
+            ['name', 'phone', 'address', 'city', 'state', 'bio', 'avatar', 'timezone', 'preferredLanguage', 'socialAccounts'].includes(key)
+        );
+
+        if (updatedFields.length > 0) {
+            await createActivity(
+                req.userId,
+                'profile_update',
+                'Updated profile information',
+                `Updated: ${updatedFields.join(', ')}`,
+                null,
+                {},
+                {
+                    fieldsUpdated: updatedFields,
+                    updateCount: updatedFields.length,
+                }
+            );
         }
 
         return res.status(200).json({
@@ -1009,6 +1071,62 @@ export const getUserDonations = asyncHandler(async (req, res) => {
         .lean();
 
     return res.status(200).json(new ApiResponse(200, "Donations fetched", donations));
+});
+
+// ─── User Stats (Impact Overview) ──────────────────────────────────────────────
+export const getUserStats = asyncHandler(async (req, res) => {
+    const userId = req.user._id || req.user.id;
+
+    // Calculate total donations (impact value)
+    const donationData = await Payment.aggregate([
+        {
+            $match: {
+                user: mongoose.Types.ObjectId.isValid(userId) ? new mongoose.Types.ObjectId(userId) : null,
+                status: "paid"
+            }
+        },
+        {
+            $group: {
+                _id: null,
+                totalAmount: { $sum: "$amount" },
+                count: { $sum: 1 }
+            }
+        }
+    ]);
+
+    const totalImpact = donationData.length > 0 ? donationData[0].totalAmount : 0;
+    const projectsSupported = donationData.length > 0 ? donationData[0].count : 0;
+
+    // Calculate activity metrics
+    const activityCount = await Activity.countDocuments({
+        userId,
+        isVisible: true
+    });
+
+    // Get badge/level based on donation amount
+    let level = "New Member";
+    if (totalImpact >= 100000) level = "Platinum Supporter";
+    else if (totalImpact >= 50000) level = "Gold Supporter";
+    else if (totalImpact >= 10000) level = "Silver Supporter";
+    else if (totalImpact >= 5000) level = "Bronze Supporter";
+    else if (totalImpact > 0) level = "Active Supporter";
+
+    console.log('✓ User stats calculated:', {
+        userId,
+        totalImpact,
+        projectsSupported,
+        activityCount,
+        level
+    });
+
+    return res.status(200).json(
+        new ApiResponse(200, "User stats fetched", {
+            totalImpact,
+            projectsSupported,
+            badgesEarned: activityCount,
+            level
+        })
+    );
 });
 
 // ─── User Volunteer Application ───────────────────────────────────────────────

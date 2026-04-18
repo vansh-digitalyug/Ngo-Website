@@ -17,8 +17,8 @@ const router = express.Router();
 // Create Razorpay Order (optionalAuth links order to user if logged in)
 router.post("/order", optionalAuth, createOrder);
 
-// Verify payment after checkout
-router.post("/verify", verifyPayment);
+// Verify payment after checkout (optionalAuth to link payment to user if logged in)
+router.post("/verify", optionalAuth, verifyPayment);
 
 // Razorpay webhook (IMPORTANT: raw body)
 router.post(

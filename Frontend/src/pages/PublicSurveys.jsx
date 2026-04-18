@@ -2,68 +2,47 @@ import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchPublicSurveys, selectSurveysStatus } from "../store/slices/surveysSlice";
+import { AlertCircle, Search, ChevronRight, Users, ClipboardList, MapPin, Target, ArrowRight, Loader2 } from "lucide-react";
 
 const API = String(import.meta.env.VITE_API_BASE_URL || "http://localhost:5000").replace(/\/$/, "");
 
-const STYLES = `
+const ANIMATIONS = `
   @keyframes psFadeUp  { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
   @keyframes psShimmer { 0%{background-position:-700px 0} 100%{background-position:700px 0} }
-  @keyframes psSpin    { to{transform:rotate(360deg)} }
   @keyframes psFloat   { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-10px)} }
-
   .ps-fade { animation: psFadeUp 0.5s ease-out both; }
   .ps-float{ animation: psFloat 5s ease-in-out infinite; }
   .ps-skel {
     background: linear-gradient(90deg,#e8ecf0 0%,#d1d8e0 50%,#e8ecf0 100%);
     background-size: 700px 100%;
     animation: psShimmer 1.6s infinite;
-    border-radius: 8px;
-  }
-
-  .ps-card {
-    background: #fff;
-    border-radius: 20px;
-    overflow: hidden;
-    border: 1.5px solid #f1f5f9;
-    box-shadow: 0 2px 14px rgba(0,0,0,0.06);
-    transition: all 0.3s cubic-bezier(0.4,0,0.2,1);
-    display: flex;
-    flex-direction: column;
-  }
-  .ps-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 16px 40px rgba(15,118,110,0.13);
-    border-color: #0f766e33;
-  }
-
-  .ps-btn {
-    display: inline-flex; align-items: center; justify-content: center; gap: 8px;
-    padding: 12px 24px; border-radius: 12px; border: none;
-    background: linear-gradient(135deg,#0f766e,#065f46);
-    color: #fff; font-weight: 800; font-size: 14px;
-    cursor: pointer; transition: all 0.25s;
-    box-shadow: 0 6px 18px rgba(15,118,110,0.3);
-    width: 100%;
-    font-family: inherit;
-  }
-  .ps-btn:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 10px 26px rgba(15,118,110,0.42);
-  }
-
-  .ps-search {
-    width: 100%; padding: 13px 18px 13px 46px;
-    border: 2px solid #e2e8f0; border-radius: 14px;
-    font-size: 15px; font-family: inherit; outline: none;
-    background: #fff; color: #0f172a; transition: all 0.25s;
-    box-sizing: border-box;
-  }
-  .ps-search:focus { border-color: #0f766e; box-shadow: 0 0 0 4px rgba(15,118,110,0.08); }
-
-  @media(max-width:640px) {
-    .ps-grid { grid-template-columns: 1fr !important; }
   }
 `;
+
+// Search validation utility - NO NUMBERS ALLOWED
+const SEARCH_VALIDATION = {
+  onlyTextSpaceDash: (str) => str.replace(/[^a-zA-Z\s\-]/g, ""), // Remove numbers and special chars
+  maxLength: (str, len) => str.slice(0, len),
+  trimWhitespace: (str) => str.trim(),
+  
+  validateSearch: (search) => {
+    const trimmed = search.trim();
+    
+    // Check for only spaces
+    if (search.length > 0 && trimmed.length === 0) return "Search cannot contain only spaces";
+    
+    // Min length if searching
+    if (trimmed.length > 0 && trimmed.length < 2) return "Search must be at least 2 characters";
+    
+    // Max length
+    if (trimmed.length > 100) return "Search limited to 100 characters";
+    
+    // Check if attempting to type numbers
+    if (/\d/.test(search)) return "Numbers not allowed - please use only letters";
+    
+    return "";
+  },
+};
 
 function timeAgo(d) {
   const days = Math.floor((Date.now() - new Date(d)) / 86400000);
@@ -76,20 +55,20 @@ function timeAgo(d) {
 /* ── Skeleton card ── */
 function SkeletonCard() {
   return (
-    <div style={{ background: "#fff", borderRadius: 20, overflow: "hidden", border: "1.5px solid #f1f5f9" }}>
-      <div className="ps-skel" style={{ height: 6 }} />
-      <div style={{ padding: "20px 22px" }}>
-        <div style={{ display: "flex", gap: 10, marginBottom: 16 }}>
-          <div className="ps-skel" style={{ width: 40, height: 40, borderRadius: "50%", flexShrink: 0 }} />
-          <div style={{ flex: 1 }}>
-            <div className="ps-skel" style={{ width: "60%", height: 14, marginBottom: 8 }} />
-            <div className="ps-skel" style={{ width: "35%", height: 11 }} />
+    <div className="bg-white rounded-2xl overflow-hidden border border-slate-200">
+      <div className="ps-skel h-1.5" />
+      <div className="p-5 space-y-4">
+        <div className="flex gap-2.5 mb-4">
+          <div className="ps-skel w-10 h-10 rounded-full flex-shrink-0" />
+          <div className="flex-1 space-y-2">
+            <div className="ps-skel w-3/5 h-3.5" />
+            <div className="ps-skel w-2/5 h-2.5" />
           </div>
         </div>
-        <div className="ps-skel" style={{ width: "85%", height: 18, marginBottom: 10 }} />
-        <div className="ps-skel" style={{ width: "100%", height: 12, marginBottom: 6 }} />
-        <div className="ps-skel" style={{ width: "70%", height: 12, marginBottom: 20 }} />
-        <div className="ps-skel" style={{ width: "100%", height: 42, borderRadius: 12 }} />
+        <div className="ps-skel w-5/6 h-4.5" />
+        <div className="ps-skel w-full h-3" />
+        <div className="ps-skel w-4/5 h-3" />
+        <div className="ps-skel w-full h-10 rounded-lg" />
       </div>
     </div>
   );
@@ -112,26 +91,15 @@ function CoverImage({ imgKey }) {
   if (!url && !loading) return null;
 
   return (
-    <div style={{
-      width: "100%",
-      height: 220,
-      position: "relative",
-      background: "#e2e8f0",
-      overflow: "hidden"
-    }}>
+    <div className="w-full h-56 relative bg-slate-300 overflow-hidden">
       {loading && !url && (
-        <div className="ps-skel" style={{ width: "100%", height: "100%" }} />
+        <div className="ps-skel w-full h-full" />
       )}
       {url && (
         <img
           src={url}
           alt="Survey cover"
-          style={{
-            width: "100%",
-            height: "100%",
-            objectFit: "cover",
-            objectPosition: "center"
-          }}
+          className="w-full h-full object-cover object-center"
         />
       )}
     </div>
@@ -141,106 +109,84 @@ function CoverImage({ imgKey }) {
 /* ── Survey Card ── */
 function SurveyCard({ survey, delay, onParticipate }) {
   const qCount = survey.questions?.length || 0;
-  const statusColor = {
-    draft: { bg: "#f1f5f9", color: "#475569", label: "Draft" },
-    active: { bg: "#dcfce7", color: "#166534", label: "Active" },
-    closed: { bg: "#fef9c3", color: "#854d0e", label: "Closed" }
-  }[survey.status] || { bg: "#f1f5f9", color: "#475569", label: "Draft" };
+  const statusConfig = {
+    draft: { bg: "bg-slate-100", color: "text-slate-700", label: "Draft" },
+    active: { bg: "bg-green-100", color: "text-green-700", label: "Active" },
+    closed: { bg: "bg-yellow-100", color: "text-yellow-800", label: "Closed" }
+  }[survey.status] || { bg: "bg-slate-100", color: "text-slate-700", label: "Draft" };
 
   return (
-    <div className="ps-card ps-fade" style={{ animationDelay: `${delay}s` }}>
+    <div className="ps-fade bg-white rounded-2xl overflow-hidden border border-slate-200 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all flex flex-col" style={{ animationDelay: `${delay}s` }}>
       {/* Cover Image */}
       {survey.coverImageKey && <CoverImage imgKey={survey.coverImageKey} />}
 
       {/* Card Content */}
-      <div style={{ padding: "18px 20px", flex: 1, display: "flex", flexDirection: "column", gap: 0 }}>
+      <div className="p-5 flex flex-col gap-0 flex-1">
 
         {/* Title and Status Row */}
-        <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12, marginBottom: 8 }}>
-          <h3 style={{ margin: 0, fontWeight: 800, fontSize: 15, color: "#0f172a", lineHeight: 1.35, flex: 1 }}>
+        <div className="flex items-start justify-between gap-3 mb-2">
+          <h3 className="m-0 font-black text-sm text-slate-900 leading-snug flex-1">
             {survey.title}
           </h3>
-          <span style={{
-            background: statusColor.bg,
-            color: statusColor.color,
-            padding: "2px 8px",
-            borderRadius: 6,
-            fontSize: 10,
-            fontWeight: 700,
-            whiteSpace: "nowrap",
-            flexShrink: 0
-          }}>
-            {statusColor.label}
+          <span className={`${statusConfig.bg} ${statusConfig.color} px-2 py-1 rounded-md text-xs font-bold whitespace-nowrap flex-shrink-0`}>
+            {statusConfig.label}
           </span>
         </div>
 
         {/* Description */}
         {survey.description && (
-          <p style={{
-            margin: "0 0 10px", color: "#475569", fontSize: 12, lineHeight: 1.5,
-            display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden",
-          }}>
+          <p className="m-0 mb-2.5 text-slate-600 text-xs leading-relaxed line-clamp-2">
             {survey.description}
           </p>
         )}
 
         {/* Stats row */}
-        <div style={{ display: "flex", gap: 12, fontSize: 11, color: "#64748b", marginBottom: 10, paddingBottom: 10, borderBottom: "1px solid #f1f5f9" }}>
-          <span style={{ display: "flex", alignItems: "center", gap: 2 }}>
-            📋 {qCount} question{qCount !== 1 ? "s" : ""}
+        <div className="flex gap-3 text-xs text-slate-500 mb-2.5 pb-2.5 border-b border-slate-100">
+          <span className="flex items-center gap-1">
+            <ClipboardList size={14} /> {qCount} question{qCount !== 1 ? "s" : ""}
           </span>
-          <span style={{ display: "flex", alignItems: "center", gap: 2 }}>
-            👥 {survey.responseCount || 0} response{survey.responseCount !== 1 ? "s" : ""}
+          <span className="flex items-center gap-1">
+            <Users size={14} /> {survey.responseCount || 0} response{survey.responseCount !== 1 ? "s" : ""}
           </span>
         </div>
 
         {/* NGO info and meta pills */}
-        <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 12 }}>
+        <div className="flex items-center gap-3 mb-3">
           {/* NGO avatar */}
-          <div style={{
-            width: 36, height: 36, borderRadius: "50%", flexShrink: 0,
-            background: "linear-gradient(135deg,#0f766e,#34d399)",
-            display: "flex", alignItems: "center", justifyContent: "center",
-            color: "#fff", fontWeight: 800, fontSize: 14,
-            boxShadow: "0 2px 8px rgba(15,118,110,0.2)",
-          }}>
+          <div className="w-9 h-9 rounded-full flex-shrink-0 bg-gradient-to-br from-teal-600 to-teal-400 flex items-center justify-center text-white font-black text-xs shadow-md">
             {(survey.ngoId?.ngoName || "N").charAt(0).toUpperCase()}
           </div>
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontWeight: 700, color: "#0f172a", fontSize: 12, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+          <div className="flex-1 min-w-0">
+            <div className="font-bold text-slate-900 text-xs truncate">
               {survey.ngoId?.ngoName || "NGO"}
             </div>
-            <div style={{ fontSize: 10, color: "#94a3b8", marginTop: 2 }}>
+            <div className="text-xs text-slate-400 mt-0.5">
               {survey.ngoId?.city ? `${survey.ngoId.city}` : survey.ngoId?.state || "India"}
             </div>
           </div>
         </div>
 
         {/* Meta tags */}
-        <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 12, marginTop: "auto" }}>
+        <div className="flex gap-1.5 flex-wrap mb-3 mt-auto">
           {survey.villageId && (
-            <span style={{
-              background: "#eff6ff", color: "#1d4ed8", border: "1px solid #bfdbfe",
-              borderRadius: 999, padding: "2px 8px", fontSize: 10, fontWeight: 700,
-            }}>
-              📍 {survey.villageId.villageName}
+            <span className="bg-blue-50 text-blue-700 border border-blue-200 rounded-full px-2 py-1 text-xs font-bold flex items-center gap-1">
+              <MapPin size={10} /> {survey.villageId.villageName}
             </span>
           )}
 
           {survey.targetAudience && (
-            <span style={{
-              background: "#fdf4ff", color: "#7c3aed", border: "1px solid #e9d5ff",
-              borderRadius: 999, padding: "2px 8px", fontSize: 10, fontWeight: 700,
-              maxWidth: 120, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
-            }}>
-              👥 {survey.targetAudience}
+            <span className="bg-purple-50 text-purple-700 border border-purple-200 rounded-full px-2 py-1 text-xs font-bold truncate max-w-xs flex items-center gap-1">
+              <Target size={10} /> {survey.targetAudience}
             </span>
           )}
         </div>
 
         {/* CTA */}
-        <button className="ps-btn" onClick={() => onParticipate(survey.shareToken)}>
-          Participate in Survey →
+        <button 
+          onClick={() => onParticipate(survey.shareToken)}
+          className="w-full bg-gradient-to-r from-teal-600 to-teal-700 text-white font-bold text-sm py-2.5 px-4 rounded-lg hover:shadow-lg hover:-translate-y-0.5 transition-all flex items-center justify-center gap-2 shadow-md"
+        >
+          Participate <ArrowRight size={14} />
         </button>
       </div>
     </div>
@@ -256,6 +202,7 @@ export default function PublicSurveys() {
   const [surveys,  setSurveys]  = useState([]);
   const [loading,  setLoading]  = useState(true);
   const [search,   setSearch]   = useState("");
+  const [searchError, setSearchError] = useState("");
   const [query,    setQuery]    = useState("");   // debounced
   const [page,     setPage]     = useState(1);
   const [hasMore,  setHasMore]  = useState(false);
@@ -265,7 +212,7 @@ export default function PublicSurveys() {
   /* inject styles */
   useEffect(() => {
     const el = document.createElement("style");
-    el.textContent = STYLES;
+    el.textContent = ANIMATIONS;
     document.head.appendChild(el);
     return () => el.remove();
   }, []);
@@ -275,11 +222,28 @@ export default function PublicSurveys() {
     if (surveysStatus === "idle") dispatch(fetchPublicSurveys());
   }, [surveysStatus, dispatch]);
 
-  /* debounce search */
+  /* debounce search with validation */
   useEffect(() => {
-    const t = setTimeout(() => { setQuery(search); setPage(1); }, 400);
+    setSearchError("");
+    const t = setTimeout(() => { 
+      setQuery(search); 
+      setPage(1); 
+    }, 400);
     return () => clearTimeout(t);
   }, [search]);
+
+  const handleSearchChange = (e) => {
+    const value = e.target.value;
+    // Allow only text (letters), spaces, and dashes - NO NUMBERS
+    const cleaned = SEARCH_VALIDATION.onlyTextSpaceDash(value);
+    // Apply max length
+    const limited = SEARCH_VALIDATION.maxLength(cleaned, 100);
+    setSearch(limited);
+    
+    // Real-time validation
+    const error = SEARCH_VALIDATION.validateSearch(limited);
+    setSearchError(error);
+  };
 
   const fetchSurveys = useCallback(async (p = 1, q = "") => {
     setLoading(true); setError("");
@@ -309,128 +273,108 @@ export default function PublicSurveys() {
   };
 
   return (
-    <div style={{ minHeight: "100vh", background: "#f8fafc", fontFamily: "system-ui,-apple-system,sans-serif", paddingBottom: 80 }}>
+    <div className="min-h-screen bg-slate-50 font-sans pb-20">
 
-      {/* ── Hero ── */}
-      <div style={{
-        position: "relative", overflow: "hidden",
-        backgroundImage: "url('https://images.unsplash.com/photo-1500382017468-9049fed747ef?q=80&w=2560&auto=format&fit=crop')",
-        backgroundSize: "cover", backgroundPosition: "center",
-        padding: "90px 20px 100px",
-      }}>
+      {/* ── Hero Section ── */}
+      <div 
+        className="relative overflow-hidden bg-cover bg-center py-24 md:py-32"
+        style={{
+          backgroundImage: "url('https://images.unsplash.com/photo-1500382017468-9049fed747ef?q=80&w=2560&auto=format&fit=crop')",
+        }}
+      >
         {/* Dark overlay */}
-        <div style={{
-          position: "absolute", inset: 0,
-          background: "rgba(0,0,0,0.48)",
-          pointerEvents: "none",
-        }} />
+        <div className="absolute inset-0 bg-black/50 pointer-events-none" />
 
-        <div style={{ maxWidth: 760, margin: "0 auto", position: "relative", zIndex: 1, textAlign: "center" }}>
-          <h1 className="ps-fade" style={{
-            color: "#fff", fontSize: "clamp(2.2rem,5vw,3.4rem)",
-            fontWeight: 900, margin: "0 0 18px", lineHeight: 1.1,
-          }}>
+        <div className="max-w-3xl mx-auto px-4 md:px-6 relative z-10 text-center">
+          <h1 className="ps-fade text-4xl md:text-5xl lg:text-6xl font-black text-white mb-4 leading-tight">
             Surveys by NGOs
           </h1>
 
-          <p className="ps-fade" style={{
-            color: "#86efac", fontSize: 17, lineHeight: 1.75,
-            margin: "0 0 40px", animationDelay: "0.1s", fontWeight: 500,
-          }}>
-            Share your feedback, help NGOs understand community needs,<br />
+          <p className="ps-fade text-lg md:text-xl text-green-100 mb-8 leading-relaxed font-medium" style={{ animationDelay: "0.1s" }}>
+            Share your feedback, help NGOs understand community needs,<br className="hidden sm:block" />
             and make your voice count.
           </p>
 
           {/* Search + Button row */}
-          <div className="ps-fade" style={{
-            display: "flex", gap: 0, maxWidth: 680, margin: "0 auto",
-            background: "#fff", borderRadius: 14, overflow: "hidden",
-            boxShadow: "0 4px 24px rgba(0,0,0,0.18)",
-            animationDelay: "0.18s",
-          }}>
-            <div style={{ position: "relative", flex: 1 }}>
-              <svg style={{ position: "absolute", left: 16, top: "50%", transform: "translateY(-50%)", pointerEvents: "none", color: "#94a3b8" }}
-                width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
-              </svg>
-              <input
-                style={{
-                  width: "100%", padding: "17px 18px 17px 48px",
-                  border: "none", outline: "none",
-                  fontSize: 15, fontFamily: "inherit", color: "#0f172a",
-                  background: "transparent", boxSizing: "border-box",
-                }}
-                value={search}
-                onChange={e => setSearch(e.target.value)}
-                placeholder="Search surveys by title or NGO..."
-              />
+          <div className="ps-fade max-w-2xl mx-auto" style={{ animationDelay: "0.18s" }}>
+            <div className={`flex flex-col md:flex-row gap-3 bg-white rounded-xl overflow-hidden shadow-2xl transition-all ${searchError ? 'ring-2 ring-red-300' : search.trim().length > 0 ? 'ring-2 ring-green-300' : ''}`}>
+              <div className="relative flex-1 flex items-center">
+                <Search size={18} className="absolute left-4 text-slate-400 pointer-events-none" />
+                <input
+                  className={`w-full px-5 py-4 pl-14 outline-none text-slate-900 placeholder-slate-400 font-sans transition-colors ${searchError ? 'bg-red-50' : search.trim().length > 0 ? 'bg-green-50' : 'bg-white'}`}
+                  value={search}
+                  onChange={handleSearchChange}
+                  placeholder="Search surveys by title or NGO..."
+                />
+                {search.trim().length > 0 && !searchError && (
+                  <div className="absolute right-4 text-green-600">
+                    <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                    </svg>
+                  </div>
+                )}
+              </div>
+              <button
+                onClick={() => fetchSurveys(1, search)}
+                disabled={!!searchError || search.trim().length === 0}
+                className={`px-6 md:px-8 py-4 text-white font-bold text-sm transition-all flex items-center justify-center gap-2 ${
+                  searchError || search.trim().length === 0
+                    ? 'bg-slate-400 cursor-not-allowed opacity-60'
+                    : 'bg-teal-700 hover:bg-teal-800 hover:shadow-lg'
+                }`}
+              >
+                <Search size={16} /> Find Surveys
+              </button>
             </div>
-            <button
-              className="ps-fade"
-              onClick={() => fetchSurveys(1, search)}
-              style={{
-                padding: "17px 28px", border: "none",
-                background: "#134e4a", color: "#fff",
-                fontWeight: 800, fontSize: 15, cursor: "pointer",
-                fontFamily: "inherit", flexShrink: 0, letterSpacing: "0.01em",
-                transition: "background 0.2s",
-              }}
-              onMouseEnter={e => e.currentTarget.style.background = "#0f766e"}
-              onMouseLeave={e => e.currentTarget.style.background = "#134e4a"}
-            >
-              Find Surveys
-            </button>
+            <div className="flex justify-between items-start mt-2">
+              {searchError ? (
+                <p className="text-red-500 text-xs flex items-center gap-1 font-medium">
+                  <AlertCircle size={14} /> {searchError}
+                </p>
+              ) : search.trim().length > 0 ? (
+                <p className="text-green-600 text-xs flex items-center gap-1 font-medium">
+                  ✓ Search ready
+                </p>
+              ) : null}
+              <span className={`text-xs ml-auto font-medium ${search.length > 85 ? 'text-orange-600' : 'text-slate-400'}`}>
+                {search.length}/100
+              </span>
+            </div>
           </div>
         </div>
       </div>
 
       {/* ── Content ── */}
-      <div style={{ maxWidth: 1100, margin: "0 auto", padding: "32px 16px" }}>
+      <div className="max-w-6xl mx-auto px-4 md:px-6 py-12">
 
         {/* Error */}
         {error && (
-          <div style={{
-            background: "#fff1f2", border: "1.5px solid #fecdd3",
-            borderRadius: 14, padding: "16px 20px", marginBottom: 24,
-            color: "#be123c", fontWeight: 600, fontSize: 14,
-            display: "flex", alignItems: "center", gap: 10,
-          }}>
-            <span style={{ fontSize: 22 }}>⚠️</span> {error}
+          <div className="bg-red-50 border border-red-300 rounded-xl p-4 mb-8 text-red-700 font-semibold text-sm flex items-center gap-3">
+            <AlertCircle size={18} /> {error}
           </div>
         )}
 
         {/* Skeleton */}
         {loading && page === 1 && (
-          <div
-            className="ps-grid"
-            style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 20 }}
-          >
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
             {[1,2,3,4,5,6].map(i => <SkeletonCard key={i} />)}
           </div>
         )}
 
         {/* Empty */}
         {!loading && surveys.length === 0 && !error && (
-          <div style={{
-            textAlign: "center", padding: "80px 20px",
-            background: "#fff", borderRadius: 24,
-            boxShadow: "0 4px 20px rgba(0,0,0,0.06)",
-          }}>
-            <div style={{ fontSize: 72, marginBottom: 16 }}>📭</div>
-            <h3 style={{ margin: "0 0 8px", fontWeight: 800, fontSize: 20, color: "#0f172a" }}>
+          <div className="text-center py-20 px-4 bg-white rounded-2xl shadow-sm">
+            <div className="text-6xl mb-4">📭</div>
+            <h3 className="m-0 font-black text-2xl text-slate-900 mb-2">
               No surveys found
             </h3>
-            <p style={{ color: "#94a3b8", fontSize: 15, margin: 0 }}>
+            <p className="text-slate-500 text-base m-0">
               {query ? `No surveys match "${query}". Try a different search.` : "No active surveys available right now. Check back later!"}
             </p>
             {query && (
               <button
                 onClick={() => setSearch("")}
-                style={{
-                  marginTop: 20, padding: "10px 24px", borderRadius: 10, border: "none",
-                  background: "#0f766e", color: "#fff", fontWeight: 700, fontSize: 14,
-                  cursor: "pointer", fontFamily: "inherit",
-                }}
+                className="mt-6 px-6 py-2.5 rounded-lg bg-teal-600 hover:bg-teal-700 text-white font-bold text-sm transition-colors"
               >
                 Clear Search
               </button>
@@ -440,10 +384,7 @@ export default function PublicSurveys() {
 
         {/* Grid */}
         {surveys.length > 0 && (
-          <div
-            className="ps-grid"
-            style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 20 }}
-          >
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
             {surveys.map((s, i) => (
               <SurveyCard
                 key={s._id}
@@ -457,103 +398,71 @@ export default function PublicSurveys() {
 
         {/* Load more */}
         {hasMore && !loading && (
-          <div style={{ textAlign: "center", marginTop: 36 }}>
+          <div className="text-center mt-12">
             <button
               onClick={loadMore}
-              style={{
-                padding: "13px 44px", borderRadius: 14, border: "none",
-                background: "linear-gradient(135deg,#0f766e,#065f46)",
-                color: "#fff", fontWeight: 800, fontSize: 15,
-                cursor: "pointer", fontFamily: "inherit",
-                boxShadow: "0 8px 24px rgba(15,118,110,0.28)",
-                transition: "all 0.28s",
-              }}
-              onMouseEnter={e => { e.currentTarget.style.transform = "translateY(-3px)"; e.currentTarget.style.boxShadow = "0 14px 36px rgba(15,118,110,0.38)"; }}
-              onMouseLeave={e => { e.currentTarget.style.transform = ""; e.currentTarget.style.boxShadow = "0 8px 24px rgba(15,118,110,0.28)"; }}
+              className="px-10 py-3.5 rounded-lg bg-gradient-to-r from-teal-600 to-teal-700 text-white font-bold text-base shadow-lg hover:shadow-xl hover:-translate-y-0.5 transition-all flex items-center justify-center gap-2 mx-auto"
             >
-              Load More Surveys
+              Load More Surveys <ChevronRight size={16} />
             </button>
           </div>
         )}
 
         {loading && page > 1 && (
-          <div style={{ textAlign: "center", padding: 24 }}>
-            <div style={{
-              width: 32, height: 32, border: "3px solid #e2e8f0",
-              borderTopColor: "#0f766e", borderRadius: "50%",
-              margin: "0 auto", animation: "psSpin 0.7s linear infinite",
-            }} />
+          <div className="text-center py-8">
+            <div className="flex items-center justify-center gap-2 text-teal-600">
+              <Loader2 size={20} className="animate-spin" />
+              <span className="text-sm font-medium">Loading surveys...</span>
+            </div>
           </div>
         )}
       </div>
 
       {/* ── Why Your Feedback Matters ── */}
-      <div style={{ background: "#f1f5f9", padding: "80px 24px" }}>
-        <div style={{
-          maxWidth: 1100, margin: "0 auto",
-          display: "grid", gridTemplateColumns: "1fr 1fr",
-          gap: "64px", alignItems: "center",
-        }}>
+      <div className="bg-slate-100 py-20 px-4">
+        <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-12 md:gap-16 items-center">
           {/* Left — image */}
-          <div style={{ position: "relative" }}>
-            <div style={{
-              borderRadius: 28, overflow: "hidden",
-              boxShadow: "0 24px 60px rgba(0,0,0,0.13)",
-              aspectRatio: "4/3",
-            }}>
+          <div className="relative order-2 md:order-1">
+            <div className="rounded-3xl overflow-hidden shadow-2xl aspect-video md:aspect-auto">
               <img
                 src="https://images.unsplash.com/photo-1529156069898-49953e39b3ac?q=80&w=1000&auto=format&fit=crop"
                 alt="Community discussion"
-                style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
+                className="w-full h-full object-cover block"
               />
             </div>
             {/* floating badge */}
-            <div style={{
-              position: "absolute", bottom: -18, right: 24,
-              background: "#0f766e", color: "#fff",
-              borderRadius: 16, padding: "14px 22px",
-              boxShadow: "0 8px 28px rgba(15,118,110,0.35)",
-              textAlign: "center",
-            }}>
-              <div style={{ fontSize: 26, fontWeight: 900, lineHeight: 1 }}>{total > 0 ? total : "10"}+</div>
-              <div style={{ fontSize: 11, fontWeight: 600, marginTop: 3, opacity: 0.88 }}>Active Surveys</div>
+            <div className="absolute -bottom-6 right-6 bg-teal-700 text-white rounded-2xl px-6 py-4 shadow-xl text-center">
+              <div className="text-3xl font-black leading-tight">{total > 0 ? total : "10"}+</div>
+              <div className="text-xs font-bold mt-1 opacity-90">Active Surveys</div>
             </div>
           </div>
 
           {/* Right — text */}
-          <div>
-            <p style={{ margin: "0 0 10px", fontSize: 12, fontWeight: 800, color: "#0f766e", textTransform: "uppercase", letterSpacing: "0.1em" }}>
+          <div className="order-1 md:order-2">
+            <p className="m-0 mb-3 text-xs font-black text-teal-600 uppercase tracking-wider">
               Community Impact
             </p>
-            <h2 style={{ margin: "0 0 18px", fontSize: "clamp(1.7rem,3vw,2.3rem)", fontWeight: 900, color: "#0f172a", lineHeight: 1.2 }}>
+            <h2 className="m-0 mb-4 text-4xl md:text-5xl font-black text-slate-900 leading-tight">
               Why Your Feedback{" "}
-              <span style={{ color: "#ea580c" }}>Matters</span>
+              <span className="text-orange-600">Matters</span>
             </h2>
-            <p style={{ margin: "0 0 32px", fontSize: 15, color: "#475569", lineHeight: 1.85 }}>
+            <p className="m-0 mb-8 text-base text-slate-600 leading-relaxed">
               Direct community input is the most powerful tool for meaningful change. By participating in these surveys, you provide NGOs with the data they need to allocate resources, design programs, and advocate for policy changes that actually reflect your reality.
             </p>
 
-            <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+            <div className="space-y-4">
               {[
-                { icon: "🎯", title: "Data-Driven Advocacy",  desc: "Hard data makes community voices impossible to ignore.",             bg: "#fff7ed", border: "#fed7aa" },
-                { icon: "⚡", title: "Rapid Response",         desc: "Identify urgent needs as they emerge in your neighborhood.",         bg: "#f0fdf4", border: "#bbf7d0" },
-                { icon: "🤝", title: "Stronger Communities",   desc: "Your voice connects NGOs to the people who need them most.",         bg: "#eff6ff", border: "#bfdbfe" },
+                { icon: "🎯", title: "Data-Driven Advocacy",  desc: "Hard data makes community voices impossible to ignore.",             bg: "bg-orange-50", border: "border-orange-200" },
+                { icon: "⚡", title: "Rapid Response",         desc: "Identify urgent needs as they emerge in your neighborhood.",         bg: "bg-green-50", border: "border-green-200" },
+                { icon: "🤝", title: "Stronger Communities",   desc: "Your voice connects NGOs to the people who need them most.",         bg: "bg-blue-50", border: "border-blue-200" },
               ].map((item, i) => (
-                <div key={i} style={{
-                  display: "flex", gap: 14, alignItems: "flex-start",
-                  background: item.bg, border: `1px solid ${item.border}`,
-                  borderRadius: 14, padding: "14px 16px",
-                }}>
-                  <div style={{
-                    width: 42, height: 42, borderRadius: 10, flexShrink: 0,
-                    background: "#fff", border: `1px solid ${item.border}`,
-                    display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20,
-                  }}>
+                <div key={i} className={`flex gap-3 items-start ${item.bg} border ${item.border} rounded-lg p-3.5`}>
+                  <div className={`w-10 h-10 rounded-lg ${item.bg} border ${item.border} flex items-center justify-center text-lg flex-shrink-0`}>
                     {item.icon}
                   </div>
                   <div>
-                    <p style={{ margin: "0 0 3px", fontWeight: 800, fontSize: 14, color: "#0f172a" }}>{item.title}</p>
-                    <p style={{ margin: 0, fontSize: 13, color: "#64748b", lineHeight: 1.55 }}>{item.desc}</p>
+                    <p className="m-0 mb-1 font-bold text-sm text-slate-900">{item.title}</p>
+                    <p className="m-0 text-xs text-slate-600 leading-relaxed">{item.desc}</p>
                   </div>
                 </div>
               ))}

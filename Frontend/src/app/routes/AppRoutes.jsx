@@ -11,7 +11,7 @@ import AddNGO from "../pages/addNgo.jsx";
 import Login from "../pages/login.jsx";
 import Contact from "../pages/contact.jsx";
 import ResetPassword from "../pages/resetPassword.jsx";
-import Profile from "../pages/profile.jsx";
+import Profile from "../pages/profile/Profile.jsx";
 import VolunteerDashboard from "../pages/volunteer/VolunteerDashboard.jsx";
 
 import AdminLayout from "../pages/admin/AdminLayout.jsx";

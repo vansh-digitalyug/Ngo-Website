@@ -4,6 +4,7 @@ import ApiError from "../utils/ApiError.js";
 import ApiResponse from "../utils/ApiResponse.js";
 import Payment from "../models/payment.model.js";
 import razorpay from "../config/razorpay.config.js";
+import { createActivity } from "./activity.controller.js";
 import "../config/loadEnv.js";
 
 const KEY_SECRET = process.env.RAZORPAY_KEY_SECRET;
@@ -19,6 +20,7 @@ export const createOrder = asyncHandler(async (req, res) => {
     receipt,
     notes,
     ngoId,
+    program,
     serviceTitle,
     donorName,
     isAnonymous
@@ -40,6 +42,7 @@ export const createOrder = asyncHandler(async (req, res) => {
   const payment = await Payment.create({
     user: req.user?._id || null,
     ngoId: ngoId || null,
+    program: program || null,
     serviceTitle: serviceTitle || "",
     donorName: donorName || notes?.donorName || "",
     isAnonymous: isAnonymous || false,
@@ -49,6 +52,13 @@ export const createOrder = asyncHandler(async (req, res) => {
     notes: options.notes,
     razorpayOrderId: order.id,
     status: "created"
+  });
+
+  console.log('✓ Order created successfully:', {
+    paymentId: payment._id,
+    orderId: order.id,
+    amount: amount,
+    userId: req.user?._id || 'anonymous',
   });
 
   return res
@@ -84,15 +94,63 @@ export const verifyPayment = asyncHandler(async (req, res) => {
     throw new ApiError(400, "Invalid payment signature");
   }
 
+  // Build update object
+  const updateData = {
+    razorpayPaymentId: razorpay_payment_id,
+    razorpaySignature: razorpay_signature,
+    status: "paid",
+  };
+
+  // If user is not set but user is authenticated, assign user during verification
+  const existingPayment = await Payment.findOne({ razorpayOrderId: razorpay_order_id });
+  
+  if (existingPayment && !existingPayment.user && req.user?._id) {
+    console.log('✓ Assigning user to payment during verification:', {
+      paymentId: existingPayment._id,
+      userId: req.user._id,
+    });
+    updateData.user = req.user._id;
+  }
+
   const updatedPayment = await Payment.findOneAndUpdate(
     { razorpayOrderId: razorpay_order_id },
-    {
-      razorpayPaymentId: razorpay_payment_id,
-      razorpaySignature: razorpay_signature,
-      status: "paid",
-    },
+    updateData,
     { new: true }
   );
+
+  // Log donation activity if user is authenticated
+  if (updatedPayment.user) {
+    try {
+      const activityTitle = updatedPayment.serviceTitle 
+        ? `Donated to ${updatedPayment.serviceTitle}`
+        : `Donated ${updatedPayment.currency} ${updatedPayment.amount}`;
+      
+      await createActivity(
+        updatedPayment.user,
+        'donation',
+        activityTitle,
+        `Successfully completed donation of ${updatedPayment.currency} ${updatedPayment.amount}`,
+        updatedPayment.amount,
+        {
+          type: 'donation',
+          id: updatedPayment._id,
+          paymentId: updatedPayment.razorpayPaymentId,
+        },
+        {
+          paymentId: updatedPayment._id,
+          razorpayPaymentId: updatedPayment.razorpayPaymentId,
+          amount: updatedPayment.amount,
+          ngoId: updatedPayment.ngoId,
+        }
+      );
+      console.log('✓ Donation activity logged:', {
+        userId: updatedPayment.user,
+        amount: updatedPayment.amount,
+      });
+    } catch (activityError) {
+      console.error('Error logging donation activity:', activityError);
+    }
+  }
 
   return res
     .status(200)

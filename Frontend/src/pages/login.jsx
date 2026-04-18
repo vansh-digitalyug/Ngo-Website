@@ -1,10 +1,140 @@
 import { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { GoogleLogin } from "@react-oauth/google";
-import { User, Building2 } from "lucide-react";
+import { User, Building2, AlertTriangle } from "lucide-react";
 
 const API_BASE_URL = String(import.meta.env.VITE_API_BASE_URL || "http://localhost:5000").replace(/\/$/, "");
 const GOOGLE_CLIENT_ID = String(import.meta.env.VITE_GOOGLE_CLIENT_ID || "").trim();
+
+/* ===========================
+   VALIDATION UTILITIES
+   =========================== */
+const VALIDATION = {
+  // Remove all numbers and special chars, keep letters, spaces, hyphens
+  onlyTextNoNumbers: (value) =>
+    value
+      .replace(/[0-9]/g, "")
+      .replace(/[^a-zA-Z\s'-]/g, "")
+      .trim(),
+
+  // Validate email format
+  isValidEmail: (email) => {
+    const trimmed = email.trim();
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(trimmed);
+  },
+
+  // Get password strength (weak, fair, good, strong)
+  getPasswordStrength: (password) => {
+    if (!password || password.length < 6) return "weak";
+    if (password.length >= 6 && password.length < 8) return "fair";
+    if (/[a-z]/.test(password) && /[A-Z]/.test(password) && /[0-9]/.test(password)) return "strong";
+    if (/[a-z]/.test(password) && /[0-9]/.test(password)) return "good";
+    return "fair";
+  },
+
+  // Get password strength color
+  getPasswordStrengthColor: (strength) => {
+    switch (strength) {
+      case "strong":
+        return { bg: "#dcfce7", text: "#166534", label: "Strong" };
+      case "good":
+        return { bg: "#fef3c7", text: "#92400e", label: "Good" };
+      case "fair":
+        return { bg: "#fee2e2", text: "#991b1b", label: "Fair" };
+      default:
+        return { bg: "#f3f4f6", text: "#6b7280", label: "Weak" };
+    }
+  },
+
+  // Validate name format
+  isValidName: (name) => {
+    const trimmed = name.trim();
+    return (
+      trimmed.length >= 2 &&
+      trimmed.length <= 100 &&
+      /^[a-zA-Z]/.test(trimmed) &&
+      !/[0-9]/.test(trimmed) &&
+      /[a-zA-Z\s'-]/.test(trimmed)
+    );
+  },
+
+  // Validate password (min 6 chars)
+  isValidPassword: (password) => password && password.length >= 6,
+
+  // Validate OTP (6 digits)
+  isValidOtp: (otp) => /^[0-9]{6}$/.test(otp),
+};
+
+/* ===========================
+   VALIDATION FUNCTIONS
+   =========================== */
+
+const validateLoginForm = (loginData) => {
+  const errors = {};
+
+  if (!loginData.email.trim()) {
+    errors.email = "Email is required.";
+  } else if (!VALIDATION.isValidEmail(loginData.email)) {
+    errors.email = "⚠️ Please enter a valid email address.";
+  }
+
+  if (!loginData.password.trim()) {
+    errors.password = "Password is required.";
+  } else if (loginData.password.length < 6) {
+    errors.password = "Password must be at least 6 characters.";
+  }
+
+  return errors;
+};
+
+const validateRegisterForm = (registerData) => {
+  const errors = {};
+
+  if (!registerData.name.trim()) {
+    errors.name = "Your name is required.";
+  } else if (!VALIDATION.isValidName(registerData.name)) {
+    errors.name = "⚠️ Name must be 2-100 characters, start with a letter, no numbers.";
+  }
+
+  if (!registerData.email.trim()) {
+    errors.email = "Email is required.";
+  } else if (!VALIDATION.isValidEmail(registerData.email)) {
+    errors.email = "⚠️ Please enter a valid email address.";
+  }
+
+  if (!registerData.password.trim()) {
+    errors.password = "Password is required.";
+  } else if (registerData.password.length < 6) {
+    errors.password = "Password must be at least 6 characters.";
+  }
+
+  if (!registerData.confirmPassword.trim()) {
+    errors.confirmPassword = "Please confirm your password.";
+  } else if (registerData.password !== registerData.confirmPassword) {
+    errors.confirmPassword = "⚠️ Passwords do not match.";
+  }
+
+  return errors;
+};
+
+const validateResetPasswordForm = (resetPasswordData) => {
+  const errors = {};
+
+  if (!resetPasswordData.password.trim()) {
+    errors.password = "Password is required.";
+  } else if (resetPasswordData.password.length < 6) {
+    errors.password = "Password must be at least 6 characters.";
+  }
+
+  if (!resetPasswordData.confirmPassword.trim()) {
+    errors.confirmPassword = "Please confirm your password.";
+  } else if (resetPasswordData.password !== resetPasswordData.confirmPassword) {
+    errors.confirmPassword = "⚠️ Passwords do not match.";
+  }
+
+  return errors;
+};
 
 function Login() {
   const navigate = useNavigate();
@@ -45,6 +175,10 @@ function Login() {
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [loginErrors, setLoginErrors] = useState({});
+  const [registerErrors, setRegisterErrors] = useState({});
+  const [resetErrors, setResetErrors] = useState({});
+  const [passwordStrength, setPasswordStrength] = useState("weak");
   const [showForgotModal, setShowForgotModal] = useState(false);
   const [forgotEmail, setForgotEmail] = useState("");
   const [forgotLoading, setForgotLoading] = useState(false);
@@ -67,11 +201,30 @@ function Login() {
      ====================== */
 
   const handleLoginChange = (e) => {
-    setLoginData({ ...loginData, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    setLoginData({ ...loginData, [name]: value });
+    if (loginErrors[name]) {
+      setLoginErrors({ ...loginErrors, [name]: "" });
+    }
   };
 
   const handleRegisterChange = (e) => {
-    setRegisterData({ ...registerData, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    let processedValue = value;
+
+    if (name === "name") {
+      processedValue = VALIDATION.onlyTextNoNumbers(value);
+    }
+
+    if (name === "password") {
+      const strength = VALIDATION.getPasswordStrength(processedValue);
+      setPasswordStrength(strength);
+    }
+
+    setRegisterData({ ...registerData, [name]: processedValue });
+    if (registerErrors[name]) {
+      setRegisterErrors({ ...registerErrors, [name]: "" });
+    }
   };
 
   const toggleMode = () => {
@@ -80,6 +233,9 @@ function Login() {
     setIsLogin(!isLogin);
     setLoginData({ email: "", password: "" });
     setRegisterData({ name: "", email: "", password: "", confirmPassword: "" });
+    setLoginErrors({});
+    setRegisterErrors({});
+    setPasswordStrength("weak");
     setOtpSent(false);
     setRegisterOtp("");
     setOtpCountdown(0);
@@ -234,13 +390,9 @@ function Login() {
       return;
     }
 
-    if (resetPasswordData.password.length < 6) {
-      setResetError("Password must be at least 6 characters long");
-      return;
-    }
-
-    if (resetPasswordData.password !== resetPasswordData.confirmPassword) {
-      setResetError("Passwords do not match");
+    const errors = validateResetPasswordForm(resetPasswordData);
+    if (Object.keys(errors).length > 0) {
+      setResetErrors(errors);
       return;
     }
 
@@ -343,6 +495,13 @@ function Login() {
     e.preventDefault();
     setError("");
     setGoogleError("");
+
+    const errors = validateLoginForm(loginData);
+    if (Object.keys(errors).length > 0) {
+      setLoginErrors(errors);
+      return;
+    }
+
     setLoading(true);
 
     try {
@@ -400,6 +559,12 @@ function Login() {
     setError("");
     setGoogleError("");
 
+    const errors = validateRegisterForm(registerData);
+    if (Object.keys(errors).length > 0) {
+      setRegisterErrors(errors);
+      return;
+    }
+
     if (!otpSent) {
       setError("Please verify your email with an OTP first.");
       return;
@@ -410,8 +575,8 @@ function Login() {
       return;
     }
 
-    if (registerData.password !== registerData.confirmPassword) {
-      setError("Passwords do not match");
+    if (!VALIDATION.isValidOtp(registerOtp)) {
+      setError("⚠️ OTP must be exactly 6 digits.");
       return;
     }
 
@@ -552,22 +717,49 @@ function Login() {
               </div>
             )}
 
+            {/* Show validation errors if login/register has errors */}
+            {((isLogin && Object.keys(loginErrors).length > 0) || (!isLogin && Object.keys(registerErrors).length > 0)) && (
+              <div className="bg-[#fee2e2] border border-[#fecaca] text-[#991b1b] p-3 rounded-lg text-[0.88rem] mb-4 flex items-start gap-2">
+                <AlertTriangle size={16} className="shrink-0 mt-0.5" />
+                <div>
+                  <p className="font-semibold">Please fix the following errors:</p>
+                  <ul className="list-disc list-inside mt-1 text-[0.82rem]">
+                    {Object.values(isLogin ? loginErrors : registerErrors).map((err, idx) => (
+                      <li key={idx}>{err}</li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+            )}
+
             <form onSubmit={isLogin ? handleLoginSubmit : handleRegisterSubmit} className="flex flex-col gap-5" autoComplete="off">
 
               {/* Full Name (Register Only) */}
               {!isLogin && (
                 <div className="flex flex-col gap-2">
-                  <label className="text-[0.9rem] font-semibold text-[#344054]">Full Name</label>
+                  <label className="text-[0.9rem] font-semibold text-[#344054]">Full Name <span className="text-xs text-gray-400 font-normal">(Letters only)</span></label>
                   <input
                     type="text"
                     name="name"
-                    className="px-4 py-3.5 rounded-[10px] border border-[#d0d5dd] text-base text-[#1a1a1a] outline-none transition-all w-full bg-[#fcfcfc] font-[inherit]"
-                    placeholder="name"
+                    className={`px-4 py-3.5 rounded-[10px] border text-base text-[#1a1a1a] outline-none transition-all w-full bg-[#fcfcfc] font-[inherit] ${
+                      registerErrors.name ? "border-red-400 bg-red-50" : "border-[#d0d5dd]"
+                    }`}
+                    placeholder="John Doe"
                     value={registerData.name}
                     onChange={handleRegisterChange}
+                    maxLength={100}
                     required
                     autoComplete="off"
                   />
+                  {registerErrors.name && (
+                    <p className="text-xs text-red-600 flex items-center gap-1.5">
+                      <AlertTriangle size={14} className="shrink-0" />
+                      {registerErrors.name}
+                    </p>
+                  )}
+                  {registerData.name && !registerErrors.name && (
+                    <p className="text-xs text-gray-400">💡 Numbers are not allowed in name</p>
+                  )}
                 </div>
               )}
 
@@ -577,23 +769,39 @@ function Login() {
                 <input
                   type="email"
                   name="email"
-                  className="px-4 py-3.5 rounded-[10px] border border-[#d0d5dd] text-base text-[#1a1a1a] outline-none transition-all w-full bg-[#fcfcfc] font-[inherit]"
+                  className={`px-4 py-3.5 rounded-[10px] border text-base text-[#1a1a1a] outline-none transition-all w-full bg-[#fcfcfc] font-[inherit] ${
+                    (isLogin ? loginErrors.email : registerErrors.email) ? "border-red-400 bg-red-50" : "border-[#d0d5dd]"
+                  }`}
                   placeholder="name@example.com"
                   value={isLogin ? loginData.email : registerData.email}
                   onChange={isLogin ? handleLoginChange : handleRegisterChange}
                   required
                   autoComplete="off"
                 />
+                {(isLogin ? loginErrors.email : registerErrors.email) && (
+                  <p className="text-xs text-red-600 flex items-center gap-1.5">
+                    <AlertTriangle size={14} className="shrink-0" />
+                    {isLogin ? loginErrors.email : registerErrors.email}
+                  </p>
+                )}
+                {(isLogin ? loginData.email : registerData.email) && !((isLogin ? loginErrors.email : registerErrors.email)) && VALIDATION.isValidEmail(isLogin ? loginData.email : registerData.email) && (
+                  <p className="text-xs text-green-600">✓ Valid email address</p>
+                )}
               </div>
 
               {/* Password */}
               <div className="flex flex-col gap-2">
-                <label className="text-[0.9rem] font-semibold text-[#344054]">Password</label>
+                <label className="text-[0.9rem] font-semibold text-[#344054]">
+                  Password
+                  {!isLogin && registerData.password && <span className="ml-2 text-xs font-normal">Strength: {VALIDATION.getPasswordStrengthColor(passwordStrength).label}</span>}
+                </label>
                 <div className="relative flex items-center">
                   <input
                     type={showPassword ? "text" : "password"}
                     name="password"
-                    className="px-4 py-3.5 rounded-[10px] border border-[#d0d5dd] text-base text-[#1a1a1a] outline-none transition-all w-full bg-[#fcfcfc] font-[inherit]"
+                    className={`px-4 py-3.5 rounded-[10px] border text-base text-[#1a1a1a] outline-none transition-all w-full bg-[#fcfcfc] font-[inherit] ${
+                      (isLogin ? loginErrors.password : registerErrors.password) ? "border-red-400 bg-red-50" : "border-[#d0d5dd]"
+                    }`}
                     placeholder="password"
                     value={isLogin ? loginData.password : registerData.password}
                     onChange={isLogin ? handleLoginChange : handleRegisterChange}
@@ -608,6 +816,23 @@ function Login() {
                     {showPassword ? <EyeOffIcon /> : <EyeOpenIcon />}
                   </span>
                 </div>
+                {(isLogin ? loginErrors.password : registerErrors.password) && (
+                  <p className="text-xs text-red-600 flex items-center gap-1.5">
+                    <AlertTriangle size={14} className="shrink-0" />
+                    {isLogin ? loginErrors.password : registerErrors.password}
+                  </p>
+                )}
+                {!isLogin && registerData.password && (
+                  <div
+                    className="mt-1.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold transition-colors"
+                    style={{
+                      backgroundColor: VALIDATION.getPasswordStrengthColor(passwordStrength).bg,
+                      color: VALIDATION.getPasswordStrengthColor(passwordStrength).text,
+                    }}
+                  >
+                    💡 Tip: Mix uppercase, lowercase, and numbers for strong password
+                  </div>
+                )}
               </div>
 
               {/* Confirm Password (Register Only) */}
@@ -617,13 +842,26 @@ function Login() {
                   <input
                     type="password"
                     name="confirmPassword"
-                    className="px-4 py-3.5 rounded-[10px] border border-[#d0d5dd] text-base text-[#1a1a1a] outline-none transition-all w-full bg-[#fcfcfc] font-[inherit]"
+                    className={`px-4 py-3.5 rounded-[10px] border text-base text-[#1a1a1a] outline-none transition-all w-full bg-[#fcfcfc] font-[inherit] ${
+                      registerErrors.confirmPassword ? "border-red-400 bg-red-50" : "border-[#d0d5dd]"
+                    }`}
                     placeholder="password"
                     value={registerData.confirmPassword}
                     onChange={handleRegisterChange}
                     required
                     autoComplete="new-password"
                   />
+                  {registerErrors.confirmPassword && (
+                    <p className="text-xs text-red-600 flex items-center gap-1.5">
+                      <AlertTriangle size={14} className="shrink-0" />
+                      {registerErrors.confirmPassword}
+                    </p>
+                  )}
+                  {registerData.confirmPassword &&
+                    registerData.password === registerData.confirmPassword &&
+                    !registerErrors.confirmPassword && (
+                      <p className="text-xs text-green-600">✓ Passwords match</p>
+                    )}
                 </div>
               )}
 
@@ -681,15 +919,22 @@ function Login() {
 
               <button
                 type="submit"
-                disabled={loading}
-                className={`mt-2.5 px-4 py-4 text-white border-none rounded-[10px] text-[1.05rem] font-semibold w-full font-[inherit] transition-all
-                  ${loading ? 'bg-[#9e9e9e] cursor-not-allowed' : 'bg-[#2e7d32] cursor-pointer shadow-[0_4px_12px_rgba(46,125,50,0.2)]'}`}
+                disabled={loading || Object.keys(isLogin ? loginErrors : registerErrors).length > 0}
+                className={`mt-2.5 px-4 py-4 text-white border-none rounded-[10px] text-[1.05rem] font-semibold w-full font-[inherit] transition-all flex items-center justify-center gap-2
+                  ${(loading || Object.keys(isLogin ? loginErrors : registerErrors).length > 0) ? 'bg-[#9e9e9e] cursor-not-allowed' : 'bg-[#2e7d32] cursor-pointer shadow-[0_4px_12px_rgba(46,125,50,0.2)]'}`}
               >
                 {loading
-                  ? "Processing..."
-                  : isLogin
-                    ? (loginType === "ngo" ? "Login as NGO" : "Sign In")
-                    : "Create Account"}
+                  ? ("Processing...")
+                  : Object.keys(isLogin ? loginErrors : registerErrors).length > 0
+                    ? (
+                      <>
+                        <AlertTriangle size={18} />
+                        Fix {Object.keys(isLogin ? loginErrors : registerErrors).length} Error(s)
+                      </>
+                    )
+                    : isLogin
+                      ? (loginType === "ngo" ? "Login as NGO" : "Sign In")
+                      : "Create Account"}
               </button>
             </form>
 
@@ -851,37 +1096,68 @@ function Login() {
             )}
 
             <form onSubmit={handleResetPasswordSubmit} className="flex flex-col gap-3">
-              <input
-                type="password"
-                value={resetPasswordData.password}
-                onChange={(e) => setResetPasswordData((prev) => ({ ...prev, password: e.target.value }))}
-                placeholder="New password (min 6 chars)"
-                className="px-3.5 py-3 border border-[#d1d5db] rounded-[10px] text-[0.96rem] outline-none w-full font-[inherit]"
-                required
-              />
-              <input
-                type="password"
-                value={resetPasswordData.confirmPassword}
-                onChange={(e) => setResetPasswordData((prev) => ({ ...prev, confirmPassword: e.target.value }))}
-                placeholder="Confirm new password"
-                className="px-3.5 py-3 border border-[#d1d5db] rounded-[10px] text-[0.96rem] outline-none w-full font-[inherit]"
-                required
-              />
-              <div className="flex justify-end gap-2.5 mt-1">
+              <div className="flex flex-col gap-1.5">
+                <input
+                  type="password"
+                  value={resetPasswordData.password}
+                  onChange={(e) => {
+                    setResetPasswordData((prev) => ({ ...prev, password: e.target.value }));
+                    if (resetErrors.password) {
+                      setResetErrors({ ...resetErrors, password: "" });
+                    }
+                  }}
+                  placeholder="New password (min 6 chars)"
+                  className={`px-3.5 py-3 border rounded-[10px] text-[0.96rem] outline-none w-full font-[inherit] ${
+                    resetErrors.password ? "border-red-400 bg-red-50" : "border-[#d1d5db]"
+                  }`}
+                  required
+                />
+                {resetErrors.password && (
+                  <p className="text-xs text-red-600 flex items-center gap-1.5">
+                    <AlertTriangle size={14} className="shrink-0" />
+                    {resetErrors.password}
+                  </p>
+                )}
+              </div>
+              <div className="flex flex-col gap-1.5">
+                <input
+                  type="password"
+                  value={resetPasswordData.confirmPassword}
+                  onChange={(e) => {
+                    setResetPasswordData((prev) => ({ ...prev, confirmPassword: e.target.value }));
+                    if (resetErrors.confirmPassword) {
+                      setResetErrors({ ...resetErrors, confirmPassword: "" });
+                    }
+                  }}
+                  placeholder="Confirm new password"
+                  className={`px-3.5 py-3 border rounded-[10px] text-[0.96rem] outline-none w-full font-[inherit] ${
+                    resetErrors.confirmPassword ? "border-red-400 bg-red-50" : "border-[#d1d5db]"
+                  }`}
+                  required
+                />
+                {resetErrors.confirmPassword && (
+                  <p className="text-xs text-red-600 flex items-center gap-1.5">
+                    <AlertTriangle size={14} className="shrink-0" />
+                    {resetErrors.confirmPassword}
+                  </p>
+                )}
+              </div>
+              <div className="flex justify-end gap-2.5 mt-1.5">
                 <button
                   type="button"
                   onClick={closeResetModal}
-                  disabled={resetLoading}
-                  className="border border-[#d1d5db] bg-white text-[#374151] rounded-[10px] px-3 py-[9px] cursor-pointer font-semibold font-[inherit]"
+                  disabled={resetLoading || Object.keys(resetErrors).length > 0}
+                  className="border border-[#d1d5db] bg-white text-[#374151] rounded-[10px] px-3 py-[9px] cursor-pointer font-semibold font-[inherit] disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  disabled={resetLoading}
-                  className="border-none bg-[#2e7d32] text-white rounded-[10px] px-3 py-[9px] cursor-pointer font-semibold font-[inherit]"
+                  disabled={resetLoading || Object.keys(resetErrors).length > 0}
+                  className="border-none bg-[#2e7d32] text-white rounded-[10px] px-3 py-[9px] cursor-pointer font-semibold font-[inherit] disabled:opacity-50 disabled:cursor-not-allowed transition-opacity"
+                  title={Object.keys(resetErrors).length > 0 ? `Please fix ${Object.keys(resetErrors).length} error(s)` : ""}
                 >
-                  {resetLoading ? "Updating..." : "Reset Password"}
+                  {resetLoading ? "Updating..." : Object.keys(resetErrors).length > 0 ? `Fix ${Object.keys(resetErrors).length} Error(s)` : "Reset Password"}
                 </button>
               </div>
             </form>
