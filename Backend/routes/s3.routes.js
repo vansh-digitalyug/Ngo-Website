@@ -2,8 +2,12 @@
 import express from "express";
 import asyncHandler from "../utils/asyncHandler.js";
 import { generateUploadUrl, getUrl } from "../controllers/s3.controller.js";
+import { authenticate } from "../middlewares/auth.middleware.js";
 
 const router = express.Router();
+
+// Protect S3 routes with authentication
+router.use(authenticate);
 
 // Get presigned PUT URL for uploading a file to S3
 router.post("/generate-upload-url", asyncHandler(generateUploadUrl));

@@ -926,6 +926,44 @@ export const updateProfile = asyncHandler(async (req, res) => {
             });
         }
 
+        // ✅ ONE-WAY SYNC: User → Volunteer
+        // Sync common fields to all volunteer records linked to this user
+        const commonFieldsToSync = ['email', 'phone', 'city', 'state'];
+        const syncUpdates = {};
+
+        // Extract only common fields that were updated
+        commonFieldsToSync.forEach(field => {
+            if (updates[field]) {
+                syncUpdates[field] = updates[field];
+            }
+        });
+
+        // If any common fields were updated, sync to volunteer records
+        if (Object.keys(syncUpdates).length > 0) {
+            try {
+                const syncResult = await Volunteer.updateMany(
+                    { user: req.userId },  // Find all volunteer records for this user
+                    { $set: syncUpdates },  // Sync the common fields
+                    { new: false }  // We don't need the updated documents back
+                );
+
+                // Log the sync operation
+                if (syncResult.modifiedCount > 0) {
+                    console.log(
+                        `✅ [SYNC] Updated ${syncResult.modifiedCount} volunteer record(s) for user ${req.userId}`,
+                        `Fields: ${Object.keys(syncUpdates).join(', ')}`
+                    );
+                }
+            } catch (syncError) {
+                // Log the sync error but don't fail the request
+                console.error(
+                    `⚠️  [SYNC ERROR] Failed to sync volunteer records for user ${req.userId}:`,
+                    syncError.message
+                );
+                // Continue with the response - sync failure shouldn't break the user update
+            }
+        }
+
         // Log activity for profile update
         const updatedFields = Object.keys(updates).filter(key => 
             ['name', 'phone', 'address', 'city', 'state', 'bio', 'avatar', 'timezone', 'preferredLanguage', 'socialAccounts'].includes(key)
@@ -936,11 +974,12 @@ export const updateProfile = asyncHandler(async (req, res) => {
                 req.userId,
                 'profile_update',
                 'Updated profile information',
-                `Updated: ${updatedFields.join(', ')}`,
+                `Updated: ${updatedFields.join(', ')}${Object.keys(syncUpdates).length > 0 ? ` (synced to ${Object.keys(syncUpdates).join(', ')})` : ''}`,
                 null,
                 {},
                 {
                     fieldsUpdated: updatedFields,
+                    syncedFields: Object.keys(syncUpdates),
                     updateCount: updatedFields.length,
                 }
             );
@@ -948,8 +987,13 @@ export const updateProfile = asyncHandler(async (req, res) => {
 
         return res.status(200).json({
             success: true,
-            message: "Profile updated successfully",
-            data: toUserPayload(user)
+            message: "Profile updated successfully" + (Object.keys(syncUpdates).length > 0 ? " (synced to volunteer records)" : ""),
+            data: toUserPayload(user),
+            syncInfo: {
+                volunteerSyncEnabled: true,
+                syncedToVolunteer: Object.keys(syncUpdates).length > 0,
+                syncedFields: Object.keys(syncUpdates)
+            }
         });
 });
 

@@ -26,7 +26,7 @@ import kanyaHero        from "../assets/images/socialWelfare/Kanyadan/hero.png";
 import road             from "../assets/images/infrastructure/road.jpg";
 
 /* ── animated counter ── */
-function useCountUp(end, duration = 2000, trigger = false) {
+function useCountUp(end, duration = 2500, trigger = false) {
   const [val, setVal] = useState(0);
   useEffect(() => {
     if (!trigger) return;
@@ -34,7 +34,7 @@ function useCountUp(end, duration = 2000, trigger = false) {
     const t0 = performance.now();
     const tick = now => {
       const p = Math.min((now - t0) / duration, 1);
-      const e = 1 - Math.pow(1 - p, 3);
+      const e = 1 - Math.pow(1 - p, 4); // Smoother ease-out curve
       setVal(Math.floor(e * end));
       if (p < 1) raf = requestAnimationFrame(tick); else setVal(end);
     };
@@ -45,7 +45,7 @@ function useCountUp(end, duration = 2000, trigger = false) {
 }
 
 /* ── one-shot intersection hook ── */
-function useInView(threshold = 0.18) {
+function useInView(threshold = 0.15) {
   const ref = useRef(null);
   const [hit, setHit] = useState(false);
   useEffect(() => {
@@ -97,7 +97,7 @@ export default function Home() {
   ];
 
   useEffect(() => {
-    const id = setInterval(() => setSlide(p => (p + 1) % slides.length), 6000);
+    const id = setInterval(() => setSlide(p => (p + 1) % slides.length), 7000); // Slowed down hero slide change
     return () => clearInterval(id);
   }, [slides.length]);
 
@@ -109,9 +109,9 @@ export default function Home() {
           obs.unobserve(e.target);
         }
       }),
-      { threshold: 0.07, rootMargin: "0px 0px -40px 0px" }
+      { threshold: 0.1, rootMargin: "0px 0px -50px 0px" }
     );
-    document.querySelectorAll(".sr,.sl,.sfr,.ssc").forEach(el => obs.observe(el));
+    document.querySelectorAll(".sr,.sl,.sfr,.ssc,.line-track").forEach(el => obs.observe(el));
     return () => obs.disconnect();
   }, []);
 
@@ -135,7 +135,7 @@ export default function Home() {
         const max = Math.max(0, 6 - progVisible);
         return s >= max ? 0 : s + 1;
       });
-    }, 3000);
+    }, 4000); // Slowed down auto-play
     return () => clearInterval(id);
   }, [progPaused, progVisible]);
 
@@ -159,10 +159,10 @@ export default function Home() {
   }));
 
   const [statsRef, statsHit] = useInView(0.3);
-  const n1 = useCountUp(liveStats?.totalNgos      ?? ngoTotal, 2000, statsHit);
-  const n2 = useCountUp(liveStats?.totalDonations ?? 0,        2200, statsHit);
-  const n3 = useCountUp(liveStats?.statesCovered  ?? 0,        1500, statsHit);
-  const n4 = useCountUp(liveStats?.totalVolunteers ?? 0,       2000, statsHit);
+  const n1 = useCountUp(liveStats?.totalNgos      ?? ngoTotal, 2500, statsHit);
+  const n2 = useCountUp(liveStats?.totalDonations ?? 0,        3000, statsHit);
+  const n3 = useCountUp(liveStats?.statesCovered  ?? 0,        2000, statsHit);
+  const n4 = useCountUp(liveStats?.totalVolunteers ?? 0,       2800, statsHit);
 
   const CAUSE_IMG_MAP = [
     { keywords: ["orphan", "child", "education", "school"],   img: orphanEducation, link: "/services/orphanage/education" },
@@ -239,6 +239,20 @@ export default function Home() {
   ];
 
   const totalRaisedCr = liveStats?.totalRaised ? (liveStats.totalRaised / 10000000).toFixed(1) : null;
+  
+  /* ── Top Marquee: Mission & Impact Focused ── */
+  const topMarqueeItems = [
+    { Icon: FaChild,          text: <><strong>Orphaned Children</strong> receive quality education & healthcare</> },
+    { Icon: FaUtensils,       text: <><strong>Senior Citizens</strong> get daily meals & medical support</> },
+    { Icon: FaFemale,         text: <><strong>Women Empowerment</strong> through livelihood & financial aid</> },
+    { Icon: FaRoad,           text: <><strong>Infrastructure</strong> built in {liveStats?.statesCovered ?? "20+"} rural states</> },
+    { Icon: FaHospitalAlt,    text: <><strong>Free Health Camps</strong> serving underprivileged communities</> },
+    { Icon: FaRing,           text: <><strong>Kanya Daan</strong> supporting girls' futures & dignity</> },
+    { Icon: FaHandshake,      text: <><strong>Join {(liveStats?.totalVolunteers ?? 1000).toLocaleString("en-IN")}+ Volunteers</strong> making real impact</> },
+    { Icon: FaHeart,          text: <><strong>Together We've Changed</strong> 10,000+ lives across India</> },
+  ];
+
+  /* ── Bottom Marquee: Stats & Trust Focused ── */
   const marqueeItems = [
     { Icon: FaStar,           text: <><strong>{(liveStats?.totalNgos ?? ngoTotal) || "—"}+</strong> Verified NGOs</> },
     { Icon: FaHandHoldingUsd, text: <><strong>{totalRaisedCr ? `₹${totalRaisedCr} Cr+` : "—"}</strong> Donated</> },
@@ -259,37 +273,63 @@ export default function Home() {
 
   return (
     <div className="font-sans text-gray-900 overflow-x-hidden bg-white">
-      {/* ── Custom Keyframes & Scroll Reveals ── */}
+      {/* ── Custom Keyframes & Slower, Smoother Scroll Reveals ── */}
       <style>{`
-        .sr { opacity: 0; transform: translateY(32px); transition: opacity .7s ease, transform .7s ease; will-change: opacity, transform; }
-        .sl { opacity: 0; transform: translateX(-48px); transition: opacity .7s ease, transform .7s ease; will-change: opacity, transform; }
-        .sfr { opacity: 0; transform: translateX(48px); transition: opacity .7s ease, transform .7s ease; will-change: opacity, transform; }
-        .ssc { opacity: 0; transform: scale(.94); transition: opacity .6s ease, transform .6s ease; will-change: opacity, transform; }
+        /* Disable Overscroll Bounce */
+        html, body { overscroll-behavior: none; }
+        
+        /* Premium Slow, Smooth Cubic-Bezier Transitions */
+        .sr { opacity: 0; transform: translateY(50px); transition: opacity 1.4s cubic-bezier(0.16, 1, 0.3, 1), transform 1.4s cubic-bezier(0.16, 1, 0.3, 1); will-change: opacity, transform; }
+        .sl { opacity: 0; transform: translateX(-60px); transition: opacity 1.4s cubic-bezier(0.16, 1, 0.3, 1), transform 1.4s cubic-bezier(0.16, 1, 0.3, 1); will-change: opacity, transform; }
+        .sfr { opacity: 0; transform: translateX(60px); transition: opacity 1.4s cubic-bezier(0.16, 1, 0.3, 1), transform 1.4s cubic-bezier(0.16, 1, 0.3, 1); will-change: opacity, transform; }
+        .ssc { opacity: 0; transform: scale(.92); transition: opacity 1.4s cubic-bezier(0.16, 1, 0.3, 1), transform 1.4s cubic-bezier(0.16, 1, 0.3, 1); will-change: opacity, transform; }
+        
         .sr.sv, .sl.sv, .sfr.sv, .ssc.sv { opacity: 1; transform: none; will-change: auto; }
-        .d1 { transition-delay: .06s } .d2 { transition-delay: .14s } .d3 { transition-delay: .22s }
-        .d4 { transition-delay: .30s } .d5 { transition-delay: .38s } .d6 { transition-delay: .46s }
-        @keyframes fadeUp { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: translateY(0); } }
+        
+        /* Line Drawing Animation Base - Slower */
+        .line-track { width: 0%; transition: width 2s cubic-bezier(0.16, 1, 0.3, 1) 0.4s; }
+        .line-track.sv { width: 100%; }
+
+        /* Cascading Delays */
+        .d1 { transition-delay: .1s } .d2 { transition-delay: .25s } .d3 { transition-delay: .4s }
+        .d4 { transition-delay: .55s } .d5 { transition-delay: .7s } .d6 { transition-delay: .85s }
+        
+        @keyframes fadeUp { from { opacity: 0; transform: translateY(25px); } to { opacity: 1; transform: translateY(0); } }
         @keyframes marquee-scroll { from { transform: translateX(0); } to { transform: translateX(-50%); } }
-        @keyframes pulse-ring { 0% { transform: scale(.95); box-shadow: 0 0 0 0 rgba(217,119,6,.45); } 70% { transform: scale(1); box-shadow: 0 0 0 12px rgba(217,119,6,0); } 100% { transform: scale(.95); box-shadow: 0 0 0 0 rgba(217,119,6,0); } }
+        @keyframes float-soft { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
         @keyframes shimmer { 0% { background-position: -200% center; } 100% { background-position: 200% center; } }
       `}</style>
 
       {/* ══════════════════════════════════════════
+          TOP MARQUEE (Mission & Impact Stories)
+      ══════════════════════════════════════════ */}
+      <div className="bg-[#1a2d5a] overflow-hidden py-10 pb-6 relative z-50 border-b border-amber-600/20">
+        <div className="flex w-max gap-0 animate-[marquee-scroll_40s_linear_infinite] hover:[animation-play-state:paused] cursor-default">
+          {[...topMarqueeItems, ...topMarqueeItems].map((item, i) => (
+            <span key={i} className="flex items-center gap-2 px-6 whitespace-nowrap text-[1rem] font-bold text-white/80 tracking-[0.05em] hover:text-amber-300 transition-colors duration-300">
+              <item.Icon className="text-amber-500 text-[0.8rem] shrink-0" />
+              {item.text}
+            </span>
+          ))}
+        </div>
+      </div>
+
+      {/* ══════════════════════════════════════════
           HERO
       ══════════════════════════════════════════ */}
-      <section className="relative h-screen min-h-[600px] overflow-hidden">
+      <section className="relative h-[calc(100vh-32px)] min-h-[600px] overflow-hidden">
         {slides.map((s, i) => (
-          <div key={i} className={`absolute inset-0 transition-opacity duration-1000 ${i === slide ? "opacity-100 z-0" : "opacity-0 -z-10"}`}>
-            <img src={s.img} alt={s.kicker} loading={i === 0 ? "eager" : "lazy"} className={`w-full h-full object-cover transition-transform duration-[8s] ${i === slide ? "scale-100" : "scale-[1.04]"}`} />
+          <div key={i} className={`absolute inset-0 transition-opacity duration-[1200ms] ${i === slide ? "opacity-100 z-0" : "opacity-0 -z-10"}`}>
+            <img src={s.img} alt={s.kicker} loading={i === 0 ? "eager" : "lazy"} className={`w-full h-full object-cover transition-transform duration-[10s] ease-out ${i === slide ? "scale-100" : "scale-[1.08]"}`} />
           </div>
         ))}
 
         <div className="absolute inset-0 bg-[linear-gradient(112deg,rgba(15,25,60,.88)_0%,rgba(15,25,60,.60)_55%,rgba(0,0,0,.20)_100%)] z-10" />
 
         <div className="relative z-20 h-full flex flex-col justify-center max-w-[1200px] mx-auto px-10">
-          <h1 key={`h${slide}`} className="text-[clamp(2.2rem,5.5vw,4rem)] font-black text-white leading-[1.12] mb-5 max-w-[660px] opacity-0 animate-[fadeUp_.55s_ease_.07s_forwards]">{slides[slide].h}</h1>
-          <p key={`p${slide}`} className="text-[clamp(0.95rem,1.6vw,1.1rem)] text-white/80 leading-[1.85] mb-9 max-w-[520px] opacity-0 animate-[fadeUp_.55s_ease_.14s_forwards]">{slides[slide].p}</p>
-          <div className="flex gap-4 flex-wrap opacity-0 animate-[fadeUp_.55s_ease_.21s_forwards]">
+          <h1 key={`h${slide}`} className="text-[clamp(2.2rem,5.5vw,4rem)] font-black text-white leading-[1.12] mb-5 max-w-[660px] opacity-0 animate-[fadeUp_0.9s_cubic-bezier(0.16,1,0.3,1)_0.1s_forwards]">{slides[slide].h}</h1>
+          <p key={`p${slide}`} className="text-[clamp(0.95rem,1.6vw,1.1rem)] text-white/80 leading-[1.85] mb-9 max-w-[520px] opacity-0 animate-[fadeUp_0.9s_cubic-bezier(0.16,1,0.3,1)_0.3s_forwards]">{slides[slide].p}</p>
+          <div className="flex gap-4 flex-wrap opacity-0 animate-[fadeUp_0.9s_cubic-bezier(0.16,1,0.3,1)_0.5s_forwards]">
             <Link to="/donate" className={btnAmber}>Donate Now</Link>
             <a href="#services" className={btnWhiteOutline}>Our Programmes</a>
           </div>
@@ -297,11 +337,11 @@ export default function Home() {
 
         <div className="absolute bottom-9 left-1/2 -translate-x-1/2 flex gap-2 z-30">
           {slides.map((_, i) => (
-            <button key={i} onClick={() => setSlide(i)} aria-label={`Slide ${i + 1}`} className={`h-2 rounded-full transition-all duration-300 ${i === slide ? "bg-amber-600 w-6 rounded-md" : "bg-white/40 w-2 hover:bg-white/60"}`} />
+            <button key={i} onClick={() => setSlide(i)} aria-label={`Slide ${i + 1}`} className={`h-2 rounded-full transition-all duration-500 ease-in-out ${i === slide ? "bg-amber-600 w-8" : "bg-white/40 w-2 hover:bg-white/60"}`} />
           ))}
         </div>
 
-        <div className="hidden md:flex absolute bottom-10 right-12 z-30 items-center gap-2.5 text-white/50 text-[0.72rem] tracking-[1.5px] uppercase font-semibold opacity-0 animate-[fadeIn_1s_ease_1s_forwards]">
+        <div className="hidden md:flex absolute bottom-10 right-12 z-30 items-center gap-2.5 text-white/50 text-[0.72rem] tracking-[1.5px] uppercase font-semibold opacity-0 animate-[fadeUp_1.2s_ease_1s_forwards]">
           <span className="w-11 h-[1px] bg-white/30" />
           Scroll to explore
         </div>
@@ -320,7 +360,7 @@ export default function Home() {
           ].map((st, i) => (
             <div key={i} className={`p-8 text-center border-b md:border-b-0 md:border-r border-white/10 ${i % 2 === 0 ? "border-r" : ""} ${i === 3 ? "border-none" : ""}`}>
               <st.Icon className="text-amber-600 text-xl mx-auto mb-2.5" />
-              <div className="text-[clamp(1.8rem,2.8vw,2.5rem)] font-black text-white leading-none tabular-nums">{st.n.toLocaleString("en-IN")}{st.s}</div>
+              <div className="text-[clamp(1.8rem,2.8vw,2.5rem)] font-black text-white leading-none tabular-nums transition-all duration-300">{st.n.toLocaleString("en-IN")}{st.s}</div>
               <div className="text-[0.7rem] text-white/50 uppercase tracking-[1.8px] mt-1.5">{st.label}</div>
             </div>
           ))}
@@ -330,14 +370,14 @@ export default function Home() {
       {/* ══════════════════════════════════════════
           INFINITE MARQUEE BANNER
       ══════════════════════════════════════════ */}
-      <div className="bg-[#1a2d5a] overflow-hidden border-y border-white/5 relative">
+      <div className="bg-[#1a2d5a] overflow-hidden border-y border-white/5 relative sticky top-[100px] md:top-[90px] z-30">
         <div className="h-[3px] bg-[linear-gradient(90deg,#d97706,#f59e0b,#b45309,#d97706)] bg-[length:200%_100%] animate-[shimmer_3s_linear_infinite]" />
-        <div className="overflow-hidden py-4 relative group">
-          <div className="absolute inset-y-0 left-0 w-20 bg-gradient-to-r from-[#1a2d5a] to-transparent z-10 pointer-events-none" />
-          <div className="absolute inset-y-0 right-0 w-20 bg-gradient-to-l from-[#1a2d5a] to-transparent z-10 pointer-events-none" />
-          <div className="flex w-max gap-0 animate-[marquee-scroll_32s_linear_infinite] group-hover:[animation-play-state:paused]">
+        <div className="overflow-hidden py-6 pb-2 pt-2 relative group">
+          <div className="absolute inset-y-0 left-0 w-24 bg-gradient-to-r from-[#1a2d5a] to-transparent z-10 pointer-events-none" />
+          <div className="absolute inset-y-0 right-0 w-24 bg-gradient-to-l from-[#1a2d5a] to-transparent z-10 pointer-events-none" />
+          <div className="flex w-max gap-0 animate-[marquee-scroll_45s_linear_infinite] group-hover:[animation-play-state:paused]">
             {[...marqueeItems, ...marqueeItems].map((item, i) => (
-              <span key={i} className="flex items-center gap-2.5 px-9 whitespace-nowrap border-r border-white/10 text-[0.82rem] font-semibold text-white/70 tracking-[0.02em]">
+              <span key={i} className="flex items-center gap-2.5 px-9 pt-8 pb-2 whitespace-nowrap border-r border-white/10 text-[0.82rem] font-semibold text-white/70 tracking-[0.02em]">
                 <item.Icon className="text-amber-600 text-[0.88rem] shrink-0" />
                 {item.text}
               </span>
@@ -351,7 +391,7 @@ export default function Home() {
       ══════════════════════════════════════════ */}
       <section className="py-[100px] px-5 md:px-10 bg-white">
         <div className="max-w-[1160px] mx-auto grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-20 items-center">
-          <div className="sl">
+          <div className="sl d1">
             <h2 className="text-[clamp(1.8rem,3vw,2.6rem)] font-extrabold leading-tight text-gray-900 mb-4">
               Bridging the Gap Between<br />
               <span className="text-amber-600">Compassion and Real Change</span>
@@ -370,8 +410,8 @@ export default function Home() {
                 { Icon: FaFileAlt, label: "80G Tax Benefits" },
                 { Icon: FaSatelliteDish, label: "Live Tracking" },
               ].map(b => (
-                <div key={b.label} className="flex items-center gap-2.5 p-3 rounded-lg bg-[#eff3ff] border border-[#c7d2fe] text-[0.85rem] font-semibold text-[#1a2d5a]">
-                  <b.Icon className="text-amber-600 shrink-0" /> {b.label}
+                <div key={b.label} className="flex items-center gap-2.5 p-3 rounded-lg bg-[#eff3ff] border border-[#c7d2fe] text-[0.85rem] font-semibold text-[#1a2d5a] hover:bg-[#1a2d5a] hover:text-white transition-colors duration-500 group">
+                  <b.Icon className="text-amber-600 shrink-0 group-hover:text-amber-400 transition-colors duration-500" /> {b.label}
                 </div>
               ))}
             </div>
@@ -381,8 +421,8 @@ export default function Home() {
           </div>
 
           <div className="sfr d2 relative mt-8 lg:mt-0">
-            <img src={orphanEducation} alt="Children learning" className="w-full h-[340px] lg:h-[440px] object-cover rounded-[22px] shadow-[0_12px_40px_rgba(0,0,0,0.13)]" />
-            <div className="absolute -bottom-5 -left-5 lg:-left-5 bg-amber-600 text-white p-4 lg:p-5 rounded-[14px] shadow-[0_8px_24px_rgba(217,119,6,0.35)] flex items-center gap-2.5">
+            <img src={orphanEducation} alt="Children learning" className="w-full h-[340px] lg:h-[440px] object-cover rounded-[22px] shadow-[0_12px_40px_rgba(0,0,0,0.13)] transition-transform duration-700 hover:scale-[1.02]" />
+            <div className="absolute -bottom-5 -left-5 lg:-left-5 bg-amber-600 text-white p-4 lg:p-5 rounded-[14px] shadow-[0_8px_24px_rgba(217,119,6,0.35)] flex items-center gap-2.5 animate-[fadeUp_1.2s_ease_0.8s_backwards] hover:scale-105 transition-transform duration-500">
               <FaHeart className="text-[1.2rem]" />
               <div>
                 <div className="text-[1.28rem] font-black leading-none">
@@ -408,13 +448,13 @@ export default function Home() {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {causes.map((c, i) => (
-              <div key={i} className={`sr d${i + 1} bg-white border border-gray-200 rounded-[14px] overflow-hidden group cursor-pointer hover:-translate-y-2 hover:shadow-[0_12px_40px_rgba(0,0,0,0.13)] transition-all duration-300`}>
+              <div key={i} className={`sr d${i + 1} bg-white border border-gray-200 rounded-[14px] overflow-hidden group cursor-pointer hover:-translate-y-2 hover:shadow-[0_16px_40px_rgba(0,0,0,0.1)] transition-all duration-700`}>
                 <div className="relative overflow-hidden">
-                  <img src={c.img} alt={c.title} loading="lazy" className="w-full h-[200px] object-cover transition-transform duration-500 group-hover:scale-105" />
-                  <span className="absolute top-3 left-3 bg-amber-600 text-white text-[0.66rem] font-bold uppercase tracking-[1px] px-2.5 py-1 rounded-full">{c.cat}</span>
+                  <img src={c.img} alt={c.title} loading="lazy" className="w-full h-[200px] object-cover transition-transform duration-[1.5s] ease-out group-hover:scale-110" />
+                  <span className="absolute top-3 left-3 bg-amber-600 text-white text-[0.66rem] font-bold uppercase tracking-[1px] px-2.5 py-1 rounded-full shadow-md">{c.cat}</span>
                 </div>
                 <div className="p-5">
-                  <h3 className="text-[0.97rem] font-bold text-gray-900 mb-3.5 leading-[1.4]">{c.title}</h3>
+                  <h3 className="text-[0.97rem] font-bold text-gray-900 mb-3.5 leading-[1.4] group-hover:text-[#1a2d5a] transition-colors duration-500">{c.title}</h3>
                   <div className="flex justify-between items-baseline mb-2">
                     <span className="text-[0.92rem] font-extrabold text-[#1a2d5a]">
                       {c.raised >= 100000 ? `₹${(c.raised / 100000).toFixed(1)}L raised` : `₹${(c.raised / 1000).toFixed(0)}K raised`}
@@ -426,15 +466,15 @@ export default function Home() {
                     )}
                   </div>
                   {c.goal && (
-                    <div className="w-full h-[5px] bg-gray-200 rounded-full overflow-hidden mb-1.5">
-                      <div className="h-full rounded-full bg-gradient-to-r from-amber-600 to-amber-500 transition-all duration-1000" style={{ width: `${Math.min(Math.round((c.raised / c.goal) * 100), 100)}%` }} />
+                    <div className="w-full h-[5px] bg-gray-200 rounded-full overflow-hidden mb-1.5 relative">
+                      <div className="absolute inset-y-0 left-0 h-full rounded-full bg-gradient-to-r from-amber-600 to-amber-400 transition-all duration-[1.5s] ease-out" style={{ width: `${Math.min(Math.round((c.raised / c.goal) * 100), 100)}%` }} />
                     </div>
                   )}
                   <div className="text-[0.75rem] text-amber-700 font-bold">
                     {c.goal ? `${Math.min(Math.round((c.raised / c.goal) * 100), 100)}% funded` : ""}
                     {c.donors && <span className="ml-2 opacity-65 text-[0.78rem]">· {c.donors} donors</span>}
                   </div>
-                  <Link to={c.link} className="flex items-center gap-1.5 mt-3.5 text-[0.85rem] font-bold text-[#1a2d5a] group-hover:gap-2.5 transition-all">Support This Cause →</Link>
+                  <Link to={c.link} className="flex items-center gap-1.5 mt-4 text-[0.85rem] font-bold text-[#1a2d5a] group-hover:gap-2.5 transition-all duration-500">Support This Cause <span className="text-amber-600">→</span></Link>
                 </div>
               </div>
             ))}
@@ -460,10 +500,10 @@ export default function Home() {
             const prev = () => bump(() => setProgSlide(s => Math.max(0, s - 1)));
             const next = () => bump(() => setProgSlide(s => Math.min(maxSlide, s + 1)));
             const goTo = (i) => bump(() => setProgSlide(Math.min(i, maxSlide)));
-            const cardPct = 100 / programs.length; // % of track per card
+            const cardPct = 100 / programs.length; 
             return (
               <div
-                className="relative"
+                className="relative sr d2"
                 onMouseEnter={() => setProgPaused(true)}
                 onMouseLeave={() => setProgPaused(false)}
               >
@@ -472,19 +512,19 @@ export default function Home() {
                   onClick={prev}
                   disabled={progSlide === 0}
                   aria-label="Previous"
-                  className="absolute left-0 top-[45%] -translate-y-1/2 -translate-x-5 z-10 w-11 h-11 rounded-full bg-white shadow-lg border border-gray-200 flex items-center justify-center text-gray-500 text-xl font-bold hover:bg-amber-50 hover:border-amber-400 hover:text-amber-600 transition-all disabled:opacity-25 disabled:cursor-not-allowed"
+                  className="absolute left-0 top-[45%] -translate-y-1/2 -translate-x-5 z-10 w-11 h-11 rounded-full bg-white shadow-lg border border-gray-200 flex items-center justify-center text-gray-500 text-xl font-bold hover:bg-amber-50 hover:border-amber-400 hover:text-amber-600 transition-all duration-300 disabled:opacity-25 disabled:cursor-not-allowed"
                 >
                   ‹
                 </button>
 
-                {/* ── Track wrapper (clips horizontal overflow only, lets scale breathe) ── */}
+                {/* ── Track wrapper ── */}
                 <div style={{ overflowX: "clip", overflowY: "visible" }} className="py-4">
                   <div
                     className="flex"
                     style={{
                       width: `${(programs.length / progVisible) * 100}%`,
                       transform: `translateX(-${progSlide * cardPct}%)`,
-                      transition: "transform 0.55s cubic-bezier(0.4,0,0.2,1)",
+                      transition: "transform 0.8s cubic-bezier(0.16, 1, 0.3, 1)", /* Slower, smoother slide */
                     }}
                   >
                     {programs.map(({ img, Icon, title, desc, link }, i) => (
@@ -493,43 +533,39 @@ export default function Home() {
                         style={{ width: `${cardPct}%` }}
                         className="flex-shrink-0 px-3"
                       >
-                        <Link to={link} className="group block rounded-2xl overflow-hidden shadow-md hover:shadow-[0_8px_30px_rgba(217,119,6,0.25)] transition-all duration-500 hover:scale-[1.03]" style={{ transformOrigin: "center bottom" }}>
+                        <Link to={link} className="group block rounded-2xl overflow-hidden shadow-md hover:shadow-[0_16px_40px_rgba(217,119,6,0.15)] transition-all duration-700 hover:-translate-y-1.5" style={{ transformOrigin: "center bottom" }}>
                           {/* Image */}
                           <div className="relative h-56 sm:h-64 md:h-72 overflow-hidden">
                             <img
                               src={img}
                               alt={title}
                               loading="lazy"
-                              className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                              className="w-full h-full object-cover transition-transform duration-[1.5s] ease-out group-hover:scale-110"
                             />
-                            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/25 to-transparent transition-opacity duration-500" />
-                            {/* Amber color wash on hover */}
-                            <div className="absolute inset-0 bg-amber-600/0 group-hover:bg-amber-600/15 transition-all duration-500" />
+                            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/25 to-transparent transition-opacity duration-700" />
+                            <div className="absolute inset-0 bg-amber-600/0 group-hover:bg-amber-600/20 transition-all duration-700" />
 
-                            {/* Icon badge top-left */}
-                            <div className="absolute top-4 left-4 w-9 h-9 rounded-xl bg-white/20 backdrop-blur-sm border border-white/30 flex items-center justify-center text-white text-sm shadow-md group-hover:bg-amber-500 group-hover:border-amber-400 transition-all duration-300">
+                            <div className="absolute top-4 left-4 w-9 h-9 rounded-xl bg-white/20 backdrop-blur-sm border border-white/30 flex items-center justify-center text-white text-sm shadow-md group-hover:bg-amber-500 group-hover:border-amber-400 transition-all duration-500">
                               <Icon />
                             </div>
 
-                            {/* "Programme" tag top-right */}
-                            <div className="absolute top-4 right-4 text-[9px] font-bold uppercase tracking-[1.5px] text-white/70 border border-white/25 px-2 py-0.5 rounded-full backdrop-blur-sm">
+                            <div className="absolute top-4 right-4 text-[9px] font-bold uppercase tracking-[1.5px] text-white/90 border border-white/30 px-2.5 py-1 rounded-full backdrop-blur-md bg-black/20">
                               Programme
                             </div>
 
-                            {/* Title overlay at bottom of image */}
-                            <div className="absolute bottom-0 left-0 right-0 px-5 pb-4 pt-2">
-                              <h3 className="text-[0.97rem] font-extrabold text-white leading-snug drop-shadow-sm">
+                            <div className="absolute bottom-0 left-0 right-0 px-5 pb-5 pt-2">
+                              <h3 className="text-[1.05rem] font-extrabold text-white leading-snug drop-shadow-md">
                                 {title}
                               </h3>
                             </div>
                           </div>
 
                           {/* Content */}
-                          <div className="bg-white px-5 py-4 group-hover:bg-amber-50 transition-colors duration-500">
-                            <p className="text-[0.73rem] text-gray-500 leading-relaxed line-clamp-2 mb-3">
+                          <div className="bg-white px-5 py-5 group-hover:bg-[#faf9f7] transition-colors duration-700">
+                            <p className="text-[0.8rem] text-gray-500 leading-relaxed line-clamp-2 mb-3">
                               {desc}
                             </p>
-                            <span className="inline-flex items-center gap-1 text-[0.7rem] font-bold text-amber-600 uppercase tracking-[1.5px] group-hover:gap-2.5 transition-all duration-300">
+                            <span className="inline-flex items-center gap-1 text-[0.75rem] font-bold text-amber-600 uppercase tracking-[1.5px] group-hover:gap-2.5 transition-all duration-500">
                               Explore <span className="text-base leading-none">→</span>
                             </span>
                           </div>
@@ -544,21 +580,21 @@ export default function Home() {
                   onClick={next}
                   disabled={progSlide === maxSlide}
                   aria-label="Next"
-                  className="absolute right-0 top-[45%] -translate-y-1/2 translate-x-5 z-10 w-11 h-11 rounded-full bg-white shadow-lg border border-gray-200 flex items-center justify-center text-gray-500 text-xl font-bold hover:bg-amber-50 hover:border-amber-400 hover:text-amber-600 transition-all disabled:opacity-25 disabled:cursor-not-allowed"
+                  className="absolute right-0 top-[45%] -translate-y-1/2 translate-x-5 z-10 w-11 h-11 rounded-full bg-white shadow-lg border border-gray-200 flex items-center justify-center text-gray-500 text-xl font-bold hover:bg-amber-50 hover:border-amber-400 hover:text-amber-600 transition-all duration-300 disabled:opacity-25 disabled:cursor-not-allowed"
                 >
                   ›
                 </button>
 
                 {/* ── Dot indicators ── */}
-                <div className="flex justify-center gap-2 mt-10">
+                <div className="flex justify-center gap-2 mt-8">
                   {Array.from({ length: maxSlide + 1 }).map((_, i) => (
                     <button
                       key={i}
                       onClick={() => goTo(i)}
                       aria-label={`Slide ${i + 1}`}
-                      className={`h-2 rounded-full transition-all duration-300 ${
+                      className={`h-2 rounded-full transition-all duration-500 ease-in-out ${
                         i === progSlide
-                          ? "bg-amber-600 w-6"
+                          ? "bg-amber-600 w-8"
                           : "bg-gray-200 w-2 hover:bg-gray-400"
                       }`}
                     />
@@ -579,7 +615,7 @@ export default function Home() {
       ══════════════════════════════════════════ */}
       <section className="py-20 px-5 md:px-10 bg-[#1a2d5a] relative overflow-hidden">
         <div className="absolute -top-20 -right-20 w-[300px] h-[300px] rounded-full bg-white/5 pointer-events-none" />
-        <div className="absolute -bottom-16 -left-16 w-[220px] h-[220px] rounded-full bg-[#d97706]/10 pointer-events-none" />
+        <div className="absolute -bottom-16 -left-16 w-[220px] h-[220px] rounded-full bg-[#d97706]/15 pointer-events-none" />
         
         <div className="max-w-[860px] mx-auto text-center relative z-10">
           <h2 className="sr d1 text-[clamp(1.6rem,3vw,2.4rem)] font-extrabold text-white mb-3.5 leading-[1.3]">
@@ -596,7 +632,7 @@ export default function Home() {
       </section>
 
       {/* ══════════════════════════════════════════
-          HOW IT WORKS
+          HOW IT WORKS (With Drawing Line Animation)
       ══════════════════════════════════════════ */}
       <section id="how" className="py-20 px-5 md:px-10 bg-[#f2f3f5]">
         <div className="max-w-[1100px] mx-auto">
@@ -607,7 +643,12 @@ export default function Home() {
           </div>
 
           <div className="relative grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-7 lg:gap-0 mt-12">
-            <div className="hidden lg:block absolute top-6 left-[10%] right-[10%] h-[2px] bg-gradient-to-r from-amber-600 to-[#2e4a8a] z-0" />
+            
+            {/* The Drawing Line Animation */}
+            <div className="hidden lg:block absolute top-6 left-[12.5%] right-[12.5%] h-[2px] bg-gray-200 z-0">
+              <div className="line-track h-full bg-gradient-to-r from-amber-600 via-amber-400 to-[#1a2d5a]" />
+            </div>
+
             {[
               { n: "01", Icon: FaSearch, h: "Browse NGOs", p: "Search 500+ verified NGOs by cause, location, or rating. Read reports and audit financials." },
               { n: "02", Icon: FaCheckCircle, h: "Pick a Cause", p: "Choose a project that resonates with you — child welfare, elderly care, women empowerment, or more." },
@@ -615,7 +656,7 @@ export default function Home() {
               { n: "04", Icon: FaChartLine, h: "Track Impact", p: "Follow your donation's journey with fund utilisation updates and ground-level impact reports." },
             ].map((s, i) => (
               <div key={i} className={`sr d${i + 1} text-center px-4 relative z-10 group`}>
-                <div className="w-[50px] h-[50px] rounded-full bg-[#1a2d5a] text-white flex items-center justify-center text-[1.1rem] font-extrabold mx-auto mb-5 border-4 border-white shadow-[0_4px_14px_rgba(26,45,90,0.25)] group-hover:bg-amber-600 group-hover:scale-110 transition-all duration-300">{s.n}</div>
+                <div className="w-[50px] h-[50px] rounded-full bg-[#1a2d5a] text-white flex items-center justify-center text-[1.1rem] font-extrabold mx-auto mb-5 border-4 border-[#f2f3f5] shadow-[0_4px_14px_rgba(26,45,90,0.25)] group-hover:bg-amber-600 group-hover:scale-110 transition-all duration-500">{s.n}</div>
                 <h3 className="text-[0.97rem] font-bold text-gray-900 mb-2">{s.h}</h3>
                 <p className="text-[0.84rem] text-gray-600 leading-[1.6]">{s.p}</p>
               </div>
@@ -635,16 +676,16 @@ export default function Home() {
             <p className="text-base text-gray-600 leading-relaxed max-w-[560px] mx-auto">SevaIndia ensures every rupee you donate reaches the people it was meant for — with proof, gratitude, and the ability to see the change you created.</p>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 mt-12">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mt-12">
             {whyUs.map((w, i) => (
-              <div key={i} className={`ssc d${(i % 3) + 1} p-7 border border-gray-200 rounded-[14px] bg-white hover:border-[#c7d2fe] hover:shadow-[0_8px_28px_rgba(26,45,90,0.09)] hover:-translate-y-1 transition-all duration-300 group`}>
-                <div className="w-[50px] h-[50px] rounded-xl bg-[#eff3ff] flex items-center justify-center text-[1.2rem] text-[#1a2d5a] mb-4 group-hover:bg-[#1a2d5a] group-hover:text-white transition-colors"><w.Icon /></div>
-                <h3 className="text-[0.97rem] font-bold text-gray-900 mb-2">{w.h}</h3>
+              <div key={i} className={`ssc d${(i % 3) + 1} p-7 border border-gray-200 rounded-[14px] bg-white hover:border-[#c7d2fe] hover:shadow-[0_16px_40px_rgba(26,45,90,0.08)] hover:-translate-y-2 transition-all duration-700 group`}>
+                <div className="w-[54px] h-[54px] rounded-xl bg-[#eff3ff] flex items-center justify-center text-[1.3rem] text-[#1a2d5a] mb-5 group-hover:bg-[#1a2d5a] group-hover:text-white transition-colors duration-700"><w.Icon /></div>
+                <h3 className="text-[1.05rem] font-bold text-gray-900 mb-2">{w.h}</h3>
                 <p className="text-[0.86rem] text-gray-600 leading-[1.65]">{w.p}</p>
               </div>
             ))}
           </div>
-          <div className="sr text-center mt-10">
+          <div className="sr text-center mt-12">
             <Link to="/add-ngo" className={btnNavyOutline}>Register Your NGO</Link>
           </div>
         </div>
@@ -657,14 +698,14 @@ export default function Home() {
         <div className="max-w-[1280px] mx-auto grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-14 items-center">
 
           {/* LEFT — Map */}
-          <div className="sl">
+          <div className="sl d1">
             <IndiaMap />
           </div>
 
           {/* RIGHT — Text + NGO cards */}
           <div className="sfr d2 flex flex-col gap-6">
             <div>
-              <h2 className="text-[clamp(1.8rem,3vw,2.6rem)] font-extrabold leading-tight text-gray-900 mb-4">Find a Verified NGO<br /><span className="text-grad">Near Your City</span></h2>
+              <h2 className="text-[clamp(1.8rem,3vw,2.6rem)] font-extrabold leading-tight text-gray-900 mb-4">Find a Verified NGO<br /><span className="text-amber-600">Near Your City</span></h2>
               <div className="w-11 h-[3px] rounded bg-amber-600 my-4" />
               <p className="text-base text-gray-600 leading-relaxed mb-4">
                 Every NGO on SevaIndia is personally verified. We visit offices, check legal filings, audit past expenditures, and speak with beneficiaries before approving a listing.
@@ -690,16 +731,16 @@ export default function Home() {
                 </div>
               ))}
               {!ngoLoading && liveNgos.map((n, i) => (
-                <Link to={`/ngo/${n.id || ""}`} key={n.id || i} className={`sr d${i + 1} flex items-center gap-3.5 p-3.5 bg-white border border-gray-200 rounded-[14px] shadow-sm hover:shadow-md hover:translate-x-1.5 hover:border-[#c7d2fe] transition-all duration-250`}>
-                  <div className="w-11 h-11 rounded-lg bg-[#1a2d5a] text-white flex items-center justify-center text-[0.82rem] font-extrabold shrink-0">{n.name ? n.name[0].toUpperCase() : "N"}</div>
+                <Link to={`/ngo/${n.id || ""}`} key={n.id || i} className={`sr d${i + 1} flex items-center gap-3.5 p-4 bg-white border border-gray-200 rounded-[14px] shadow-sm hover:shadow-md hover:translate-x-2 hover:border-[#c7d2fe] transition-all duration-500`}>
+                  <div className="w-12 h-12 rounded-xl bg-[#1a2d5a] text-white flex items-center justify-center text-[1rem] font-extrabold shrink-0 transition-transform group-hover:scale-105">{n.name ? n.name[0].toUpperCase() : "N"}</div>
                   <div>
-                    <h4 className="text-[0.9rem] font-bold text-gray-900 mb-0.5">{n.name}</h4>
-                    <p className="text-[0.78rem] text-gray-400 flex items-center">
-                      <FaMapMarkerAlt className="text-[0.68rem] mr-1" />
-                      {n.city} · {n.cause}
+                    <h4 className="text-[0.95rem] font-bold text-gray-900 mb-0.5">{n.name}</h4>
+                    <p className="text-[0.8rem] text-gray-500 flex items-center">
+                      <FaMapMarkerAlt className="text-[0.7rem] mr-1.5 text-amber-600" />
+                      {n.city} <span className="mx-1.5 opacity-50">|</span> {n.cause}
                     </p>
                   </div>
-                  <span className="ml-auto shrink-0 text-[0.68rem] font-bold text-green-700 bg-green-100 border border-green-200 px-2.5 py-1 rounded-full">{n.rating ? `★ ${n.rating} ` : ""}Verified</span>
+                  <span className="ml-auto shrink-0 text-[0.7rem] font-bold text-green-700 bg-green-50 border border-green-200 px-3 py-1 rounded-full">{n.rating ? `★ ${n.rating} ` : ""}Verified</span>
                 </Link>
               ))}
             </div>
@@ -720,19 +761,19 @@ export default function Home() {
             <p className="text-base text-white/80 leading-relaxed max-w-[560px] mx-auto">Donors, volunteers, and NGO partners share how SevaIndia changed the way they give.</p>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 mt-12">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-12">
             {stories.map((s, i) => (
-              <div key={i} className={`sr d${i + 1} bg-white/[0.06] border border-white/10 rounded-[14px] p-7 hover:bg-white/10 hover:-translate-y-1 transition-all duration-300`}>
-                <FaQuoteLeft className="text-[1.6rem] text-amber-600 mb-4" />
-                <p className="text-[0.93rem] text-white/80 leading-[1.75] italic mb-5">{s.quote}</p>
-                <div className="flex items-center gap-3">
-                  <div className="w-11 h-11 rounded-full bg-amber-600 text-white flex items-center justify-center text-[0.82rem] font-extrabold shrink-0">
+              <div key={i} className={`sr d${i + 1} bg-white/[0.06] border border-white/10 rounded-[14px] p-8 hover:bg-white/10 hover:-translate-y-2 transition-all duration-700`}>
+                <FaQuoteLeft className="text-[1.8rem] text-amber-500 mb-5 opacity-80" />
+                <p className="text-[0.95rem] text-white/90 leading-[1.8] italic mb-6">"{s.quote}"</p>
+                <div className="flex items-center gap-3.5">
+                  <div className="w-12 h-12 rounded-full bg-gradient-to-br from-amber-500 to-amber-700 text-white flex items-center justify-center text-[0.9rem] font-extrabold shrink-0 shadow-lg">
                     {s.name.split(" ").map(w => w[0]).join("").slice(0, 2)}
                   </div>
                   <div>
-                    <p className="text-[0.88rem] font-bold text-white mb-0.5">{s.name}</p>
-                    <p className="text-[0.76rem] text-white/50">{s.role}</p>
-                    <span className="inline-block text-[0.68rem] font-bold bg-[#d97706]/25 text-amber-200 rounded-full px-2.5 py-1 mt-2">{s.tag}</span>
+                    <p className="text-[0.92rem] font-bold text-white mb-0.5">{s.name}</p>
+                    <p className="text-[0.78rem] text-white/60">{s.role}</p>
+                    <span className="inline-block text-[0.68rem] font-bold bg-[#d97706]/30 text-amber-200 border border-amber-500/30 rounded-full px-2.5 py-1 mt-2.5">{s.tag}</span>
                   </div>
                 </div>
               </div>
@@ -752,20 +793,22 @@ export default function Home() {
             <p className="text-base text-gray-600 leading-relaxed max-w-[560px] mx-auto">You don't need to donate money to create change. Your time, skills, or network can be equally powerful.</p>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 mt-12">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mt-12">
             {[
               { Icon: FaHandHoldingHeart, h: "Donate", p: "Contribute to a verified cause. Every rupee is tracked and 80G tax-deductible.", link: "/donate", btn: "Donate Now", benefits: ["As low as ₹100", "Instant receipt & 80G cert", "Choose your cause", "Monthly giving option"] },
               { Icon: FaHandshake, h: "Volunteer", p: "Give your time and skills. We match you with opportunities that fit your schedule.", link: "/volunteer", btn: "Apply as Volunteer", benefits: ["Flexible hours", "Remote or on-ground", "Certificate of service", "25+ states"] },
               { Icon: FaBuilding, h: "Register NGO", p: "Reach thousands of donors across India. Get KYC-verified and start fundraising.", link: "/add-ngo", btn: "Register Your NGO", benefits: ["Free listing", "Verified badge", "Donor network access", "Fundraising tools"] },
             ].map((card, i) => (
-              <div key={i} className={`sr d${i + 1} bg-white border border-gray-200 rounded-[14px] p-8 text-center hover:-translate-y-1.5 hover:shadow-[0_12px_40px_rgba(0,0,0,0.13)] hover:border-[#c7d2fe] transition-all duration-300 group`}>
-                <div className="w-[60px] h-[60px] rounded-2xl bg-[#eff3ff] mx-auto mb-4 flex items-center justify-center text-[1.4rem] text-[#1a2d5a] group-hover:bg-amber-600 group-hover:text-white transition-colors animate-[pulse-ring_3s_ease_infinite] group-hover:animate-none"><card.Icon /></div>
+              <div key={i} className={`sr d${i + 1} bg-white border border-gray-200 rounded-[14px] p-8 text-center hover:-translate-y-2 hover:shadow-[0_16px_40px_rgba(0,0,0,0.08)] hover:border-[#c7d2fe] transition-all duration-700 group`}>
+                <div className="w-[64px] h-[64px] rounded-2xl bg-[#eff3ff] mx-auto mb-5 flex items-center justify-center text-[1.5rem] text-[#1a2d5a] group-hover:bg-amber-600 group-hover:text-white transition-colors duration-700"><card.Icon className="group-hover:animate-bounce" /></div>
                 <h3 className="text-[1.1rem] font-extrabold text-gray-900 mb-2.5">{card.h}</h3>
                 <p className="text-[0.88rem] text-gray-600 leading-[1.65] mb-5">{card.p}</p>
-                <ul className="list-none p-0 m-0 mb-5 text-left">
+                <ul className="list-none p-0 m-0 mb-6 text-left">
                   {card.benefits.map(b => (
-                    <li key={b} className="flex items-center gap-2 text-[0.84rem] text-gray-600 mb-2">
-                      <FaCheck className="text-amber-600 text-[0.68rem] shrink-0" />
+                    <li key={b} className="flex items-center gap-2.5 text-[0.84rem] text-gray-600 mb-2.5">
+                      <div className="w-4 h-4 rounded-full bg-amber-100 flex items-center justify-center shrink-0">
+                        <FaCheck className="text-amber-600 text-[0.55rem]" />
+                      </div>
                       {b}
                     </li>
                   ))}
@@ -778,55 +821,63 @@ export default function Home() {
       </section>
 
       {/* ══════════════════════════════════════════
-          RECENT DONATIONS
+          RECENT DONATIONS (Slower Marquee + Float Animation + Fade Edges)
       ══════════════════════════════════════════ */}
-      <section className="py-20 px-5 md:px-10 bg-[#faf9f7]">
-        <div className="max-w-[1200px] mx-auto">
-          <div className="sr text-center mb-12">
+      <section className="py-20 bg-[#faf9f7] overflow-hidden">
+        <div className="max-w-[1200px] mx-auto px-5 md:px-10">
+          <div className="sr text-center mb-10">
             <h2 className="text-[clamp(1.8rem,3vw,2.6rem)] font-extrabold leading-tight text-gray-900 mb-4">Recent <span className="text-amber-600">Donations</span></h2>
             <div className="w-11 h-[3px] rounded bg-amber-600 mx-auto my-4" />
             <p className="text-base text-gray-600 leading-relaxed max-w-[560px] mx-auto">Real people making real impact — see the latest contributions flowing in right now.</p>
           </div>
+        </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-12">
-            {recentDonations.map((d, i) => (
-              <div key={i} className={`sr d${(i % 3) + 1} bg-white border border-gray-200 rounded-[14px] p-5 flex items-start gap-3.5 relative overflow-hidden group hover:-translate-y-1 hover:shadow-md hover:border-[#c7d2fe] transition-all`}>
-                <div className="absolute bottom-0 left-0 h-[3px] w-0 bg-gradient-to-r from-amber-600 to-amber-500 rounded-bl-[14px] group-hover:w-full transition-all duration-400" />
-                <div className="w-[46px] h-[46px] rounded-full flex items-center justify-center text-[0.85rem] font-extrabold text-white shrink-0 tracking-[0.02em]" style={{ background: d.color }}>
+        {/* Smoother, Slower Moving Ticker Strip with Fade Edges */}
+        <div className="relative mt-6" style={{ WebkitMaskImage: 'linear-gradient(to right, transparent, black 10%, black 90%, transparent)', maskImage: 'linear-gradient(to right, transparent, black 10%, black 90%, transparent)' }}>
+          <div className="flex w-max gap-6 animate-[marquee-scroll_75s_linear_infinite] hover:[animation-play-state:paused] py-6 px-5">
+            {[...recentDonations, ...recentDonations, ...recentDonations, ...recentDonations].map((d, i) => (
+              <div 
+                key={i} 
+                className="w-[320px] sm:w-[360px] shrink-0 bg-white border border-gray-200 rounded-[14px] p-5 flex items-start gap-4 relative overflow-hidden group/card hover:scale-[1.02] hover:shadow-xl hover:border-amber-300 transition-all duration-500 animate-[float-soft_4s_ease-in-out_infinite]"
+                style={{ animationDelay: `${(i % 5) * 0.5}s` }} /* Slight staggering for floating effect */
+              >
+                <div className="absolute bottom-0 left-0 h-[3px] w-0 bg-gradient-to-r from-amber-600 to-amber-400 rounded-bl-[14px] group-hover/card:w-full transition-all duration-700 ease-out" />
+                <div className="w-[48px] h-[48px] rounded-full flex items-center justify-center text-[0.9rem] font-extrabold text-white shrink-0 tracking-[0.02em] shadow-inner transition-transform duration-500 group-hover/card:scale-110" style={{ background: d.color }}>
                   {d.initials}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <h4 className="text-[0.92rem] font-bold text-gray-900 mb-1 truncate">{d.name}</h4>
-                  <p className="text-[0.76rem] text-gray-400 mb-2.5 truncate">{d.cause}</p>
+                  <h4 className="text-[0.95rem] font-bold text-gray-900 mb-1 truncate">{d.name}</h4>
+                  <p className="text-[0.78rem] text-gray-500 mb-3 truncate">{d.cause}</p>
                   <div className="flex items-center justify-between gap-2">
-                    <span className="text-[1rem] font-black text-[#1a2d5a]">{d.amount}</span>
-                    <span className="text-[0.7rem] text-gray-400 bg-[#f2f3f5] px-2 py-1 rounded-full whitespace-nowrap flex items-center">
-                      <FaRegClock className="text-[0.65rem] mr-1" />{d.time}
+                    <span className="text-[1.05rem] font-black text-[#1a2d5a]">{d.amount}</span>
+                    <span className="text-[0.7rem] text-gray-500 bg-[#f2f3f5] px-2.5 py-1 rounded-md whitespace-nowrap flex items-center font-semibold">
+                      <FaRegClock className="text-[0.65rem] mr-1.5 text-amber-600" />{d.time}
                     </span>
                   </div>
                 </div>
               </div>
             ))}
           </div>
+        </div>
 
-          <div className="sr mt-9 bg-[#1a2d5a] rounded-[14px] p-5 md:p-7 flex flex-col md:flex-row items-center justify-between gap-4">
-            <div className="flex items-center gap-3.5">
-              <div className="w-12 h-12 rounded-xl bg-white/10 flex items-center justify-center text-[1.2rem] text-amber-600">
+        <div className="max-w-[1200px] mx-auto px-5 md:px-10 mt-10">
+          <div className="sr d2 bg-[#1a2d5a] rounded-2xl p-6 md:p-8 flex flex-col md:flex-row items-center justify-between gap-5 shadow-[0_16px_40px_rgba(26,45,90,0.15)] hover:shadow-[0_20px_50px_rgba(26,45,90,0.25)] transition-shadow duration-700 relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-64 h-64 bg-white/[0.03] rounded-full -translate-y-1/2 translate-x-1/3 pointer-events-none" />
+            <div className="flex items-center gap-4 relative z-10">
+              <div className="w-14 h-14 rounded-xl bg-white/10 flex items-center justify-center text-[1.4rem] text-amber-500 backdrop-blur-sm border border-white/10 shadow-inner">
                 <FaHandHoldingUsd />
               </div>
               <div>
-                <h3 className="text-[1.4rem] font-black text-white mb-0.5">
+                <h3 className="text-[1.6rem] font-black text-white mb-1">
                   {liveStats?.totalRaised ? `₹${Number(liveStats.totalRaised).toLocaleString("en-IN")}` : "₹2,40,87,450"}
                 </h3>
-                <p className="text-[0.76rem] text-white/55 uppercase tracking-[1.5px] m-0">Total funds raised to date</p>
+                <p className="text-[0.78rem] text-amber-200/80 uppercase tracking-[1.5px] font-bold m-0">Total funds raised to date</p>
               </div>
             </div>
-            <Link to="/donate" className={btnAmber}>Add Your Contribution</Link>
+            <Link to="/donate" className={`${btnAmber} relative z-10 !px-8 !py-3.5 hover:scale-105`}>Add Your Contribution</Link>
           </div>
         </div>
       </section>
-
-      {/* ══════════════════════════════════════════
 
       {/* ══════════════════════════════════════════
           FAQ
@@ -841,13 +892,15 @@ export default function Home() {
 
           <div className="mt-11">
             {faqs.map((f, i) => (
-              <div key={i} className={`sr d${i + 1} border-b border-gray-200`}>
-                <div className={`transition-colors ${openFaq === i ? "bg-gray-50" : ""}`}>
-                  <button className="w-full text-left py-5 px-2 flex justify-between items-center gap-3.5 text-[0.97rem] font-semibold text-gray-900 hover:text-[#1a2d5a] transition-colors" onClick={() => setOpenFaq(openFaq === i ? null : i)}>
+              <div key={i} className={`sr d${i + 1} border-b border-gray-200 last:border-b-0`}>
+                <div className={`transition-colors duration-500 ${openFaq === i ? "bg-[#faf9f7] rounded-lg" : ""}`}>
+                  <button className="w-full text-left py-5 px-4 flex justify-between items-center gap-3.5 text-[0.97rem] font-bold text-gray-900 hover:text-amber-600 transition-colors duration-300" onClick={() => setOpenFaq(openFaq === i ? null : i)}>
                     <span>{f.q}</span>
-                    <FaChevronDown className={`shrink-0 text-[0.82rem] transition-all duration-250 ${openFaq === i ? "rotate-180 text-amber-600" : "text-gray-400"}`} />
+                    <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 transition-all duration-500 ${openFaq === i ? "bg-amber-100 text-amber-600" : "bg-gray-100 text-gray-400"}`}>
+                      <FaChevronDown className={`text-[0.7rem] transition-transform duration-500 ${openFaq === i ? "rotate-180" : ""}`} />
+                    </div>
                   </button>
-                  <div className={`overflow-hidden transition-all duration-350 ease-in-out px-2 text-[0.92rem] text-gray-600 leading-[1.8] ${openFaq === i ? "max-h-[400px] pb-5" : "max-h-0"}`}>
+                  <div className={`overflow-hidden transition-all duration-[600ms] ease-in-out px-4 text-[0.92rem] text-gray-600 leading-[1.8] ${openFaq === i ? "max-h-[400px] pb-6 opacity-100" : "max-h-0 opacity-0"}`}>
                     {f.a}
                   </div>
                 </div>
@@ -856,7 +909,6 @@ export default function Home() {
           </div>
         </div>
       </section>
-
 
     </div>
   );

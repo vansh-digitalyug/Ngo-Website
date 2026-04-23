@@ -183,42 +183,6 @@ const PersonalInfo = ({
           </div>
         </Section>
 
-        {/* Account Preferences Section */}
-        <Section title="Account Preferences" description="Localization and communication settings.">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            <div className="space-y-5">
-              <div>
-                <label className="block text-[11px] font-bold text-[#8B8B8B] uppercase tracking-wider mb-2">LANGUAGE</label>
-                <select className="w-full px-4 py-3.5 bg-[#E8E6E1] text-[#3D342B] rounded-xl text-[14px] hover:bg-[#DDD6CA] focus:bg-white focus:ring-2 focus:ring-[#6B5D49]/20 outline-none transition-all border border-transparent appearance-none">
-                  <option>English (UK)</option>
-                  <option>English (US)</option>
-                  <option>Hindi</option>
-                </select>
-              </div>
-              <div>
-                <label className="block text-[11px] font-bold text-[#8B8B8B] uppercase tracking-wider mb-2">TIMEZONE</label>
-                <select className="w-full px-4 py-3.5 bg-[#E8E6E1] text-[#3D342B] rounded-xl text-[14px] hover:bg-[#DDD6CA] focus:bg-white focus:ring-2 focus:ring-[#6B5D49]/20 outline-none transition-all border border-transparent appearance-none">
-                  <option>(GMT+00:00) London</option>
-                  <option>(GMT+05:30) New Delhi</option>
-                </select>
-              </div>
-            </div>
-
-            <div className="space-y-4">
-              <ToggleBox 
-                label="Email Notifications" 
-                description="Daily digest of curations" 
-                defaultChecked={true} 
-              />
-              <ToggleBox 
-                label="SMS Alerts" 
-                description="Critical account updates only" 
-                defaultChecked={false} 
-              />
-            </div>
-          </div>
-        </Section>
-
         {/* Security Section */}
         <Section title="Security" description="Update your password to keep your archive safe." icon={<FaSyncAlt className="text-[#6B5D49]" />}>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-4">

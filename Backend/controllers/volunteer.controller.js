@@ -4,6 +4,7 @@ import asyncHandler from "../utils/asyncHandler.js";
 import ApiError from "../utils/ApiError.js";
 import ApiResponse from "../utils/ApiResponse.js";
 import { sendVolunteerApplicationEmail } from "../services/mail.service.js";
+import { createActivity } from "./activity.controller.js";
 
 // Get volunteer application status for the logged-in user
 export const getVolunteerStatus = asyncHandler(async (req, res) => {
@@ -254,4 +255,132 @@ export const getProfessionStats = asyncHandler(async (req, res) => {
       ...(isAdmin && { stateBreakdown }),
     })
   );
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// PUT /api/volunteer/profile
+// Update volunteer-specific fields (motivation, skills, interests, etc.)
+// ─────────────────────────────────────────────────────────────────────────────
+export const updateVolunteerProfile = asyncHandler(async (req, res) => {
+  if (!req.userId) {
+    return res.status(401).json({
+      success: false,
+      message: "Unauthorized. Please login first."
+    });
+  }
+
+  // Find user's latest volunteer record
+  const volunteer = await Volunteer.findOne({ user: req.userId })
+    .sort({ createdAt: -1 }); // Get latest if multiple
+
+  if (!volunteer) {
+    return res.status(404).json({
+      success: false,
+      message: "Volunteer record not found. Please apply to become a volunteer first."
+    });
+  }
+
+  // ✅ BLOCKED FIELDS: Common fields that sync from User model
+  // These can ONLY be updated via User Profile endpoints to maintain data consistency
+  const blockedCommonFields = ['email', 'phone', 'city', 'state'];
+  
+  // Check if user tried to update any blocked fields
+  const attemptedBlockedFields = blockedCommonFields.filter(field => 
+    typeof req.body[field] !== "undefined"
+  );
+  
+  if (attemptedBlockedFields.length > 0) {
+    console.warn(
+      `⚠️  [BLOCKED] User ${req.userId} attempted to update common fields: ${attemptedBlockedFields.join(', ')}`
+    );
+    return res.status(400).json({
+      success: false,
+      message: `Cannot update these fields here: ${attemptedBlockedFields.join(', ')}. These are linked to your Profile. Update them in Profile → Personal Info`,
+      blockedFields: attemptedBlockedFields,
+      info: "Common fields (email, phone, city, state) are managed through your User Profile and synced automatically to maintain data consistency."
+    });
+  }
+
+  // ✅ Update volunteer-specific fields (safe fields only)
+  const safeFields = [
+    'fullName',
+    'dob',
+    'profession',
+    'occupation',
+    'education',
+    'skills',
+    'interests',
+    'mode',
+    'availability',
+    'motivation',    // ← KEY FIELD: No character limit
+    'emergencyName',
+    'emergencyPhone'
+  ];
+
+  const updates = {};
+  safeFields.forEach(field => {
+    if (typeof req.body[field] !== "undefined") {
+      if (field === 'interests' && Array.isArray(req.body[field])) {
+        updates[field] = req.body[field];
+      } else if (field !== 'interests') {
+        updates[field] = String(req.body[field] || "").trim();
+      }
+    }
+  });
+
+  if (Object.keys(updates).length === 0) {
+    return res.status(400).json({
+      success: false,
+      message: "No volunteer profile changes provided"
+    });
+  }
+
+  // Update volunteer record
+  const updatedVolunteer = await Volunteer.findByIdAndUpdate(
+    volunteer._id,
+    { $set: updates },
+    { new: true, runValidators: true }
+  );
+
+  if (!updatedVolunteer) {
+    return res.status(404).json({
+      success: false,
+      message: "Failed to update volunteer profile"
+    });
+  }
+
+  // Log activity
+  const updatedFields = Object.keys(updates);
+  await createActivity(
+    req.userId,
+    'volunteer_profile_update',
+    'Updated volunteer profile information',
+    `Updated: ${updatedFields.join(', ')}`,
+    null,
+    {},
+    {
+      fieldsUpdated: updatedFields,
+      updateCount: updatedFields.length,
+    }
+  );
+
+  return res.status(200).json({
+    success: true,
+    message: "Volunteer profile updated successfully",
+    data: {
+      _id: updatedVolunteer._id,
+      fullName: updatedVolunteer.fullName,
+      dob: updatedVolunteer.dob,
+      profession: updatedVolunteer.profession,
+      occupation: updatedVolunteer.occupation,
+      education: updatedVolunteer.education,
+      skills: updatedVolunteer.skills,
+      interests: updatedVolunteer.interests,
+      mode: updatedVolunteer.mode,
+      availability: updatedVolunteer.availability,
+      motivation: updatedVolunteer.motivation,
+      status: updatedVolunteer.status,
+      updatedFields: updatedFields
+    }
+  });
 });

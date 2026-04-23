@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate, useParams } from 'react-router-dom';
 import { FaSpinner } from 'react-icons/fa';
 import Sidebar from './components/Sidebar';
 import Overview from './components/Overview';
@@ -16,10 +16,20 @@ import { PROFILE_VALIDATION, toPersonalFormState } from './utils/validation';
 import { readStoredUser, persistUserToStorage, getApiUrl } from './utils/helpers.jsx';
 
 const Profile = () => {
+  const navigate = useNavigate();
+  const { page } = useParams();
   const API_BASE_URL = getApiUrl();
 
   // ─── Tab & UI State ───────────────────────────────────────────
-  const [activeTab, setActiveTab] = useState('overview');
+  const validTabs = ['overview', 'personal', 'donations', 'kanyadan', 'tasks', 'volunteer', 'feedback', 'eventUpdates', 'events', 'recentActivity'];
+  const activeTab = validTabs.includes(page) ? page : 'overview';
+  
+  const setActiveTab = (tab) => {
+    if (validTabs.includes(tab)) {
+      navigate(`/profile/${tab}`);
+    }
+  };
+  
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState(null);
 
@@ -61,6 +71,13 @@ const Profile = () => {
   // ─── Initial Load ─────────────────────────────────────────────
   useEffect(() => {
     window.scrollTo(0, 0);
+    
+    // Redirect to overview if no valid page specified
+    if (!page || !validTabs.includes(page)) {
+      navigate('/profile/overview', { replace: true });
+      return;
+    }
+    
     const cachedUser = readStoredUser();
     if (cachedUser) {
       setUser(cachedUser);
@@ -127,7 +144,7 @@ const Profile = () => {
     return () => {
       isMounted = false;
     };
-  }, [API_BASE_URL]);
+  }, [API_BASE_URL, page, navigate]);
 
   // ─── Fetch Functions ──────────────────────────────────────────
   const fetchDonations = useCallback(async () => {

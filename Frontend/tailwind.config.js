@@ -108,8 +108,13 @@ export default {
         spinAnim: {
           to: { transform: 'rotate(360deg)' },
         },
+        scaleIn: {
+          '0%':   { opacity: '0', transform: 'scale(0.95)' },
+          '100%': { opacity: '1', transform: 'scale(1)' },
+        },
       },
       animation: {
+        'scale-in':     'scaleIn 0.3s ease-out forwards',
         'fade-up':      'fadeUp 0.55s ease forwards',
         'fade-up-d1':   'fadeUp 0.55s ease 0.07s both',
         'fade-up-d2':   'fadeUp 0.55s ease 0.14s both',

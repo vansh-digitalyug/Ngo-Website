@@ -18,15 +18,46 @@ const ALLOWED_LOCATIONS = new Set([
   "community-covers",
   "community-posts",
   "surveys",
+  "volunteerTask",
 ]);
 
+// Allowed MIME types for uploads — security whitelist
+const ALLOWED_MIMETYPES = new Set([
+  "image/jpeg",
+  "image/png",
+  "image/webp",
+  "image/gif",
+  "video/mp4",
+  "video/webm",
+  "video/quicktime",
+  "video/x-msvideo",
+]);
+
+// Max file size: 100 MB
+const MAX_FILE_SIZE = 100 * 1024 * 1024;
+
 export const generateUploadUrl = async (req, res) => {
-  const { fileType, fileName, location } = req.body;
+  const { fileType, fileName, location, fileSize } = req.body;
 
-  if (!fileType) throw new ApiError(400, "fileType is required");
-  if (!fileName) throw new ApiError(400, "fileName is required");
+  // Validate required fields
+  if (!fileType) throw new ApiError(400, "fileType is required", "VALIDATION_ERROR");
+  if (!fileName) throw new ApiError(400, "fileName is required", "VALIDATION_ERROR");
+  if (!location) throw new ApiError(400, "location is required", "VALIDATION_ERROR");
 
-  
+  // Validate file type is in whitelist
+  if (!ALLOWED_MIMETYPES.has(fileType)) {
+    throw new ApiError(400, "File type not allowed. Allowed: JPG, PNG, WEBP, GIF, MP4, WEBM, MOV, AVI", "INVALID_FILETYPE");
+  }
+
+  // Validate location is in whitelist (prevent path traversal)
+  if (!ALLOWED_LOCATIONS.has(location)) {
+    throw new ApiError(400, "Invalid upload location", "INVALID_LOCATION");
+  }
+
+  // Validate file size (if provided from frontend)
+  if (fileSize && fileSize > MAX_FILE_SIZE) {
+    throw new ApiError(400, `File exceeds maximum size of 100 MB`, "FILE_TOO_LARGE");
+  }
 
   // Strip existing extension to avoid double extensions (e.g. photo.png.png)
   const baseName = fileName.replace(/\.[^/.]+$/, "");

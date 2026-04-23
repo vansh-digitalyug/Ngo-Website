@@ -123,6 +123,9 @@ const ComplaintForm           = lazy(() => import("../pages/complaints/Complaint
 // Feedback
 const FeedbackForm            = lazy(() => import("../pages/feedback/FeedbackForm.jsx"));
 
+// 404 Not Found
+const NotFound                = lazy(() => import("../pages/NotFound.jsx"));
+
 // ── Page loader fallback ────────────────────────────────────────────
 function PageLoader() {
   return (
@@ -273,7 +276,10 @@ function AppRoutes() {
 
           {/* Protected */}
           <Route path="/volunteer"           element={<RequireVolunteerAuth><Volunteer /></RequireVolunteerAuth>} />
-          <Route path="/profile"             element={<RequireVolunteerAuth><ProfileOrAdmin /></RequireVolunteerAuth>} />
+          <Route path="/profile" element={<RequireVolunteerAuth><ProfileOrAdmin /></RequireVolunteerAuth>}>
+            <Route index element={<Navigate to="overview" />} />
+            <Route path=":page" />
+          </Route>
           <Route path="/volunteer-dashboard" element={<RequireVolunteerAuth><VolunteerDashboard /></RequireVolunteerAuth>} />
 
           {/* Admin */}
@@ -324,6 +330,9 @@ function AppRoutes() {
             <Route path="surveys"         element={<NgoSurveys />} />
             <Route path="problems"        element={<NgoProblems />} />
           </Route>
+
+          {/* 404 Catch-all — MUST BE LAST */}
+          <Route path="*" element={<NotFound />} />
         </Routes>
       </Suspense>
     </>

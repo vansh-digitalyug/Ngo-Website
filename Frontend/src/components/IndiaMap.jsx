@@ -20,24 +20,63 @@ const NGO_HUBS = [
   { name: "Ahmedabad", coordinates: [72.5714, 23.0225], path: "/find-ngos?city=Ahmedabad" },
 ];
 
-// Teardrop pin matching reference image — filled shape with circle hole
+// Teardrop pin with blinking effect
 function PinIcon({ hovered }) {
   return (
     <g transform="translate(-11, -28)" style={{ cursor: "pointer" }}>
-      {/* Outer teardrop */}
+      {/* Outer glow circle - expanding pulse */}
+      <circle
+        cx="11"
+        cy="11"
+        r="8"
+        fill="none"
+        stroke="#f97316"
+        strokeWidth="1.2"
+        opacity="0.7"
+        style={{ animation: 'blink-glow 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite' }}
+      />
+      
+      {/* Secondary glow - wider pulse */}
+      <circle
+        cx="11"
+        cy="11"
+        r="5"
+        fill="none"
+        stroke="#dc2626"
+        strokeWidth="0.8"
+        opacity="0.4"
+        style={{ animation: 'blink-glow-secondary 2s ease-in-out infinite' }}
+      />
+      
+      {/* Main teardrop */}
       <path
         d="M11 0C6.925 0 3.667 3.258 3.667 7.333c0 6.417 7.333 16.667 7.333 16.667s7.333-10.25 7.333-16.667C18.333 3.258 15.075 0 11 0z"
-        fill={hovered ? "#155e75" : "#1e3a5f"}
+        fill={hovered ? "#f97316" : "#dc2626"}
         stroke="#ffffff"
-        strokeWidth="1.2"
+        strokeWidth="1.8"
+        filter="drop-shadow(0 2px 4px rgba(0,0,0,0.2))"
+        style={{ transition: 'fill 0.3s cubic-bezier(0.4, 0, 0.6, 1)' }}
       />
-      {/* Inner circle */}
+      
+      {/* Inner circle - enhanced pulse */}
       <circle
         cx="11"
         cy="7.5"
-        r="3"
+        r="3.5"
         fill="#ffffff"
-        opacity="0.9"
+        opacity={hovered ? 1 : 0.85}
+        filter="drop-shadow(0 1px 2px rgba(0,0,0,0.1))"
+        style={{ animation: 'pulse-inner 2s ease-in-out infinite' }}
+      />
+      
+      {/* Highlight for 3D effect */}
+      <circle
+        cx="10"
+        cy="6.5"
+        r="1"
+        fill="#ffffff"
+        opacity={hovered ? 0.8 : 0.5}
+        style={{ transition: 'opacity 0.3s ease' }}
       />
     </g>
   );
@@ -148,6 +187,24 @@ export default function IndiaMap() {
 
   return (
     <div className="w-full">
+      <style>{`
+        @keyframes blink-glow { 
+          0%, 100% { opacity: 0.3; r: 8px; } 
+          50% { opacity: 0.9; r: 14px; } 
+        }
+        @keyframes blink-glow-secondary {
+          0%, 100% { opacity: 0.2; r: 5px; }
+          50% { opacity: 0.6; r: 10px; }
+        }
+        @keyframes pulse {
+          0%, 100% { r: 3.5px; opacity: 0.9; }
+          50% { r: 4.5px; opacity: 0.6; }
+        }
+        @keyframes pulse-inner {
+          0%, 100% { r: 3.5px; opacity: 0.85; }
+          50% { r: 4.2px; opacity: 0.7; }
+        }
+      `}</style>
       <div className="relative w-full">
         <ComposableMap
           projection="geoMercator"
@@ -225,10 +282,28 @@ export default function IndiaMap() {
           ))}
         </ComposableMap>
 
-        {/* Hovered state tooltip */}
+        {/* Hovered state tooltip - LARGE & PROMINENT */}
         {hoveredState && (
-          <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-white border border-gray-200 shadow-md rounded-full px-5 py-1.5 text-xs font-bold text-[#1e3a5f] pointer-events-none whitespace-nowrap">
-            {hoveredState}{ACTIVE_STATES.has(hoveredState) ? " — Click to view NGOs" : ""}
+          <div className="absolute bottom-8 left-1/2 -translate-x-1/2 bg-gradient-to-r from-amber-600 via-amber-500 to-orange-500 text-white shadow-2xl rounded-2xl px-8 py-4 text-lg font-bold pointer-events-none whitespace-nowrap animate-bounce transition-all duration-300" style={{ boxShadow: '0 0 40px rgba(217,119,6,0.7), inset 0 0 20px rgba(255,255,255,0.1)', transform: 'translateX(-50%) translateY(-8px)', border: '2px solid rgba(255,255,255,0.2)' }}>
+            <div className="flex items-center gap-3">
+              <span className="text-3xl drop-shadow-lg animate-[pulse_2s_ease-in-out_infinite]">📍</span>
+              <div>
+                <div className="text-white font-extrabold tracking-wide">{hoveredState}</div>
+                <div className="text-xs font-semibold opacity-95 mt-1 flex items-center gap-1">
+                  {ACTIVE_STATES.has(hoveredState) ? (
+                    <>
+                      <span className="inline-block w-1.5 h-1.5 bg-white rounded-full animate-pulse" />
+                      Click to view NGOs
+                    </>
+                  ) : (
+                    <>
+                      <span className="inline-block">⏳</span>
+                      Coming soon
+                    </>
+                  )}
+                </div>
+              </div>
+            </div>
           </div>
         )}
       </div>

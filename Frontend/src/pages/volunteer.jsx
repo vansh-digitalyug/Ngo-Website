@@ -438,6 +438,48 @@ function Volunteer() {
       .finally(() => setStatusChecked(true));
   }, []);
 
+  // ✅ AUTO-FILL: Fetch logged-in user data and populate common fields
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (!token) return; // Not logged in, don't auto-fill
+
+    const fetchUserData = async () => {
+      try {
+        const res = await fetch(`${API_BASE_URL}/api/profile`, {
+          headers: {
+            "Authorization": `Bearer ${token}`,
+            "Content-Type": "application/json"
+          }
+        });
+
+        if (!res.ok) {
+          console.log("Could not fetch user profile for auto-fill");
+          return;
+        }
+
+        const data = await res.json();
+        if (data?.success && data?.data) {
+          const user = data.data;
+          
+          // Auto-fill common fields from User profile
+          setFormData(prev => ({
+            ...prev,
+            email: user.email || prev.email,
+            phone: user.phone || prev.phone,
+            city: user.city || prev.city,
+            state: user.state || prev.state
+          }));
+
+          console.log("✅ Auto-filled common fields from user profile: email, phone, city, state");
+        }
+      } catch (err) {
+        console.log("Auto-fill error (non-blocking):", err.message);
+      }
+    };
+
+    fetchUserData();
+  }, []);
+
   // --- KYC Verification State ---
   const [idVerified, setIdVerified] = useState(false);
   const [kycLoading, setKycLoading] = useState(false);
@@ -1066,24 +1108,34 @@ function Volunteer() {
 
                 <div style={styles.row}>
                   <div style={styles.inputGroup}>
-                    <label style={styles.label}>Email Address *</label>
-                    <input style={{ ...styles.input, borderColor: errors.email ? 'red' : '#ddd' }}
-                      type="email" name="email" value={formData.email} onChange={handleChange} placeholder="rahul@example.com" />
-                    {errors.email && <span style={styles.errorMsg}>{errors.email}</span>}
+                    <label style={styles.label}>Email Address * <span style={{fontSize: '0.85rem', color: '#666'}}>(Linked to your account)</span></label>
+                    <input 
+                      style={{ ...styles.input, borderColor: '#ccc', backgroundColor: '#f5f5f5', cursor: 'not-allowed' }}
+                      type="email" 
+                      name="email" 
+                      value={formData.email} 
+                      disabled
+                      title="Email is linked to your account. Update it in your Profile if needed."
+                    />
+                    <small style={{color: '#666', fontSize: '0.85rem', marginTop: '4px', display: 'block'}}>
+                      💡 Tip: Update email in Profile → Personal Info if you need to change it
+                    </small>
                   </div>
                   <div style={styles.inputGroup}>
-                    <label style={styles.label}>Phone Number *</label>
+                    <label style={styles.label}>Phone Number * <span style={{fontSize: '0.85rem', color: '#666'}}>(Auto-filled)</span></label>
                     <div style={{ display: "flex", gap: "8px", alignItems: "flex-start" }}>
                       <input
-                        style={{ ...styles.input, borderColor: errors.phone ? "red" : "#ddd", flex: 1 }}
-                        type="tel" name="phone" value={formData.phone}
-                        onChange={handleChange} placeholder="98765*****" maxLength="10"
-                        disabled={phoneVerified}
+                        style={{ ...styles.input, borderColor: '#ccc', backgroundColor: '#f5f5f5', cursor: 'not-allowed', flex: 1 }}
+                        type="tel" 
+                        name="phone" 
+                        value={formData.phone}
+                        disabled
+                        title="Phone is auto-filled from your profile. Update in Profile if needed."
                       />
-                      {!phoneVerified && (
+                      {!phoneVerified && formData.phone && (
                         <button type="button" onClick={handleSendPhoneOtp}
-                          disabled={phoneOtpLoading || phoneOtpCooldown > 0}
-                          style={{ padding: "10px 14px", fontSize: "13px", whiteSpace: "nowrap", background: "#1d4ed8", color: "#fff", border: "none", borderRadius: "8px", cursor: phoneOtpLoading || phoneOtpCooldown > 0 ? "not-allowed" : "pointer", opacity: phoneOtpLoading || phoneOtpCooldown > 0 ? 0.6 : 1 }}>
+                          disabled={phoneOtpLoading || phoneOtpCooldown > 0 || !formData.phone}
+                          style={{ padding: "10px 14px", fontSize: "13px", whiteSpace: "nowrap", background: "#1d4ed8", color: "#fff", border: "none", borderRadius: "8px", cursor: phoneOtpLoading || phoneOtpCooldown > 0 || !formData.phone ? "not-allowed" : "pointer", opacity: phoneOtpLoading || phoneOtpCooldown > 0 || !formData.phone ? 0.6 : 1 }}>
                           {phoneOtpLoading ? "Sending..." : phoneOtpCooldown > 0 ? `Resend (${phoneOtpCooldown}s)` : phoneOtpSent ? "Resend OTP" : "Send OTP"}
                         </button>
                       )}
@@ -1091,7 +1143,6 @@ function Volunteer() {
                         <span style={{ color: "#16a34a", fontWeight: 600, paddingTop: "10px", whiteSpace: "nowrap", fontSize: "14px" }}>✓ Verified</span>
                       )}
                     </div>
-                    {errors.phone && <span style={styles.errorMsg}>{errors.phone}</span>}
 
                     {/* OTP input row */}
                     {phoneOtpSent && !phoneVerified && (
@@ -1114,19 +1165,33 @@ function Volunteer() {
 
                 <div style={styles.row}>
                   <div style={styles.inputGroup}>
-                    <label style={styles.label}>City *</label>
-                    <input style={{ ...styles.input, borderColor: errors.city ? 'red' : '#ddd' }}
-                      name="city" value={formData.city} onChange={handleChange} placeholder="Current City" />
-                    {errors.city && <span style={styles.errorMsg}>{errors.city}</span>}
+                    <label style={styles.label}>City * <span style={{fontSize: '0.85rem', color: '#666'}}>(Auto-filled)</span></label>
+                    <input 
+                      style={{ ...styles.input, borderColor: '#ccc', backgroundColor: '#f5f5f5', cursor: 'not-allowed' }}
+                      name="city" 
+                      value={formData.city} 
+                      disabled
+                      title="City is auto-filled from your profile. Update in Profile if needed."
+                    />
+                    <small style={{color: '#666', fontSize: '0.85rem', marginTop: '4px', display: 'block'}}>
+                      💡 Update in Profile → Personal Info if needed
+                    </small>
                   </div>
                   <div style={styles.inputGroup}>
-                    <label style={styles.label}>State *</label>
-                    <select style={{ ...styles.select, borderColor: errors.state ? 'red' : '#ddd' }}
-                      name="state" value={formData.state} onChange={handleChange}>
+                    <label style={styles.label}>State * <span style={{fontSize: '0.85rem', color: '#666'}}>(Auto-filled)</span></label>
+                    <select 
+                      style={{ ...styles.select, borderColor: '#ccc', backgroundColor: '#f5f5f5', cursor: 'not-allowed' }}
+                      name="state" 
+                      value={formData.state} 
+                      disabled
+                      title="State is auto-filled from your profile. Update in Profile if needed."
+                    >
                       <option value="">Select State</option>
                       {INDIAN_STATES.map((st) => <option key={st} value={st}>{st}</option>)}
                     </select>
-                    {errors.state && <span style={styles.errorMsg}>{errors.state}</span>}
+                    <small style={{color: '#666', fontSize: '0.85rem', marginTop: '4px', display: 'block'}}>
+                      💡 Update in Profile → Personal Info if needed
+                    </small>
                   </div>
                 </div>
               </div>
