@@ -32,7 +32,6 @@ function metaFor(name) {
   return { id: name.toLowerCase().replace(/\s+/g, "-"), icon: FaHandHoldingHeart };
 }
 
-
 const ALL_CAUSES_ID = "all-causes";
 
 function ServicePage() {

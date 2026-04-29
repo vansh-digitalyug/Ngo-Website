@@ -1,174 +1,45 @@
-import { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useParams, Link } from "react-router-dom";
 
 const API = String(import.meta.env.VITE_API_BASE_URL || "http://localhost:5000").replace(/\/$/, "");
-
-/* ─── CSS injected once ─────────────────────────────────────── */
-const STYLES = `
-  @keyframes srFadeUp   { from{opacity:0;transform:translateY(22px)} to{opacity:1;transform:translateY(0)} }
-  @keyframes srSpin     { to{transform:rotate(360deg)} }
-  @keyframes srPop      { 0%{transform:scale(0.6);opacity:0} 70%{transform:scale(1.08)} 100%{transform:scale(1);opacity:1} }
-  @keyframes srShimmer  { 0%{background-position:-600px 0} 100%{background-position:600px 0} }
-  @keyframes srPulse    { 0%,100%{opacity:1} 50%{opacity:0.5} }
-  @keyframes srProgress { from{width:0} }
-
-  .sr-fade  { animation:srFadeUp 0.5s ease-out both; }
-  .sr-pop   { animation:srPop 0.45s cubic-bezier(0.34,1.56,0.64,1) both; }
-  .sr-spin  { animation:srSpin 0.8s linear infinite; }
-  .sr-skel  {
-    background:linear-gradient(90deg,#e8ecf0 0%,#d1d8e0 50%,#e8ecf0 100%);
-    background-size:600px 100%;
-    animation:srShimmer 1.6s infinite;
-    border-radius:8px;
-  }
-
-  .sr-star { font-size:36px; cursor:pointer; transition:transform 0.15s, color 0.15s; user-select:none; }
-  .sr-star:hover { transform:scale(1.2); }
-
-  .sr-opt {
-    display:flex; align-items:center; gap:12px;
-    padding:13px 16px; border-radius:12px;
-    border:2px solid #e2e8f0; background:#fff;
-    cursor:pointer; transition:all 0.2s; text-align:left; width:100%;
-  }
-  .sr-opt:hover { border-color:#0f766e; background:#f0fdf4; }
-  .sr-opt.selected { border-color:#0f766e; background:#f0fdf4; }
-
-  .sr-yn {
-    flex:1; padding:16px 12px; border-radius:12px; border:2px solid #e2e8f0;
-    background:#fff; cursor:pointer; font-weight:800; font-size:16px;
-    transition:all 0.22s; display:flex; align-items:center; justify-content:center; gap:8px;
-  }
-  .sr-yn.yes.selected { border-color:#16a34a; background:#dcfce7; color:#166534; }
-  .sr-yn.no.selected  { border-color:#dc2626; background:#fee2e2; color:#991b1b; }
-  .sr-yn.yes:hover:not(.selected) { border-color:#16a34a; background:#f0fdf4; }
-  .sr-yn.no:hover:not(.selected)  { border-color:#dc2626; background:#fff5f5; }
-
-  .sr-scale-btn {
-    width:40px; height:40px; border-radius:10px;
-    border:2px solid #e2e8f0; background:#fff;
-    font-weight:800; font-size:14px; cursor:pointer;
-    transition:all 0.18s; display:flex; align-items:center; justify-content:center;
-    color:#374151; flex-shrink:0;
-  }
-  .sr-scale-btn:hover:not(.selected) { border-color:#0f766e; color:#0f766e; background:#f0fdf4; }
-  .sr-scale-btn.selected { border-color:#0f766e; background:#0f766e; color:#fff; }
-
-  .sr-textarea {
-    width:100%; resize:vertical; border:2px solid #e2e8f0; border-radius:12px;
-    padding:12px 14px; font-size:15px; font-family:inherit; outline:none;
-    line-height:1.7; color:#1e293b; background:#fafafa; transition:all 0.22s;
-    box-sizing:border-box; min-height:100px;
-  }
-  .sr-textarea:focus { border-color:#0f766e; background:#fff; box-shadow:0 0 0 4px rgba(15,118,110,0.08); }
-
-  .sr-text-input {
-    width:100%; border:2px solid #e2e8f0; border-radius:10px;
-    padding:11px 14px; font-size:14px; font-family:inherit; outline:none;
-    color:#1e293b; background:#fafafa; transition:all 0.22s; box-sizing:border-box;
-  }
-  .sr-text-input:focus { border-color:#0f766e; background:#fff; box-shadow:0 0 0 3px rgba(15,118,110,0.08); }
-
-  @media(max-width:500px) {
-    .sr-scale-btn { width:34px; height:34px; font-size:12px; border-radius:8px; }
-    .sr-star { font-size:30px; }
-  }
-`;
-
-/* ─── Question type label ───────────────────────────────────── */
-const TYPE_LABEL = {
-  text:            { label: "Text Answer",      color: "#6366f1", bg: "#eef2ff" },
-  multiple_choice: { label: "Multiple Choice",  color: "#0891b2", bg: "#ecfeff" },
-  yes_no:          { label: "Yes / No",         color: "#059669", bg: "#ecfdf5" },
-  rating:          { label: "Star Rating",      color: "#d97706", bg: "#fffbeb" },
-  scale:           { label: "Scale",            color: "#7c3aed", bg: "#f5f3ff" },
-};
 
 /* ─── Respondent Validation ───────────────────────────────── */
 const RESPONDENT_VALIDATION = {
   onlyTextSpaces: (str) => str.replace(/[^a-zA-Z\s]/g, ""),
   onlyDigits: (str) => str.replace(/[^0-9]/g, ""),
-  
   validateName: (name) => {
     const trimmed = name.trim();
-    if (trimmed.length > 0 && trimmed.length < 2) return "Name must be at least 2 characters";
-    if (trimmed.length > 50) return "Name limited to 50 characters";
+    if (trimmed.length > 0 && trimmed.length < 2) return "Must be at least 2 characters";
+    if (trimmed.length > 50) return "Limited to 50 characters";
     return "";
   },
-  
   validatePhone: (phone) => {
     const digits = phone.replace(/\D/g, "");
-    if (phone.length > 0 && digits.length < 10) return "Phone must be exactly 10 digits";
-    if (digits.length > 10) return "Phone must be exactly 10 digits";
+    if (phone.length > 0 && digits.length < 10) return "Must be exactly 10 digits";
+    if (digits.length > 10) return "Must be exactly 10 digits";
     return "";
   },
 };
 
 /* ─── Cover Image Loader ───────────────────────────────────── */
-function CoverImageDisplay({ imgKey, title, description }) {
+function CoverImageDisplay({ imgKey }) {
   const [url, setUrl] = useState(null);
-  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!imgKey) { setLoading(false); return; }
+    if (!imgKey) return;
     fetch(`${API}/api/s3/get-url?key=${encodeURIComponent(imgKey)}`)
       .then(r => r.json())
       .then(d => { if (d.data?.Url) setUrl(d.data.Url); })
-      .catch(() => {})
-      .finally(() => setLoading(false));
+      .catch(() => {});
   }, [imgKey]);
 
-  if (!url && !loading) return null;
-
+  if (!url) return null;
   return (
-    <div style={{
-      height: 240, borderRadius: 16, overflow: "hidden",
-      boxShadow: "0 8px 32px rgba(0,0,0,0.12)", marginBottom: 24,
-      background: "#e2e8f0", position: "relative",
-    }}>
-      {loading && (
-        <div className="sr-skel" style={{ width: "100%", height: "100%" }} />
-      )}
-      {url && (
-        <>
-          <img
-            src={url}
-            alt="Survey cover"
-            style={{
-              width: "100%", height: "100%", objectFit: "cover",
-              objectPosition: "center", display: "block"
-            }}
-          />
-          {/* Dark overlay for text readability */}
-          <div style={{
-            position: "absolute", inset: 0,
-            background: "linear-gradient(to bottom, rgba(0,0,0,0.2), rgba(0,0,0,0.4))",
-            display: "flex", flexDirection: "column", justifyContent: "flex-end",
-            padding: "28px 24px",
-          }}>
-            <h1 style={{
-              color: "#fff", fontSize: "clamp(1.4rem,4vw,2rem)",
-              fontWeight: 900, margin: 0, lineHeight: 1.2,
-              textShadow: "0 2px 10px rgba(0,0,0,0.4)",
-            }}>
-              {title}
-            </h1>
-            {description && (
-              <p style={{
-                color: "rgba(255,255,255,0.9)", fontSize: 13,
-                lineHeight: 1.6, margin: "10px 0 0",
-                textShadow: "0 1px 6px rgba(0,0,0,0.3)",
-              }}>
-                {description.length > 120 
-                  ? description.substring(0, 120) + '...'
-                  : description
-                }
-              </p>
-            )}
-          </div>
-        </>
-      )}
-    </div>
+    <img 
+      src={url} 
+      alt="Survey cover" 
+      className="w-full h-[260px] object-cover rounded-sm mb-8 grayscale-[20%] contrast-110" 
+    />
   );
 }
 
@@ -176,183 +47,118 @@ function CoverImageDisplay({ imgKey, title, description }) {
 function StarRating({ value, onChange }) {
   const [hover, setHover] = useState(0);
   const active = hover || value || 0;
-  const labels = ["", "Poor", "Fair", "Good", "Very Good", "Excellent"];
   return (
-    <div>
-      <div style={{ display: "flex", gap: 4, marginBottom: 8 }}>
-        {[1, 2, 3, 4, 5].map(s => (
-          <span
-            key={s}
-            className="sr-star"
-            onMouseEnter={() => setHover(s)}
-            onMouseLeave={() => setHover(0)}
-            onClick={() => onChange(s)}
-            style={{ color: s <= active ? "#f59e0b" : "#d1d5db" }}
-            role="button"
-            aria-label={`${s} star`}
-          >
-            ★
-          </span>
-        ))}
-      </div>
-      {active > 0 && (
-        <div style={{ fontSize: 13, fontWeight: 700, color: "#f59e0b", marginTop: 2 }}>
-          {labels[active]}
-        </div>
-      )}
+    <div className="flex gap-1.5 text-[22px] cursor-pointer text-slate-300">
+      {[1, 2, 3, 4, 5].map(s => (
+        <span
+          key={s}
+          className={`transition-colors duration-200 ${s <= active ? "text-blue-600" : ""}`}
+          onMouseEnter={() => setHover(s)}
+          onMouseLeave={() => setHover(0)}
+          onClick={() => onChange(s)}
+          role="button"
+        >
+          ★
+        </span>
+      ))}
     </div>
   );
 }
 
 /* ─── Scale Input ───────────────────────────────────────────── */
-function ScaleInput({ min = 1, max = 10, value, onChange }) {
+function ScaleInput({ min = 1, max = 5, value, onChange }) {
   const nums = Array.from({ length: max - min + 1 }, (_, i) => min + i);
   return (
-    <div>
-      <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 8 }}>
+    <div className="flex flex-col md:flex-row items-start md:items-center gap-4 bg-white p-3 md:py-2 md:px-4 border border-slate-200 w-full md:inline-flex md:w-auto box-border rounded-sm">
+      <span className="text-[9px] uppercase text-slate-500 font-semibold tracking-wider">
+        Inaccessible
+      </span>
+      <div className="flex w-full md:w-auto justify-between gap-1.5">
         {nums.map(n => (
           <button
             key={n}
             type="button"
             onClick={() => onChange(n)}
-            className={`sr-scale-btn${value === n ? " selected" : ""}`}
+            className={`w-9 h-9 border flex items-center justify-center font-semibold cursor-pointer transition-colors text-sm rounded-sm 
+              ${value === n 
+                ? "bg-gray-900 text-white border-gray-900" 
+                : "border-slate-200 bg-white text-slate-800 hover:border-gray-900"
+              }`}
           >
             {n}
           </button>
         ))}
       </div>
-      <div style={{ display: "flex", justifyContent: "space-between", fontSize: 11, color: "#94a3b8", fontWeight: 600, marginTop: 4 }}>
-        <span>{min} — Lowest</span>
-        <span>Highest — {max}</span>
-      </div>
+      <span className="text-[9px] uppercase text-slate-500 font-semibold tracking-wider">
+        Excellent
+      </span>
     </div>
   );
 }
 
-/* ─── Question Card ─────────────────────────────────────────── */
-function QuestionCard({ q, index, total, answer, onChange }) {
-  const meta = TYPE_LABEL[q.type] || { label: q.type, color: "#64748b", bg: "#f8fafc" };
-  const answered = answer !== undefined && answer !== "" && answer !== null;
+/* ─── Question Row ─────────────────────────────────────────── */
+function QuestionRow({ q, index, answer, onChange }) {
+  const numStr = String(index + 1).padStart(2, '0') + ".";
 
   return (
-    <div
-      className="sr-fade"
-      style={{
-        background: "#fff",
-        borderRadius: 18,
-        overflow: "hidden",
-        boxShadow: "0 2px 16px rgba(0,0,0,0.07)",
-        border: `1.5px solid ${answered ? "#0f766e33" : "#f1f5f9"}`,
-        transition: "border-color 0.3s",
-        animationDelay: `${index * 0.07}s`,
-      }}
-    >
-      {/* Question header */}
-      <div style={{
-        padding: "16px 20px 14px",
-        borderBottom: "1px solid #f8fafc",
-        display: "flex", alignItems: "flex-start", gap: 12,
-      }}>
-        {/* Number badge */}
-        <div style={{
-          width: 30, height: 30, borderRadius: "50%", flexShrink: 0,
-          background: answered ? "linear-gradient(135deg,#0f766e,#059669)" : "#f1f5f9",
-          color: answered ? "#fff" : "#64748b",
-          display: "flex", alignItems: "center", justifyContent: "center",
-          fontWeight: 800, fontSize: 13, transition: "all 0.3s",
-        }}>
-          {answered ? "✓" : index + 1}
-        </div>
-
-        <div style={{ flex: 1 }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6, flexWrap: "wrap" }}>
-            <span style={{
-              background: meta.bg, color: meta.color,
-              fontSize: 10, fontWeight: 800, padding: "2px 8px",
-              borderRadius: 999, letterSpacing: "0.06em", textTransform: "uppercase",
-            }}>
-              {meta.label}
-            </span>
-            {q.required && (
-              <span style={{ fontSize: 10, fontWeight: 700, color: "#ef4444", background: "#fee2e2", padding: "2px 7px", borderRadius: 999 }}>
-                Required
-              </span>
-            )}
-            <span style={{ fontSize: 11, color: "#cbd5e1", marginLeft: "auto" }}>
-              {index + 1} / {total}
-            </span>
-          </div>
-          <p style={{ margin: 0, fontWeight: 700, color: "#0f172a", fontSize: 15, lineHeight: 1.5 }}>
-            {q.question}
-          </p>
-        </div>
+    <div className="flex flex-col md:flex-row gap-2 md:gap-5 mb-10 pb-10 border-b border-slate-200">
+      <div className="font-['Playfair_Display',_serif] text-[22px] md:text-[26px] text-slate-400 font-medium md:w-10 shrink-0">
+        {numStr}
       </div>
+      <div className="flex-1">
+        <h3 className="font-['Playfair_Display',_serif] text-xl text-slate-900 mb-5 font-medium leading-[1.4]">
+          {q.question}
+          {q.required && <span className="text-red-500 text-sm ml-1.5">*</span>}
+        </h3>
 
-      {/* Answer input */}
-      <div style={{ padding: "18px 20px" }}>
         {q.type === "text" && (
-          <div>
-            <textarea
-              className="sr-textarea"
-              value={answer || ""}
-              onChange={e => onChange(e.target.value)}
-              placeholder="Type your answer here…"
-              maxLength={500}
-              rows={3}
-            />
-            <div style={{ fontSize: 11, color: "#94a3b8", textAlign: "right", marginTop: 4 }}>
-              {(answer || "").length} / 500
-            </div>
-          </div>
+          <textarea
+            className="w-full border border-slate-200 p-4 font-['Inter',_sans-serif] text-sm min-h-[120px] resize-y outline-none bg-white rounded-sm text-slate-800 focus:border-gray-900 transition-colors"
+            value={answer || ""}
+            onChange={e => onChange(e.target.value)}
+            placeholder="Type your response here..."
+            maxLength={500}
+          />
         )}
 
         {q.type === "multiple_choice" && (
-          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             {(q.options || []).map(opt => (
-              <button
+              <div
                 key={opt}
-                type="button"
                 onClick={() => onChange(opt)}
-                className={`sr-opt${answer === opt ? " selected" : ""}`}
+                className={`border p-3.5 flex items-center gap-3.5 cursor-pointer transition-all rounded-sm
+                  ${answer === opt 
+                    ? "border-gray-900 bg-slate-100" 
+                    : "border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50"
+                  }`}
               >
-                <div style={{
-                  width: 20, height: 20, borderRadius: "50%", flexShrink: 0,
-                  border: `2px solid ${answer === opt ? "#0f766e" : "#cbd5e1"}`,
-                  background: answer === opt ? "#0f766e" : "#fff",
-                  display: "flex", alignItems: "center", justifyContent: "center",
-                  transition: "all 0.2s",
-                }}>
-                  {answer === opt && (
-                    <div style={{ width: 8, height: 8, borderRadius: "50%", background: "#fff" }} />
-                  )}
+                <div className={`w-3.5 h-3.5 rounded-full border flex items-center justify-center shrink-0 
+                  ${answer === opt ? "border-gray-900" : "border-slate-400"}`}
+                >
+                  {answer === opt && <div className="w-1.5 h-1.5 bg-gray-900 rounded-full" />}
                 </div>
-                <span style={{
-                  fontSize: 14, fontWeight: answer === opt ? 700 : 500,
-                  color: answer === opt ? "#065f46" : "#374151",
-                }}>
-                  {opt}
-                </span>
-              </button>
+                <span className="text-[13px] text-slate-700 font-medium">{opt}</span>
+              </div>
             ))}
           </div>
         )}
 
         {q.type === "yes_no" && (
-          <div style={{ display: "flex", gap: 12 }}>
-            <button
-              type="button"
-              onClick={() => onChange("yes")}
-              className={`sr-yn yes${answer === "yes" ? " selected" : ""}`}
-            >
-              <span style={{ fontSize: 20 }}>👍</span> Yes
-            </button>
-            <button
-              type="button"
-              onClick={() => onChange("no")}
-              className={`sr-yn no${answer === "no" ? " selected" : ""}`}
-            >
-              <span style={{ fontSize: 20 }}>👎</span> No
-            </button>
+          <div className="flex gap-3">
+            {["yes", "no"].map((opt) => (
+              <div
+                key={opt}
+                onClick={() => onChange(opt)}
+                className={`w-[100px] text-center py-3.5 justify-center font-semibold text-[13px] tracking-wider uppercase border cursor-pointer transition-all rounded-sm
+                  ${answer === opt 
+                    ? "border-gray-900 bg-slate-100 text-gray-900" 
+                    : "border-slate-200 bg-white text-slate-600 hover:border-slate-300 hover:bg-slate-50"
+                  }`}
+              >
+                {opt}
+              </div>
+            ))}
           </div>
         )}
 
@@ -363,7 +169,7 @@ function QuestionCard({ q, index, total, answer, onChange }) {
         {q.type === "scale" && (
           <ScaleInput
             min={q.scaleMin || 1}
-            max={q.scaleMax || 10}
+            max={q.scaleMax || 5}
             value={answer}
             onChange={onChange}
           />
@@ -376,28 +182,28 @@ function QuestionCard({ q, index, total, answer, onChange }) {
 /* ─── Main Page ─────────────────────────────────────────────── */
 export default function SurveyRespond() {
   const { token } = useParams();
-  const [survey,          setSurvey]          = useState(null);
-  const [loading,         setLoading]         = useState(true);
-  const [fetchError,      setFetchError]      = useState("");
-  const [answers,         setAnswers]         = useState({});
-  const [respondentName,  setRespondentName]  = useState("");
+  const [survey, setSurvey] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [fetchError, setFetchError] = useState("");
+  const [answers, setAnswers] = useState({});
+  const [respondentName, setRespondentName] = useState("");
   const [respondentPhone, setRespondentPhone] = useState("");
-  const [nameError,       setNameError]       = useState("");
-  const [phoneError,      setPhoneError]      = useState("");
-  const [submitting,      setSubmitting]      = useState(false);
-  const [submitError,     setSubmitError]     = useState("");
-  const [submitted,       setSubmitted]       = useState(false);
+  const [nameError, setNameError] = useState("");
+  const [phoneError, setPhoneError] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState("");
+  const [submitted, setSubmitted] = useState(false);
   const topRef = useRef(null);
 
-  /* inject styles */
+  /* Inject required fonts (Inter & Playfair Display) */
   useEffect(() => {
     const el = document.createElement("style");
-    el.textContent = STYLES;
+    el.textContent = "@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@500;600;700&display=swap');";
     document.head.appendChild(el);
     return () => el.remove();
   }, []);
 
-  /* fetch survey */
+  /* Fetch survey */
   useEffect(() => {
     fetch(`${API}/api/surveys/respond/${token}`)
       .then(r => r.json())
@@ -419,8 +225,7 @@ export default function SurveyRespond() {
     const cleaned = RESPONDENT_VALIDATION.onlyTextSpaces(value);
     const limited = cleaned.slice(0, 50);
     setRespondentName(limited);
-    const error = RESPONDENT_VALIDATION.validateName(limited);
-    setNameError(error);
+    setNameError(RESPONDENT_VALIDATION.validateName(limited));
   };
 
   const handlePhoneChange = (e) => {
@@ -428,35 +233,32 @@ export default function SurveyRespond() {
     const digits = RESPONDENT_VALIDATION.onlyDigits(value);
     const limited = digits.slice(0, 10);
     setRespondentPhone(limited);
-    const error = RESPONDENT_VALIDATION.validatePhone(limited);
-    setPhoneError(error);
+    setPhoneError(RESPONDENT_VALIDATION.validatePhone(limited));
   };
 
-  /* progress */
-  const total    = survey?.questions?.length || 0;
+  /* Progress calculation */
+  const total = survey?.questions?.length || 0;
   const answered = survey?.questions?.filter(q => {
     const a = answers[q._id];
     return a !== undefined && a !== "" && a !== null;
   }).length || 0;
   const progress = total > 0 ? Math.round((answered / total) * 100) : 0;
 
-  /* submit */
+  /* Submit */
   const handleSubmit = () => {
     if (!survey) return;
 
-    /* validate respondent info */
     if (respondentName.trim() && RESPONDENT_VALIDATION.validateName(respondentName)) {
-      setSubmitError("Please fix: " + RESPONDENT_VALIDATION.validateName(respondentName));
+      setSubmitError("Please fix name format.");
       topRef.current?.scrollIntoView({ behavior: "smooth" });
       return;
     }
     if (respondentPhone.trim() && RESPONDENT_VALIDATION.validatePhone(respondentPhone)) {
-      setSubmitError("Please fix: " + RESPONDENT_VALIDATION.validatePhone(respondentPhone));
+      setSubmitError("Please fix phone format.");
       topRef.current?.scrollIntoView({ behavior: "smooth" });
       return;
     }
 
-    /* validate required */
     const missing = survey.questions.filter(
       q => q.required && (answers[q._id] === undefined || answers[q._id] === "" || answers[q._id] === null)
     );
@@ -470,7 +272,7 @@ export default function SurveyRespond() {
     setSubmitError("");
 
     const payload = {
-      respondentName:  respondentName.trim() || "Anonymous",
+      respondentName: respondentName.trim() || "Anonymous",
       respondentPhone: respondentPhone.trim(),
       answers: survey.questions.map(q => ({
         questionId: q._id,
@@ -478,17 +280,14 @@ export default function SurveyRespond() {
       })),
     };
 
-    // Get auth token if user is logged in
-    const token = localStorage.getItem("token");
+    const localToken = localStorage.getItem("token");
     const headers = { "Content-Type": "application/json" };
-    if (token) {
-      headers["Authorization"] = `Bearer ${token}`;
-    }
+    if (localToken) headers["Authorization"] = `Bearer ${localToken}`;
 
     fetch(`${API}/api/surveys/respond/${token}`, {
-      method:  "POST",
+      method: "POST",
       headers: headers,
-      body:    JSON.stringify(payload),
+      body: JSON.stringify(payload),
     })
       .then(r => r.json())
       .then(d => {
@@ -499,36 +298,30 @@ export default function SurveyRespond() {
       .finally(() => setSubmitting(false));
   };
 
+  /* ── COMMON WRAPPER CLASSES ── */
+  const layoutWrapperClasses = "font-['Inter',_sans-serif] text-gray-900 bg-slate-50 min-h-screen pb-[100px]";
+  const centerContentClasses = "flex items-center justify-center min-h-screen p-5 bg-slate-50";
+  const messageCardClasses = "text-center bg-white p-10 md:p-[60px_40px] border border-slate-200 max-w-[460px] w-full rounded-sm shadow-sm";
+
   /* ── LOADING ── */
   if (loading) return (
-    <div style={{ minHeight: "100vh", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", background: "#f8fafc", gap: 16 }}>
-      <div style={{ width: 48, height: 48, border: "4px solid #e2e8f0", borderTopColor: "#0f766e", borderRadius: "50%" }} className="sr-spin" />
-      <p style={{ color: "#94a3b8", fontWeight: 600, fontSize: 15, fontFamily: "system-ui,sans-serif" }}>Loading survey…</p>
+    <div className={centerContentClasses}>
+      <div className="w-10 h-10 border-[3px] border-slate-200 border-t-slate-900 rounded-full animate-spin" />
     </div>
   );
 
-  /* ── ERROR (survey not found / not active) ── */
+  /* ── ERROR ── */
   if (fetchError) return (
-    <div style={{ minHeight: "100vh", background: "#f8fafc", display: "flex", alignItems: "center", justifyContent: "center", padding: 20, fontFamily: "system-ui,sans-serif" }}>
-      <div className="sr-pop" style={{ background: "#fff", borderRadius: 24, padding: "48px 36px", maxWidth: 420, width: "100%", textAlign: "center", boxShadow: "0 8px 40px rgba(0,0,0,0.1)" }}>
-        <div style={{ fontSize: 64, marginBottom: 16 }}>🔒</div>
-        <h2 style={{ margin: "0 0 10px", fontWeight: 900, fontSize: 22, color: "#0f172a" }}>
+    <div className={centerContentClasses}>
+      <div className={messageCardClasses}>
+        <h2 className="font-['Playfair_Display',_serif] text-[28px] font-semibold mb-3 text-slate-900">
           Survey Unavailable
         </h2>
-        <p style={{ color: "#64748b", margin: "0 0 28px", lineHeight: 1.65, fontSize: 15 }}>
+        <p className="text-[15px] text-slate-600 leading-relaxed mb-8">
           {fetchError}
         </p>
-        <Link
-          to="/"
-          style={{
-            display: "inline-block", padding: "12px 28px",
-            background: "linear-gradient(135deg,#0f766e,#065f46)",
-            color: "#fff", borderRadius: 12, fontWeight: 700,
-            textDecoration: "none", fontSize: 14,
-            boxShadow: "0 6px 20px rgba(15,118,110,0.3)",
-          }}
-        >
-          ← Back to Home
+        <Link to="/" className="inline-block bg-black text-white px-8 py-3.5 text-[11px] font-bold uppercase tracking-widest rounded-sm hover:bg-neutral-800 transition-colors">
+          Back to Home
         </Link>
       </div>
     </div>
@@ -536,50 +329,15 @@ export default function SurveyRespond() {
 
   /* ── SUBMITTED ── */
   if (submitted) return (
-    <div style={{ minHeight: "100vh", background: "linear-gradient(135deg,#ecfdf5,#eff6ff)", display: "flex", alignItems: "center", justifyContent: "center", padding: 20, fontFamily: "system-ui,sans-serif" }}>
-      <div className="sr-pop" style={{ background: "#fff", borderRadius: 28, padding: "52px 40px", maxWidth: 480, width: "100%", textAlign: "center", boxShadow: "0 16px 60px rgba(15,118,110,0.15)" }}>
-        {/* Checkmark circle */}
-        <div style={{
-          width: 88, height: 88, borderRadius: "50%",
-          background: "linear-gradient(135deg,#34d399,#059669)",
-          display: "flex", alignItems: "center", justifyContent: "center",
-          margin: "0 auto 24px",
-          boxShadow: "0 12px 36px rgba(52,211,153,0.4)",
-        }}>
-          <span style={{ fontSize: 42, color: "#fff" }}>✓</span>
-        </div>
-
-        <h2 style={{ margin: "0 0 12px", fontWeight: 900, fontSize: 26, color: "#0f172a" }}>
-          Thank You!
+    <div className={centerContentClasses}>
+      <div className={`${messageCardClasses} max-w-[500px]`}>
+        <h2 className="font-['Playfair_Display',_serif] text-[32px] font-semibold mb-3 text-slate-900">
+          Thank You
         </h2>
-        <p style={{ color: "#475569", margin: "0 0 8px", fontSize: 16, lineHeight: 1.65 }}>
-          Your response has been recorded successfully.
+        <p className="text-[15px] text-slate-600 leading-relaxed mb-8">
+          Your response has been recorded successfully. Your data contributes to the broader research goals of <strong className="text-slate-900 font-semibold">{survey?.ngoId?.ngoName || "our organization"}</strong>.
         </p>
-        <p style={{ color: "#94a3b8", margin: "0 0 32px", fontSize: 14 }}>
-          Your feedback helps <strong style={{ color: "#0f766e" }}>{survey?.ngoId?.ngoName}</strong> improve community services.
-        </p>
-
-        <div style={{ background: "#f0fdf4", borderRadius: 14, padding: "16px 20px", marginBottom: 28, border: "1px solid #bbf7d0" }}>
-          <div style={{ fontSize: 13, color: "#059669", fontWeight: 700 }}>
-            📋 {survey?.title}
-          </div>
-          {survey?.villageId && (
-            <div style={{ fontSize: 12, color: "#6b7280", marginTop: 4 }}>
-              📍 {survey.villageId.villageName}, {survey.villageId.district}
-            </div>
-          )}
-        </div>
-
-        <Link
-          to="/"
-          style={{
-            display: "inline-block", padding: "13px 32px",
-            background: "linear-gradient(135deg,#0f766e,#065f46)",
-            color: "#fff", borderRadius: 14, fontWeight: 800,
-            textDecoration: "none", fontSize: 15,
-            boxShadow: "0 8px 24px rgba(15,118,110,0.3)",
-          }}
-        >
+        <Link to="/" className="inline-block bg-black text-white px-8 py-3.5 text-[11px] font-bold uppercase tracking-widest rounded-sm hover:bg-neutral-800 transition-colors">
           Back to Home
         </Link>
       </div>
@@ -587,249 +345,101 @@ export default function SurveyRespond() {
   );
 
   /* ── MAIN SURVEY PAGE ── */
-  const requiredLeft = (survey?.questions || []).filter(
-    q => q.required && (answers[q._id] === undefined || answers[q._id] === "" || answers[q._id] === null)
-  ).length;
-
   return (
-    <div style={{ minHeight: "100vh", background: "#f1f5f9", fontFamily: "system-ui,-apple-system,sans-serif" }} ref={topRef}>
-
-      {/* ── Sticky progress bar ── */}
-      <div style={{ position: "sticky", top: 0, zIndex: 100, background: "#fff", borderBottom: "1px solid #e2e8f0", boxShadow: "0 2px 8px rgba(0,0,0,0.06)" }}>
-        <div style={{ height: 5, background: "#e2e8f0" }}>
-          <div style={{
-            height: "100%",
-            width: `${progress}%`,
-            background: "linear-gradient(90deg,#0f766e,#34d399)",
-            transition: "width 0.4s cubic-bezier(0.4,0,0.2,1)",
-            borderRadius: "0 4px 4px 0",
-          }} />
-        </div>
-        <div style={{ padding: "8px 20px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-          <span style={{ fontSize: 12, fontWeight: 700, color: "#0f766e" }}>
-            {survey?.ngoId?.ngoName || "Survey"}
+    <div className={layoutWrapperClasses} ref={topRef}>
+      
+      <div className="max-w-[760px] mx-auto py-12 px-5 md:px-8 bg-slate-50">
+        
+        {/* Header Section */}
+        <div className="mb-12">
+          <span className="text-blue-600 text-[10px] font-bold uppercase tracking-[0.1em] mb-2 block">
+            {survey?.ngoId?.ngoName || "COMMUNITY ASSESSMENT 2024"}
           </span>
-          <span style={{ fontSize: 12, fontWeight: 700, color: "#64748b" }}>
-            {answered}/{total} answered · {progress}%
-          </span>
-        </div>
-      </div>
-
-      {/* ── Cover Image Section ── */}
-      <div style={{
-        maxWidth: 800, margin: "0 auto", padding: "20px 16px",
-      }}>
-        {survey?.coverImageKey ? (
-          <CoverImageDisplay 
-            imgKey={survey.coverImageKey}
-            title={survey.title}
-            description={survey.description}
-          />
-        ) : (
-          /* Fallback gradient header */
-          <div style={{
-            background: "linear-gradient(135deg,#1a5f52 0%,#0f766e 55%,#065f46 100%)",
-            borderRadius: 16, padding: "40px 24px", marginBottom: 24,
-            position: "relative", overflow: "hidden",
-          }}>
-            {/* NGO badge */}
-            <div style={{
-              display: "inline-flex", alignItems: "center", gap: 7,
-              background: "rgba(255,255,255,0.15)", color: "#fff",
-              borderRadius: 999, padding: "5px 12px", fontSize: 10,
-              fontWeight: 700, letterSpacing: "0.05em", marginBottom: 14,
-              border: "1px solid rgba(255,255,255,0.2)",
-            }}>
-              🏢 {survey?.ngoId?.ngoName || "NGO Survey"}
-            </div>
-
-            <h1 style={{
-              color: "#fff", fontSize: "clamp(1.4rem,4vw,2rem)",
-              fontWeight: 900, margin: "0 0 12px", lineHeight: 1.2,
-            }}>
-              {survey?.title}
-            </h1>
-
-            {survey?.description && (
-              <p style={{
-                color: "rgba(255,255,255,0.85)", fontSize: 14,
-                lineHeight: 1.6, margin: 0, maxWidth: 520,
-              }}>
-                {survey.description}
-              </p>
-            )}
-
-            {/* Meta pills */}
-            <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginTop: 14 }}>
-              {survey?.villageId && (
-                <div style={{
-                  background: "rgba(255,255,255,0.12)", color: "#fff",
-                  borderRadius: 999, padding: "4px 10px", fontSize: 11, fontWeight: 600,
-                  border: "1px solid rgba(255,255,255,0.2)",
-                }}>
-                  📍 {survey.villageId.villageName}
-                </div>
-              )}
-              {survey?.targetAudience && (
-                <div style={{
-                  background: "rgba(255,255,255,0.12)", color: "#fff",
-                  borderRadius: 999, padding: "4px 10px", fontSize: 11, fontWeight: 600,
-                  border: "1px solid rgba(255,255,255,0.2)",
-                }}>
-                  👥 {survey.targetAudience}
-                </div>
-              )}
-              <div style={{
-                background: "rgba(255,255,255,0.12)", color: "#fff",
-                borderRadius: 999, padding: "4px 10px", fontSize: 11, fontWeight: 600,
-                border: "1px solid rgba(255,255,255,0.2)",
-              }}>
-                📝 {total} Q
-              </div>
-            </div>
-          </div>
-        )}
-      </div>
-
-      {/* ── Content ── */}
-      <div style={{ maxWidth: 700, margin: "0 auto", padding: "28px 16px 80px" }}>
-
-        {/* Respondent info card */}
-        <div className="sr-fade" style={{
-          background: "#fff", borderRadius: 14, padding: "18px 20px",
-          marginBottom: 24, boxShadow: "0 2px 10px rgba(0,0,0,0.05)",
-          border: "1px solid #f0f4f8",
-        }}>
-          <p style={{ margin: "0 0 12px", fontWeight: 700, fontSize: 13, color: "#1e293b", display: "flex", alignItems: "center", gap: 6 }}>
-            <span style={{ fontSize: 16 }}>👤</span> Your Information
-            <span style={{ fontWeight: 500, color: "#cbd5e1", fontSize: 11 }}>optional</span>
+          <h1 className="font-['Playfair_Display',_serif] text-[32px] md:text-[42px] font-semibold leading-[1.1] mb-4 tracking-[-0.02em] text-slate-900">
+            {survey?.title || "Public Health & Wellness Impact Survey"}
+          </h1>
+          <p className="text-[15px] text-slate-600 leading-relaxed max-w-[600px] mb-10">
+            {survey?.description || "This inquiry assists our research team in quantifying systemic trends. Your individual data remains anonymized, contributing to the broader report."}
           </p>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+          {survey?.coverImageKey && <CoverImageDisplay imgKey={survey.coverImageKey} />}
+        </div>
+
+        {/* Respondent Info */}
+        <div className="mb-10 pb-10 border-b border-slate-200">
+          <h3 className="text-[13px] font-bold uppercase tracking-widest text-slate-500 mb-4">
+            Respondent Information (Optional)
+          </h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label style={{ fontSize: 11, fontWeight: 600, color: "#64748b", display: "block", marginBottom: 4 }}>
-                Full Name
-              </label>
               <input
-                className="sr-text-input"
-                style={{
-                  borderColor: nameError ? "#fecaca" : respondentName.trim().length > 0 ? "#86efac" : "#e2e8f0",
-                  background: nameError ? "#fef2f2" : respondentName.trim().length > 0 ? "#f0fdf4" : "#fafafa"
-                }}
+                className={`w-full border p-3.5 font-['Inter',_sans-serif] text-sm outline-none rounded-sm transition-colors
+                  ${nameError ? 'border-red-500 bg-red-50' : respondentName ? 'border-emerald-500 bg-white' : 'border-slate-200 bg-white focus:border-gray-900'}`}
                 value={respondentName}
                 onChange={handleNameChange}
-                placeholder="Enter your name (letters only)"
+                placeholder="Full Name"
                 maxLength={50}
               />
-              <div style={{ display: "flex", justifyContent: "space-between", marginTop: 4 }}>
-                {nameError ? (
-                  <p style={{ fontSize: 11, color: "#dc2626", margin: 0, fontWeight: 600 }}>❌ {nameError}</p>
-                ) : respondentName.trim().length > 0 ? (
-                  <p style={{ fontSize: 11, color: "#16a34a", margin: 0, fontWeight: 600 }}>✓ Valid name</p>
-                ) : null}
-                <span style={{ fontSize: 10, color: "#94a3b8", fontWeight: 600 }}>{respondentName.length}/50</span>
-              </div>
+              {nameError && <p className="text-red-500 text-[11px] font-medium mt-1.5">{nameError}</p>}
             </div>
             <div>
-              <label style={{ fontSize: 11, fontWeight: 600, color: "#64748b", display: "block", marginBottom: 4 }}>
-                Phone Number
-              </label>
               <input
-                className="sr-text-input"
-                style={{
-                  borderColor: phoneError ? "#fecaca" : respondentPhone.length === 10 ? "#86efac" : "#e2e8f0",
-                  background: phoneError ? "#fef2f2" : respondentPhone.length === 10 ? "#f0fdf4" : "#fafafa"
-                }}
+                className={`w-full border p-3.5 font-['Inter',_sans-serif] text-sm outline-none rounded-sm transition-colors
+                  ${phoneError ? 'border-red-500 bg-red-50' : respondentPhone.length === 10 ? 'border-emerald-500 bg-white' : 'border-slate-200 bg-white focus:border-gray-900'}`}
                 value={respondentPhone}
                 onChange={handlePhoneChange}
-                placeholder="Enter 10-digit number"
+                placeholder="Phone Number (10 digits)"
                 type="tel"
-                inputMode="numeric"
                 maxLength={10}
               />
-              <div style={{ display: "flex", justifyContent: "space-between", marginTop: 4 }}>
-                {phoneError ? (
-                  <p style={{ fontSize: 11, color: "#dc2626", margin: 0, fontWeight: 600 }}>❌ {phoneError}</p>
-                ) : respondentPhone.length === 10 ? (
-                  <p style={{ fontSize: 11, color: "#16a34a", margin: 0, fontWeight: 600 }}>✓ Valid phone</p>
-                ) : null}
-                <span style={{ fontSize: 10, color: "#94a3b8", fontWeight: 600 }}>{respondentPhone.length}/10</span>
-              </div>
+              {phoneError && <p className="text-red-500 text-[11px] font-medium mt-1.5">{phoneError}</p>}
             </div>
           </div>
+        </div>
+
+        {/* Progress Tracker */}
+        <div className="flex justify-between text-[11px] font-semibold uppercase tracking-wider text-slate-500 pb-3 border-b border-slate-200 mb-8">
+          <span>Survey Questions</span>
+          <span>{progress}% Complete</span>
         </div>
 
         {/* Questions */}
-        <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+        <div>
           {(survey?.questions || []).map((q, i) => (
-            <QuestionCard
+            <QuestionRow
               key={q._id}
               q={q}
               index={i}
-              total={total}
               answer={answers[q._id]}
               onChange={val => setAnswer(q._id, val)}
             />
           ))}
         </div>
 
-        {/* Error */}
+        {/* Error State */}
         {submitError && (
-          <div style={{
-            margin: "24px 0 0",
-            background: "#fee2e2", border: "1px solid #fecaca",
-            color: "#c41211", padding: "12px 16px", borderRadius: 10,
-            fontSize: 12, fontWeight: 600, display: "flex", alignItems: "center", gap: 8,
-          }}>
-            <span style={{ fontSize: 18 }}>⚠️</span> {submitError}
+          <div className="p-4 bg-red-50 border border-red-200 text-red-600 text-sm font-medium mb-5 rounded-sm">
+            {submitError}
           </div>
         )}
 
-        {/* Submit */}
-        <div style={{ marginTop: 32 }}>
-          {/* Completion indicator */}
-          {requiredLeft > 0 && (
-            <p style={{ textAlign: "center", fontSize: 12, color: "#ea580c", fontWeight: 600, marginBottom: 14 }}>
-              ⏳ {requiredLeft} required question{requiredLeft > 1 ? "s" : ""} remaining
-            </p>
-          )}
-          {requiredLeft === 0 && total > 0 && (
-            <p style={{ textAlign: "center", fontSize: 12, color: "#059669", fontWeight: 700, marginBottom: 14 }}>
-              ✅ All required questions answered
-            </p>
-          )}
-
+        {/* Footer Actions */}
+        <div className="flex flex-col md:flex-row justify-end items-center mt-6 gap-4">
           <button
             onClick={handleSubmit}
             disabled={submitting || nameError || phoneError}
-            style={{
-              width: "100%", padding: "14px 20px",
-              borderRadius: 10, border: "none",
-              background: submitting || nameError || phoneError
-                ? "#cbd5e1"
-                : "#0f766e",
-              color: "#fff", fontWeight: 800, fontSize: 15,
-              cursor: submitting || nameError || phoneError ? "not-allowed" : "pointer",
-              boxShadow: submitting || nameError || phoneError ? "none" : "0 4px 12px rgba(15,118,110,0.2)",
-              transition: "all 0.25s",
-              display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
-            }}
-            onMouseEnter={e => { if (!submitting && !nameError && !phoneError) { e.currentTarget.style.transform = "translateY(-1px)"; e.currentTarget.style.boxShadow = "0 6px 16px rgba(15,118,110,0.28)"; } }}
-            onMouseLeave={e => { if (!submitting && !nameError && !phoneError) { e.currentTarget.style.transform = ""; e.currentTarget.style.boxShadow = "0 4px 12px rgba(15,118,110,0.2)"; } }}
+            className="bg-black text-white px-8 py-3.5 text-[11px] font-bold uppercase tracking-widest rounded-sm flex items-center justify-center gap-2 hover:bg-neutral-800 disabled:bg-slate-400 disabled:cursor-not-allowed transition-colors w-full md:w-auto"
           >
             {submitting ? (
               <>
-                <div style={{ width: 18, height: 18, border: "3px solid rgba(255,255,255,0.3)", borderTopColor: "#fff", borderRadius: "50%" }} className="sr-spin" />
-                Submitting…
+                <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                Submitting...
               </>
             ) : (
-              <>Submit Survey Response →</>
+              "Submit Survey Response"
             )}
           </button>
-
-          <p style={{ textAlign: "center", fontSize: 11, color: "#94a3b8", marginTop: 12, lineHeight: 1.6 }}>
-            Your privacy is important to us. Data is used for community improvement only.
-          </p>
         </div>
+
       </div>
     </div>
   );

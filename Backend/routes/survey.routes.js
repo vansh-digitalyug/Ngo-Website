@@ -20,7 +20,7 @@ router.delete("/:id",             requireNgoAuth, deleteSurvey);
 router.get("/:id/results",        requireNgoAuth, getSurveyResults);
 
 // Public listing
-router.get("/public",             getPublicSurveys);
+router.get("/public", getPublicSurveys);
 
 // Public (share link)
 router.get("/respond/:token",     getSurveyByToken);
