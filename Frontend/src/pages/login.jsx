@@ -2,6 +2,8 @@ import { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { GoogleLogin } from "@react-oauth/google";
 import { User, Building2, AlertTriangle } from "lucide-react";
+import Navbar from "../components/common/navbar";
+import Footer from "../components/common/footer";
 
 const API_BASE_URL = String(import.meta.env.VITE_API_BASE_URL || "http://localhost:5000").replace(/\/$/, "");
 const GOOGLE_CLIENT_ID = String(import.meta.env.VITE_GOOGLE_CLIENT_ID || "").trim();
@@ -10,21 +12,18 @@ const GOOGLE_CLIENT_ID = String(import.meta.env.VITE_GOOGLE_CLIENT_ID || "").tri
    VALIDATION UTILITIES
    =========================== */
 const VALIDATION = {
-  // Remove all numbers and special chars, keep letters, spaces, hyphens
   onlyTextNoNumbers: (value) =>
     value
       .replace(/[0-9]/g, "")
       .replace(/[^a-zA-Z\s'-]/g, "")
       .trim(),
 
-  // Validate email format
   isValidEmail: (email) => {
     const trimmed = email.trim();
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     return emailRegex.test(trimmed);
   },
 
-  // Get password strength (weak, fair, good, strong)
   getPasswordStrength: (password) => {
     if (!password || password.length < 6) return "weak";
     if (password.length >= 6 && password.length < 8) return "fair";
@@ -33,7 +32,6 @@ const VALIDATION = {
     return "fair";
   },
 
-  // Get password strength color
   getPasswordStrengthColor: (strength) => {
     switch (strength) {
       case "strong":
@@ -47,7 +45,6 @@ const VALIDATION = {
     }
   },
 
-  // Validate name format
   isValidName: (name) => {
     const trimmed = name.trim();
     return (
@@ -59,17 +56,14 @@ const VALIDATION = {
     );
   },
 
-  // Validate password (min 6 chars)
   isValidPassword: (password) => password && password.length >= 6,
 
-  // Validate OTP (6 digits)
   isValidOtp: (otp) => /^[0-9]{6}$/.test(otp),
 };
 
 /* ===========================
    VALIDATION FUNCTIONS
    =========================== */
-
 const validateLoginForm = (loginData) => {
   const errors = {};
 
@@ -139,11 +133,16 @@ const validateResetPasswordForm = (resetPasswordData) => {
 function Login() {
   const navigate = useNavigate();
   const location = useLocation();
+
   const [isLogin, setIsLogin] = useState(true);
   const [showPassword, setShowPassword] = useState(false);
 
-  // Derive loginType from URL path
-  const loginType = location.pathname === "/login/ngo" ? "ngo" : "user";
+  const [loginType, setLoginType] = useState(location.pathname.includes("ngo") ? "ngo" : "user");
+
+  const handleTabSwitch = (type) => {
+    setLoginType(type);
+    window.history.replaceState(null, "", `/login/${type}`);
+  };
 
   const getRedirectPath = () => {
     const candidate = location.state?.redirectTo;
@@ -153,13 +152,11 @@ function Login() {
     return "/";
   };
 
-  // Login state
   const [loginData, setLoginData] = useState({
     email: "",
     password: ""
   });
 
-  // Register state
   const [registerData, setRegisterData] = useState({
     name: "",
     email: "",
@@ -167,7 +164,6 @@ function Login() {
     confirmPassword: ""
   });
 
-  // OTP step for registration
   const [otpSent, setOtpSent] = useState(false);
   const [otpSending, setOtpSending] = useState(false);
   const [registerOtp, setRegisterOtp] = useState("");
@@ -241,7 +237,6 @@ function Login() {
     setOtpCountdown(0);
   };
 
-  // Start OTP countdown timer
   const startOtpCountdown = (seconds) => {
     setOtpCountdown(seconds);
     const interval = setInterval(() => {
@@ -291,13 +286,12 @@ function Login() {
     setShowForgotModal(false);
 
     if (new URLSearchParams(location.search).get("forgot") === "1") {
-      navigate(`/login/${loginType}`, { replace: true });
+      window.history.replaceState(null, "", `/login/${loginType}`);
     }
   };
 
   const handleForgotPasswordSubmit = async (e) => {
     e.preventDefault();
-
     setForgotError("");
     setForgotSuccess("");
 
@@ -329,7 +323,7 @@ function Login() {
       setTimeout(() => {
         setShowForgotModal(false);
         if (new URLSearchParams(location.search).get("forgot") === "1") {
-          navigate(`/login/${loginType}`, { replace: true });
+          window.history.replaceState(null, "", `/login/${loginType}`);
         }
       }, 1400);
     } catch (err) {
@@ -376,7 +370,7 @@ function Login() {
     setResetSuccess("");
 
     if (new URLSearchParams(location.search).get("resetToken")) {
-      navigate(`/login/${loginType}`, { replace: true });
+      window.history.replaceState(null, "", `/login/${loginType}`);
     }
   };
 
@@ -621,7 +615,6 @@ function Login() {
     }
   };
 
-  // Icons as components for cleaner JSX
   const EyeOpenIcon = () => (
     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#666" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
       <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
@@ -637,12 +630,15 @@ function Login() {
   );
 
   return (
-    <div className="min-h-[calc(100vh-60px)] w-full bg-[#f0f2f5] flex items-stretch justify-center">
-      <div className="flex w-full min-h-[calc(100vh-60px)] max-w-[1440px] bg-white shadow-[0_20px_60px_rgba(0,0,0,0.1)] overflow-hidden">
+    <div className="flex flex-col min-h-screen bg-white font-sans w-full">
+      <div className="shrink-0 w-full z-50 bg-white">
+        <Navbar />
+      </div>
 
-        {/* LEFT SIDE - IMAGE */}
+      {/* FIX: Changed flex-1 to "grow shrink-0 min-h-[calc(100vh-120px)]" to prevent the image from squishing when footer appears */}
+      <main className="flex grow shrink-0 w-full relative min-h-[calc(100vh-0px)]">
         <div
-          className="hidden lg:flex flex-1 bg-cover bg-center relative flex-col justify-end p-[60px] text-white"
+          className="hidden lg:flex w-1/2 bg-cover bg-center relative flex-col justify-end p-10 xl:p-16 text-white shrink-0"
           style={{ backgroundImage: "url('https://images.unsplash.com/photo-1542810634-71277d95dcbb?q=80&w=1600&auto=format&fit=crop')" }}
         >
           <div className="relative z-[2] bg-gradient-to-b from-transparent to-[rgba(0,0,0,0.85)] p-10 rounded-[20px]">
@@ -662,31 +658,29 @@ function Login() {
           </div>
         </div>
 
-        {/* RIGHT SIDE - FORM */}
-        <div className="flex-1 flex items-center justify-center px-5 py-8 sm:px-10 sm:py-10 bg-white">
-          <div className="w-full max-w-[400px]">
+        <div className="w-full lg:w-1/2 flex flex-col justify-start px-6 pt-10 sm:px-12 sm:pt-16 pb-16 bg-white z-10">
+          <div className="w-full max-w-[440px] mx-auto">
 
-            {/* LOGIN TYPE TABS */}
             {isLogin && (
               <div className="flex gap-2 sm:gap-2.5 mb-6">
                 <button
                   type="button"
-                  onClick={() => navigate("/login/user")}
-                  className={`flex-1 flex items-center justify-center gap-1.5 sm:gap-2 px-2 sm:px-4 py-3 rounded-[10px] border-2 font-[inherit] text-[0.82rem] sm:text-[0.95rem] cursor-pointer transition-all
+                  onClick={() => handleTabSwitch("user")}
+                  className={`flex-1 flex items-center justify-center gap-1.5 sm:gap-2 px-2 sm:px-4 py-3 rounded-[10px] border-2 font-[inherit] text-[0.82rem] sm:text-[0.95rem] cursor-pointer
                     ${loginType === "user"
-                      ? "border-[#2e7d32] bg-[#f0fdf4] text-[#2e7d32] font-semibold"
-                      : "border-[#e0e0e0] bg-white text-[#666] font-medium"}`}
+                      ? "border-[#2e7d32] bg-[#f0fdf4] text-[#2e7d32] font-semibold shadow-sm"
+                      : "border-[#e0e0e0] bg-white text-[#666] font-medium hover:bg-gray-50"}`}
                 >
                   <User size={16} />
                   <span>User Login</span>
                 </button>
                 <button
                   type="button"
-                  onClick={() => navigate("/login/ngo")}
-                  className={`flex-1 flex items-center justify-center gap-1.5 sm:gap-2 px-2 sm:px-4 py-3 rounded-[10px] border-2 font-[inherit] text-[0.82rem] sm:text-[0.95rem] cursor-pointer transition-all
+                  onClick={() => handleTabSwitch("ngo")}
+                  className={`flex-1 flex items-center justify-center gap-1.5 sm:gap-2 px-2 sm:px-4 py-3 rounded-[10px] border-2 font-[inherit] text-[0.82rem] sm:text-[0.95rem] cursor-pointer
                     ${loginType === "ngo"
-                      ? "border-[#2e7d32] bg-[#f0fdf4] text-[#2e7d32] font-semibold"
-                      : "border-[#e0e0e0] bg-white text-[#666] font-medium"}`}
+                      ? "border-[#2e7d32] bg-[#f0fdf4] text-[#2e7d32] font-semibold shadow-sm"
+                      : "border-[#e0e0e0] bg-white text-[#666] font-medium hover:bg-gray-50"}`}
                 >
                   <Building2 size={16} />
                   <span>NGO Login</span>
@@ -694,8 +688,8 @@ function Login() {
               </div>
             )}
 
-            <div className="mb-6 sm:mb-8">
-              <h2 className="text-[1.6rem] sm:text-[2rem] font-extrabold text-[#1a1a1a] mb-2.5">
+            <div className="mb-6 sm:mb-8 min-h-[100px]">
+              <h2 className="text-[1.6rem] sm:text-[2rem] font-extrabold text-[#1a1a1a] mb-2.5 leading-tight">
                 {isLogin
                   ? (loginType === "ngo" ? "NGO Dashboard Access" : "Welcome Back")
                   : "Join the Movement"}
@@ -709,7 +703,6 @@ function Login() {
               </p>
             </div>
 
-            {/* ERROR ALERT */}
             {error && (
               <div className="bg-[#fee2e2] text-[#b91c1c] p-3 rounded-lg text-[0.9rem] mb-5 flex items-center gap-2 border border-[#fecaca]">
                 <span className="w-5 h-5 rounded-full bg-[#b91c1c] text-white flex items-center justify-center text-[0.75rem] font-bold shrink-0">!</span>
@@ -717,7 +710,6 @@ function Login() {
               </div>
             )}
 
-            {/* Show validation errors if login/register has errors */}
             {((isLogin && Object.keys(loginErrors).length > 0) || (!isLogin && Object.keys(registerErrors).length > 0)) && (
               <div className="bg-[#fee2e2] border border-[#fecaca] text-[#991b1b] p-3 rounded-lg text-[0.88rem] mb-4 flex items-start gap-2">
                 <AlertTriangle size={16} className="shrink-0 mt-0.5" />
@@ -733,15 +725,13 @@ function Login() {
             )}
 
             <form onSubmit={isLogin ? handleLoginSubmit : handleRegisterSubmit} className="flex flex-col gap-5" autoComplete="off">
-
-              {/* Full Name (Register Only) */}
               {!isLogin && (
                 <div className="flex flex-col gap-2">
                   <label className="text-[0.9rem] font-semibold text-[#344054]">Full Name <span className="text-xs text-gray-400 font-normal">(Letters only)</span></label>
                   <input
                     type="text"
                     name="name"
-                    className={`px-4 py-3.5 rounded-[10px] border text-base text-[#1a1a1a] outline-none transition-all w-full bg-[#fcfcfc] font-[inherit] ${
+                    className={`px-4 py-3.5 rounded-[10px] border text-base text-[#1a1a1a] outline-none transition-all w-full bg-[#fcfcfc] font-[inherit] focus:border-[#2e7d32] focus:ring-2 focus:ring-[#2e7d32]/20 ${
                       registerErrors.name ? "border-red-400 bg-red-50" : "border-[#d0d5dd]"
                     }`}
                     placeholder="John Doe"
@@ -752,24 +742,23 @@ function Login() {
                     autoComplete="off"
                   />
                   {registerErrors.name && (
-                    <p className="text-xs text-red-600 flex items-center gap-1.5">
+                    <p className="text-xs text-red-600 flex items-center gap-1.5 mt-1">
                       <AlertTriangle size={14} className="shrink-0" />
                       {registerErrors.name}
                     </p>
                   )}
                   {registerData.name && !registerErrors.name && (
-                    <p className="text-xs text-gray-400">💡 Numbers are not allowed in name</p>
+                    <p className="text-xs text-gray-400 mt-1">💡 Numbers are not allowed in name</p>
                   )}
                 </div>
               )}
 
-              {/* Email */}
               <div className="flex flex-col gap-2">
                 <label className="text-[0.9rem] font-semibold text-[#344054]">Email Address</label>
                 <input
                   type="email"
                   name="email"
-                  className={`px-4 py-3.5 rounded-[10px] border text-base text-[#1a1a1a] outline-none transition-all w-full bg-[#fcfcfc] font-[inherit] ${
+                  className={`px-4 py-3.5 rounded-[10px] border text-base text-[#1a1a1a] outline-none transition-all w-full bg-[#fcfcfc] font-[inherit] focus:border-[#2e7d32] focus:ring-2 focus:ring-[#2e7d32]/20 ${
                     (isLogin ? loginErrors.email : registerErrors.email) ? "border-red-400 bg-red-50" : "border-[#d0d5dd]"
                   }`}
                   placeholder="name@example.com"
@@ -779,30 +768,36 @@ function Login() {
                   autoComplete="off"
                 />
                 {(isLogin ? loginErrors.email : registerErrors.email) && (
-                  <p className="text-xs text-red-600 flex items-center gap-1.5">
+                  <p className="text-xs text-red-600 flex items-center gap-1.5 mt-1">
                     <AlertTriangle size={14} className="shrink-0" />
                     {isLogin ? loginErrors.email : registerErrors.email}
                   </p>
                 )}
                 {(isLogin ? loginData.email : registerData.email) && !((isLogin ? loginErrors.email : registerErrors.email)) && VALIDATION.isValidEmail(isLogin ? loginData.email : registerData.email) && (
-                  <p className="text-xs text-green-600">✓ Valid email address</p>
+                  <p className="text-xs text-green-600 mt-1">✓ Valid email address</p>
                 )}
               </div>
 
-              {/* Password */}
               <div className="flex flex-col gap-2">
-                <label className="text-[0.9rem] font-semibold text-[#344054]">
-                  Password
-                  {!isLogin && registerData.password && <span className="ml-2 text-xs font-normal">Strength: {VALIDATION.getPasswordStrengthColor(passwordStrength).label}</span>}
+                <label className="text-[0.9rem] font-semibold text-[#344054] flex justify-between items-center">
+                  <span>Password</span>
+                  {!isLogin && registerData.password && (
+                    <span className="text-[0.7rem] font-bold px-2 py-0.5 rounded uppercase tracking-wider" style={{
+                      backgroundColor: VALIDATION.getPasswordStrengthColor(passwordStrength).bg,
+                      color: VALIDATION.getPasswordStrengthColor(passwordStrength).text,
+                    }}>
+                      {VALIDATION.getPasswordStrengthColor(passwordStrength).label}
+                    </span>
+                  )}
                 </label>
                 <div className="relative flex items-center">
                   <input
                     type={showPassword ? "text" : "password"}
                     name="password"
-                    className={`px-4 py-3.5 rounded-[10px] border text-base text-[#1a1a1a] outline-none transition-all w-full bg-[#fcfcfc] font-[inherit] ${
+                    className={`px-4 py-3.5 rounded-[10px] border text-base text-[#1a1a1a] outline-none transition-all w-full bg-[#fcfcfc] font-[inherit] focus:border-[#2e7d32] focus:ring-2 focus:ring-[#2e7d32]/20 ${
                       (isLogin ? loginErrors.password : registerErrors.password) ? "border-red-400 bg-red-50" : "border-[#d0d5dd]"
                     }`}
-                    placeholder="password"
+                    placeholder="••••••••"
                     value={isLogin ? loginData.password : registerData.password}
                     onChange={isLogin ? handleLoginChange : handleRegisterChange}
                     required
@@ -810,49 +805,42 @@ function Login() {
                   />
                   <span
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-[15px] cursor-pointer flex items-center justify-center bg-transparent opacity-70"
+                    className="absolute right-[15px] cursor-pointer flex items-center justify-center bg-transparent opacity-70 hover:opacity-100 transition-opacity"
                     role="button"
                   >
                     {showPassword ? <EyeOffIcon /> : <EyeOpenIcon />}
                   </span>
                 </div>
                 {(isLogin ? loginErrors.password : registerErrors.password) && (
-                  <p className="text-xs text-red-600 flex items-center gap-1.5">
+                  <p className="text-xs text-red-600 flex items-center gap-1.5 mt-1">
                     <AlertTriangle size={14} className="shrink-0" />
                     {isLogin ? loginErrors.password : registerErrors.password}
                   </p>
                 )}
                 {!isLogin && registerData.password && (
-                  <div
-                    className="mt-1.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold transition-colors"
-                    style={{
-                      backgroundColor: VALIDATION.getPasswordStrengthColor(passwordStrength).bg,
-                      color: VALIDATION.getPasswordStrengthColor(passwordStrength).text,
-                    }}
-                  >
+                  <div className="mt-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold transition-colors bg-blue-50 text-blue-700">
                     💡 Tip: Mix uppercase, lowercase, and numbers for strong password
                   </div>
                 )}
               </div>
 
-              {/* Confirm Password (Register Only) */}
               {!isLogin && (
                 <div className="flex flex-col gap-2">
                   <label className="text-[0.9rem] font-semibold text-[#344054]">Confirm Password</label>
                   <input
                     type="password"
                     name="confirmPassword"
-                    className={`px-4 py-3.5 rounded-[10px] border text-base text-[#1a1a1a] outline-none transition-all w-full bg-[#fcfcfc] font-[inherit] ${
+                    className={`px-4 py-3.5 rounded-[10px] border text-base text-[#1a1a1a] outline-none transition-all w-full bg-[#fcfcfc] font-[inherit] focus:border-[#2e7d32] focus:ring-2 focus:ring-[#2e7d32]/20 ${
                       registerErrors.confirmPassword ? "border-red-400 bg-red-50" : "border-[#d0d5dd]"
                     }`}
-                    placeholder="password"
+                    placeholder="••••••••"
                     value={registerData.confirmPassword}
                     onChange={handleRegisterChange}
                     required
                     autoComplete="new-password"
                   />
                   {registerErrors.confirmPassword && (
-                    <p className="text-xs text-red-600 flex items-center gap-1.5">
+                    <p className="text-xs text-red-600 flex items-center gap-1.5 mt-1">
                       <AlertTriangle size={14} className="shrink-0" />
                       {registerErrors.confirmPassword}
                     </p>
@@ -860,12 +848,11 @@ function Login() {
                   {registerData.confirmPassword &&
                     registerData.password === registerData.confirmPassword &&
                     !registerErrors.confirmPassword && (
-                      <p className="text-xs text-green-600">✓ Passwords match</p>
+                      <p className="text-xs text-green-600 mt-1">✓ Passwords match</p>
                     )}
                 </div>
               )}
 
-              {/* Email OTP Verification (Register Only) */}
               {!isLogin && (
                 <div className="flex flex-col gap-2">
                   <label className="text-[0.9rem] font-semibold text-[#344054]">Email Verification</label>
@@ -874,7 +861,7 @@ function Login() {
                       type="text"
                       inputMode="numeric"
                       maxLength={6}
-                      className={`px-4 py-3.5 rounded-[10px] border border-[#d0d5dd] text-[1.1rem] outline-none transition-all flex-1 tracking-[6px] font-bold font-[inherit] ${otpSent ? 'bg-[#fcfcfc] text-[#1a1a1a]' : 'bg-[#f5f5f5] text-[#aaa]'}`}
+                      className={`px-4 py-3.5 rounded-[10px] border border-[#d0d5dd] text-[1.1rem] outline-none transition-all flex-1 tracking-[6px] font-bold font-[inherit] text-center sm:text-left focus:border-[#2e7d32] focus:ring-2 focus:ring-[#2e7d32]/20 ${otpSent ? 'bg-[#fcfcfc] text-[#1a1a1a]' : 'bg-[#f5f5f5] text-[#aaa]'}`}
                       placeholder="— — — — — —"
                       value={registerOtp}
                       onChange={e => setRegisterOtp(e.target.value.replace(/\D/g, "").slice(0, 6))}
@@ -884,8 +871,8 @@ function Login() {
                       type="button"
                       onClick={handleSendRegisterOtp}
                       disabled={otpSending || otpCountdown > 0}
-                      className={`px-3.5 py-3 rounded-[10px] border-none text-white font-semibold text-[0.82rem] whitespace-nowrap w-full xs:w-auto xs:min-w-[90px] font-[inherit] transition-colors
-                        ${(otpSending || otpCountdown > 0) ? 'bg-[#9e9e9e] cursor-not-allowed' : 'bg-[#1565c0] cursor-pointer'}`}
+                      className={`px-4 py-3 rounded-[10px] border-none text-white font-semibold text-[0.82rem] whitespace-nowrap w-full xs:w-auto xs:min-w-[100px] font-[inherit] transition-colors
+                        ${(otpSending || otpCountdown > 0) ? 'bg-[#9e9e9e] cursor-not-allowed' : 'bg-[#1565c0] hover:bg-[#0d47a1] cursor-pointer'}`}
                     >
                       {otpSending
                         ? "Sending..."
@@ -897,20 +884,19 @@ function Login() {
                     </button>
                   </div>
                   {otpSent && (
-                    <p className="mt-1 text-[0.8rem] text-[#2e7d32]">
+                    <p className="mt-1 text-[0.8rem] text-[#2e7d32] font-medium">
                       ✓ OTP sent to {registerData.email}. Check your inbox.
                     </p>
                   )}
                 </div>
               )}
 
-              {/* Forgot Password Link (Login Only) */}
               {isLogin && (
-                <div className="text-right text-[0.9rem]">
+                <div className="text-right mt-1">
                   <button
                     type="button"
                     onClick={openForgotPassword}
-                    className="border-none bg-transparent text-[#2e7d32] font-medium cursor-pointer p-0 text-[0.9rem] font-[inherit]"
+                    className="border-none bg-transparent text-[#2e7d32] font-semibold cursor-pointer p-0 text-[0.9rem] font-[inherit] hover:underline"
                   >
                     Forgot password?
                   </button>
@@ -921,7 +907,7 @@ function Login() {
                 type="submit"
                 disabled={loading || Object.keys(isLogin ? loginErrors : registerErrors).length > 0}
                 className={`mt-2.5 px-4 py-4 text-white border-none rounded-[10px] text-[1.05rem] font-semibold w-full font-[inherit] transition-all flex items-center justify-center gap-2
-                  ${(loading || Object.keys(isLogin ? loginErrors : registerErrors).length > 0) ? 'bg-[#9e9e9e] cursor-not-allowed' : 'bg-[#2e7d32] cursor-pointer shadow-[0_4px_12px_rgba(46,125,50,0.2)]'}`}
+                  ${(loading || Object.keys(isLogin ? loginErrors : registerErrors).length > 0) ? 'bg-[#9e9e9e] cursor-not-allowed' : 'bg-[#2e7d32] hover:bg-[#1b5e20] cursor-pointer shadow-[0_4px_12px_rgba(46,125,50,0.2)]'}`}
               >
                 {loading
                   ? ("Processing...")
@@ -940,24 +926,24 @@ function Login() {
 
             {isLogin && (
               <>
-                <div className="flex items-center gap-2.5 mt-[18px]">
+                <div className="flex items-center gap-2.5 mt-[24px]">
                   <span className="flex-1 h-px bg-[#e5e7eb]" />
                   <span className="text-[#6b7280] text-[0.85rem] font-medium">or continue with</span>
                   <span className="flex-1 h-px bg-[#e5e7eb]" />
                 </div>
 
                 {googleError && (
-                  <div className="bg-[#fee2e2] text-[#b91c1c] p-3 rounded-lg text-[0.9rem] mt-3 flex items-center gap-2 border border-[#fecaca]">
+                  <div className="bg-[#fee2e2] text-[#b91c1c] p-3 rounded-lg text-[0.9rem] mt-4 flex items-center gap-2 border border-[#fecaca]">
                     {googleError}
                   </div>
                 )}
 
                 {GOOGLE_CLIENT_ID ? (
-                  <div className="mt-3.5 flex justify-center">
+                  <div className="mt-4 flex justify-center">
                     {googleLoading ? (
                       <button
                         type="button"
-                        className="mt-2.5 px-4 py-4 bg-[#9e9e9e] text-white border-none rounded-[10px] text-[1.05rem] font-semibold cursor-not-allowed w-full font-[inherit]"
+                        className="px-4 py-3.5 bg-gray-100 text-[#9e9e9e] border border-gray-200 rounded-[10px] text-[1rem] font-semibold cursor-not-allowed w-full font-[inherit]"
                         disabled
                       >
                         Signing in with Google...
@@ -974,8 +960,8 @@ function Login() {
                     )}
                   </div>
                 ) : (
-                  <p className="mt-3 text-[#b45309] bg-[#fffbeb] border border-[#fde68a] rounded-lg px-3 py-2.5 text-[0.85rem] leading-[1.45]">
-                    Google sign-in is not configured. Add <strong>VITE_GOOGLE_CLIENT_ID</strong> in your frontend env.
+                  <p className="mt-4 text-[#b45309] bg-[#fffbeb] border border-[#fde68a] rounded-lg px-3 py-2.5 text-[0.85rem] leading-[1.45] text-center">
+                    Google sign-in is not configured. Add <strong>VITE_GOOGLE_CLIENT_ID</strong>.
                   </p>
                 )}
               </>
@@ -986,14 +972,14 @@ function Login() {
                 loginType === "ngo" ? (
                   <>
                     Don't have an NGO registered?{" "}
-                    <span onClick={() => navigate("/add-ngo")} className="text-[#2e7d32] font-bold cursor-pointer ml-1.5">
+                    <span onClick={() => navigate("/add-ngo")} className="text-[#2e7d32] font-bold cursor-pointer ml-1.5 hover:underline">
                       Register NGO
                     </span>
                   </>
                 ) : (
                   <>
                     Don't have an account?{" "}
-                    <span onClick={toggleMode} className="text-[#2e7d32] font-bold cursor-pointer ml-1.5">
+                    <span onClick={toggleMode} className="text-[#2e7d32] font-bold cursor-pointer ml-1.5 hover:underline">
                       Sign up
                     </span>
                   </>
@@ -1001,7 +987,7 @@ function Login() {
               ) : (
                 <>
                   Already have an account?{" "}
-                  <span onClick={toggleMode} className="text-[#2e7d32] font-bold cursor-pointer ml-1.5">
+                  <span onClick={toggleMode} className="text-[#2e7d32] font-bold cursor-pointer ml-1.5 hover:underline">
                     Log in
                   </span>
                 </>
@@ -1010,56 +996,61 @@ function Login() {
 
           </div>
         </div>
-      </div>
+      </main>
 
-      {/* FORGOT PASSWORD MODAL */}
+      {loginType === "ngo" && (
+        <div className="shrink-0 w-full z-20 bg-white border-t border-gray-100">
+          <Footer />
+        </div>
+      )}
+
       {showForgotModal && (
         <div
-          className="fixed inset-0 bg-[rgba(15,23,42,0.6)] flex items-center justify-center z-[2000] p-4"
+          className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[2000] p-4"
           onClick={closeForgotModal}
         >
           <div
-            className="w-full max-w-[420px] bg-white rounded-[14px] shadow-[0_20px_45px_rgba(15,23,42,0.25)] p-5 sm:p-[22px]"
+            className="w-full max-w-[420px] bg-white rounded-2xl shadow-xl p-6 sm:p-8"
             onClick={(e) => e.stopPropagation()}
           >
             <h3 className="m-0 mb-2 text-[#111827] text-[1.25rem] font-bold">Forgot Password</h3>
-            <p className="m-0 mb-3.5 text-[#6b7280] text-[0.92rem] leading-[1.5]">
+            <p className="m-0 mb-5 text-[#6b7280] text-[0.92rem] leading-[1.5]">
               Enter your email to receive a password reset link.
             </p>
 
             {forgotError && (
-              <div className="mb-2.5 bg-[#fee2e2] text-[#b91c1c] border border-[#fecaca] rounded-lg px-[11px] py-[9px] text-[0.86rem]">
+              <div className="mb-4 bg-[#fee2e2] text-[#b91c1c] border border-[#fecaca] rounded-lg px-[11px] py-[9px] text-[0.86rem]">
                 {forgotError}
               </div>
             )}
             {forgotSuccess && (
-              <div className="mb-2.5 bg-[#dcfce7] text-[#166534] border border-[#bbf7d0] rounded-lg px-[11px] py-[9px] text-[0.86rem]">
+              <div className="mb-4 bg-[#dcfce7] text-[#166534] border border-[#bbf7d0] rounded-lg px-[11px] py-[9px] text-[0.86rem]">
                 {forgotSuccess}
               </div>
             )}
 
-            <form onSubmit={handleForgotPasswordSubmit} className="flex flex-col gap-3">
+            <form onSubmit={handleForgotPasswordSubmit} className="flex flex-col gap-4">
               <input
                 type="email"
                 value={forgotEmail}
                 onChange={(e) => setForgotEmail(e.target.value)}
                 placeholder="name@example.com"
-                className="px-3.5 py-3 border border-[#d1d5db] rounded-[10px] text-[0.96rem] outline-none w-full font-[inherit]"
+                className="px-4 py-3.5 border border-[#d1d5db] rounded-[10px] text-[0.96rem] outline-none w-full font-[inherit] focus:border-[#2e7d32] focus:ring-2 focus:ring-[#2e7d32]/20"
                 required
               />
-              <div className="flex justify-end gap-2.5 mt-1">
+              <div className="flex justify-end gap-3 mt-2">
                 <button
                   type="button"
                   onClick={closeForgotModal}
                   disabled={forgotLoading}
-                  className="border border-[#d1d5db] bg-white text-[#374151] rounded-[10px] px-3 py-[9px] cursor-pointer font-semibold font-[inherit]"
+                  className="border border-[#d1d5db] bg-white text-[#374151] rounded-[10px] px-5 py-2.5 cursor-pointer font-semibold font-[inherit] hover:bg-gray-50 transition-colors"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={forgotLoading}
-                  className="border-none bg-[#2e7d32] text-white rounded-[10px] px-3 py-[9px] cursor-pointer font-semibold font-[inherit]"
+                  className="border-none bg-[#2e7d32] text-white rounded-[10px] px-5 py-2.5 cursor-pointer font-semibold font-[inherit] hover:bg-[#1b5e20] transition-colors"
                 >
                   {forgotLoading ? "Sending..." : "Send Link"}
                 </button>
@@ -1069,34 +1060,33 @@ function Login() {
         </div>
       )}
 
-      {/* RESET PASSWORD MODAL */}
       {showResetModal && (
         <div
-          className="fixed inset-0 bg-[rgba(15,23,42,0.6)] flex items-center justify-center z-[2000] p-4"
+          className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[2000] p-4"
           onClick={closeResetModal}
         >
           <div
-            className="w-full max-w-[420px] bg-white rounded-[14px] shadow-[0_20px_45px_rgba(15,23,42,0.25)] p-5 sm:p-[22px]"
+            className="w-full max-w-[420px] bg-white rounded-2xl shadow-xl p-6 sm:p-8"
             onClick={(e) => e.stopPropagation()}
           >
             <h3 className="m-0 mb-2 text-[#111827] text-[1.25rem] font-bold">Reset Password</h3>
-            <p className="m-0 mb-3.5 text-[#6b7280] text-[0.92rem] leading-[1.5]">
+            <p className="m-0 mb-5 text-[#6b7280] text-[0.92rem] leading-[1.5]">
               Enter your new password to continue.
             </p>
 
             {resetError && (
-              <div className="mb-2.5 bg-[#fee2e2] text-[#b91c1c] border border-[#fecaca] rounded-lg px-[11px] py-[9px] text-[0.86rem]">
+              <div className="mb-4 bg-[#fee2e2] text-[#b91c1c] border border-[#fecaca] rounded-lg px-[11px] py-[9px] text-[0.86rem]">
                 {resetError}
               </div>
             )}
             {resetSuccess && (
-              <div className="mb-2.5 bg-[#dcfce7] text-[#166534] border border-[#bbf7d0] rounded-lg px-[11px] py-[9px] text-[0.86rem]">
+              <div className="mb-4 bg-[#dcfce7] text-[#166534] border border-[#bbf7d0] rounded-lg px-[11px] py-[9px] text-[0.86rem]">
                 {resetSuccess}
               </div>
             )}
 
-            <form onSubmit={handleResetPasswordSubmit} className="flex flex-col gap-3">
-              <div className="flex flex-col gap-1.5">
+            <form onSubmit={handleResetPasswordSubmit} className="flex flex-col gap-4">
+              <div className="flex flex-col gap-2">
                 <input
                   type="password"
                   value={resetPasswordData.password}
@@ -1107,7 +1097,7 @@ function Login() {
                     }
                   }}
                   placeholder="New password (min 6 chars)"
-                  className={`px-3.5 py-3 border rounded-[10px] text-[0.96rem] outline-none w-full font-[inherit] ${
+                  className={`px-4 py-3.5 border rounded-[10px] text-[0.96rem] outline-none w-full font-[inherit] focus:border-[#2e7d32] focus:ring-2 focus:ring-[#2e7d32]/20 ${
                     resetErrors.password ? "border-red-400 bg-red-50" : "border-[#d1d5db]"
                   }`}
                   required
@@ -1119,7 +1109,7 @@ function Login() {
                   </p>
                 )}
               </div>
-              <div className="flex flex-col gap-1.5">
+              <div className="flex flex-col gap-2">
                 <input
                   type="password"
                   value={resetPasswordData.confirmPassword}
@@ -1130,7 +1120,7 @@ function Login() {
                     }
                   }}
                   placeholder="Confirm new password"
-                  className={`px-3.5 py-3 border rounded-[10px] text-[0.96rem] outline-none w-full font-[inherit] ${
+                  className={`px-4 py-3.5 border rounded-[10px] text-[0.96rem] outline-none w-full font-[inherit] focus:border-[#2e7d32] focus:ring-2 focus:ring-[#2e7d32]/20 ${
                     resetErrors.confirmPassword ? "border-red-400 bg-red-50" : "border-[#d1d5db]"
                   }`}
                   required
@@ -1142,22 +1132,21 @@ function Login() {
                   </p>
                 )}
               </div>
-              <div className="flex justify-end gap-2.5 mt-1.5">
+              <div className="flex justify-end gap-3 mt-2">
                 <button
                   type="button"
                   onClick={closeResetModal}
                   disabled={resetLoading || Object.keys(resetErrors).length > 0}
-                  className="border border-[#d1d5db] bg-white text-[#374151] rounded-[10px] px-3 py-[9px] cursor-pointer font-semibold font-[inherit] disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="border border-[#d1d5db] bg-white text-[#374151] rounded-[10px] px-5 py-2.5 cursor-pointer font-semibold font-[inherit] disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 transition-colors"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={resetLoading || Object.keys(resetErrors).length > 0}
-                  className="border-none bg-[#2e7d32] text-white rounded-[10px] px-3 py-[9px] cursor-pointer font-semibold font-[inherit] disabled:opacity-50 disabled:cursor-not-allowed transition-opacity"
-                  title={Object.keys(resetErrors).length > 0 ? `Please fix ${Object.keys(resetErrors).length} error(s)` : ""}
+                  className="border-none bg-[#2e7d32] text-white rounded-[10px] px-5 py-2.5 cursor-pointer font-semibold font-[inherit] disabled:opacity-50 disabled:cursor-not-allowed transition-colors hover:bg-[#1b5e20]"
                 >
-                  {resetLoading ? "Updating..." : Object.keys(resetErrors).length > 0 ? `Fix ${Object.keys(resetErrors).length} Error(s)` : "Reset Password"}
+                  {resetLoading ? "Updating..." : Object.keys(resetErrors).length > 0 ? "Fix Errors" : "Reset Password"}
                 </button>
               </div>
             </form>

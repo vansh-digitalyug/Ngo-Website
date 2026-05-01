@@ -14,28 +14,29 @@ import {
 } from "../../store/slices/ourStorySlice";
 gsap.registerPlugin(ScrollTrigger);
 
-// ── Local image imports ──────────────────────────────────────────────────────
-import heroImg          from "../../assets/images/service/hero.png";
-import educationImg     from "../../assets/images/orphanage/education.jpg";
-import edu1Img          from "../../assets/images/orphanage/education/image1.png";
-import edu2Img          from "../../assets/images/orphanage/education/image2.png";
-import empowerImg1      from "../../assets/images/women/empowerment/image1.png";
-import empowerImg2      from "../../assets/images/women/empowerment/image2.png";
-import empowerImg3      from "../../assets/images/women/empowerment/image3.png";
-import medicalImg       from "../../assets/images/orphanage/medical/image1.png";
-import campImg          from "../../assets/images/Medical/camp.jpg";
-import kanayadanHero    from "../../assets/images/socialWelfare/Kanyadan/hero.png";
-import kanayadanFuture  from "../../assets/images/socialWelfare/Kanyadan/Future.png";
-import kanayadanSupport from "../../assets/images/socialWelfare/Kanyadan/Support.png";
-import roadImg          from "../../assets/images/infrastructure/road.jpg";
-import elderFoodImg     from "../../assets/images/elderly/food.jpg";
-import elderEmotional   from "../../assets/images/elderly/emotional.jpg";
-import healthImg        from "../../assets/images/orphanage/health.jpg";
-import widowImg         from "../../assets/images/women/widow.png";
-import mealImg          from "../../assets/images/orphanage/meal/image1.png";
-import donateImg        from "../../assets/images/orphanage/donate.png";
-import cowImg           from "../../assets/images/socialWelfare/Cow/image1.png";
-import ritesImg         from "../../assets/images/socialWelfare/rites.png";
+// ── Placeholder images from public URLs (local files not found) ──────────────
+// Using Unsplash & high-quality placeholder URLs for development
+const heroImg          = "https://images.unsplash.com/photo-1542810634-71277d95dcbb?q=80&w=1600&auto=format&fit=crop";
+const educationImg     = "https://images.unsplash.com/photo-1427504494785-4a9bbb9d773d?q=80&w=800&auto=format&fit=crop";
+const edu1Img          = "https://images.unsplash.com/photo-1453936556840-6112e73bedff?q=80&w=800&auto=format&fit=crop";
+const edu2Img          = "https://images.unsplash.com/photo-1509042239860-f550ce710b93?q=80&w=800&auto=format&fit=crop";
+const empowerImg1      = "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?q=80&w=800&auto=format&fit=crop";
+const empowerImg2      = "https://images.unsplash.com/photo-1518611505868-48510c2e022f?q=80&w=800&auto=format&fit=crop";
+const empowerImg3      = "https://images.unsplash.com/photo-1529156069898-49953e39b3ac?q=80&w=800&auto=format&fit=crop";
+const medicalImg       = "https://images.unsplash.com/photo-1576091160550-2173dba999ef?q=80&w=800&auto=format&fit=crop";
+const campImg          = "https://images.unsplash.com/photo-1631084328921-ab7d72dd4476?q=80&w=800&auto=format&fit=crop";
+const kanayadanHero    = "https://images.unsplash.com/photo-1519741497674-611481863552?q=80&w=800&auto=format&fit=crop";
+const kanayadanFuture  = "https://images.unsplash.com/photo-1529156069898-49953e39b3ac?q=80&w=800&auto=format&fit=crop";
+const kanayadanSupport = "https://images.unsplash.com/photo-1469571486292-f3e7328e8b11?q=80&w=800&auto=format&fit=crop";
+const roadImg          = "https://images.unsplash.com/photo-1581092918056-0c4c3acd3789?q=80&w=800&auto=format&fit=crop";
+const elderFoodImg     = "https://images.unsplash.com/photo-1512621776951-a57141f2eefd?q=80&w=800&auto=format&fit=crop";
+const elderEmotional   = "https://images.unsplash.com/photo-1552508744-5f732b956ecc?q=80&w=800&auto=format&fit=crop";
+const healthImg        = "https://images.unsplash.com/photo-1631217315655-e96f2fe17fbb?q=80&w=800&auto=format&fit=crop";
+const widowImg         = "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?q=80&w=800&auto=format&fit=crop";
+const mealImg          = "https://images.unsplash.com/photo-1498837167922-a78db0655c23?q=80&w=800&auto=format&fit=crop";
+const donateImg        = "https://images.unsplash.com/photo-1526838573367-1298b3e50e20?q=80&w=800&auto=format&fit=crop";
+const cowImg           = "https://images.unsplash.com/photo-1551717281-055fbe7f46b2?q=80&w=800&auto=format&fit=crop";
+const ritesImg         = "https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?q=80&w=800&auto=format&fit=crop";
 
 /* ── Counter hook ───────────────────────────────────────────────────────────── */
 function useCounter(target, duration = 2000, start = false) {
