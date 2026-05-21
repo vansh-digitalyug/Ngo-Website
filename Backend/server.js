@@ -41,6 +41,7 @@ import surveyRoutes from "./routes/survey.routes.js";
 import impactReportRoutes from "./routes/impactReport.routes.js";
 import activityRoutes from "./routes/activity.routes.js";
 import notificationRoutes from "./routes/notification.routes.js";
+import fundUtilizationRoutes from "./routes/fundUtilization.routes.js";
 
 import connectDB from "./config/db.js";
 import seedAdmin from "./utils/seedAdmin.js";
@@ -134,6 +135,7 @@ app.use("/api/surveys", surveyRoutes);
 app.use("/api/impact-reports", impactReportRoutes);
 app.use("/api", activityRoutes);
 app.use("/api/notifications", notificationRoutes);
+app.use("/api/fund-utilization", fundUtilizationRoutes);
 
 // ─── Health check ─────────────────────────────────────────────────────────────
 app.get("/health", (_req, res) => {

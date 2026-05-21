@@ -7,6 +7,9 @@ import ApiResponse from "../utils/ApiResponse.js";
 import ApiError from "../utils/ApiError.js";
 import asyncHandler from "../utils/asyncHandler.js";
 import { sendNgoSubmissionEmail } from "../services/mail.service.js";
+import { GetObjectCommand } from "@aws-sdk/client-s3";
+import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
+import { s3 } from "../config/s3Client.config.js";
 
 const toBool = (value) => value === true || value === "true" || value === "on";
 
@@ -141,9 +144,52 @@ export const getNgoById = asyncHandler(async (req, res) => {
 });
 
 // GET gallery items for a specific NGO (public, approved only)
+// Helper function to sign S3 URLs - converts direct URLs to presigned URLs
+const signUrl = async (url, expiresIn = 3600) => {
+  if (!url || !url.includes(".amazonaws.com/")) {
+    console.log(`⏭️ Skipping non-S3 URL: ${url?.substring(0, 50) || "null"}`);
+    return url;
+  }
+  
+  try {
+    const key = url.split(".amazonaws.com/")[1];
+    console.log(`🔑 Extracted key: ${key?.substring(0, 60) || "FAILED TO EXTRACT"}`);
+    
+    if (!key) {
+      console.warn(`⚠️ No key extracted from URL: ${url}`);
+      return url;
+    }
+    
+    const bucketName = process.env.BUCKET_NAME;
+    console.log(`📦 Bucket: ${bucketName}, Key: ${key}`);
+    
+    if (!bucketName) {
+      console.error("❌ BUCKET_NAME not set in environment!");
+      return url;
+    }
+    
+    const command = new GetObjectCommand({ 
+      Bucket: bucketName, 
+      Key: key 
+    });
+    
+    console.log(`⏳ Generating presigned URL...`);
+    const presignedUrl = await getSignedUrl(s3, command, { expiresIn });
+    console.log(`✅ Presigned URL generated: ${presignedUrl?.substring(0, 80) || "EMPTY"}...`);
+    return presignedUrl;
+  } catch (error) {
+    const key = url.split(".amazonaws.com/")[1] || "unknown";
+    console.error(`❌ ERROR signing URL for key "${key}":`, error.message);
+    console.error(`   Full error:`, error);
+    return url; // Return original URL on error
+  }
+};
+
 export const getNgoGallery = asyncHandler(async (req, res) => {
   const { id } = req.params;
   const { type, page = 1, limit = 18 } = req.query;
+
+  console.log("🔍 getNgoGallery called for NGO:", id);
 
   const ngo = await Ngo.findById(id).select("_id ngoName");
   if (!ngo) throw new ApiError(404, "NGO not found");
@@ -157,9 +203,34 @@ export const getNgoGallery = asyncHandler(async (req, res) => {
     Gallery.countDocuments(query),
   ]);
 
+  console.log(`📸 Found ${items.length} gallery items for NGO ${id}`);
+
+  // Sign URLs for all items (images get presigned URLs, videos stay as-is)
+  const signedItems = await Promise.all(
+    items.map(async (item) => {
+      const itemObj = item.toObject ? item.toObject() : { ...item };
+      
+      // Sign image URLs to presigned URLs
+      if (item.type === "image" && item.url) {
+        console.log(`🔗 Signing image URL: ${item.url.substring(0, 80)}...`);
+        itemObj.url = await signUrl(itemObj.url);
+        console.log(`✅ Signed URL generated`);
+      }
+      
+      // Sign thumbnail URLs if they exist
+      if (item.thumbnail && item.thumbnail.includes(".amazonaws.com/")) {
+        itemObj.thumbnail = await signUrl(itemObj.thumbnail);
+      }
+      
+      return itemObj;
+    })
+  );
+
+  console.log(`🎉 Returning ${signedItems.length} items with signed URLs`);
+
   return res.status(200).json(
     new ApiResponse(200, "Gallery fetched successfully", {
-      items,
+      items: signedItems,
       pagination: { total, page: Number(page), pages: Math.ceil(total / Number(limit)) },
     })
   );

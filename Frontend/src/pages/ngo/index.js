@@ -8,3 +8,4 @@ export { default as NgoPending } from './NgoPending';
 export { default as NgoFundRequests } from './NgoFundRequests';
 export { default as NgoEvents } from './NgoEvents';
 export { default as NgoEmployment } from './NgoEmployment';
+export { default as NgoFundUtilization } from './NgoFundUtilization';

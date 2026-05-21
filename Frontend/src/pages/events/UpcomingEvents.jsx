@@ -37,6 +37,19 @@ function fmtDate(d) {
   return new Date(d).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" });
 }
 
+function getOrganizerName(event) {
+  if (event.createdByRole === "admin") {
+    return "Seva India";
+  }
+  if (event.createdByRole === "ngo" && event.ngoId?.ngoName) {
+    return event.ngoId.ngoName;
+  }
+  if (event.createdByRole === "ngo" && typeof event.ngoId === "string") {
+    return event.ngoName || "NGO";
+  }
+  return event.ngoName || "Seva India";
+}
+
 // ─── Event Card (Redesigned) ──────────────────────────────────────────────────
 function EventCard({ event, onNavigate }) {
   const { days, hours, minutes, seconds, expired } = useCountdown(event.date);
@@ -162,6 +175,14 @@ function EventCard({ event, onNavigate }) {
 
       {/* Main Content Area */}
       <div className="p-6 flex flex-col flex-1">
+        
+        {/* Organizer Badge */}
+        <div className="mb-2.5 flex items-center gap-2">
+          <div className="inline-flex items-center gap-1.5 bg-amber-50 border border-amber-200 rounded-full px-3 py-1 text-xs font-bold text-amber-800">
+            <span>📌</span>
+            <span>{getOrganizerName(event)}</span>
+          </div>
+        </div>
         
         {/* Title */}
         <h3 className="font-bold text-stone-900 text-xl leading-snug mb-3 line-clamp-2">
@@ -307,6 +328,15 @@ function EventDetailView({ event, onBack }) {
             <CalendarDays size={80} className="text-stone-400" strokeWidth={1} />
           </div>
         )}
+      </div>
+
+      {/* Organizer Info */}
+      <div className="w-full mb-8 flex items-center gap-3 p-4 bg-amber-50 border border-amber-200 rounded-xl">
+        <span className="text-2xl">📌</span>
+        <div>
+          <p className="text-xs font-bold text-amber-700 uppercase tracking-wider">Organized by</p>
+          <p className="text-lg font-bold text-amber-900">{getOrganizerName(event)}</p>
+        </div>
       </div>
 
       {/* Date, Time & Location */}

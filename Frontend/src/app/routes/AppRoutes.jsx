@@ -38,7 +38,8 @@ import {
   NgoGallery,
   NgoVolunteers,
   NgoPending,
-  NgoFundRequests
+  NgoFundRequests,
+  NgoFundUtilization,
 } from "../pages/ngo/index.js";
 
 import GalleryImages from "../pages/gallery/GalleryImages.jsx";
@@ -221,6 +222,7 @@ function AppRoutes() {
           <Route path="gallery" element={<NgoGallery />} />
           <Route path="volunteers" element={<NgoVolunteers />} />
           <Route path="funds" element={<NgoFundRequests />} />
+          <Route path="fund-utilization" element={<NgoFundUtilization />} />
           <Route path="events" element={<NgoEvents />} />
         </Route>
 

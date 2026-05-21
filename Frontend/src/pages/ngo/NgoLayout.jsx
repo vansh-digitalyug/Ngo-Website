@@ -21,6 +21,7 @@ import {
   AlertTriangle,
   Menu,
   X,
+  TrendingUp,
 } from "lucide-react";
 import "./ngo.css";
 // Removed remove-ngo-padding.css import
@@ -33,6 +34,7 @@ const NAV_ITEMS = [
   { path: "/ngo/gallery", label: "Media Gallery", icon: Image },
   { path: "/ngo/events", label: "Events", icon: CalendarDays },
   { path: "/ngo/funds", label: "Fund Requests", icon: IndianRupee },
+  { path: "/ngo/fund-utilization", label: "Fund Utilization", icon: TrendingUp },
   { path: "/ngo/villages", label: "Village Adoptions", icon: MapPin },
   { path: "/ngo/problems", label: "Village Problems", icon: AlertTriangle },
   { path: "/ngo/fund-ledger", label: "Fund Ledger", icon: BookMarked },

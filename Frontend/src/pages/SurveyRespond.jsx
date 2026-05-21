@@ -205,13 +205,32 @@ export default function SurveyRespond() {
 
   /* Fetch survey */
   useEffect(() => {
+    if (!token) {
+      setFetchError("No survey token provided in the URL.");
+      setLoading(false);
+      return;
+    }
+
+    console.log("Attempting to fetch survey with token:", token);
+    
     fetch(`${API}/api/surveys/respond/${token}`)
-      .then(r => r.json())
-      .then(d => {
-        if (d.success) setSurvey(d.data.survey);
-        else setFetchError(d.message || "Survey not found.");
+      .then(r => {
+        console.log("API response status:", r.status);
+        return r.json().then(d => ({ status: r.status, data: d }));
       })
-      .catch(() => setFetchError("Could not load survey. Please check your connection."))
+      .then(({ status, data }) => {
+        console.log("API response:", data);
+        if (data.success && data.data?.survey) {
+          setSurvey(data.data.survey);
+        } else {
+          const message = data.message || "Survey not found or is not active.";
+          setFetchError(`${message} (Token: ${token})`);
+        }
+      })
+      .catch(err => {
+        console.error("Fetch error:", err);
+        setFetchError(`Could not load survey. Please check your connection or the survey link. Error: ${err.message}`);
+      })
       .finally(() => setLoading(false));
   }, [token]);
 

@@ -74,6 +74,7 @@ const NgoFundRequests         = lazy(() => import("../pages/ngo/NgoFundRequests.
 const NgoEvents               = lazy(() => import("../pages/ngo/NgoEvents.jsx"));
 const NgoVillages             = lazy(() => import("../pages/ngo/NgoVillages.jsx"));
 const NgoFundLedger           = lazy(() => import("../pages/ngo/NgoFundLedger.jsx"));
+const NgoFundUtilization     = lazy(() => import("../pages/ngo/NgoFundUtilization.jsx"));
 const NgoEmployment           = lazy(() => import("../pages/ngo/NgoEmployment.jsx"));
 const NgoStaff                = lazy(() => import("../pages/ngo/NgoStaff.jsx"));
 const NgoSurveys              = lazy(() => import("../pages/ngo/NgoSurveys.jsx"));
@@ -325,6 +326,7 @@ function AppRoutes() {
             <Route path="events"      element={<NgoEvents />} />
             <Route path="villages"    element={<NgoVillages />} />
             <Route path="fund-ledger" element={<NgoFundLedger />} />
+            <Route path="fund-utilization" element={<NgoFundUtilization />} />
             <Route path="employment"  element={<NgoEmployment />} />
             <Route path="staff"       element={<NgoStaff />} />
             <Route path="surveys"         element={<NgoSurveys />} />

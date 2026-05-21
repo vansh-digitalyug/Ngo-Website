@@ -20,6 +20,19 @@ function fmtTime(t) {
   return `${h % 12 || 12}:${String(m).padStart(2, "0")} ${h >= 12 ? "pm" : "am"}`;
 }
 
+function getOrganizerName(event) {
+  if (event.createdByRole === "admin") {
+    return "Seva India";
+  }
+  if (event.createdByRole === "ngo" && event.ngoId?.ngoName) {
+    return event.ngoId.ngoName;
+  }
+  if (event.createdByRole === "ngo" && typeof event.ngoId === "string") {
+    return event.ngoName || "NGO";
+  }
+  return event.ngoName || "Seva India";
+}
+
 // ─── Event Card (Grid Item) ───────────────────────────────────────────────────
 function EventCard({ event, onClick, onNavigate }) {
   return (
@@ -42,6 +55,14 @@ function EventCard({ event, onClick, onNavigate }) {
       </div>
 
       <div className="p-6 flex flex-col flex-1">
+        {/* Organizer Badge */}
+        <div className="mb-2.5 flex items-center gap-2">
+          <div className="inline-flex items-center gap-1.5 bg-amber-50 border border-amber-200 rounded-full px-3 py-1 text-xs font-bold text-amber-800">
+            <span>📌</span>
+            <span>{getOrganizerName(event)}</span>
+          </div>
+        </div>
+
         <h3 className="font-bold text-stone-900 text-xl leading-snug mb-3 line-clamp-2 group-hover:text-amber-800 transition-colors">
           {event.title}
         </h3>
@@ -92,6 +113,15 @@ function EventDetailView({ event, onBack }) {
         {event.title}
       </h1>
 
+      {/* Organizer Info */}
+      <div className="w-full mb-8 flex items-center gap-3 p-4 bg-amber-50 border border-amber-200 rounded-xl">
+        <span className="text-2xl">📌</span>
+        <div>
+          <p className="text-xs font-bold text-amber-700 uppercase tracking-wider">Organized by</p>
+          <p className="text-lg font-bold text-amber-900">{getOrganizerName(event)}</p>
+        </div>
+      </div>
+
       {/* Hero Image */}
       <div className="w-full max-w-[1200px] aspect-[3/2] bg-stone-100 rounded-xl overflow-hidden mb-12 shadow-lg mx-auto">
         {event.imageUrl ? (
@@ -105,6 +135,7 @@ function EventDetailView({ event, onBack }) {
 
       {/* Description */}
       <div className="w-full mb-16">
+        <h2 className="text-2xl font-bold text-stone-900 mb-4 pb-3 border-b-2 border-stone-200">About the Event</h2>
         <p className="text-stone-700 text-lg leading-relaxed whitespace-pre-wrap">
           {event.description || "No description provided for this event."}
         </p>

@@ -19,6 +19,7 @@ const ALLOWED_LOCATIONS = new Set([
   "community-posts",
   "surveys",
   "volunteerTask",
+  "fund-utilization",
 ]);
 
 // Allowed MIME types for uploads — security whitelist

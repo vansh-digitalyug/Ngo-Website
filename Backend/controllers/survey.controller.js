@@ -2,6 +2,8 @@ import Survey from "../models/Survey.model.js";
 import SurveyResponse from "../models/SurveyResponse.model.js";
 import mongoose from "mongoose";
 import { createActivity } from "./activity.controller.js";
+import ApiResponse from "../utils/ApiResponse.js";
+import ApiError from "../utils/ApiError.js";
 
 const ok  = (res, data, msg = "Success", code = 200) =>
     res.status(code).json({ success: true, message: msg, data });
@@ -229,15 +231,17 @@ export const getPublicSurveys = async (req, res) => {
             Survey.countDocuments(filter),
         ]);
 
-        ok(res, {
+        return res.status(200).json(new ApiResponse(200, "Public surveys fetched successfully", {
             surveys,
             pagination: {
                 total,
                 page:  Number(page),
                 pages: Math.ceil(total / Number(limit)),
             },
-        });
-    } catch (e) { err(res, e.message); }
+        }));
+    } catch (e) { 
+        return res.status(500).json(new ApiError(500, e.message)); 
+    }
 };
 
 // ── Admin ──────────────────────────────────────────────────────────────────
